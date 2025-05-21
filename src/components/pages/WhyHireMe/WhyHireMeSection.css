@@ -1,0 +1,343 @@
+/* WhyHireMeSection.css cập nhật với các animation */
+
+/* Section background gradient */
+.why-hire-me-section {
+  background: linear-gradient(
+    135deg,
+    rgba(251, 146, 60, 0.1),
+    rgba(255, 255, 255, 0.8)
+  );
+  position: relative;
+  overflow: hidden; /* Đảm bảo các hiệu ứng không overflow ra ngoài */
+}
+
+/* Add subtle pattern overlay */
+.why-hire-me-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23fb923c' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  animation: patternFadeIn 2s ease-out forwards;
+  opacity: 0;
+}
+
+/* Carousel container positioning */
+.carousel-container {
+  padding: 0 50px; /* Create space for the arrows to sit outside */
+  margin-bottom: 40px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Arrow buttons styling with improved transitions */
+.carousel-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: rgba(251, 146, 60, 0.1);
+  color: #fb923c;
+  border: 1px solid rgba(251, 146, 60, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 10;
+  box-shadow: 0 2px 10px rgba(251, 146, 60, 0.1);
+}
+
+.carousel-button:hover {
+  background-color: #fb923c;
+  color: white;
+  transform: translateY(-50%) scale(1.05);
+  box-shadow: 0 4px 15px rgba(251, 146, 60, 0.25);
+}
+
+.carousel-button:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.carousel-button.prev {
+  left: -35px; /* Position outside the slider */
+}
+
+.carousel-button.next {
+  right: -25px; /* Position outside the slider */
+}
+
+/* Pagination styling with animation improvements */
+.pagination-container {
+  margin-top: 20px;
+}
+
+/* Override slick styling for smoother animations */
+.slick-track {
+  display: flex;
+  gap: 30px;
+  padding: 20px 0;
+}
+
+.slick-slide {
+  height: inherit;
+  display: flex;
+  justify-content: center;
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Slightly dim non-active slides */
+.slick-slide:not(.slick-active) {
+  opacity: 0.7;
+  transform: scale(0.95);
+}
+
+/* Custom styling for active slide */
+.slick-slide.slick-active {
+  z-index: 1;
+}
+
+/* Create a nice fade effect at the edges */
+.carousel-container::before,
+.carousel-container::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 80px;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1s ease-out;
+}
+
+.carousel-container::before {
+  left: 0;
+  background: linear-gradient(
+    to right,
+    rgba(251, 146, 60, 0.05),
+    rgba(251, 146, 60, 0)
+  );
+}
+
+.carousel-container::after {
+  right: 0;
+  background: linear-gradient(
+    to left,
+    rgba(251, 146, 60, 0.05),
+    rgba(251, 146, 60, 0)
+  );
+}
+
+.why-hire-me-section.in-view .carousel-container::before,
+.why-hire-me-section.in-view .carousel-container::after {
+  opacity: 1;
+}
+
+/* Enhanced touch feedback */
+.why-card-slider {
+  touch-action: pan-y;
+  will-change: transform;
+}
+
+/* Animation for slide transitions */
+@keyframes slideInRight {
+  from {
+    transform: translateX(30px) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-30px) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Enhanced animations for page load */
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes patternFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes titleReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes subtleFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* Apply subtle floating animation to cards when they're hovered */
+.slide-item:hover {
+  animation: subtleFloat 3s ease-in-out infinite;
+}
+
+/* Ensure cards are always centered in the container */
+.slick-slider {
+  display: flex;
+  justify-content: center;
+}
+
+.slick-list {
+  width: 100%;
+  overflow: visible;
+}
+
+.why-card-slider .slick-track,
+.why-card-slider .slick-slide > div {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Smooth transitions for all interactive elements */
+.card-frame .frame-path {
+  fill: none;
+  stroke: rgba(8, 8, 8, 0.9);
+  stroke-width: 1.5;
+  transition: stroke-dashoffset 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Add shine effect to cards on entry */
+.card-shine-effect {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  transition: left 0.7s ease;
+  pointer-events: none;
+}
+
+.why-hire-me-section.in-view .card-shine-effect {
+  left: 100%;
+}
+
+/* Floating dots background animation */
+.floating-dots {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: rgba(251, 146, 60, 0.2);
+  pointer-events: none;
+  opacity: 0;
+  animation: floatUp 15s linear infinite;
+}
+
+@keyframes floatUp {
+  0% {
+    transform: translateY(0) scale(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  90% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(-500px) scale(0);
+    opacity: 0;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 1280px) {
+  .carousel-container {
+    padding: 0 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .carousel-container {
+    padding: 0 30px;
+  }
+
+  .carousel-button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .carousel-button.prev {
+    left: -15px;
+  }
+
+  .carousel-button.next {
+    right: -15px;
+  }
+}
+
+/* Create glow effect for cards when active */
+.slick-slide.slick-active .deconstructed-card {
+  box-shadow: 0 0 25px rgba(251, 146, 60, 0);
+  transition: box-shadow 1s ease;
+}
+
+.why-hire-me-section.in-view .slick-slide.slick-active .deconstructed-card {
+  box-shadow: 0 0 25px rgba(251, 146, 60, 0.15);
+}
+
+/* Entry animations */
+.entry-animation-container {
+  opacity: 0;
+  transform: translateY(40px);
+}
+
+.why-hire-me-section.in-view .entry-animation-container {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}

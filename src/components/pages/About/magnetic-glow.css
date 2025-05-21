@@ -1,0 +1,85 @@
+/* Custom CSS for magnetic glow effects */
+.glow-card {
+  position: relative;
+  background-color: var(--color-card, #111111);
+  overflow: hidden;
+  cursor: pointer;
+  height: 100%;
+  transition: transform 0.3s ease;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.glow-card:hover {
+  transform: translateY(-8px);
+}
+
+.glow-effect {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+}
+
+/* Variables for glow effect */
+:root {
+  --glow-size: 50vh;
+  --glow-blur: 60px;
+  --glow-color: rgba(251, 146, 60, 0.5);
+}
+
+/* Custom scrollbar for modern browsers */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #fb923c;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .about-section {
+    padding: 2rem 1rem;
+  }
+
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Transition animations */
+.about-section {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Fancy underline animation for links */
+.fancy-underline {
+  position: relative;
+}
+
+.fancy-underline::after {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: -2px;
+  left: 0;
+  background-color: #fb923c;
+  transition: width 0.3s ease;
+}
+
+.fancy-underline:hover::after {
+  width: 100%;
+}
