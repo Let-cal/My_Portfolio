@@ -1,7 +1,8 @@
 import { Box, Typography } from "@mui/material";
 import gsap from "gsap";
 import PropTypes from "prop-types";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import AboutSection from "../pages/About/AboutSection";
 
 // Utility function to animate elements
@@ -18,38 +19,72 @@ const MobileSummaryModal = ({ onClose, isAboutSection = false, aboutData }) => {
   const modalRef = useRef(null);
   const contentRef = useRef(null);
   const overlayRef = useRef(null);
+  const [isClosing, setIsClosing] = useState(false);
 
-  // Lock body scroll when modal is open
-  useEffect(() => {
-    // Save the original body overflow style
-    const originalStyle = window.getComputedStyle(document.body).overflow;
+  // Handle close with animation
+  const handleClose = () => {
+    if (isClosing) return; // Prevent multiple clicks
 
-    // Prevent body scrolling
-    document.body.style.overflow = "hidden";
+    setIsClosing(true);
 
-    // Optional: Prevent touchmove on body to avoid iOS Safari scrolling issues
-    const preventTouchMove = (e) => {
-      e.preventDefault();
-    };
+    if (!modalRef.current || !overlayRef.current) {
+      onClose();
+      return;
+    }
 
-    document.body.addEventListener("touchmove", preventTouchMove, {
-      passive: false,
+    const modal = modalRef.current;
+    const overlay = overlayRef.current;
+
+    // GSAP closing animation
+    const tl = gsap.timeline({
+      onComplete: onClose,
     });
 
-    return () => {
-      // Restore body scrolling
-      document.body.style.overflow = originalStyle;
-      document.body.removeEventListener("touchmove", preventTouchMove);
-    };
-  }, []);
+    tl.to(modal, {
+      y: "100%",
+      duration: 0.4,
+      ease: "power3.in",
+    });
 
-  // Animation and ESC key handling
+    tl.to(
+      overlay,
+      {
+        opacity: 0,
+        duration: 0.3,
+        ease: "power2.out",
+      },
+      "-=0.2"
+    );
+  };
+
   useEffect(() => {
     if (!modalRef.current || !overlayRef.current || !contentRef.current) return;
 
     const modal = modalRef.current;
     const overlay = overlayRef.current;
     const contentChildren = contentRef.current.children;
+
+    // Store current scroll position
+    const scrollY = window.scrollY;
+
+    // Prevent body scroll when modal is open
+    document.body.style.overflow = "hidden";
+
+    // Store original body styles to restore later
+    const originalBodyStyle = {
+      position: document.body.style.position,
+      top: document.body.style.top,
+      left: document.body.style.left,
+      right: document.body.style.right,
+      width: document.body.style.width,
+    };
+
+    // Fix body position to prevent background scroll
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
 
     // Slide up animation for modal
     animateElement(
@@ -84,37 +119,23 @@ const MobileSummaryModal = ({ onClose, isAboutSection = false, aboutData }) => {
 
     return () => {
       window.removeEventListener("keydown", handleEscKey);
+
+      // Restore body styles
+      document.body.style.position = originalBodyStyle.position || "";
+      document.body.style.top = originalBodyStyle.top || "";
+      document.body.style.left = originalBodyStyle.left || "";
+      document.body.style.right = originalBodyStyle.right || "";
+      document.body.style.width = originalBodyStyle.width || "";
+      document.body.style.overflow = "";
+
+      // Restore scroll position smoothly
+      window.scrollTo(0, scrollY);
+
       cleanupTweens([modal, overlay, ...(contentChildren || [])]);
     };
   }, []);
 
-  const handleClose = () => {
-    if (!modalRef.current || !overlayRef.current) {
-      onClose();
-      return;
-    }
-
-    const modal = modalRef.current;
-    const overlay = overlayRef.current;
-
-    animateElement(
-      modal,
-      { y: 0 },
-      { y: "100%" },
-      { duration: 0.3, ease: "power2.in" }
-    );
-    animateElement(
-      overlay,
-      { opacity: 1 },
-      { opacity: 0 },
-      {
-        duration: 0.3,
-        onComplete: onClose,
-      }
-    );
-  };
-
-  // Safety check for aboutData
+  // Safety check to prevent rendering if aboutData is incomplete when isAboutSection is true
   if (
     isAboutSection &&
     (!aboutData ||
@@ -123,9 +144,18 @@ const MobileSummaryModal = ({ onClose, isAboutSection = false, aboutData }) => {
       !aboutData.profile)
   ) {
     console.error("AboutData is missing required properties");
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-        <div className="bg-white p-6 rounded-lg max-w-md">
+
+    const errorModal = (
+      <div
+        className="fixed inset-0 flex items-center justify-center bg-black/50 z-[9999]"
+        style={{
+          position: "fixed",
+          zIndex: 9999,
+          opacity: isClosing ? 0 : 1,
+          transition: "opacity 0.3s ease-out",
+        }}
+      >
+        <div className="bg-white p-6 rounded-lg max-w-md mx-4">
           <h3 className="text-xl font-bold text-red-600 mb-4">
             Error Loading About Section
           </h3>
@@ -142,60 +172,76 @@ const MobileSummaryModal = ({ onClose, isAboutSection = false, aboutData }) => {
           </ul>
           <button
             className="w-full py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
-            onClick={onClose}
+            onClick={handleClose}
           >
             Close
           </button>
         </div>
       </div>
     );
+
+    return createPortal(errorModal, document.body);
   }
 
-  return (
+  const modalContent = (
     <>
-      {/* Overlay with full coverage and blur */}
+      {/* Overlay with maximum z-index and full coverage */}
       <Box
         ref={overlayRef}
-        className="fixed top-0 left-0 w-full h-full z-50 bg-black/70"
+        className="fixed top-0 left-0 w-full h-full bg-black/70"
         onClick={handleClose}
         sx={{
+          position: "fixed !important",
+          zIndex: 9999,
           backdropFilter: "blur(5px)",
-          WebkitBackdropFilter: "blur(5px)", // Ensure compatibility with Safari
+          WebkitBackdropFilter: "blur(5px)",
+          touchAction: "none", // Prevent touch scrolling on overlay
         }}
       />
 
-      {/* Modal content with scrollable area */}
+      {/* Modal content with maximum z-index and proper positioning */}
       <Box
         ref={modalRef}
-        className="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-2xl"
+        className="fixed inset-x-0 bottom-0 bg-white rounded-t-2xl"
         sx={{
-          maxHeight: "80vh",
+          position: "fixed !important",
+          zIndex: 9999,
+          maxHeight: "85vh",
           boxShadow: "0 -4px 20px rgba(0, 0, 0, 0.15)",
           display: "flex",
           flexDirection: "column",
-          touchAction: "none", // Prevent touch events from affecting modal positioning
+          margin: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          transform: "translateZ(0)", // Force hardware acceleration
+          willChange: "transform", // Optimize for animations
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Drag handle */}
         <Box
-          className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mt-2 mb-4"
-          sx={{ cursor: "grab" }}
+          className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mt-3 mb-4 cursor-grab active:cursor-grabbing"
+          onClick={handleClose}
         />
+
         {/* Scrollable content area */}
         <Box
           className="px-5 pb-8 flex-1 overflow-y-auto"
           ref={contentRef}
           sx={{
-            scrollbarWidth: "thin", // For Firefox
+            scrollbarWidth: "thin",
+            touchAction: "pan-y", // Allow vertical scrolling only
             "&::-webkit-scrollbar": {
-              width: "6px",
+              width: "4px",
             },
             "&::-webkit-scrollbar-thumb": {
               backgroundColor: "rgba(0, 0, 0, 0.3)",
-              borderRadius: "3px",
+              borderRadius: "2px",
             },
-            overscrollBehavior: "contain",
-            touchAction: "auto", // Allow scrolling within content
+            "&::-webkit-scrollbar-track": {
+              backgroundColor: "rgba(0, 0, 0, 0.1)",
+            },
           }}
         >
           {isAboutSection && aboutData ? (
@@ -251,12 +297,19 @@ const MobileSummaryModal = ({ onClose, isAboutSection = false, aboutData }) => {
               </Box>
             </>
           )}
+
+          {/* Close button */}
           <Box
-            className="w-full py-3 text-center text-white font-medium rounded-lg bg-orange-500"
+            className="w-full py-3 text-center text-white font-medium rounded-lg bg-orange-500 mt-6"
             onClick={handleClose}
             sx={{
               cursor: "pointer",
+              transition: "background-color 0.2s ease",
               "&:hover": { backgroundColor: "rgb(249, 115, 22)" },
+              "&:active": {
+                backgroundColor: "rgb(234, 88, 12)",
+                transform: "scale(0.98)",
+              },
             }}
           >
             Close
@@ -265,6 +318,9 @@ const MobileSummaryModal = ({ onClose, isAboutSection = false, aboutData }) => {
       </Box>
     </>
   );
+
+  // Use React Portal to render modal at document.body level
+  return createPortal(modalContent, document.body);
 };
 
 MobileSummaryModal.propTypes = {

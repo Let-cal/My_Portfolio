@@ -80,6 +80,12 @@ const SkillCard = ({ skill, onShowDetail }) => {
           boxShadow: "0 8px 32px rgba(255, 165, 0, 0.3)",
           transform: "translateY(-8px)",
         },
+        "@media (max-width: 767px)": {
+          boxShadow: "none",
+          "&:hover": {
+            boxShadow: "none", // Ensure no hover shadow on mobile
+          },
+        },
       }}
       // Handle pointer events to detect drags vs. clicks
       onPointerDown={handlePointerDown}
