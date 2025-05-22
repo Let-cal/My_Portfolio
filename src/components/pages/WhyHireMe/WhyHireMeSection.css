@@ -30,10 +30,18 @@
 .carousel-container {
   padding: 0 50px;
   margin-bottom: 40px;
+  height: 100%;
   position: relative;
   z-index: 1;
+  overflow-x: auto; /* Cho phép cuộn ngang */
+  overflow-y: hidden; /* Ẩn cuộn dọc */
+  -webkit-overflow-scrolling: touch; /* Cải thiện cuộn trên iOS */
+  -ms-overflow-style: none; /* Ẩn thanh cuộn trên IE/Edge */
+  scrollbar-width: none; /* Ẩn thanh cuộn trên Firefox */
 }
-
+.carousel-container::-webkit-scrollbar {
+  display: none;
+}
 /* Arrow buttons styling with improved transitions */
 .carousel-button {
   position: absolute;
@@ -203,7 +211,7 @@
 .why-card-slider {
   touch-action: pan-x;
   will-change: transform;
-  -webkit-overflow-scrolling: touch;
+  -webkit-overflow-scrolling: touch !important;
 }
 
 /* Smooth momentum transitions */
@@ -216,6 +224,7 @@
 /* Enhanced pagination container */
 .pagination-container {
   margin-top: 30px;
+  margin-bottom: 30px;
   display: flex;
   justify-content: center;
   align-items: center;

@@ -461,7 +461,10 @@ export default function WhyHireMeSection() {
           startX: swipeData.startX,
           endX: touch.clientX,
         });
-        e.preventDefault();
+        const slider = document.querySelector(".why-card-slider");
+        if (slider && slider.contains(e.target)) {
+          e.preventDefault(); // Ngăn chặn cuộn trang khi lướt carousel
+        }
         e.stopPropagation();
       }
     };
@@ -506,7 +509,7 @@ export default function WhyHireMeSection() {
       document.removeEventListener("touchmove", handleTouchMove);
       document.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [isDragging, isMobile, swipeData]);
+  }, [handleSwipe, handleSwipeEnd, isDragging, isMobile, swipeData]);
 
   // Animation variants for staggered animations
   const containerVariants = {
@@ -604,7 +607,7 @@ export default function WhyHireMeSection() {
       }`}
     >
       <motion.div
-        className="container mx-auto max-w-8xl"
+        className=" mx-auto w-full"
         initial="hidden"
         animate={isVisible ? "visible" : "hidden"}
         variants={containerVariants}
