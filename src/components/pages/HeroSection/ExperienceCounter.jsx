@@ -203,52 +203,7 @@ const ExperienceCounter = ({ years = 3 }) => {
       >
         {wrapTextInSpans("Experience")}
       </motion.div>
-
-      {/* Small floating particles */}
-      <FloatingParticles />
     </motion.div>
-  );
-};
-
-// Add floating particles for visual appeal
-const FloatingParticles = () => {
-  const particles = Array.from({ length: 6 }, (_, i) => ({
-    id: i,
-    size: Math.random() * 4 + 3, // Smaller particles
-    x: (Math.random() - 0.5) * 180,
-    y: (Math.random() - 0.5) * 180,
-    duration: Math.random() * 25 + 20, // Much slower movement
-    delay: Math.random() * 3,
-  }));
-
-  return (
-    <>
-      {particles.map((particle) => (
-        <motion.div
-          key={particle.id}
-          className="absolute rounded-full bg-orange-300"
-          style={{
-            width: particle.size,
-            height: particle.size,
-            x: particle.x,
-            y: particle.y,
-            opacity: 0.3,
-            zIndex: 5,
-          }}
-          animate={{
-            y: [particle.y, particle.y - 10, particle.y], // Reduced movement
-            x: [particle.x, particle.x + 5, particle.x], // Reduced movement
-            opacity: [0.15, 0.3, 0.15], // More subtle opacity changes
-          }}
-          transition={{
-            duration: particle.duration,
-            repeat: Infinity,
-            delay: particle.delay,
-            ease: "easeInOut", // Smoother movement
-          }}
-        />
-      ))}
-    </>
   );
 };
 

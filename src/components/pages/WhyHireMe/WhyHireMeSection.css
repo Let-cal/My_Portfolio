@@ -1,4 +1,4 @@
-/* WhyHireMeSection.css cập nhật với các animation */
+/* WhyHireMeSection.css cập nhật với momentum effects */
 
 /* Section background gradient */
 .why-hire-me-section {
@@ -8,7 +8,7 @@
     rgba(255, 255, 255, 0.8)
   );
   position: relative;
-  overflow: hidden; /* Đảm bảo các hiệu ứng không overflow ra ngoài */
+  overflow: hidden;
 }
 
 /* Add subtle pattern overlay */
@@ -28,7 +28,7 @@
 
 /* Carousel container positioning */
 .carousel-container {
-  padding: 0 50px; /* Create space for the arrows to sit outside */
+  padding: 0 50px;
   margin-bottom: 40px;
   position: relative;
   z-index: 1;
@@ -66,45 +66,103 @@
 }
 
 .carousel-button.prev {
-  left: -35px; /* Position outside the slider */
+  left: -35px;
 }
 
 .carousel-button.next {
-  right: -25px; /* Position outside the slider */
+  right: -25px;
 }
 
-/* Pagination styling with animation improvements */
-.pagination-container {
-  margin-top: 20px;
-}
-
-/* Override slick styling for smoother animations */
+/* Enhanced slick track with momentum effects */
 .slick-track {
   display: flex;
   gap: 30px;
   padding: 20px 0;
+  transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
 }
 
+/* Enhanced slide animations with momentum */
 .slick-slide {
   height: inherit;
   display: flex;
   justify-content: center;
-  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 0.4s ease;
+  will-change: transform, opacity;
 }
 
-/* Slightly dim non-active slides */
+/* Mobile momentum enhancements */
+@media (max-width: 640px) {
+  .slick-track {
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .slick-slide {
+    transition: opacity 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 0.3s ease;
+  }
+
+  /* Enhanced touch feedback */
+  .slick-slide:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+}
+
+/* Momentum-based slide effects */
+.slick-slide.momentum-fast {
+  animation: momentumSlide 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.slick-slide.momentum-slow {
+  animation: momentumSlide 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes momentumSlide {
+  0% {
+    transform: translateX(var(--slide-offset, 0));
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateX(calc(var(--slide-offset, 0) * 0.3));
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Slightly dim non-active slides with smooth transitions */
 .slick-slide:not(.slick-active) {
-  opacity: 0.7;
-  transform: scale(0.95);
+  opacity: 0.6;
+  transform: scale(0.92);
+  filter: blur(0.5px);
 }
 
-/* Custom styling for active slide */
+/* Custom styling for active slide with glow effect */
 .slick-slide.slick-active {
   z-index: 1;
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0);
 }
 
-/* Create a nice fade effect at the edges */
+/* Enhanced momentum feedback for mobile */
+@media (max-width: 640px) {
+  .slick-slide:not(.slick-active) {
+    opacity: 0.7;
+    transform: scale(0.95);
+    filter: blur(0.3px);
+  }
+
+  .slick-slide.slick-active {
+    box-shadow: 0 8px 25px rgba(251, 146, 60, 0.15);
+  }
+}
+
+/* Create smooth fade effect at the edges */
 .carousel-container::before,
 .carousel-container::after {
   content: "";
@@ -141,65 +199,79 @@
   opacity: 1;
 }
 
-/* Enhanced touch feedback */
+/* Enhanced touch feedback with momentum */
 .why-card-slider {
-  touch-action: pan-y;
+  touch-action: pan-x;
   will-change: transform;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* Animation for slide transitions */
-@keyframes slideInRight {
-  from {
-    transform: translateX(30px) scale(0.95);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0) scale(1);
-    opacity: 1;
-  }
+/* Smooth momentum transitions */
+.why-card-slider .slick-list {
+  overflow: visible;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
-@keyframes slideInLeft {
-  from {
-    transform: translateX(-30px) scale(0.95);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0) scale(1);
-    opacity: 1;
-  }
+/* Enhanced pagination container */
+.pagination-container {
+  margin-top: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  z-index: 5;
 }
 
-/* Enhanced animations for page load */
-@keyframes cardFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(40px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes patternFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes titleReveal {
+/* Momentum-based slide transitions */
+@keyframes slideInRightMomentum {
   0% {
+    transform: translateX(60px) scale(0.9);
     opacity: 0;
-    transform: translateY(-30px);
+    filter: blur(1px);
+  }
+  60% {
+    transform: translateX(-5px) scale(1.02);
+    opacity: 0.8;
+    filter: blur(0.3px);
   }
   100% {
+    transform: translateX(0) scale(1);
     opacity: 1;
-    transform: translateY(0);
+    filter: blur(0);
   }
+}
+
+@keyframes slideInLeftMomentum {
+  0% {
+    transform: translateX(-60px) scale(0.9);
+    opacity: 0;
+    filter: blur(1px);
+  }
+  60% {
+    transform: translateX(5px) scale(1.02);
+    opacity: 0.8;
+    filter: blur(0.3px);
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+/* Apply momentum animations based on direction */
+.slick-slide.slide-right {
+  animation: slideInRightMomentum 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.slick-slide.slide-left {
+  animation: slideInLeftMomentum 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Enhanced card hover effects */
+.slide-item:hover {
+  animation: subtleFloat 3s ease-in-out infinite;
 }
 
 @keyframes subtleFloat {
@@ -208,90 +280,101 @@
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-5px);
+    transform: translateY(-3px);
   }
 }
 
-/* Apply subtle floating animation to cards when they're hovered */
-.slide-item:hover {
-  animation: subtleFloat 3s ease-in-out infinite;
+/* Mobile-specific momentum enhancements */
+@media (max-width: 640px) {
+  .carousel-container {
+    padding: 0 20px;
+  }
+
+  .slick-track {
+    gap: 15px;
+    padding: 15px 0;
+  }
+
+  /* Enhanced mobile swipe feedback */
+  .why-card-slider.swiping .slick-slide {
+    transition: transform 0.1s ease-out;
+  }
+
+  /* Mobile momentum effects */
+  .mobile-momentum-high .slick-slide {
+    animation: mobileMomentumHigh 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .mobile-momentum-low .slick-slide {
+    animation: mobileMomentumLow 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
 }
 
-/* Ensure cards are always centered in the container */
-.slick-slider {
-  display: flex;
-  justify-content: center;
+@keyframes mobileMomentumHigh {
+  0% {
+    transform: translateX(var(--momentum-offset, 0)) scale(0.95);
+    opacity: 0.7;
+  }
+  30% {
+    transform: translateX(calc(var(--momentum-offset, 0) * 0.7)) scale(1);
+    opacity: 0.85;
+  }
+  70% {
+    transform: translateX(calc(var(--momentum-offset, 0) * 0.2)) scale(1.02);
+    opacity: 0.95;
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
 }
 
-.slick-list {
-  width: 100%;
-  overflow: visible;
+@keyframes mobileMomentumLow {
+  0% {
+    transform: translateX(var(--momentum-offset, 0)) scale(0.98);
+    opacity: 0.8;
+  }
+  60% {
+    transform: translateX(calc(var(--momentum-offset, 0) * 0.3)) scale(1.01);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
 }
 
-.why-card-slider .slick-track,
-.why-card-slider .slick-slide > div {
-  will-change: transform, opacity;
+/* Enhanced edge bounce effect */
+.slick-slider.edge-bounce .slick-track {
+  animation: edgeBounce 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes edgeBounce {
+  0% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(var(--bounce-offset, 10px));
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+/* Improve overall performance */
+.why-card-slider *,
+.why-card-slider *::before,
+.why-card-slider *::after {
   transform: translateZ(0);
   backface-visibility: hidden;
 }
 
-/* Smooth transitions for all interactive elements */
-.card-frame .frame-path {
-  fill: none;
-  stroke: rgba(8, 8, 8, 0.9);
-  stroke-width: 1.5;
-  transition: stroke-dashoffset 1.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* Add shine effect to cards on entry */
-.card-shine-effect {
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.4),
-    transparent
-  );
-  transition: left 0.7s ease;
-  pointer-events: none;
-}
-
-.why-hire-me-section.in-view .card-shine-effect {
-  left: 100%;
-}
-
-/* Floating dots background animation */
-.floating-dots {
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background-color: rgba(251, 146, 60, 0.2);
-  pointer-events: none;
-  opacity: 0;
-  animation: floatUp 15s linear infinite;
-}
-
-@keyframes floatUp {
-  0% {
-    transform: translateY(0) scale(0);
-    opacity: 0;
-  }
-  10% {
-    opacity: 0.5;
-    transform: scale(1);
-  }
-  90% {
-    opacity: 0.5;
-  }
-  100% {
-    transform: translateY(-500px) scale(0);
-    opacity: 0;
-  }
+/* Enhanced loading states */
+.slick-slide.loading {
+  opacity: 0.5;
+  transform: scale(0.95);
+  filter: blur(0.5px);
+  transition: all 0.3s ease;
 }
 
 /* Responsive adjustments */
@@ -320,7 +403,7 @@
   }
 }
 
-/* Create glow effect for cards when active */
+/* Enhanced glow effect for active cards */
 .slick-slide.slick-active .deconstructed-card {
   box-shadow: 0 0 25px rgba(251, 146, 60, 0);
   transition: box-shadow 1s ease;
@@ -340,4 +423,14 @@
   opacity: 1;
   transform: translateY(0);
   transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Pattern animation */
+@keyframes patternFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

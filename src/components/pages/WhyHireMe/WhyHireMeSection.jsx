@@ -89,13 +89,34 @@ export default function WhyHireMeSection() {
 
   // Track if user is interacting with the slider
   const [isDragging, setIsDragging] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Enhanced swipe tracking for momentum
+  const [swipeData, setSwipeData] = useState({
+    startX: 0,
+    currentX: 0,
+    velocity: 0,
+    lastMoveTime: 0,
+  });
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      const width = window.innerWidth;
+      setIsMobile(width <= 640);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Set up the Intersection Observer to detect when the section is in view
   useEffect(() => {
     const observerOptions = {
-      root: null, // use the viewport as the reference
-      rootMargin: "0px", // no margin
-      threshold: 0.25, // trigger when at least 25% of the element is visible
+      root: null,
+      rootMargin: "0px",
+      threshold: 0.25,
     };
 
     const handleIntersection = (entries) => {
@@ -103,10 +124,9 @@ export default function WhyHireMeSection() {
       if (entry.isIntersecting) {
         setIsVisible(true);
         setIsAnimating(true);
-        // After all cards have animated in, set isAnimating to false
         setTimeout(() => {
           setIsAnimating(false);
-        }, (skills.length + 1) * 150); // Delay based on number of cards plus title animation
+        }, (skills.length + 1) * 150);
       }
     };
 
@@ -126,16 +146,16 @@ export default function WhyHireMeSection() {
     };
   }, []);
 
-  // Custom arrows for the slider with updated styling
+  // Custom arrows for the slider - hidden on mobile for touch interaction
   const NextArrow = ({ onClick }) => (
     <motion.button
-      className="carousel-button next"
+      className={`carousel-button next ${isMobile ? "hidden" : ""}`}
       onClick={onClick}
       aria-label="Next slide"
       type="button"
       initial={{ opacity: 0, x: 20 }}
       animate={{
-        opacity: isVisible ? 1 : 0,
+        opacity: isVisible && !isMobile ? 1 : 0,
         x: isVisible ? 0 : 20,
       }}
       transition={{
@@ -169,13 +189,13 @@ export default function WhyHireMeSection() {
 
   const PrevArrow = ({ onClick }) => (
     <motion.button
-      className="carousel-button prev"
+      className={`carousel-button prev ${isMobile ? "hidden" : ""}`}
       onClick={onClick}
       aria-label="Previous slide"
       type="button"
       initial={{ opacity: 0, x: -20 }}
       animate={{
-        opacity: isVisible ? 1 : 0,
+        opacity: isVisible && !isMobile ? 1 : 0,
         x: isVisible ? 0 : -20,
       }}
       transition={{
@@ -207,9 +227,10 @@ export default function WhyHireMeSection() {
     onClick: PropTypes.func,
   };
 
-  // Determine slide direction when changing slides
+  // Enhanced slide direction tracking
   const handleBeforeChange = (current, next) => {
-    // Logic to determine slide direction (right or left)
+    console.log("Before change:", { current, next }); // Debug log
+
     if (next > current || (current === skills.length - 1 && next === 0)) {
       setSlideDirection("right");
     } else if (
@@ -222,8 +243,9 @@ export default function WhyHireMeSection() {
 
   // Function to handle manual slide change from pagination dots
   const handleDotSlideChange = (index) => {
+    console.log("Dot slide change to:", index); // Debug log
+
     if (sliderRef.current) {
-      // Determine direction for animation
       if (index > currentSlide) {
         setSlideDirection("right");
       } else {
@@ -233,26 +255,89 @@ export default function WhyHireMeSection() {
     }
   };
 
-  // Track slide change
+  // Enhanced slide change tracking
   const handleAfterChange = (index) => {
+    console.log("After change to slide:", index); // Debug log
     setCurrentSlide(index);
     setIsDragging(false);
   };
 
-  // Track drag state
-  const handleSwipeStart = () => {
+  // Enhanced swipe tracking with momentum calculation
+  const handleSwipeStart = (direction, { startX }) => {
     setIsDragging(true);
+    setSwipeData({
+      startX: startX || 0,
+      currentX: startX || 0,
+      velocity: 0,
+      lastMoveTime: Date.now(),
+    });
   };
 
-  // Enhanced slider settings with better swipe mechanics
+  // Track swipe movement for momentum
+  const handleSwipe = (direction, { startX, endX }) => {
+    const currentTime = Date.now();
+    const deltaTime = currentTime - swipeData.lastMoveTime;
+    const deltaX = endX - swipeData.currentX;
+    const velocity = deltaTime > 0 ? Math.abs(deltaX / deltaTime) : 0;
+
+    setSwipeData((prev) => ({
+      ...prev,
+      currentX: endX,
+      velocity: velocity,
+      lastMoveTime: currentTime,
+    }));
+  };
+
+  // Enhanced swipe end with momentum
+  const handleSwipeEnd = (direction) => {
+    const { velocity } = swipeData;
+
+    // Apply momentum based on swipe velocity
+    if (velocity > 0.5) {
+      // High velocity - allow multiple slides
+      const slidesToMove = Math.min(Math.ceil(velocity * 2), 3);
+
+      if (direction === "left") {
+        // Swipe left = next slides
+        for (let i = 0; i < slidesToMove; i++) {
+          setTimeout(() => {
+            if (sliderRef.current) {
+              sliderRef.current.slickNext();
+            }
+          }, i * 100);
+        }
+      } else if (direction === "right") {
+        // Swipe right = previous slides
+        for (let i = 0; i < slidesToMove; i++) {
+          setTimeout(() => {
+            if (sliderRef.current) {
+              sliderRef.current.slickPrev();
+            }
+          }, i * 100);
+        }
+      }
+    }
+
+    // Reset swipe data
+    setSwipeData({
+      startX: 0,
+      currentX: 0,
+      velocity: 0,
+      lastMoveTime: 0,
+    });
+
+    setTimeout(() => setIsDragging(false), 200);
+  };
+
+  // Enhanced slider settings with momentum support
   const settings = {
-    dots: false, // We'll use our custom AnimatedPagination
-    infinite: true, // Enables endless scrolling
-    speed: 300,
+    dots: false,
+    infinite: true,
+    speed: 400,
     slidesToShow: 3,
     slidesToScroll: 1,
-    cssEase: "ease-out",
-    edgeFriction: 0.15,
+    cssEase: "cubic-bezier(0.25, 0.46, 0.45, 0.94)", // Smoother easing
+    edgeFriction: 0.15, // Better edge handling
     nextArrow: <NextArrow />,
     prevArrow: <PrevArrow />,
     initialSlide: 0,
@@ -260,75 +345,168 @@ export default function WhyHireMeSection() {
     draggable: true,
     swipe: true,
     touchMove: true,
-    touchThreshold: 8, // More sensitive touch response
+    touchThreshold: 3, // More sensitive touch
+    lazyLoad: "ondemand",
+    focusOnSelect: false,
+    centerMode: false,
+    variableWidth: false,
     beforeChange: handleBeforeChange,
     afterChange: handleAfterChange,
-    swipeEvent: handleSwipeStart,
+    onSwipe: handleSwipe,
+    onEdge: (direction) => {
+      // Add subtle bounce effect at edges
+      if (sliderRef.current) {
+        const sliderElement = sliderRef.current.innerSlider.list;
+        sliderElement.style.transform += ` translateX(${
+          direction === "left" ? "-10px" : "10px"
+        })`;
+        setTimeout(() => {
+          sliderElement.style.transform = sliderElement.style.transform.replace(
+            / translateX\([^)]+\)/,
+            ""
+          );
+        }, 150);
+      }
+    },
     responsive: [
       {
         breakpoint: 1280,
         settings: {
           slidesToShow: 2,
           centerPadding: "8%",
+          touchThreshold: 4,
+          speed: 350,
         },
       },
       {
         breakpoint: 768,
         settings: {
           slidesToShow: 1,
-          centerPadding: "15%",
+          centerPadding: "12%",
+          touchThreshold: 3,
+          speed: 300,
+        },
+      },
+      {
+        breakpoint: 640, // Mobile breakpoint
+        settings: {
+          slidesToShow: 2.2,
+          slidesToScroll: 1,
+          centerPadding: "5%",
+          touchThreshold: 2,
+          speed: 250,
+          swipe: true,
+          draggable: true,
+          touchMove: true,
+          arrows: false,
+          infinite: true,
+          edgeFriction: 0.1,
+          cssEase: "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+        },
+      },
+      {
+        breakpoint: 480,
+        settings: {
+          slidesToShow: 1.8,
+          slidesToScroll: 1,
+          centerPadding: "8%",
+          touchThreshold: 2,
+          speed: 200,
+          swipe: true,
+          draggable: true,
+          touchMove: true,
+          arrows: false,
+          infinite: true,
+          edgeFriction: 0.05,
+        },
+      },
+      {
+        breakpoint: 380,
+        settings: {
+          slidesToShow: 1.5,
+          slidesToScroll: 1,
+          centerPadding: "10%",
+          touchThreshold: 1,
+          speed: 180,
+          swipe: true,
+          draggable: true,
+          touchMove: true,
+          arrows: false,
+          infinite: true,
+          edgeFriction: 0.05,
         },
       },
     ],
   };
 
   useEffect(() => {
-    // Handle keyboard navigation
-    const handleKeyDown = (e) => {
-      if (!sliderRef.current) return;
+    // Enhanced touch handling with momentum
+    const handleTouchStart = (e) => {
+      if (isMobile) {
+        const touch = e.touches[0];
+        handleSwipeStart("start", { startX: touch.clientX });
 
-      if (e.key === "ArrowLeft") {
-        sliderRef.current.slickPrev();
-      } else if (e.key === "ArrowRight") {
-        sliderRef.current.slickNext();
+        // Prevent page scroll while swiping cards
+        const slider = document.querySelector(".why-card-slider");
+        if (slider && slider.contains(e.target)) {
+          e.stopPropagation();
+        }
       }
     };
 
-    // Prevent horizontal scroll of the page when the carousel is swiped
-    const preventPageScroll = (e) => {
-      if (isDragging) {
+    const handleTouchMove = (e) => {
+      if (isMobile && isDragging) {
+        const touch = e.touches[0];
+        handleSwipe("move", {
+          startX: swipeData.startX,
+          endX: touch.clientX,
+        });
         e.preventDefault();
         e.stopPropagation();
       }
     };
 
+    const handleTouchEnd = (e) => {
+      if (isMobile && isDragging) {
+        const touch = e.changedTouches[0];
+        const deltaX = touch.clientX - swipeData.startX;
+        const direction = deltaX > 0 ? "right" : "left";
+        handleSwipeEnd(direction);
+      }
+    };
+
+    // Handle keyboard navigation (desktop only)
+    const handleKeyDown = (e) => {
+      if (!sliderRef.current || isMobile) return;
+
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        sliderRef.current.slickPrev();
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        sliderRef.current.slickNext();
+      }
+    };
+
     // Set up event listeners
-    window.addEventListener("keydown", handleKeyDown);
-    document
-      .querySelector(".why-card-slider")
-      ?.addEventListener("touchmove", preventPageScroll, { passive: false });
+    if (!isMobile) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+
+    document.addEventListener("touchstart", handleTouchStart, {
+      passive: true,
+    });
+    document.addEventListener("touchmove", handleTouchMove, { passive: false });
+    document.addEventListener("touchend", handleTouchEnd, { passive: true });
 
     // Clean up event listeners
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      document
-        .querySelector(".why-card-slider")
-        ?.removeEventListener("touchmove", preventPageScroll);
+      document.removeEventListener("touchstart", handleTouchStart);
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [isDragging]);
-
-  // Manual navigation methods
-  const goToNext = () => {
-    if (sliderRef.current) {
-      sliderRef.current.slickNext();
-    }
-  };
-
-  const goToPrev = () => {
-    if (sliderRef.current) {
-      sliderRef.current.slickPrev();
-    }
-  };
+  }, [isDragging, isMobile, swipeData]);
 
   // Animation variants for staggered animations
   const containerVariants = {
@@ -378,10 +556,52 @@ export default function WhyHireMeSection() {
     },
   };
 
+  // Mobile swipe instruction component
+  const SwipeInstruction = () => (
+    <motion.div
+      className={`${isMobile ? "block" : "hidden"} text-center mt-4 mb-2`}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: isVisible ? 0.7 : 0, y: isVisible ? 0 : 10 }}
+      transition={{ delay: 1, duration: 0.6 }}
+    >
+      <p className="text-sm text-gray-500 flex items-center justify-center gap-2">
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M7 16l-4-4m0 0l4-4m-4 4h18"
+          />
+        </svg>
+        Swipe to explore skills
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M17 8l4 4m0 0l-4 4m4-4H3"
+          />
+        </svg>
+      </p>
+    </motion.div>
+  );
+
   return (
     <section
       ref={sectionRef}
-      className="why-hire-me-section py-16 px-4 relative overflow-hidden"
+      className={`why-hire-me-section py-16 px-4 relative overflow-hidden ${
+        isMobile ? "mobile-optimized" : ""
+      }`}
     >
       <motion.div
         className="container mx-auto max-w-8xl"
@@ -395,10 +615,14 @@ export default function WhyHireMeSection() {
             component="h2"
             align="center"
             sx={{
-              mb: { xs: 6, md: 10 },
+              mb: { xs: 4, md: 8 },
               fontWeight: 900,
               fontFamily: "Inter, sans-serif",
-              fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
+              fontSize: {
+                xs: "1.75rem",
+                sm: "2.25rem",
+                md: "3rem",
+              },
               background: "linear-gradient(135deg, #fb923c, #f97316)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
@@ -415,8 +639,14 @@ export default function WhyHireMeSection() {
           </Typography>
         </motion.div>
 
-        <div className="carousel-container relative">
-          {/* Custom wrapper for the slider to handle animation */}
+        {/* Mobile swipe instruction */}
+        <SwipeInstruction />
+
+        <div
+          className={`carousel-container relative ${
+            isMobile ? "mobile-carousel" : ""
+          }`}
+        >
           <motion.div
             initial={{ opacity: 0, y: 60 }}
             animate={{
@@ -426,30 +656,39 @@ export default function WhyHireMeSection() {
             transition={{
               duration: 0.8,
               delay: 0.3,
-              ease: [0.16, 1, 0.3, 1], // Custom bezier curve for smooth animation
+              ease: [0.16, 1, 0.3, 1],
             }}
           >
-            <Slider ref={sliderRef} {...settings} className="why-card-slider">
+            <Slider
+              ref={sliderRef}
+              {...settings}
+              className={`why-card-slider ${isMobile ? "mobile-slider" : ""}`}
+            >
               {skills.map((skill, index) => (
                 <motion.div
                   key={skill.id}
-                  className="px-4 py-6 slide-item"
+                  className={`slide-item ${
+                    isMobile ? "mobile-slide" : "px-4 py-6"
+                  }`}
+                  style={{
+                    padding: isMobile ? "8px" : "16px 24px",
+                  }}
                   initial={{
                     opacity: 0,
-                    y: 80,
-                    rotateY: 15,
+                    y: isMobile ? 40 : 80,
+                    rotateY: isMobile ? 8 : 15,
                     scale: 0.95,
                   }}
                   animate={{
                     opacity: isVisible ? 1 : 0,
-                    y: isVisible ? 0 : 80,
-                    rotateY: isVisible ? 0 : 15,
+                    y: isVisible ? 0 : isMobile ? 40 : 80,
+                    rotateY: isVisible ? 0 : isMobile ? 8 : 15,
                     scale: isVisible ? 1 : 0.95,
                   }}
                   transition={{
                     duration: 0.8,
-                    delay: 0.2 + index * 0.15, // Staggered delay based on index
-                    ease: [0.16, 1, 0.3, 1], // Custom bezier curve
+                    delay: 0.2 + index * 0.1,
+                    ease: [0.16, 1, 0.3, 1],
                   }}
                 >
                   <WhyCard skill={skill} />
@@ -458,25 +697,29 @@ export default function WhyHireMeSection() {
             </Slider>
           </motion.div>
 
-          {/* Custom pagination with animation */}
-          <motion.div
-            className="pagination-container"
-            variants={paginationVariants}
-          >
-            <AnimatedPagination
-              dots={Array(skills.length).fill(null)}
-              currentSlide={currentSlide}
-              slideDirection={slideDirection}
-              hideDirectionIndicator={true}
-              onSlideChange={handleDotSlideChange}
-            />
-          </motion.div>
+          {/* Enhanced pagination with fixed current slide tracking */}
+          {!isMobile && (
+            <motion.div
+              className="pagination-container"
+              variants={paginationVariants}
+            >
+              <AnimatedPagination
+                dots={Array(skills.length).fill(null)}
+                currentSlide={currentSlide}
+                slideDirection={slideDirection}
+                hideDirectionIndicator={true}
+                onSlideChange={handleDotSlideChange}
+              />
+            </motion.div>
+          )}
         </div>
       </motion.div>
 
-      {/* Decorative background elements with parallax effect */}
+      {/* Decorative background elements - adjusted for mobile */}
       <motion.div
-        className="absolute -bottom-16 -right-16 w-64 h-64 rounded-full bg-gradient-to-br from-orange-300/10 to-orange-400/5 blur-xl"
+        className={`absolute -bottom-16 -right-16 rounded-full bg-gradient-to-br from-orange-300/10 to-orange-400/5 blur-xl ${
+          isMobile ? "w-32 h-32" : "w-64 h-64"
+        }`}
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{
           opacity: isVisible ? 0.8 : 0,
@@ -491,7 +734,9 @@ export default function WhyHireMeSection() {
       />
 
       <motion.div
-        className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-gradient-to-tr from-orange-400/10 to-orange-500/5 blur-xl"
+        className={`absolute -top-24 -left-24 rounded-full bg-gradient-to-tr from-orange-400/10 to-orange-500/5 blur-xl ${
+          isMobile ? "w-48 h-48" : "w-96 h-96"
+        }`}
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{
           opacity: isVisible ? 0.6 : 0,

@@ -179,7 +179,7 @@ const Header = ({ aboutData }) => {
     }
 
     if (id === "resume") {
-      window.open("../../public/My_CV.pdf", "_blank");
+      window.open("/My_CV.pdf", "_blank");
       return;
     }
 
