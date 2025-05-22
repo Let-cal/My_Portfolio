@@ -109,7 +109,8 @@ export const Certificates = [
     expirationDate: null,
     organization: "Japan Foundation",
     credentialId: "JLPT-N3-2024",
-    credentialUrl: "https://www.jlpt.jp/e/",
+    credentialUrl:
+      "https://www.dropbox.com/scl/fi/av3a4boxv3qb7c3l6lb35/certification_N3.pdf?rlkey=9gr3g8jvharnfanppfcaiwlgp&e=1&st=jjr45m31&dl=0",
     skills: [
       "Reading Comprehension",
       "Listening & Conversation",

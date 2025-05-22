@@ -19,33 +19,31 @@ const MobileSummaryModal = ({ onClose, isAboutSection = false, aboutData }) => {
   const contentRef = useRef(null);
   const overlayRef = useRef(null);
 
-  // Define handleClose before useEffect
-  const handleClose = () => {
-    if (!modalRef.current || !overlayRef.current) {
-      onClose();
-      return;
-    }
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    // Save the original body overflow style
+    const originalStyle = window.getComputedStyle(document.body).overflow;
 
-    const modal = modalRef.current;
-    const overlay = overlayRef.current;
+    // Prevent body scrolling
+    document.body.style.overflow = "hidden";
 
-    animateElement(
-      modal,
-      { y: 0 },
-      { y: "100%" },
-      { duration: 0.3, ease: "power2.in" }
-    );
-    animateElement(
-      overlay,
-      { opacity: 1 },
-      { opacity: 0 },
-      {
-        duration: 0.3,
-        onComplete: onClose,
-      }
-    );
-  };
+    // Optional: Prevent touchmove on body to avoid iOS Safari scrolling issues
+    const preventTouchMove = (e) => {
+      e.preventDefault();
+    };
 
+    document.body.addEventListener("touchmove", preventTouchMove, {
+      passive: false,
+    });
+
+    return () => {
+      // Restore body scrolling
+      document.body.style.overflow = originalStyle;
+      document.body.removeEventListener("touchmove", preventTouchMove);
+    };
+  }, []);
+
+  // Animation and ESC key handling
   useEffect(() => {
     if (!modalRef.current || !overlayRef.current || !contentRef.current) return;
 
@@ -90,7 +88,33 @@ const MobileSummaryModal = ({ onClose, isAboutSection = false, aboutData }) => {
     };
   }, []);
 
-  // Safety check to prevent rendering if aboutData is incomplete when isAboutSection is true
+  const handleClose = () => {
+    if (!modalRef.current || !overlayRef.current) {
+      onClose();
+      return;
+    }
+
+    const modal = modalRef.current;
+    const overlay = overlayRef.current;
+
+    animateElement(
+      modal,
+      { y: 0 },
+      { y: "100%" },
+      { duration: 0.3, ease: "power2.in" }
+    );
+    animateElement(
+      overlay,
+      { opacity: 1 },
+      { opacity: 0 },
+      {
+        duration: 0.3,
+        onComplete: onClose,
+      }
+    );
+  };
+
+  // Safety check for aboutData
   if (
     isAboutSection &&
     (!aboutData ||
@@ -99,8 +123,6 @@ const MobileSummaryModal = ({ onClose, isAboutSection = false, aboutData }) => {
       !aboutData.profile)
   ) {
     console.error("AboutData is missing required properties");
-    // Don't immediately close - this will make debugging easier
-    // Instead, let's render a helpful error message
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
         <div className="bg-white p-6 rounded-lg max-w-md">
@@ -151,6 +173,7 @@ const MobileSummaryModal = ({ onClose, isAboutSection = false, aboutData }) => {
           boxShadow: "0 -4px 20px rgba(0, 0, 0, 0.15)",
           display: "flex",
           flexDirection: "column",
+          touchAction: "none", // Prevent touch events from affecting modal positioning
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -171,6 +194,8 @@ const MobileSummaryModal = ({ onClose, isAboutSection = false, aboutData }) => {
               backgroundColor: "rgba(0, 0, 0, 0.3)",
               borderRadius: "3px",
             },
+            overscrollBehavior: "contain",
+            touchAction: "auto", // Allow scrolling within content
           }}
         >
           {isAboutSection && aboutData ? (

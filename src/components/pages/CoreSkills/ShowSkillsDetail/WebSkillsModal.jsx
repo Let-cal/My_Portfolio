@@ -1,5 +1,5 @@
 // src/components/ShowSkillsDetail/WebSkillsModal.jsx
-import { Badge, Box, Button, Flex, Grid, Text } from "@chakra-ui/react";
+import { Badge, Box, Flex, Grid, Text } from "@chakra-ui/react";
 import { motion } from "framer-motion";
 import PropTypes from "prop-types";
 import { useState } from "react";
@@ -213,15 +213,19 @@ export default function WebSkillsModal({ isOpen, onClose, skills }) {
   );
 
   const footerContent = (
-    <Button
+    <button
       onClick={onClose}
-      colorScheme="orange"
-      variant="outline"
-      size="md"
-      _hover={{ bg: "orange.500", color: "white" }}
+      style={{
+        backgroundColor: "rgba(255,165,0,0.2)",
+        color: "#FFA500",
+        border: "none",
+        padding: "8px 16px",
+        borderRadius: 4,
+        cursor: "pointer",
+      }}
     >
       Close
-    </Button>
+    </button>
   );
 
   return (

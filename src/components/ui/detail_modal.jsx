@@ -1,6 +1,7 @@
 import CloseIcon from "@mui/icons-material/Close";
 import { IconButton, Box as MuiBox, Stack, Typography } from "@mui/material";
 import PropTypes from "prop-types";
+import { useEffect } from "react";
 
 export default function DetailModal({
   onClose,
@@ -10,6 +11,30 @@ export default function DetailModal({
   additionalContent,
   footerContent,
 }) {
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    // Save the original body overflow style
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+
+    // Prevent body scrolling
+    document.body.style.overflow = "hidden";
+
+    // Prevent touchmove on body to avoid iOS Safari scrolling issues
+    const preventTouchMove = (e) => {
+      e.preventDefault();
+    };
+
+    document.body.addEventListener("touchmove", preventTouchMove, {
+      passive: false,
+    });
+
+    return () => {
+      // Restore body scrolling
+      document.body.style.overflow = originalStyle;
+      document.body.removeEventListener("touchmove", preventTouchMove);
+    };
+  }, []);
+
   return (
     <MuiBox
       onClick={(e) => e.stopPropagation()}
@@ -21,10 +46,11 @@ export default function DetailModal({
         border: "1px solid rgba(255,165,0,0.4)",
         width: "100%",
         maxWidth: 600,
-        maxHeight: 600, // Chuyển maxHeight từ SkillDetailModal sang đây
+        maxHeight: 600,
         zIndex: "10000",
-        display: "flex", // Sử dụng flex để quản lý layout
-        flexDirection: "column", // Xếp theo cột: header, body, footer
+        display: "flex",
+        flexDirection: "column",
+        touchAction: "none", // Prevent touch events from affecting modal positioning
       }}
     >
       {/* Header */}
@@ -36,7 +62,7 @@ export default function DetailModal({
           py: 2,
           background: "linear-gradient(90deg,#FF8C00 0%,#FFA500 100%)",
           borderBottom: "1px solid rgba(255,255,255,0.1)",
-          flexShrink: 0, // Không để header bị co lại
+          flexShrink: 0,
         }}
       >
         {icon && (
@@ -97,8 +123,8 @@ export default function DetailModal({
         sx={{
           px: 3,
           py: 2,
-          flexGrow: 1, // Phần body chiếm không gian còn lại
-          overflowY: "auto", // Cho phép cuộn nếu nội dung dài
+          flexGrow: 1,
+          overflowY: "auto",
           "&::-webkit-scrollbar": { width: 6 },
           "&::-webkit-scrollbar-thumb": {
             backgroundColor: "rgba(255,165,0,0.3)",
@@ -107,6 +133,8 @@ export default function DetailModal({
           "&::-webkit-scrollbar-track": {
             backgroundColor: "rgba(255,255,255,0.1)",
           },
+          touchAction: "auto", // Allow scrolling within content
+          overscrollBehavior: "contain", // Prevent bounce effect
         }}
       >
         <Stack spacing={4}>
@@ -139,7 +167,7 @@ export default function DetailModal({
             justifyContent: "flex-end",
             background: "rgba(0,0,0,0.2)",
             width: "100%",
-            flexShrink: 0, // Không để footer bị co lại
+            flexShrink: 0,
           }}
         >
           {footerContent}

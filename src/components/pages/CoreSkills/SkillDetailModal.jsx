@@ -107,7 +107,7 @@ export default function SkillDetailModal({
         cursor: "pointer",
       }}
     >
-      Đóng
+      Close
     </button>
   );
 

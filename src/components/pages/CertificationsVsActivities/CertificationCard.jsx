@@ -173,13 +173,9 @@ export default function CertificationCard({
 
           {credentialId && (
             <span className="text-xs text-white/60">
-              ID: {credentialId.substring(0, 8)}...
+              ID: {credentialId.substring(0, 15)}...
             </span>
           )}
-
-          <div className="card-icon text-xl text-white/70 transition-transform duration-300 group-hover:translate-x-1 group-hover:opacity-100">
-            →
-          </div>
         </div>
       </div>
     </div>
