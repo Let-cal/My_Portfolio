@@ -95,22 +95,6 @@ export default function SkillDetailModal({
     </motion.div>
   );
 
-  const footerContent = (
-    <button
-      onClick={onClose}
-      style={{
-        backgroundColor: "rgba(255,165,0,0.2)",
-        color: "#FFA500",
-        border: "none",
-        padding: "8px 16px",
-        borderRadius: 4,
-        cursor: "pointer",
-      }}
-    >
-      Close
-    </button>
-  );
-
   return (
     <AnimatePresence>
       {isOpen && (
@@ -150,7 +134,7 @@ export default function SkillDetailModal({
               title={skill.name}
               icon={skill.icon}
               additionalContent={additionalContent}
-              footerContent={footerContent}
+              footerContent={null}
             />
           </motion.div>
         </motion.div>

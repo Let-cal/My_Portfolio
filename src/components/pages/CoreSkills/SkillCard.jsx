@@ -21,10 +21,10 @@ const SkillCard = ({ skill, onShowDetail }) => {
   const moveThreshold = 10; // pixels needed to consider as dragging
 
   const getLevelText = (level) => {
-    if (level >= 90) return "Chuyên gia";
-    if (level >= 75) return "Nâng cao";
-    if (level >= 60) return "Trung cấp";
-    return "Cơ bản";
+    if (level >= 90) return "Expert";
+    if (level >= 75) return "Advanced";
+    if (level >= 60) return "Intermediate";
+    return "Basic";
   };
 
   const getLevelColor = (level) => {

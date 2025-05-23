@@ -49,7 +49,7 @@ const CoreSkillsSection = () => {
       id: "reactjs",
       name: "ReactJS",
       icon: "/icons/react.svg",
-      level: 95,
+      level: 70,
       description:
         "Component-based UI library for building interactive interfaces",
       experience: "3+ years of professional experience",
@@ -104,9 +104,9 @@ const CoreSkillsSection = () => {
       id: "javascript",
       name: "JavaScript",
       icon: "/icons/javascript.svg",
-      level: 95,
+      level: 70,
       description: "Core programming language for web development",
-      experience: "3+ years of expertise in ES6+ features",
+      experience: "2+ years of expertise in ES6+ features",
       projects: [
         {
           title: "Meet My Lecturer",
@@ -131,7 +131,7 @@ const CoreSkillsSection = () => {
       id: "typescript",
       name: "TypeScript",
       icon: "/icons/typescript.svg",
-      level: 75,
+      level: 60,
       description: "JavaScript with syntax for types",
       experience: "1+ years implementing in enterprise projects",
       projects: [
@@ -158,7 +158,7 @@ const CoreSkillsSection = () => {
       id: "flutter",
       name: "Dart & Flutter",
       icon: "/icons/flutter.svg",
-      level: 75,
+      level: 70,
       description: "UI toolkit for building natively compiled applications",
       experience: "2+ years of mobile app development",
       projects: [
@@ -212,7 +212,7 @@ const CoreSkillsSection = () => {
       id: "tailwindcss",
       name: "TailwindCSS",
       icon: "/icons/tailwind.svg",
-      level: 90,
+      level: 70,
       description: "Utility-first CSS framework for rapid UI development",
       experience: "2+ years building responsive interfaces",
       projects: [
@@ -257,7 +257,7 @@ const CoreSkillsSection = () => {
       id: "framer",
       name: "Framer Motion",
       icon: "/icons/framer-motion.svg",
-      level: 85,
+      level: 70,
       description: "Production-ready motion library for React",
       experience: "2+ years crafting fluid animations",
       projects: [],
@@ -267,6 +267,7 @@ const CoreSkillsSection = () => {
   // Responsive Hooks
   const [isLargerThan768] = useMediaQuery("(min-width: 768px)");
   const [isLargerThan480] = useMediaQuery("(min-width: 480px)");
+  const [isLargerThan200] = useMediaQuery("(min-width: 200px)");
 
   // Get token values for dynamic styling
   const [orange400, orange500] = useToken("colors", [
@@ -478,7 +479,7 @@ const CoreSkillsSection = () => {
         dots={dots}
         currentSlide={currentSlide}
         slideDirection={slideDirection}
-        hideDirectionIndicator={isLargerThan480 ? true : false}
+        hideDirectionIndicator={isLargerThan200 ? true : false}
       />
     ),
     customPaging: (i) => (

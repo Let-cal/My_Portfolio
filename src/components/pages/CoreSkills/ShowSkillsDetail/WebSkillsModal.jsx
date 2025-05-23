@@ -212,22 +212,6 @@ export default function WebSkillsModal({ isOpen, onClose, skills }) {
     </motion.div>
   );
 
-  const footerContent = (
-    <button
-      onClick={onClose}
-      style={{
-        backgroundColor: "rgba(255,165,0,0.2)",
-        color: "#FFA500",
-        border: "none",
-        padding: "8px 16px",
-        borderRadius: 4,
-        cursor: "pointer",
-      }}
-    >
-      Close
-    </button>
-  );
-
   return (
     <>
       <motion.div
@@ -269,7 +253,7 @@ export default function WebSkillsModal({ isOpen, onClose, skills }) {
             onClose={onClose}
             title="My Technical Skills"
             additionalContent={additionalContent}
-            footerContent={footerContent}
+            footerContent={null}
             description="A comprehensive overview of my technical skills, expertise levels, and experience. These skills have been developed through hands-on experience in production environments and various professional projects."
           />
         </motion.div>

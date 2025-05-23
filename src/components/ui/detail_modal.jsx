@@ -1,3 +1,4 @@
+import { useMediaQuery } from "@chakra-ui/react";
 import CloseIcon from "@mui/icons-material/Close";
 import { IconButton, Box as MuiBox, Stack, Typography } from "@mui/material";
 import PropTypes from "prop-types";
@@ -13,7 +14,7 @@ export default function DetailModal({
   footerContent,
 }) {
   const [isClosing, setIsClosing] = useState(false);
-
+  const [isLargerThan200] = useMediaQuery("(max-width: 450px)");
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleClose = () => {
     setIsClosing(true);
@@ -121,7 +122,7 @@ export default function DetailModal({
         sx={{
           position: "fixed !important",
           top: "50%",
-          left: "50%",
+          left: isLargerThan200 ? "44%" : "50%",
           zIndex: 9999,
           backgroundColor: "#1A202C",
           color: "white",
