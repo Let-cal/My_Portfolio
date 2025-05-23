@@ -188,7 +188,8 @@ MyWorkExperienceSection.propTypes = {
       description: PropTypes.string,
       image: PropTypes.string,
       demoLink: PropTypes.string,
-      codeLink: PropTypes.string,
+      codeWebLink: PropTypes.string,
+      codeMbLink: PropTypes.string,
       techStack: PropTypes.arrayOf(PropTypes.string),
     })
   ).isRequired,

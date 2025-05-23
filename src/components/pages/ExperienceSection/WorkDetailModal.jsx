@@ -87,7 +87,7 @@ export default function WorkDetailModal({ project, isOpen, onClose }) {
       </motion.div>
 
       {/* Demo / Code links */}
-      {(project.demoLink || project.codeLink) && (
+      {(project.demoLink || project.codeWebLink || project.codeMbLink) && (
         <motion.div variants={itemVariants}>
           <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
             {project.demoLink && (
@@ -100,14 +100,24 @@ export default function WorkDetailModal({ project, isOpen, onClose }) {
                 View Demo
               </MuiLink>
             )}
-            {project.codeLink && (
+            {project.codeWebLink && (
               <MuiLink
-                href={project.codeLink}
+                href={project.codeWebLink}
                 target="_blank"
                 rel="noopener noreferrer"
                 sx={{ color: "#fb923c", textDecoration: "underline" }}
               >
-                View Code
+                View Website Code
+              </MuiLink>
+            )}
+            {project.codeMbLink && (
+              <MuiLink
+                href={project.codeMbLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{ color: "#fb923c", textDecoration: "underline" }}
+              >
+                View Mobile Code
               </MuiLink>
             )}
           </Stack>
@@ -224,7 +234,8 @@ WorkDetailModal.propTypes = {
     summary: PropTypes.string,
     description: PropTypes.string,
     demoLink: PropTypes.string,
-    codeLink: PropTypes.string,
+    codeWebLink: PropTypes.string,
+    codeMbLink: PropTypes.string,
     techStack: PropTypes.arrayOf(PropTypes.string),
     timeline: PropTypes.string,
     role: PropTypes.string,

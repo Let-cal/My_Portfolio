@@ -45,8 +45,9 @@ export const projects = [
       "• Collaboration: Feedback loops with stakeholders to keep delivery on schedule.\n" +
       "• Features: Automated survey tasks, contract & revenue modules, SignalR notifications.\n" +
       "• Outcomes: 30% error reduction, 25% throughput increase, 95% stakeholder satisfaction.",
-    demoLink: "https://demo.siteplus.example.com",
-    codeLink: "https://github.com/yourrepo/siteplus",
+    demoLink: "https://site-plus-15hdsvfpr-let-cals-projects.vercel.app/",
+    codeWebLink: "https://github.com/Let-cal/SitePlus-FE.git",
+    codeMbLink: "https://github.com/Let-cal/SitePlus-MB.git",
     techStack: [
       "React.js & TypeScript",
       "Dart & Flutter",
@@ -67,8 +68,10 @@ export const projects = [
       "• UI/UX: Smart filters, zodiac-themed visuals, seamless checkout flows in Figma.\n" +
       "• API & Data Modeling: MongoDB catalogs, GraphQL endpoints for client‐driven queries.\n" +
       "• Outcomes: +25% conversion, +30% AOV, +18% retention.",
-    demoLink: "https://zodiacgems.example.com",
-    codeLink: "https://github.com/yourrepo/zodiacgems",
+    demoLink:
+      "https://swd-392-rfr4ctba8-let-cals-projects.vercel.app/customer-page",
+    codeMbLink: "https://github.com/Let-cal/ZodiacGems-MobileApp.git",
+    codeWebLink: "https://github.com/Let-cal/SWD392.git",
     techStack: [
       "React.js",
       "JavaScript",
@@ -89,8 +92,7 @@ export const projects = [
       "• UX/UI: Figma booking flows optimized for desktop & mobile.\n" +
       "• Dashboards: MongoDB aggregations for session metrics, analytics UI.\n" +
       "• Outcomes: +40% utilization, −70% admin overhead, 4.8/5 satisfaction.",
-    demoLink: "https://meetmylecturer.example.com",
-    codeLink: "https://github.com/yourrepo/meet-my-lecturer",
+    codeWebLink: "https://github.com/Let-cal/meet-my-lecturers.git",
     techStack: [
       "Java Servlet",
       "SQL Server",
