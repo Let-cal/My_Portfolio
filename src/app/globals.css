@@ -159,3 +159,74 @@ body:lang(ja) {
     @apply font-heading;
   }
 }
+
+/* ---- fx: signature effect primitives (src/components/fx). Accent defaults to the Kohaku orange. ---- */
+@keyframes fx-wave {
+  to {
+    transform: translateX(-50%);
+  }
+}
+@keyframes fx-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+@keyframes fx-char-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.45em);
+  }
+}
+
+@layer components {
+  .fx-wave {
+    animation: fx-wave 12s linear infinite;
+  }
+  .fx-char {
+    animation: fx-char-in 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .fx-marquee-track {
+    animation: fx-marquee var(--fx-marquee-duration, 30s) linear infinite;
+  }
+  .fx-marquee-track[data-reverse] {
+    animation-direction: reverse;
+  }
+  .fx-marquee-track[data-static] {
+    animation: none;
+  }
+  .fx-marquee[data-pause-on-hover]:hover .fx-marquee-track {
+    animation-play-state: paused;
+  }
+
+  [data-glow-card] {
+    position: relative;
+  }
+  [data-glow-card]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 250ms ease;
+    background: radial-gradient(260px circle at var(--gx, 50%) var(--gy, 50%), var(--role-accent, #f97316), transparent 70%);
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+  [data-glow-card]:hover::before,
+  [data-glow-card]:focus-within::before {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-wave,
+  .fx-char,
+  .fx-marquee-track {
+    animation: none !important;
+  }
+}
