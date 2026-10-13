@@ -7,6 +7,7 @@ import ja from "@/messages/ja.json";
 import seed from "@/content/seed.json";
 import { contentSchema, type Content, type Locale } from "@/content/schema";
 import { Projects } from "@/components/sections/Projects";
+import { projectKind } from "@/components/sections/projects/ProjectCard";
 
 const base: Content = contentSchema.parse(seed);
 
@@ -56,6 +57,32 @@ describe("Projects bento", () => {
     expect(document.getElementById("proj-zodiacgems")).toBeNull();
     const ids = Array.from(document.querySelectorAll("[id^='proj-']")).map((n) => n.id);
     expect(ids).toEqual(["proj-siteplus", "proj-meet-my-lecturer"]);
+  });
+
+  it("labels each card with its position and kind: NN · WEB / MOBILE / WEB + MOBILE", () => {
+    renderProjects();
+    expect(within(card("siteplus")).getByText("01 · WEB + MOBILE")).toBeInTheDocument();
+    expect(within(card("zodiacgems")).getByText("02 · WEB + MOBILE")).toBeInTheDocument();
+    expect(within(card("meet-my-lecturer")).getByText("03 · WEB")).toBeInTheDocument();
+  });
+
+  it("derives MOBILE only for Flutter/Dart and WEB for React/Next.js/Java Servlet", () => {
+    expect(projectKind(["Flutter"])).toBe("MOBILE");
+    expect(projectKind(["Dart", "Node.js"])).toBe("MOBILE");
+    expect(projectKind(["Next.js"])).toBe("WEB");
+    expect(projectKind(["React", "Dart"])).toBe("WEB + MOBILE");
+    expect(projectKind(["Java Servlet"])).toBe("WEB");
+    expect(projectKind(["Python"])).toBeNull();
+  });
+
+  it("wraps each card in a glow card with tilt and ends with a tech marquee that pauses on hover", () => {
+    renderProjects();
+    const siteplus = card("siteplus");
+    expect(siteplus).toHaveAttribute("data-glow-card");
+    const marquee = siteplus.querySelector(".fx-marquee");
+    expect(marquee).not.toBeNull();
+    expect(marquee).toHaveAttribute("data-pause-on-hover");
+    expect(within(marquee as HTMLElement).getAllByText("Flutter").length).toBeGreaterThan(0);
   });
 
   it("makes the first card span two columns on desktop", () => {

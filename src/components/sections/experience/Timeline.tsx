@@ -3,7 +3,9 @@
 import { ChevronRightIcon } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { useTranslations } from "next-intl";
-import { useId, useMemo, useRef, useState, type FocusEvent } from "react";
+import { useMemo, useRef, useState, type FocusEvent } from "react";
+import { GlowCard } from "@/components/fx/GlowCard";
+import { TracingBeam } from "@/components/fx/TracingBeam";
 import { useRole } from "@/components/site/RoleProvider";
 import type { RoleKey } from "@/content/schema";
 import { cn } from "@/lib/utils";
@@ -82,7 +84,7 @@ const DATE = "col-start-2 row-start-1 pb-2 text-sm font-medium tabular-nums text
 const NODE = "col-start-1 row-start-1 row-span-2 justify-self-center rounded-full md:col-start-2 md:row-span-1";
 
 /**
- * The experience list as a river: a gradient path runs down behind it, dates sit on the left (above the card on
+ * The experience list as a river: a tracing beam runs down behind it and fills as the visitor scrolls, dates sit on the left (above the card on
  * phones), SKG experiences are grouped under one company header, Education closes the list. The order follows the
  * current role and animates when the role changes. Hovering or focusing an item dims the others.
  */
@@ -90,7 +92,6 @@ export function Timeline({ data }: { data: TimelineData }) {
   const t = useTranslations("experience");
   const { role } = useRole();
   const reduced = useReducedMotion();
-  const riverGradient = useId();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [shownId, setShownId] = useState<string | null>(null);
@@ -140,7 +141,7 @@ export function Timeline({ data }: { data: TimelineData }) {
               active && "scale-125 bg-brand-400 shadow-[0_0_14px_2px_var(--brand-500)]",
             )}
           />
-          <div
+          <GlowCard
             className={cn(
               "relative col-start-2 row-start-2 min-w-0 rounded-xl border border-border bg-card/60 p-4 backdrop-blur-md transition-colors duration-200 sm:p-5 md:col-start-3 md:row-start-1",
               active && "border-brand-400/60 bg-card/80",
@@ -199,7 +200,7 @@ export function Timeline({ data }: { data: TimelineData }) {
                 <ChevronRightIcon className={cn("size-4 transition-transform", active && "translate-x-0.5")} />
               </span>
             ) : null}
-          </div>
+          </GlowCard>
         </div>
       </motion.li>
     );
@@ -207,97 +208,72 @@ export function Timeline({ data }: { data: TimelineData }) {
 
   return (
     <div className="relative">
-      <svg
-        data-river
-        aria-hidden
-        viewBox="0 0 48 1200"
-        preserveAspectRatio="none"
-        className="pointer-events-none absolute inset-y-0 left-0 h-full w-8 overflow-visible drop-shadow-[0_0_6px_rgb(249_115_22/0.45)] md:left-[9.5rem] md:w-12"
-      >
-        <defs>
-          <linearGradient id={riverGradient} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#f97316" stopOpacity="0" />
-            <stop offset="0.06" stopColor="#f97316" />
-            <stop offset="0.55" stopColor="#2dd4bf" />
-            <stop offset="0.94" stopColor="#14b8a6" />
-            <stop offset="1" stopColor="#14b8a6" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <path
-          d="M24 0 C 30 150, 18 300, 24 450 S 30 750, 24 900 S 18 1050, 24 1200"
-          fill="none"
-          stroke={`url(#${riverGradient})`}
-          strokeWidth={3}
-          strokeLinecap="round"
-          vectorEffect="non-scaling-stroke"
-          opacity={0.75}
-        />
-      </svg>
+      <TracingBeam>
+        <ol className="relative">
+          {groups.map((group) => (
+            <li key={group.key} className="pb-4">
+              {group.company ? (
+                <div className={cn(ROW, "pt-2 pb-1")}>
+                  <span
+                    aria-hidden
+                    className={cn(NODE, "mt-1 size-4 bg-brand-500 ring-4 ring-background md:mt-1.5")}
+                  />
+                  <div className="col-start-2 row-start-1 min-w-0 md:col-start-3">
+                    <h3 className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">
+                      {group.company.name} · <span className="font-normal text-muted-foreground">{group.company.period}</span>
+                    </h3>
+                    {group.company.lines.length > 0 ? (
+                      <ul className="mt-2 flex flex-col gap-1">
+                        {group.company.lines.map((line) => (
+                          <li key={line.title} className="flex flex-wrap items-baseline gap-x-3 text-sm">
+                            <span className="font-medium text-foreground/90">{line.title}</span>
+                            <span className="tabular-nums text-muted-foreground">{line.period}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+              <ol>{group.items.map((item) => renderItem(item, group.company !== null))}</ol>
+            </li>
+          ))}
 
-      <ol className="relative">
-        {groups.map((group) => (
-          <li key={group.key} className="pb-4">
-            {group.company ? (
-              <div className={cn(ROW, "pt-2 pb-1")}>
+          {data.education.map((edu) => (
+            <li
+              key={edu.id}
+              id={`edu-${edu.id}`}
+              className={cn("scroll-mt-24 py-3 transition-opacity duration-200", dimmed(edu.id) && "opacity-50")}
+              {...hoverProps(edu.id)}
+            >
+              <div className={ROW}>
+                <p className={DATE}>{edu.period}</p>
                 <span
                   aria-hidden
-                  className={cn(NODE, "mt-1 size-4 bg-brand-500 ring-4 ring-background md:mt-1.5")}
+                  className={cn(
+                    NODE,
+                    "mt-1.5 size-3 border-2 border-teal-400 bg-background transition-all duration-200 md:mt-6",
+                    hoveredId === edu.id && "scale-125 bg-teal-400",
+                  )}
                 />
-                <div className="col-start-2 row-start-1 min-w-0 md:col-start-3">
-                  <h3 className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">
-                    {group.company.name} · <span className="font-normal text-muted-foreground">{group.company.period}</span>
-                  </h3>
-                  {group.company.lines.length > 0 ? (
-                    <ul className="mt-2 flex flex-col gap-1">
-                      {group.company.lines.map((line) => (
-                        <li key={line.title} className="flex flex-wrap items-baseline gap-x-3 text-sm">
-                          <span className="font-medium text-foreground/90">{line.title}</span>
-                          <span className="tabular-nums text-muted-foreground">{line.period}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </div>
+                <GlowCard
+                  className={cn(
+                    "col-start-2 row-start-2 min-w-0 rounded-xl border border-border bg-card/60 p-4 backdrop-blur-md transition-colors duration-200 sm:p-5 md:col-start-3 md:row-start-1",
+                    hoveredId === edu.id && "border-teal-400/60 bg-card/80",
+                  )}
+                >
+                  <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{t("education")}</p>
+                  <h3 className="mt-1 font-heading text-lg leading-snug font-semibold">{edu.school}</h3>
+                  <p className="mt-0.5 text-sm font-medium text-brand-text">{edu.degree}</p>
+                  <p className="mt-0.5 text-sm text-muted-foreground">{edu.major}</p>
+                  {edu.gpa ? <p className="mt-3 text-sm text-muted-foreground">{t("gpa", { gpa: edu.gpa })}</p> : null}
+                  {edu.notes ? <p className="mt-1 text-sm text-muted-foreground">{edu.notes}</p> : null}
+                </GlowCard>
               </div>
-            ) : null}
-            <ol>{group.items.map((item) => renderItem(item, group.company !== null))}</ol>
-          </li>
-        ))}
-
-        {data.education.map((edu) => (
-          <li
-            key={edu.id}
-            id={`edu-${edu.id}`}
-            className={cn("scroll-mt-24 py-3 transition-opacity duration-200", dimmed(edu.id) && "opacity-50")}
-            {...hoverProps(edu.id)}
-          >
-            <div className={ROW}>
-              <p className={DATE}>{edu.period}</p>
-              <span
-                aria-hidden
-                className={cn(
-                  NODE,
-                  "mt-1.5 size-3 border-2 border-teal-400 bg-background transition-all duration-200 md:mt-6",
-                  hoveredId === edu.id && "scale-125 bg-teal-400",
-                )}
-              />
-              <div
-                className={cn(
-                  "col-start-2 row-start-2 min-w-0 rounded-xl border border-border bg-card/60 p-4 backdrop-blur-md transition-colors duration-200 sm:p-5 md:col-start-3 md:row-start-1",
-                  hoveredId === edu.id && "border-teal-400/60 bg-card/80",
-                )}
-              >
-                <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{t("education")}</p>
-                <h3 className="mt-1 font-heading text-lg leading-snug font-semibold">{edu.school}</h3>
-                <p className="mt-0.5 text-sm font-medium text-brand-text">{edu.degree}</p>
-                <p className="mt-0.5 text-sm text-muted-foreground">{edu.major}</p>
-                {edu.gpa ? <p className="mt-3 text-sm text-muted-foreground">{t("gpa", { gpa: edu.gpa })}</p> : null}
-                {edu.notes ? <p className="mt-1 text-sm text-muted-foreground">{edu.notes}</p> : null}
-              </div>
-            </div>
-          </li>
-        ))}
-      </ol>
+            </li>
+          ))}
+        </ol>
+      </TracingBeam>
 
       {shown?.caseStudy ? (
         <CaseStudySheet

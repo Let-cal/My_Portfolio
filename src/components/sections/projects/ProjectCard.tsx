@@ -5,6 +5,8 @@ import { useReducedMotion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import type { CaseStudyView } from "@/components/sections/experience/CaseStudySheet";
+import { GlowCard } from "@/components/fx/GlowCard";
+import { Marquee } from "@/components/fx/Marquee";
 import { cn } from "@/lib/utils";
 
 /** One project with every string already picked for the current locale. */
@@ -25,7 +27,16 @@ export type ProjectView = {
   caseStudy: CaseStudyView | null;
 };
 
-const MAX_CHIPS = 8;
+const MOBILE_TECH = /^(flutter|dart)$/i;
+const WEB_TECH = /^(react|next\.js|java servlet)$/i;
+
+/** "WEB", "MOBILE" or "WEB + MOBILE" from the tech list; null when nothing in it says which. */
+export function projectKind(tech: string[]): "WEB" | "MOBILE" | "WEB + MOBILE" | null {
+  const mobile = tech.some((name) => MOBILE_TECH.test(name));
+  const web = tech.some((name) => WEB_TECH.test(name));
+  return web && mobile ? "WEB + MOBILE" : mobile ? "MOBILE" : web ? "WEB" : null;
+}
+
 /** Share of the card that must be on screen before a touch device plays its preview. */
 const VISIBLE_RATIO = 0.6;
 
@@ -52,12 +63,12 @@ type ProjectCardProps = {
 
 /**
  * One bento tile: media on top (hover/in-view video preview, poster, or a brand-colour placeholder with the project
- * initials), then title, role, summary, tech chips and Demo/Code links. With a case study the whole card opens it.
+ * initials), then an "NN · KIND" label, title, role, summary, Demo/Code links and a tech-name marquee along the bottom. With a case study the whole card opens it.
  */
 export function ProjectCard({ project, index, featured = false, wide = false, onOpenCaseStudy }: ProjectCardProps) {
   const t = useTranslations("projects");
   const reduced = useReducedMotion();
-  const cardRef = useRef<HTMLElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [active, setActive] = useState(false);
   const { videoUrl, posterUrl, caseStudy: cs } = project;
@@ -97,11 +108,15 @@ export function ProjectCard({ project, index, featured = false, wide = false, on
     if (e.pointerType !== "touch") pause();
   }
 
-  const extra = Math.max(0, project.tech.length - MAX_CHIPS);
+  const kind = projectKind(project.tech);
+  const label = `${String(index + 1).padStart(2, "0")}${kind ? ` · ${kind}` : ""}`;
 
   return (
-    <article
+    <GlowCard
       ref={cardRef}
+      role="article"
+      tilt
+      maxTiltDeg={4}
       id={`proj-${project.id}`}
       onPointerEnter={onPointerEnter}
       onPointerLeave={onPointerLeave}
@@ -156,6 +171,7 @@ export function ProjectCard({ project, index, featured = false, wide = false, on
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col p-4 sm:p-5">
+        <p className="mb-1 text-xs font-medium tracking-[0.2em] text-muted-foreground tabular-nums uppercase">{label}</p>
         <h3 className="font-heading text-xl leading-snug font-semibold">
           {cs ? (
             <button
@@ -176,17 +192,6 @@ export function ProjectCard({ project, index, featured = false, wide = false, on
           <span className="font-normal text-muted-foreground"> · {project.period}</span>
         </p>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{project.summary}</p>
-
-        {project.tech.length > 0 ? (
-          <ul aria-label={t("techLabel")} className="mt-3 flex flex-wrap gap-1.5">
-            {project.tech.slice(0, MAX_CHIPS).map((name) => (
-              <li key={name} className="rounded-md border border-border bg-muted/60 px-2 py-0.5 text-xs text-foreground/90">
-                {name}
-              </li>
-            ))}
-            {extra > 0 ? <li className="rounded-md px-1.5 py-0.5 text-xs text-muted-foreground">{t("moreTech", { count: extra })}</li> : null}
-          </ul>
-        ) : null}
 
         <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-2 pt-4">
           {project.demoUrl ? (
@@ -210,7 +215,23 @@ export function ProjectCard({ project, index, featured = false, wide = false, on
             </span>
           ) : null}
         </div>
+
+        {project.tech.length > 0 ? (
+          <div
+            role="group"
+            aria-label={t("techLabel")}
+            className="relative z-[2] -mx-4 mt-4 -mb-4 border-t border-border py-2.5 [mask-image:linear-gradient(to_right,transparent,#000_8%,#000_92%,transparent)] sm:-mx-5 sm:-mb-5"
+          >
+            <Marquee speed={28} pauseOnHover className="[scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {project.tech.map((name) => (
+                <span key={name} className="text-xs whitespace-nowrap text-foreground/80">
+                  {name}
+                </span>
+              ))}
+            </Marquee>
+          </div>
+        ) : null}
       </div>
-    </article>
+    </GlowCard>
   );
 }

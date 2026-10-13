@@ -146,6 +146,21 @@ describe("Experience river", () => {
     expect(svg?.querySelector("path")).not.toBeNull();
   });
 
+  it("wraps each experience card in a glow card", () => {
+    renderExperience();
+    const glow = el("skg-coa").querySelector("[data-glow-card]");
+    expect(glow).not.toBeNull();
+    expect(glow).toHaveTextContent("Team size: 4");
+  });
+
+  it("traces the river with a scroll beam around the list", () => {
+    const { container } = renderExperience();
+    const beam = container.querySelector("[data-tracing-beam]");
+    expect(beam).not.toBeNull();
+    expect(beam?.querySelector("svg[data-river]")).not.toBeNull();
+    expect(beam?.querySelector("#exp-skg-coa")).not.toBeNull();
+  });
+
   it("renders tech chips and team size", () => {
     renderExperience();
     const item = within(el("skg-coa"));
