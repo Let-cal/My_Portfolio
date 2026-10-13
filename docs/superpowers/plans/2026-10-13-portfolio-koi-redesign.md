@@ -604,3 +604,56 @@ Quy ước chung:
 - Test thêm:
   - Nút "Get in touch" có `href` bắt đầu bằng `mailto:letcal2003@gmail.com`.
   - Footer có ít nhất 3 dòng nguyên tắc.
+
+
+### Task 27 (sửa đổi 2026-10-13, chủ dự án đã duyệt prototype): Hero dạng vòng tròn 3 vai trò
+
+> Phần này **thay thế** mục "RolePortrait" và "Bố cục desktop" của Task 27 ở trên. Các mục còn lại của Task 27 vẫn giữ nguyên: ROLE_ACCENT, HeroRole/TextScramble, NameMarquee, HeroStats, ProfileStatusCard, RotatingPhrase, QuickFacts và các test của chúng.
+> Prototype chuẩn để bám theo: `C:/Users/PC/Documents/03_Projects/Web/Portfolio/.superpowers/brainstorm/766-1791840729/content/hero-desc-variants.html`, biến thể **A**.
+
+**Ảnh:** `public/images/roles/role-developer.webp`, `role-techlead.webp`, `role-pm.webp` (PM là phong cách lịch sprint). Không dùng ảnh gốc, không dùng `test0123-removebg-preview.png`.
+
+**Interfaces:**
+- `sectorForAngle(deg: number): RoleKey`: góc CSS (0° là đỉnh, quay theo chiều kim đồng hồ), chuẩn hóa về [0,360).
+  - [240,360) → `fullstack` (trên-trái)
+  - [0,120) → `techlead` (trên-phải)
+  - [120,240) → `pm` (dưới)
+- `angleFromPoint(x: number, y: number, cx: number, cy: number): number`: góc CSS 0–360 tính từ tâm.
+- `SECTOR_FROM: Record<RoleKey, number> = { fullstack: 240, techlead: 0, pm: 120 }`.
+- `RoleWheel` (client) thay cho RolePortrait:
+  - **Ảnh tròn:** đĩa chân dung (`border-radius:50%`, `object-position: 50% 30%`), gồm lớp base (vai trò đang chọn) và lớp `peek` dùng `mask-image: conic-gradient(from var(--from), #000 0 var(--sweep), transparent 0)`. Đăng ký `@property --from/--sweep` là `<angle>`.
+  - **Vành SVG:** 3 cung, mỗi cung 120° trừ khoảng hở 7° ở mỗi đầu, màu theo vai trò.
+    - Cung hoạt động: `stroke-width` 7 và drop-shadow. Các cung còn lại: 3 và opacity .35.
+    - Nhãn chữ chạy theo cung (`textPath`): DEVELOPER / TECH LEAD / TECHNICAL PM (lấy từ messages). Nhãn cung dưới phải đọc xuôi từ trái sang phải.
+    - Có một chấm sáng nhỏ quay quanh vành (18s, dừng khi reduced-motion).
+  - **Hover (pointer fine):** vị trí con trỏ trên đĩa → `sectorForAngle` → lớp peek hiện lát cắt 120° của vai trò đó (`--from = SECTOR_FROM[key]`, `--sweep = 120deg`), cung tương ứng sáng lên. Rê vào cung hoặc vào panel mô tả cũng có tác dụng như vậy. Rời ra thì quay về vai trò đang chọn.
+  - **Chọn** (click hoặc Enter/Space trên cung hay panel, phím ←/→ khi wheel đang focus):
+    - Animation conic: `--sweep` từ 120° lên 360°, `--from = center - sweep/2`, trong 650ms, easeOutCubic, chạy bằng rAF trên CSS var (không dùng React state theo từng frame).
+    - Xong thì base đổi sang ảnh mới. Gọi `setRole`.
+  - **Mobile/touch:** chạm vào đĩa hoặc vuốt ngang ±40px thì đổi vai trò.
+- `RolePanels` (biến thể A, "chú thích có đường dẫn"):
+  - 3 panel nằm cố định quanh vòng tròn: Developer bên trái (căn phải), Tech Lead bên phải, Technical PM bên dưới (căn giữa).
+  - Panel thu gọn chỉ hiện `NN · Role`, tiêu đề lớn có 1 từ nghiêng màu accent (Instrument Serif), opacity .5.
+  - Panel hoạt động (hover hoặc đang chọn) có opacity 1. Phần chi tiết mở bằng `grid-template-rows: 0fr→1fr` (450ms), gồm 1–2 câu mô tả và 4 chip kỹ năng hiện lần lượt cách nhau 50ms.
+  - **Đường dẫn SVG** đi từ trung điểm cung tới mép panel. Đường cho trái/phải có 1 khuỷu ngang, đường cho dưới đi thẳng.
+    - Vẽ bằng `stroke-dashoffset` (600ms).
+    - Điểm đầu trên cung có chấm nhấp nháy (r 4.5→9, 1.6s); điểm cuối có chấm r 3.
+    - Chỉ đường của panel hoạt động được hiện. Tính lại khi resize (ResizeObserver).
+  - Nội dung panel (tiêu đề, mô tả, chip) để trong messages en/ja/vi, key `hero.roles.<key>.{eyebrow,title,accent,body,chips[]}`. Chỉ dùng sự thật từ seed (Kho sự thật).
+- **Bố cục desktop (≥1024px trong cột nội dung):** hàng trên là `KineticText` tên căn giữa và `HeroRole` (chức danh scramble). Giữa là RoleWheel cùng 2 panel trái/phải. Dưới wheel là panel PM. Sau đó là RotatingPhrase, CTA (MagneticButton), ProfileStatusCard, HeroStats, NameMarquee, QuickFacts.
+  - Vùng phía sau wheel giữ `data-water-zone` cho cá 3D.
+  - Nền có quầng sáng radial màu `--role-accent`.
+- **Mobile (<1024px):** wheel thu về `min(360px, 80vw)`. 3 panel xếp dọc dưới wheel, chỉ panel đang chọn mở chi tiết (kiểu accordion, đồng bộ với `setRole`). Ẩn đường dẫn.
+- **A11y:**
+  - Wheel là `role="radiogroup"` có `aria-label`. Mỗi cung là `role="radio"` có `aria-checked` và `tabindex` kiểu roving.
+  - Ảnh có `alt` mô tả phong cách, ví dụ "Portrait rendered from code".
+  - Panel là button có `aria-pressed` hoặc gọi đúng setRole.
+  - Reduced-motion: không có animation sweep, đổi ảnh ngay, không có chấm quay.
+
+**Test (thay cho các test RolePortrait cũ):**
+- `sectorForAngle(300)==='fullstack'`, `sectorForAngle(30)==='techlead'`, `sectorForAngle(180)==='pm'`, `sectorForAngle(-60)==='fullstack'`, `sectorForAngle(360)==='techlead'`.
+- `angleFromPoint(0,-10,0,0)≈0`, `angleFromPoint(10,0,0,0)≈90`, `angleFromPoint(0,10,0,0)≈180`.
+- RoleWheel có 3 phần tử `role="radio"` với tên DEVELOPER / TECH LEAD / TECHNICAL PM. ArrowRight từ fullstack thì sang techlead và `aria-checked` cập nhật.
+- Chọn PM thì `--role-accent` là `#e0a84e` và ảnh base có `src` chứa `role-pm`.
+- RolePanels: role techlead thì panel Tech Lead có class/`data-state="active"` và chứa đủ 4 chip; 2 panel còn lại không hiện chi tiết (`aria-hidden` trên phần chi tiết hoặc `data-state="collapsed"`).
+- Khi reduced-motion, chọn vai trò thì base đổi ngay (không cần chờ timer).
