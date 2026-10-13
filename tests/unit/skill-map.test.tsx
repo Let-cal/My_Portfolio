@@ -20,18 +20,28 @@ import { Experience } from "@/components/sections/Experience";
 import { Projects } from "@/components/sections/Projects";
 import { Skills } from "@/components/sections/Skills";
 import { HighlightProvider } from "@/components/site/HighlightProvider";
-import { RoleProvider } from "@/components/site/RoleProvider";
+import { RoleProvider, useRole } from "@/components/site/RoleProvider";
 
 const base: Content = contentSchema.parse(seed);
 const messages = { en, ja, vi: vi_ } as const;
 
-function renderSkills(opts: { role?: string; locale?: Locale; withCards?: boolean } = {}) {
+function RolePicker() {
+  const { setRole } = useRole();
+  return (
+    <button type="button" onClick={() => setRole("pm")}>
+      pick pm
+    </button>
+  );
+}
+
+function renderSkills(opts: { role?: string; locale?: Locale; withCards?: boolean; picker?: boolean } = {}) {
   search.value = opts.role ? `role=${opts.role}` : "";
   const locale = opts.locale ?? "en";
   return render(
     <NextIntlClientProvider locale={locale} messages={messages[locale]}>
       <RoleProvider>
         <HighlightProvider>
+          {opts.picker && <RolePicker />}
           {opts.withCards && (
             <>
               <Experience content={base} locale={locale} />
@@ -61,7 +71,11 @@ function mockRects() {
     const mk = (x: number, y: number, w: number, h: number) =>
       ({ x, y, left: x, top: y, width: w, height: h, right: x + w, bottom: y + h, toJSON() {} }) as DOMRect;
     if (this.hasAttribute("data-evidence-card")) return mk(600, 100, 240, 60);
-    if (this.hasAttribute("data-skill-chip")) return mk(20, 40, 90, 32);
+    if (this.hasAttribute("data-skill-chip")) {
+      // Each group sits 200px lower than the one before, so reordering the groups moves the chips.
+      const at = [...document.querySelectorAll("[data-skill-group]")].indexOf(this.closest("[data-skill-group]")!);
+      return mk(20, 40 + 200 * at, 90, 32);
+    }
     return mk(0, 0, 900, 700);
   });
 }
@@ -191,6 +205,22 @@ describe("Skills evidence", () => {
     }
   });
 
+  it("re-measures the beams when a role change reorders the groups", async () => {
+    mockRects();
+    const user = userEvent.setup();
+    renderSkills({ picker: true });
+    await user.click(chip("Next.js"));
+    const beamD = () => section().querySelector("svg[data-beam] path")?.getAttribute("d");
+    await waitFor(() => expect(beamD()).toBeTruthy());
+    // Let the post-selection settle pass run first, so only the role change can move the beam.
+    await new Promise((r) => setTimeout(r, 450));
+    const before = beamD();
+    await user.click(document.querySelector("button:not([data-skill-chip])") as HTMLElement);
+    await waitFor(() => expect(groupOrder()[0]).toBe("delivery"));
+    await waitFor(() => expect(beamD()).not.toBe(before), { timeout: 250 });
+    expect(section().querySelectorAll("svg[data-beam] path")).toHaveLength(3);
+  });
+
   it("removes the beams when the selection is cleared", async () => {
     mockRects();
     const user = userEvent.setup();
@@ -285,5 +315,76 @@ describe("Skills terminal", () => {
     renderSkills({ locale: "ja" });
     expect(within(section()).getByRole("heading", { level: 2 })).toHaveTextContent(ja.sections.skills);
     expect(section().querySelector('[data-skill-group="languages"]')?.textContent).toContain(ja.skills.groups.languages);
+  });
+});
+
+describe("Skills keyboard and screen reader model", () => {
+  it("gives each group a single chip tab stop and moves it with the arrow keys", async () => {
+    const user = userEvent.setup();
+    renderSkills();
+    const groups = [...section().querySelectorAll<HTMLElement>("[data-skill-group]")];
+    for (const g of groups) {
+      expect(g.querySelectorAll('[data-skill-chip]:not([tabindex="-1"])')).toHaveLength(1);
+    }
+    const first = chip("TypeScript");
+    const second = chip("JavaScript");
+    expect(first).toHaveAttribute("tabindex", "0");
+    expect(second).toHaveAttribute("tabindex", "-1");
+    first.focus();
+    await user.keyboard("{ArrowRight}");
+    expect(document.activeElement).toBe(second);
+    expect(second).toHaveAttribute("tabindex", "0");
+    expect(first).toHaveAttribute("tabindex", "-1");
+    await user.keyboard("{End}");
+    expect(document.activeElement).toBe(chip("SQL"));
+    await user.keyboard("{ArrowRight}");
+    expect(document.activeElement).toBe(first);
+    await user.keyboard("{ArrowLeft}");
+    expect(document.activeElement).toBe(chip("SQL"));
+    await user.keyboard("{Home}");
+    expect(document.activeElement).toBe(first);
+  });
+
+  it("keeps the selected chip as its group's tab stop", async () => {
+    const user = userEvent.setup();
+    renderSkills();
+    await user.click(chip("Node.js"));
+    expect(chip("Node.js")).toHaveAttribute("tabindex", "0");
+    expect(chip("Next.js")).toHaveAttribute("tabindex", "-1");
+  });
+
+  it("puts the evidence panel right after the groups in the DOM, and the terminal first", () => {
+    renderSkills();
+    const terminal = section().querySelector("[data-skill-terminal]")!;
+    const groups = section().querySelector('[role="group"][aria-label="Skill groups"]')!;
+    const panel = section().querySelector("#skills-evidence")!;
+    const follows = (a: Element, b: Element) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(follows(terminal, groups)).toBe(true);
+    expect(follows(groups, panel)).toBe(true);
+    expect(chip("Next.js")).toHaveAttribute("aria-controls", "skills-evidence");
+  });
+
+  it("marks the group shown in the terminal with aria-current, not aria-pressed", async () => {
+    const user = userEvent.setup();
+    renderSkills();
+    const head = (g: string) => section().querySelector<HTMLElement>(`[data-skill-group="${g}"] h3 button`)!;
+    expect(head("languages")).toHaveAttribute("aria-current", "true");
+    expect(head("languages")).not.toHaveAttribute("aria-pressed");
+    await user.click(head("testing"));
+    expect(head("testing")).toHaveAttribute("aria-current", "true");
+    expect(head("languages")).not.toHaveAttribute("aria-current");
+  });
+
+  it("announces the selection and its number of linked records politely", async () => {
+    const user = userEvent.setup();
+    renderSkills();
+    const live = () =>
+      [...section().querySelectorAll("[aria-live]")].find((n) => !n.closest("[data-skill-terminal]")) as HTMLElement;
+    expect(live()).toHaveAttribute("aria-live", "polite");
+    expect(live().textContent).toBe("");
+    await user.click(chip("Next.js"));
+    expect(live().textContent).toBe("Next.js — 3 linked records");
+    await user.click(chip("Next.js"));
+    expect(live().textContent).toBe("");
   });
 });

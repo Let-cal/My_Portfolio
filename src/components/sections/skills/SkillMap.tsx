@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
 import { useHighlight } from "@/components/site/HighlightProvider";
 import { useRole } from "@/components/site/RoleProvider";
@@ -43,6 +43,8 @@ export type SkillMapData = {
 
 const NO_EVIDENCE: EvidenceView[] = [];
 
+const ARROW_STEP: Record<string, number> = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
+
 /**
  * The skill map. Groups follow the current role. Choosing a skill lists the experiences and projects behind it as
  * mini-cards in the evidence panel, draws an animated beam from the chip to each card, and lights up the real
@@ -66,6 +68,8 @@ export function SkillMap({ data }: { data: SkillMapData }) {
   /** Group picked by hand or through a skill; only valid for the role it was picked under. */
   const [pick, setPick] = useState<{ role: RoleKey; group: SkillGroup } | null>(null);
   const [activeCard, setActiveCard] = useState<string | null>(null);
+  /** Chip that holds the tab stop of each group (roving tabindex). */
+  const [rove, setRove] = useState<Record<string, string>>({});
 
   const groups = data.orders[role];
   const skillsById = useMemo(() => new Map(data.skills.map((s) => [s.id, s])), [data.skills]);
@@ -97,6 +101,24 @@ export function SkillMap({ data }: { data: SkillMapData }) {
     setPick({ role, group: skill.group });
   }
 
+  const layoutKey = `${role}:${groups.join(",")}`;
+  const tabStop = (g: SkillGroup, list: SkillView[]) => {
+    const wanted = rove[g] ?? (selectedId && list.some((x) => x.id === selectedId) ? selectedId : null);
+    return list.some((x) => x.id === wanted) ? wanted : (list[0]?.id ?? null);
+  };
+
+  /** Arrow keys, Home and End move between the chips of one group. */
+  function onChipKeyDown(e: KeyboardEvent<HTMLButtonElement>) {
+    const step = ARROW_STEP[e.key];
+    if (step === undefined && e.key !== "Home" && e.key !== "End") return;
+    const chips = [...(e.currentTarget.closest("ul")?.querySelectorAll<HTMLButtonElement>("[data-skill-chip]") ?? [])];
+    const at = chips.indexOf(e.currentTarget);
+    if (at < 0) return;
+    e.preventDefault();
+    const next = e.key === "Home" ? 0 : e.key === "End" ? chips.length - 1 : (at + (step ?? 0) + chips.length) % chips.length;
+    chips[next]?.focus();
+  }
+
   const identity = `${data.name} — ${data.titles[role]}`;
   const terminalSkills = (byGroup.get(group) ?? []).map((s) => s.name);
 
@@ -109,11 +131,16 @@ export function SkillMap({ data }: { data: SkillMapData }) {
         cardIds={cardIds}
         getCard={getCard}
         activeCardId={activeCard}
+        layoutKey={layoutKey}
         reduced={reduced}
       />
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem] xl:gap-12">
-        <div role="group" aria-label={t("groupsLabel")} className="skill-fall relative order-2 flex flex-col gap-7 pl-6 xl:order-none xl:col-start-1 xl:row-start-1">
+        <div className="xl:sticky xl:top-20 xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:self-start">
+          <SkillTerminal label={t("terminal")} identity={identity} group={group} skills={terminalSkills} />
+        </div>
+
+        <div role="group" aria-label={t("groupsLabel")} className="skill-fall relative flex flex-col gap-7 pl-6 xl:col-start-1 xl:row-span-2 xl:row-start-1">
           {groups.map((g, index) => {
             const active = g === group;
             const list = byGroup.get(g) ?? [];
@@ -129,7 +156,7 @@ export function SkillMap({ data }: { data: SkillMapData }) {
                 <h3 className="mb-3">
                   <button
                     type="button"
-                    aria-pressed={active}
+                    aria-current={active ? "true" : undefined}
                     onClick={() => setPick({ role, group: g })}
                     className={cn(
                       "group/head inline-flex cursor-pointer items-baseline gap-3 rounded-md py-0.5 text-left font-heading text-lg font-semibold tracking-tight transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
@@ -155,6 +182,10 @@ export function SkillMap({ data }: { data: SkillMapData }) {
                           data-skill-chip=""
                           data-skill-name={skill.name}
                           aria-pressed={pressed}
+                          aria-controls="skills-evidence"
+                          tabIndex={skill.id === tabStop(g, list) ? 0 : -1}
+                          onFocus={() => setRove((r) => (r[g] === skill.id ? r : { ...r, [g]: skill.id }))}
+                          onKeyDown={onChipKeyDown}
                           onClick={() => selectSkill(skill)}
                           ref={(el) => {
                             if (el) chipRefs.current.set(skill.id, el);
@@ -175,72 +206,71 @@ export function SkillMap({ data }: { data: SkillMapData }) {
           })}
         </div>
 
-        <div className="contents xl:sticky xl:top-20 xl:col-start-2 xl:row-start-1 xl:flex xl:flex-col xl:gap-4 xl:self-start">
-          <div className="order-1 xl:order-none">
-            <SkillTerminal label={t("terminal")} identity={identity} group={group} skills={terminalSkills} />
+        <section
+          id="skills-evidence"
+          aria-label={t("evidence")}
+          data-selected={selected ? "true" : undefined}
+          className={cn(
+            "skill-evidence min-w-0 rounded-xl border border-border bg-card/80 p-4 backdrop-blur-md xl:sticky xl:top-[23.9rem] xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:mt-[18.9rem] xl:max-h-[calc(100vh-25rem)] xl:self-start xl:overflow-y-auto",
+            selected && "max-xl:sticky max-xl:bottom-[5.5rem] max-xl:z-20 max-xl:max-h-[48vh] max-xl:overflow-y-auto lg:max-xl:bottom-4",
+            selected && "border-(--role-accent)/40",
+          )}
+        >
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">{t("evidence")}</p>
+            {selected ? (
+              <p className="font-mono text-xs text-muted-foreground tabular-nums">{t("linked", { count: evidence.length })}</p>
+            ) : null}
           </div>
 
-          <section
-            aria-label={t("evidence")}
-            data-selected={selected ? "true" : undefined}
-            className={cn(
-              "skill-evidence order-3 min-w-0 rounded-xl border border-border bg-card/80 p-4 backdrop-blur-md xl:order-none",
-              selected && "max-xl:sticky max-xl:bottom-[5.5rem] max-xl:z-20 max-xl:max-h-[48vh] max-xl:overflow-y-auto lg:max-xl:bottom-4",
-              selected && "border-(--role-accent)/40",
-            )}
-          >
-            <div className="flex items-baseline justify-between gap-3">
-              <p className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">{t("evidence")}</p>
-              {selected ? (
-                <p className="font-mono text-xs text-muted-foreground tabular-nums">{t("linked", { count: evidence.length })}</p>
-              ) : null}
-            </div>
-
-            {selected ? (
-              <>
-                <h3 className="mt-1.5 font-heading text-lg leading-snug font-semibold">{t("evidenceTitle", { skill: selected.name })}</h3>
-                {evidence.length === 0 ? (
-                  <p className="mt-3 text-sm text-muted-foreground">{t("noEvidence")}</p>
-                ) : (
-                  <ul key={selected.id} className="mt-3 flex flex-col gap-2">
-                    {evidence.map((item, i) => (
-                      <li
-                        key={item.anchor}
-                        data-evidence-card=""
-                        data-kind={item.kind}
-                        ref={(el) => {
-                          if (el) cardRefs.current.set(item.anchor, el);
-                          else cardRefs.current.delete(item.anchor);
-                        }}
-                        style={{ animationDelay: `${i * 70}ms` }}
-                        className="skill-card-in"
+          {selected ? (
+            <>
+              <h3 className="mt-1.5 font-heading text-lg leading-snug font-semibold">{t("evidenceTitle", { skill: selected.name })}</h3>
+              {evidence.length === 0 ? (
+                <p className="mt-3 text-sm text-muted-foreground">{t("noEvidence")}</p>
+              ) : (
+                <ul key={selected.id} className="mt-3 flex flex-col gap-2">
+                  {evidence.map((item, i) => (
+                    <li
+                      key={item.anchor}
+                      data-evidence-card=""
+                      data-kind={item.kind}
+                      ref={(el) => {
+                        if (el) cardRefs.current.set(item.anchor, el);
+                        else cardRefs.current.delete(item.anchor);
+                      }}
+                      style={{ animationDelay: `${i * 70}ms` }}
+                      className="skill-card-in"
+                    >
+                      <a
+                        href={`#${item.anchor}`}
+                        onMouseEnter={() => setActiveCard(item.anchor)}
+                        onMouseLeave={() => setActiveCard(null)}
+                        onFocus={() => setActiveCard(item.anchor)}
+                        onBlur={() => setActiveCard(null)}
+                        className="block rounded-lg border border-border bg-background/50 px-3 py-2 transition-colors hover:border-(--role-accent)/60 hover:bg-(--role-accent)/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                       >
-                        <a
-                          href={`#${item.anchor}`}
-                          onMouseEnter={() => setActiveCard(item.anchor)}
-                          onMouseLeave={() => setActiveCard(null)}
-                          onFocus={() => setActiveCard(item.anchor)}
-                          onBlur={() => setActiveCard(null)}
-                          className="block rounded-lg border border-border bg-background/50 px-3 py-2 transition-colors hover:border-(--role-accent)/60 hover:bg-(--role-accent)/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                        >
-                          <span className="block text-[10px] font-semibold tracking-[0.18em] text-(--role-accent-text) uppercase">
-                            {item.kind === "exp" ? t("kindExperience") : t("kindProject")}
-                          </span>
-                          <span className="block text-sm leading-snug font-semibold">{item.title}</span>
-                          <span className="block text-xs leading-snug text-muted-foreground">
-                            {item.role} · {item.period}
-                          </span>
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </>
-            ) : (
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{t("evidenceHint")}</p>
-            )}
-          </section>
-        </div>
+                        <span className="block text-[10px] font-semibold tracking-[0.18em] text-(--role-accent-text) uppercase">
+                          {item.kind === "exp" ? t("kindExperience") : t("kindProject")}
+                        </span>
+                        <span className="block text-sm leading-snug font-semibold">{item.title}</span>
+                        <span className="block text-xs leading-snug text-muted-foreground">
+                          {item.role} · {item.period}
+                        </span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
+          ) : (
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{t("evidenceHint")}</p>
+          )}
+        </section>
+
+        <p aria-live="polite" className="sr-only">
+          {selected ? `${selected.name} — ${t("linked", { count: evidence.length })}` : ""}
+        </p>
       </div>
     </div>
   );

@@ -126,16 +126,16 @@ export function SkillTerminal({ label, identity, group, skills }: TerminalProps)
       data-skill-terminal=""
       role="group"
       aria-label={label}
-      className="skill-terminal overflow-hidden rounded-xl border border-white/10 bg-[#0a0f16] font-mono text-[12.5px] leading-relaxed text-slate-300 shadow-[0_20px_60px_-30px_var(--role-accent)]"
+      className="skill-terminal flex h-[17.9rem] flex-col overflow-hidden rounded-xl border border-white/10 bg-[#0a0f16] font-mono text-[12.5px] leading-relaxed text-slate-300 shadow-[0_20px_60px_-30px_var(--role-accent)]"
     >
-      <div aria-hidden="true" className="flex items-center gap-1.5 border-b border-white/10 bg-white/[0.03] px-3 py-2">
+      <div aria-hidden="true" className="flex h-9 shrink-0 items-center gap-1.5 border-b border-white/10 bg-white/[0.03] px-3">
         <span className="size-2.5 rounded-full bg-[#ff5f57]/80" />
         <span className="size-2.5 rounded-full bg-[#febc2e]/80" />
         <span className="size-2.5 rounded-full bg-[#28c840]/80" />
         <span className="ml-2 truncate text-[11px] text-slate-500">letcal ~ skills</span>
       </div>
 
-      <div data-terminal-screen="" aria-hidden="true" className="h-[15.5rem] overflow-y-auto px-3.5 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div data-terminal-screen="" aria-hidden="true" className="min-h-0 flex-1 overflow-y-auto px-3.5 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <p>
           <span className="text-(--role-accent)">$</span> {cmd1.slice(0, p.c1)}
           {p.o1 ? null : caret}
