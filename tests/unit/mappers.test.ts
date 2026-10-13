@@ -54,6 +54,14 @@ describe("mappers row shape", () => {
     expect(row).toHaveProperty("case_study");
     expect(row).toHaveProperty("employment_type");
   });
+  it("maps a why-card stat to the jsonb `stat` column, and a missing column to null", () => {
+    const withStat = c.whyCards.find((w) => w.stat);
+    expect(withStat).toBeDefined();
+    expect(whyCardToRow(withStat!).stat).toEqual(withStat!.stat);
+    const { stat: _stat, ...row } = whyCardToRow(c.whyCards[0]);
+    void _stat;
+    expect(rowToWhyCard(row as ReturnType<typeof whyCardToRow>).stat).toBeNull();
+  });
   it("ignores links that belong to other skills", () => {
     const s = c.skills[0];
     const links = [

@@ -234,6 +234,16 @@
     "verify": "Xác minh",
     "viewFile": "Xem tệp"
   },
+  "why": {
+    "manifesto": "Tôi biến yêu cầu của khách hàng Nhật thành sản phẩm đã release, từ lấy yêu cầu, thiết kế đến code.",
+    "carouselLabel": "Lý do nên làm việc cùng tôi",
+    "slideStatus": "{current} trên {total}",
+    "prev": "Thẻ trước",
+    "next": "Thẻ sau",
+    "goTo": "Đến thẻ {n}",
+    "seeEvidence": "Xem bằng chứng",
+    "hint": "Kéo, vuốt hoặc dùng phím mũi tên để xem tiếp."
+  },
   "common": {
     "present": "Hiện tại",
     "close": "Đóng"

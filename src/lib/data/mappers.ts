@@ -24,6 +24,7 @@ import type {
   Skill,
   SkillGroup,
   WhyCard,
+  WhyStat,
 } from "@/content/schema";
 
 export type ProfileRow = {
@@ -141,6 +142,8 @@ export type WhyCardRow = {
   body: I18nText;
   colors: string[];
   evidence_link: string | null;
+  /** jsonb: { value, prefix?, suffix?, label } or null. */
+  stat: WhyStat | null;
   sort_index: number;
 };
 
@@ -412,6 +415,7 @@ export function rowToWhyCard(r: WhyCardRow): WhyCard {
     body: r.body,
     colors: [from, to],
     evidenceLink: r.evidence_link,
+    stat: r.stat ?? null,
     sortIndex: r.sort_index,
   };
 }
@@ -425,6 +429,7 @@ export function whyCardToRow(w: WhyCard): WhyCardRow {
     body: w.body,
     colors: [...w.colors],
     evidence_link: w.evidenceLink,
+    stat: w.stat ?? null,
     sort_index: w.sortIndex,
   };
 }

@@ -234,6 +234,16 @@
     "verify": "認定を確認",
     "viewFile": "ファイルを見る"
   },
+  "why": {
+    "manifesto": "日本のお客様の要望を、要件定義から設計、実装まで形にして、リリースされたプロダクトに変えます。",
+    "carouselLabel": "私と働く理由",
+    "slideStatus": "{current} / {total}",
+    "prev": "前のカード",
+    "next": "次のカード",
+    "goTo": "{n}枚目のカードへ",
+    "seeEvidence": "根拠を見る",
+    "hint": "ドラッグ、スワイプ、または矢印キーで切り替えられます。"
+  },
   "common": {
     "present": "現在",
     "close": "閉じる"

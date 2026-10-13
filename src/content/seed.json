@@ -779,6 +779,14 @@
       },
       "colors": ["#118AB2", "#5AC8E3"],
       "evidenceLink": "#exp-skg-flexybox-p2",
+      "stat": {
+        "value": 6,
+        "label": {
+          "en": "Japanese client projects in 14 months",
+          "ja": "14か月で担当した日本のお客様のプロジェクト",
+          "vi": "dự án khách hàng Nhật trong 14 tháng"
+        }
+      },
       "sortIndex": 0
     },
     {
@@ -805,6 +813,14 @@
       },
       "colors": ["#fb923c", "#f97316"],
       "evidenceLink": "#exp-skg-flexybox-p1",
+      "stat": {
+        "value": 2,
+        "label": {
+          "en": "lockers in the live pilot",
+          "ja": "実環境の試験運用のロッカー",
+          "vi": "locker trong đợt chạy thử thực tế"
+        }
+      },
       "sortIndex": 1
     },
     {
@@ -831,6 +847,14 @@
       },
       "colors": ["#118AB2", "#5AC8E3"],
       "evidenceLink": "#exp-skg-ai-agent",
+      "stat": {
+        "value": 2,
+        "label": {
+          "en": "projects run in parallel",
+          "ja": "並行して進めたプロジェクト",
+          "vi": "dự án chạy song song"
+        }
+      },
       "sortIndex": 2
     },
     {
@@ -857,6 +881,7 @@
       },
       "colors": ["#fb923c", "#f97316"],
       "evidenceLink": "#proj-siteplus",
+      "stat": null,
       "sortIndex": 3
     }
   ]

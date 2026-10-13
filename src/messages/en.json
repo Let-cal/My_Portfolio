@@ -234,6 +234,16 @@
     "verify": "Verify",
     "viewFile": "View file"
   },
+  "why": {
+    "manifesto": "I turn what Japanese clients ask for into software that has been released, from requirements to design to code.",
+    "carouselLabel": "Reasons to work with me",
+    "slideStatus": "{current} of {total}",
+    "prev": "Previous card",
+    "next": "Next card",
+    "goTo": "Go to card {n}",
+    "seeEvidence": "See evidence",
+    "hint": "Drag, swipe or use the arrow keys to browse."
+  },
   "common": {
     "present": "Present",
     "close": "Close"

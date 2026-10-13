@@ -179,6 +179,15 @@ export const educationSchema = z.object({
 });
 export type Education = z.infer<typeof educationSchema>;
 
+/** One real number shown on a why-card, counted up by a NumberTicker. `prefix` carries the "~" of an estimate. */
+export const whyStatSchema = z.object({
+  value: z.number(),
+  prefix: z.string().optional(),
+  suffix: z.string().optional(),
+  label: i18nText,
+});
+export type WhyStat = z.infer<typeof whyStatSchema>;
+
 export const whyCardSchema = z.object({
   id,
   title: i18nText,
@@ -190,6 +199,7 @@ export const whyCardSchema = z.object({
     .string()
     .regex(/^#(exp|proj)-[a-z0-9]+(-[a-z0-9]+)*$/, "Expected #exp-<id> or #proj-<id>")
     .nullable(),
+  stat: whyStatSchema.nullable().default(null),
   sortIndex: z.number().int(),
 });
 export type WhyCard = z.infer<typeof whyCardSchema>;

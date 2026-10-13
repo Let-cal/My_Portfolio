@@ -9,7 +9,7 @@ import { LocalTime } from "@/components/fx/LocalTime";
 import { MagneticButton } from "@/components/fx/MagneticButton";
 import { Marquee } from "@/components/fx/Marquee";
 import { NumberTicker } from "@/components/fx/NumberTicker";
-import { ScrollTextReveal } from "@/components/fx/ScrollTextReveal";
+import { SCROLL_REVEAL_MIN_OPACITY, ScrollTextReveal } from "@/components/fx/ScrollTextReveal";
 import { Spotlight } from "@/components/fx/Spotlight";
 import { TextScramble } from "@/components/fx/TextScramble";
 import { WaveEdge } from "@/components/fx/WaveEdge";
@@ -321,6 +321,42 @@ describe("ScrollTextReveal", () => {
     for (const w of ["I", "build", "things", "for", "the", "web"]) {
       expect(screen.getByText(w)).toBeInTheDocument();
     }
+  });
+
+  it("reveals unspaced Japanese text in several segments, not as one block", () => {
+    stubMedia(() => false);
+    vi.stubGlobal("ResizeObserver", FakeObserver);
+    vi.stubGlobal("IntersectionObserver", FakeObserver);
+    const ja = "日本のお客様の要望を、要件定義から設計、実装まで形にします。";
+    const { container } = render(<ScrollTextReveal text={ja} locale="ja" />);
+    const units = container.querySelectorAll("[data-reveal-unit]");
+    expect(units.length).toBeGreaterThan(5);
+    expect(Array.from(units).map((u) => u.textContent).join("")).toBe(ja);
+  });
+
+  it("keeps the whole sentence for screen readers exactly once, and hides the dimmed words from them", () => {
+    stubMedia(() => false);
+    vi.stubGlobal("ResizeObserver", FakeObserver);
+    vi.stubGlobal("IntersectionObserver", FakeObserver);
+    const { container } = render(<ScrollTextReveal text="I build things for the web" />);
+    const sr = container.querySelectorAll(".sr-only");
+    expect(sr).toHaveLength(1);
+    expect(sr[0].textContent).toBe("I build things for the web");
+    expect(container.querySelector("[aria-hidden='true']")?.querySelectorAll("[data-reveal-unit]")).toHaveLength(6);
+  });
+
+  it("shows every word at full opacity when motion is reduced", () => {
+    stubMedia(reduced);
+    vi.stubGlobal("ResizeObserver", FakeObserver);
+    vi.stubGlobal("IntersectionObserver", FakeObserver);
+    const { container } = render(<ScrollTextReveal text="I build things for the web" />);
+    const units = Array.from(container.querySelectorAll<HTMLElement>("[data-reveal-unit]"));
+    expect(units).toHaveLength(6);
+    for (const u of units) expect(u.style.opacity).toBe("1");
+  });
+
+  it("never dims a word below 0.3 opacity", () => {
+    expect(SCROLL_REVEAL_MIN_OPACITY).toBeGreaterThanOrEqual(0.3);
   });
 });
 

@@ -977,3 +977,114 @@ html[data-hello-seen] [data-hello] {
     opacity: 1;
   }
 }
+
+/* ---- why hire me (src/components/sections/why). The card look mirrors the old site's WhyCardList (commit 1f2585f) ----
+   WhyCard writes --why-tx / --why-ty (pointer offset from the card centre, -0.5..0.5) and --why-rx / --why-ry (tilt)
+   from requestAnimationFrame; everything below only reads them. data-hover is set by the pointer (or a touch press);
+   data-tilt is present only on a fine pointer above 640px without reduced motion. */
+.why-card {
+  transform-style: preserve-3d;
+  transition: transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.why-card[data-tilt][data-hover] {
+  transform: perspective(1200px) rotateX(var(--why-rx, 0deg)) rotateY(var(--why-ry, 0deg));
+}
+
+/* Depth layers: background, frame, content drift against the pointer by 5/10/15px and sit 12/24/36px apart in z. */
+.why-layer {
+  transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.why-card[data-tilt][data-hover] .why-layer-0 {
+  transform: translate3d(calc(var(--why-tx, 0) * 10px), calc(var(--why-ty, 0) * 10px), 12px);
+}
+.why-card[data-tilt][data-hover] .why-layer-1 {
+  transform: translate3d(calc(var(--why-tx, 0) * 20px), calc(var(--why-ty, 0) * 20px), 24px);
+}
+.why-card[data-tilt][data-hover] .why-layer-2 {
+  transform: translate3d(calc(var(--why-tx, 0) * 30px), calc(var(--why-ty, 0) * 30px), 36px);
+}
+
+/* Waves: the whole SVG drifts up to 10px and each path adds its own shift, up to 20px in total at the front wave. */
+.why-wave-svg,
+.why-wave {
+  transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.why-card[data-hover] .why-wave-svg {
+  transform: translate(calc(var(--why-tx, 0) * -20px), calc(var(--why-ty, 0) * -20px)) scale(1.05);
+}
+.why-card[data-hover] .why-wave-1 {
+  transform: translate(calc(var(--why-tx, 0) * -10px), calc(var(--why-ty, 0) * -6px));
+}
+.why-card[data-hover] .why-wave-2 {
+  transform: translate(calc(var(--why-tx, 0) * -15px), calc(var(--why-ty, 0) * -9px));
+}
+.why-card[data-hover] .why-wave-3 {
+  transform: translate(calc(var(--why-tx, 0) * -20px), calc(var(--why-ty, 0) * -12px));
+}
+
+/* Frame draws itself, text settles into place (hover, keyboard focus inside the card, or the active card on touch). */
+.why-frame {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 1.2s ease;
+}
+.why-meta-line {
+  transform: scaleX(0.5);
+  transform-origin: left;
+  transition: transform 800ms cubic-bezier(0.16, 1, 0.3, 1) 50ms;
+}
+.why-meta-text {
+  transform: translateX(-5px);
+  transition: transform 800ms cubic-bezier(0.16, 1, 0.3, 1) 150ms;
+}
+.why-title,
+.why-subtitle {
+  transform: translateY(8px);
+  transition: transform 800ms cubic-bezier(0.16, 1, 0.3, 1) 100ms;
+}
+.why-card:is([data-hover], :focus-within) .why-frame {
+  stroke-dashoffset: 0;
+}
+.why-card:is([data-hover], :focus-within) .why-meta-line {
+  transform: scaleX(1);
+}
+.why-card:is([data-hover], :focus-within) :is(.why-meta-text, .why-title, .why-subtitle) {
+  transform: none;
+}
+@media (hover: none) {
+  .why-slide[data-active] .why-frame {
+    stroke-dashoffset: 0;
+  }
+  .why-meta-line,
+  .why-meta-text,
+  .why-title,
+  .why-subtitle {
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .why-card,
+  .why-layer,
+  .why-wave-svg,
+  .why-wave,
+  .why-frame,
+  .why-meta-line,
+  .why-meta-text,
+  .why-title,
+  .why-subtitle {
+    transition: none !important;
+  }
+  .why-card[data-hover] .why-wave-svg,
+  .why-card[data-hover] .why-wave {
+    transform: none;
+  }
+  .why-frame {
+    stroke-dashoffset: 0;
+  }
+  .why-meta-line,
+  .why-meta-text,
+  .why-title,
+  .why-subtitle {
+    transform: none;
+  }
+}
