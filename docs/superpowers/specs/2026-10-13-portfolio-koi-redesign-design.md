@@ -202,3 +202,72 @@ Nguồn duy nhất: spec bộ CV §3 (`01_Personal/02_CV_Ung_tuyen/CV_English/do
 - Cấu trúc thư mục, tên component, chi tiết shader, đường cong easing, thông số camera theo từng chương.
 - Bố cục chi tiết từng section trong khuôn khổ storyboard và quy tắc ở trên.
 - Thư viện nhỏ (icon: lucide; toast: sonner…).
+
+## 13. Chữ ký thiết kế từng section (bổ sung 2026-10-13)
+
+Sau khi xem localhost ở Task 7, chủ dự án nhận xét các section mới có khung, chưa có "chất riêng" như các portfolio tham khảo. Chủ dự án đã chọn 24 kỹ thuật trên bảng `signature-picker.html` và yêu cầu học thêm từ adhamdannaway.com, pszostak.pl, ayushpradhan29.netlify.app. Mục này **bổ sung** cho §5 và §6, không thay thế. Mọi hiệu ứng đều phải tôn trọng `prefers-reduced-motion`, không chặn nội dung, và chỉ dùng thư viện hoặc asset miễn phí.
+
+### 13.1 Toàn trang [Chủ dự án chọn]
+- **G1 Đèn spotlight theo chuột** (Brittany Chiang): quầng sáng cam `radial-gradient` khoảng 600px theo con trỏ, phủ toàn trang. Tắt trên thiết bị cảm ứng.
+- **G2 Cột mục lục trái** (Brittany Chiang): desktop ≥1024px có cột trái cố định gồm tên, chức danh theo vai trò và 7 mục. Mỗi mục có vạch ngang, vạch của mục đang xem dài ra và chuyển màu cam (theo dõi bằng IntersectionObserver). Dưới 1024px dùng **thanh menu dạng viên thuốc kính mờ nổi** (pszostak) **[Claude]**.
+- **G3 Lời chào 3 thứ tiếng** (Dennis Snellenberg): Hello → こんにちは → Xin chào. Chỉ chạy ở lần ghé đầu tiên mỗi phiên (sessionStorage), tổng thời gian ≤1.4 giây, bấm hoặc nhấn phím là bỏ qua, không chạy khi reduced-motion. Nội dung trang vẫn render bên dưới.
+- **G4 Nút nam châm** (Dennis Snellenberg) cho CTA chính: Tải CV, Liên hệ, nút tròn ở Contact.
+- **G5 Lớp nhiễu hạt** rất mờ phủ nền (SVG turbulence, `pointer-events:none`).
+- **G6 Mép section dạng sóng nước**: SVG sóng động chậm giữa các section.
+- **G7 Âm thanh nước**: nút bật/tắt (mặc định tắt, lưu localStorage). Âm thanh tổng hợp bằng WebAudio, không dùng file âm thanh, phát khi bấm nút và khi thả mồi.
+- **G8 Thanh tiến độ cuộn hình cá koi**: sợi chỉ mảnh ở mép trên trang, đầu sợi là cá nhỏ, đổi thành rồng từ section Why Hire Me.
+
+### 13.2 Hero [Chủ dự án chọn + yêu cầu riêng]
+- **H1 Tên xuất hiện từng ký tự**: chữ vẫn là HTML (vẫn là phần tử LCP).
+- **H2 Dải tên chạy ngang 3 thứ tiếng**: "Le Tran Cat Lam — レ・チャン・カット・ラム — Lê Trần Cát Lâm —", chữ viền, ở đáy Hero.
+- **H3 Dải số liệu thật đếm lên**: 14 tháng ở SKG · 6 dự án khách Nhật · 2 dự án song song · JLPT N3.
+- **H4 Thẻ hồ sơ trạng thái** (kết hợp Elliott Mangham và thẻ ID của Ayush Pradhan): "Open to work", Ho Chi Minh City, giờ địa phương GMT+7 cập nhật trực tiếp, nút Copy Email (có phản hồi "Copied") và Tải CV.
+- **H5 Câu giới thiệu có từ thay đổi**: "I build {web apps | AI agents | IoT locker systems} for Japanese clients", theo 3 ngôn ngữ.
+- **Role Reveal Portrait (yêu cầu riêng, lấy cảm hứng Adham Dannaway)**:
+  - Ảnh chân dung chính diện `public/images/test0123-removebg-preview.png` **[Claude]**; admin cho phép thay ảnh khác.
+  - Ảnh có 3 "lăng kính" tương ứng 3 vai trò, cùng dùng silhouette ảnh (CSS `mask-image` từ alpha của PNG):
+    - Developer: duotone xanh lam, phủ chữ code monospace mờ.
+    - Tech Lead: lưới blueprint cùng sơ đồ node kiến trúc.
+    - Technical PM: tông vàng Ogon, phủ thanh timeline/Gantt.
+  - Desktop: vị trí chuột theo chiều ngang trên ảnh quyết định lăng kính lộ ra, theo 3 dải, ranh giới có viền sáng giống đường chia của Adham. Nhãn 3 vai trò quanh ảnh to lên hoặc mờ đi theo dải đang lộ.
+  - Bấm một vai trò (ảnh hoặc RoleSwitcher) thì chốt vai trò:
+    - Hiệu ứng **wipe hình tròn** (clip-path) lan từ điểm bấm.
+    - Chức danh chạy hiệu ứng **text scramble** sang chức danh mới; summary crossfade.
+    - Đổi giống koi của cá 3D và đổi **màu nhấn theo vai trò**: Kohaku `#e4571e`, Showa `#dc2626`, Ogon `#e0a84e`, biến `--role-accent`.
+  - Mobile: không có hover. Bấm hoặc vuốt ngang để đổi vai trò.
+- **Quick-facts bento** dưới Hero (pszostak "hover to read more" + Ayush) **[Claude]**: 4 thẻ là Location (tọa độ HCMC + GMT+7), Languages (Vietnamese native · English professional · Japanese JLPT N3), Education (FPT University, Software Engineering, GPA 7.66/10), Now (Open to work). Rê chuột thì lật hoặc mở rộng xem chi tiết. Chỉ dùng sự thật trong Kho sự thật.
+
+### 13.3 Experience
+- **E1** Dòng sông "đổ đầy nước" theo cuộn (tracing beam): đường SVG phát sáng từ trên xuống theo tiến độ cuộn của section.
+- **E2** Card có viền sáng theo chuột (spotlight border), cộng thêm hiệu ứng làm mờ các mục khác đã có.
+- **E3** Nhãn section kiểu "01 — Experience" (Ayush Pradhan), kèm nhãn chương chữ dọc tiếng Nhật ở lề (`writing-mode: vertical-rl`, font Shippori Mincho): 序章 (Hero), 第一章 経歴, 第二章 作品, 第三章 技術, 第四章 資格, 第五章 昇龍, 終章 連絡 **[Claude]**.
+
+### 13.4 Projects
+- **P1** Bento giữ nguyên, thêm viền sáng theo chuột và nghiêng 3D ±6° (đồng bộ với Why Hire Me).
+- **P3** Dải tên công nghệ chạy chậm ở đáy mỗi card, dừng khi rê chuột.
+- Nhãn số "01 · WEB + MOBILE" trên mỗi card (pszostak) **[Claude]**.
+
+### 13.5 Skills
+- **S1** Tia sáng (animated beam) chạy từ skill đang chọn tới các card Experience/Project liên quan.
+- **S3** Hai dải logo/tên công nghệ chạy ngược chiều ở đầu section.
+- **S4** Terminal mini tự gõ `whoami` và `skills --group <nhóm>`. Nội dung lấy từ dữ liệu skills, nên tự cập nhật khi admin sửa.
+- Lưới công cụ đổi từ xám sang màu khi rê chuột (Ayush Pradhan) cho các skill có icon (lucide hoặc simple-icons, đều miễn phí) **[Claude]**.
+
+### 13.6 Certificates
+- **C1** Card đèn lồng trôi nhẹ, rê chuột thì "thắp sáng".
+- **C2** Lật card: mặt sau là credential ID và nút Verify.
+
+### 13.7 Why Hire Me
+- **W1** Câu tuyên ngôn sáng dần từng từ theo cuộn, đặt trước carousel.
+- **W2** Mỗi card có 1 số liệu thật đếm lên, giữ dấu "~" nếu là ước lượng (ví dụ ~300 unit tests, ~15 API → ~10 tools).
+
+### 13.8 Contact
+- **K1** Tiêu đề khổng lồ ("Let's build together", có bản dịch) kèm nút tròn nam châm "Get in touch".
+- **K2** 3–5 dòng nguyên tắc làm việc ở footer. Claude soạn nháp, **chủ dự án duyệt lời** trước khi merge.
+
+### 13.9 Kiểu chữ [Claude]
+Space Grotesk (heading) + Inter (body), thêm **Instrument Serif italic** cho các từ nhấn (kiểu tạp chí như Ayush Pradhan) và **Shippori Mincho** cho nhãn chữ dọc tiếng Nhật. Tất cả dùng Google Fonts, miễn phí.
+
+### 13.10 Không làm (đã cân nhắc)
+- Chatbot "Ask me anything" của pszostak: cần LLM trả phí, và điều khoản is-a.dev cấm trang dạng AI hội thoại.
+- Quả cầu icon 3D, card xếp chồng khi cuộn, ảnh xem trước bay theo chuột, lịch GitHub: không được chọn trên bảng.
