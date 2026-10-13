@@ -48,6 +48,9 @@
     "toLight": "Chuyển sang giao diện sáng",
     "toDark": "Chuyển sang giao diện tối"
   },
+  "motion": {
+    "label": "Hiệu ứng chuyển động"
+  },
   "sound": {
     "label": "Âm thanh"
   },

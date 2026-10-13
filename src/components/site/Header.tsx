@@ -9,6 +9,7 @@ import { Link } from "@/i18n/navigation";
 import { DEFAULT_ROLE } from "@/lib/roles";
 import { LanguageSwitch } from "./LanguageSwitch";
 import { useRole } from "./RoleProvider";
+import { MotionToggle } from "./MotionToggle";
 import { SoundToggle } from "./SoundToggle";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -39,6 +40,7 @@ export function Header({ cvUrls }: { cvUrls: Record<RoleKey, string> }) {
         <div className="ml-auto flex items-center gap-1 sm:gap-2 lg:ml-0 lg:gap-1">
           <LanguageSwitch />
           <ThemeToggle />
+          <MotionToggle />
           <SoundToggle />
           <Button
             type="button"

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
 import { HELLO_STORAGE_KEY } from "./hello-script";
+import { getMotionReduced } from "./motion-preference";
 
 const GREETINGS = [
   { text: "Hello", lang: "en" },
@@ -27,11 +28,11 @@ const noopSubscribe = () => () => {};
 /**
  * Full-screen greeting shown once per browser session: Hello, こんにちは, Xin chào (350ms each), then the
  * curtain slides up (300ms). A click or any key skips it. It is aria-hidden and the page is already rendered
- * underneath. Not shown with reduced motion or when `sessionStorage.hello` is "1".
+ * underneath. Not shown when motion is off (the Motion toggle, else the OS setting) or when `sessionStorage.hello` is "1".
  *
  * The overlay is part of the server HTML so there is no flash of content. A tiny head script marks
  * returning visitors (see hello-script.ts) and CSS hides the overlay for them and for reduced motion
- * before hydration; a CSS animation also hides it after 2.5s if scripts never run.
+ * (`<html data-motion="reduced">`) before hydration; a CSS animation also hides it after 2.5s if scripts never run.
  */
 export function HelloIntro() {
   const reduced = usePrefersReducedMotion();
@@ -47,6 +48,13 @@ export function HelloIntro() {
       // Storage blocked: the greeting may play again on the next page load.
     }
     setStep(4);
+  }, []);
+
+  // A visitor who arrives with motion off (or an OS that asks for reduced motion) never gets the greeting, even
+  // if they switch motion on later in the same visit; the greeting is for the first paint only.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (getMotionReduced()) setStep(4);
   }, []);
 
   useEffect(() => {

@@ -48,6 +48,9 @@
     "toLight": "Switch to light theme",
     "toDark": "Switch to dark theme"
   },
+  "motion": {
+    "label": "Motion effects"
+  },
   "sound": {
     "label": "Sound effects"
   },

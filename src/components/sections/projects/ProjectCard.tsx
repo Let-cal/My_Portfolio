@@ -1,12 +1,12 @@
 "use client";
 
 import { ChevronRightIcon, ExternalLinkIcon } from "lucide-react";
-import { useReducedMotion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import type { CaseStudyView } from "@/components/sections/experience/CaseStudySheet";
 import { GlowCard } from "@/components/fx/GlowCard";
 import { Marquee } from "@/components/fx/Marquee";
+import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
 import { useIsHighlighted } from "@/components/site/HighlightProvider";
 import { cn } from "@/lib/utils";
 
@@ -68,7 +68,7 @@ type ProjectCardProps = {
  */
 export function ProjectCard({ project, index, featured = false, wide = false, onOpenCaseStudy }: ProjectCardProps) {
   const t = useTranslations("projects");
-  const reduced = useReducedMotion();
+  const reduced = usePrefersReducedMotion();
   const cardRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [active, setActive] = useState(false);

@@ -14,6 +14,8 @@ import { PillNav } from "@/components/site/PillNav";
 import { RoleProvider } from "@/components/site/RoleProvider";
 import { ScrollProgressKoi } from "@/components/site/ScrollProgressKoi";
 import { SideRail } from "@/components/site/SideRail";
+import { MotionProvider } from "@/components/site/MotionProvider";
+import { MOTION_INIT_SCRIPT } from "@/components/site/motion-script";
 import { ThemeSync } from "@/components/site/ThemeSync";
 import { THEME_INIT_SCRIPT } from "@/components/site/theme-script";
 import { ROLE_KEYS } from "@/content/schema";
@@ -70,37 +72,40 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
     <html lang={locale} className="dark h-full antialiased" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: MOTION_INIT_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: HELLO_SEEN_SCRIPT }} />
       </head>
       <body className={bodyClassName}>
         <NextIntlClientProvider>
           <ThemeSync />
-          <RoleProvider>
-            <a
-              href="#main"
-              className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-primary-foreground"
-            >
-              {t("skipToContent")}
-            </a>
-            <Header cvUrls={cvUrls} />
-            {/* z-10 keeps the content above the pointer spotlight (z-0) and the 3D canvas (z-index -1).
-                From 1024px: rail (30%) | content (70%). Below that the rail is hidden and the pill nav shows. */}
-            <div className="relative z-10 flex flex-1 flex-col pt-14 pb-24 lg:grid lg:grid-cols-[minmax(17rem,30%)_minmax(0,1fr)] lg:pt-0 lg:pb-0">
-              <SideRail name={profile.name} titles={titles} links={{ github: profile.github, linkedin: profile.linkedin, email: profile.email }} />
-              <div className="flex min-w-0 flex-1 flex-col">
-                <div className="flex flex-1 flex-col">
-                  <HighlightProvider>{children}</HighlightProvider>
+          <MotionProvider>
+            <RoleProvider>
+              <a
+                href="#main"
+                className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-primary-foreground"
+              >
+                {t("skipToContent")}
+              </a>
+              <Header cvUrls={cvUrls} />
+              {/* z-10 keeps the content above the pointer spotlight (z-0) and the 3D canvas (z-index -1).
+                  From 1024px: rail (30%) | content (70%). Below that the rail is hidden and the pill nav shows. */}
+              <div className="relative z-10 flex flex-1 flex-col pt-14 pb-24 lg:grid lg:grid-cols-[minmax(17rem,30%)_minmax(0,1fr)] lg:pt-0 lg:pb-0">
+                <SideRail name={profile.name} titles={titles} links={{ github: profile.github, linkedin: profile.linkedin, email: profile.email }} />
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <div className="flex flex-1 flex-col">
+                    <HighlightProvider>{children}</HighlightProvider>
+                  </div>
+                  <Footer />
                 </div>
-                <Footer />
               </div>
-            </div>
-            <PillNav />
-            <Toaster />
-            <Spotlight />
-            <GrainOverlay />
-            <ScrollProgressKoi />
-            <HelloIntro />
-          </RoleProvider>
+              <PillNav />
+              <Toaster />
+              <Spotlight />
+              <GrainOverlay />
+              <ScrollProgressKoi />
+              <HelloIntro />
+            </RoleProvider>
+          </MotionProvider>
         </NextIntlClientProvider>
       </body>
     </html>

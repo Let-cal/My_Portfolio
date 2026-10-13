@@ -3,6 +3,9 @@
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
+/* Motion follows <html data-motion> (set before paint from the Motion toggle, else the OS setting), not the raw OS media query. */
+@custom-variant motion-reduce (&:where([data-motion=reduced], [data-motion=reduced] *));
+@custom-variant motion-safe (&:where([data-motion=full], [data-motion=full] *));
 
 @theme inline {
   --color-background: var(--background);
@@ -223,7 +226,7 @@ body:lang(ja) {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+:root[data-motion="reduced"] {
   .fx-wave,
   .fx-char,
   .fx-marquee-track {
@@ -255,7 +258,7 @@ body:lang(ja) {
 html[data-hello-seen] [data-hello] {
   display: none;
 }
-@media (prefers-reduced-motion: reduce) {
+:root[data-motion="reduced"] {
   [data-hello] {
     display: none;
   }
@@ -652,7 +655,7 @@ html[data-hello-seen] [data-hello] {
   -webkit-text-stroke: 1px color-mix(in srgb, var(--fg) 30%, transparent);
 }
 
-@media (prefers-reduced-motion: reduce) {
+:root[data-motion="reduced"] {
   .hero-orbit {
     animation: none;
   }
@@ -766,7 +769,7 @@ html[data-hello-seen] [data-hello] {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+:root[data-motion="reduced"] {
   .skill-beam {
     animation: none;
     stroke-dashoffset: 0;
@@ -953,7 +956,7 @@ html[data-hello-seen] [data-hello] {
 }
 
 /* Reduced motion: no bobbing and no rotation; the two faces crossfade instead. */
-@media (prefers-reduced-motion: reduce) {
+:root[data-motion="reduced"] {
   .lantern-bob {
     animation: none;
   }
@@ -1062,7 +1065,7 @@ html[data-hello-seen] [data-hello] {
     transform: none;
   }
 }
-@media (prefers-reduced-motion: reduce) {
+:root[data-motion="reduced"] {
   .why-card,
   .why-layer,
   .why-wave-svg,
@@ -1105,7 +1108,7 @@ html[data-hello-seen] [data-hello] {
   opacity: 0;
   transform: translateY(1rem);
 }
-@media (prefers-reduced-motion: reduce) {
+:root[data-motion="reduced"] {
   [data-contact-headline][data-held] .fx-char {
     animation-play-state: running;
   }

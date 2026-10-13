@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { useReducedMotionEffective } from "@/components/site/motion-preference";
 
 /**
  * Subscribes to a media query without per-render state. Returns `serverValue` during SSR/hydration
@@ -21,7 +22,10 @@ export function useMediaQuery(query: string, serverValue = false): boolean {
   );
 }
 
-/** True when the visitor asked the OS for reduced motion. Effects then show their final static state. */
+/**
+ * True when the page should show its static design: the visitor's Motion toggle (`on` / `off`) wins,
+ * otherwise the OS "reduce motion" setting decides. Effects then show their final state.
+ */
 export function usePrefersReducedMotion(): boolean {
-  return useMediaQuery("(prefers-reduced-motion: reduce)");
+  return useReducedMotionEffective();
 }

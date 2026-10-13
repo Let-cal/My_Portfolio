@@ -1,11 +1,12 @@
 "use client";
 
 import { ChevronRightIcon } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useMemo, useRef, useState, type FocusEvent } from "react";
 import { GlowCard } from "@/components/fx/GlowCard";
 import { TracingBeam } from "@/components/fx/TracingBeam";
+import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
 import { useHighlight } from "@/components/site/HighlightProvider";
 import { useRole } from "@/components/site/RoleProvider";
 import type { RoleKey } from "@/content/schema";
@@ -92,7 +93,7 @@ const NODE = "col-start-1 row-start-1 row-span-2 justify-self-center rounded-ful
 export function Timeline({ data }: { data: TimelineData }) {
   const t = useTranslations("experience");
   const { role } = useRole();
-  const reduced = useReducedMotion();
+  const reduced = usePrefersReducedMotion();
   const { ids: highlightIds } = useHighlight();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
