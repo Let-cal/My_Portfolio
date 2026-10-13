@@ -212,6 +212,28 @@
     "codeN": "Code {n}",
     "newTab": "(mở trong tab mới)"
   },
+  "certificates": {
+    "intro": "Các khóa học, chứng chỉ và hoạt động ở trường. Chọn một chiếc đèn lồng để xem thông tin chứng chỉ.",
+    "tabsLabel": "Chứng chỉ và hoạt động",
+    "tabCertificates": "Chứng chỉ",
+    "tabActivities": "Hoạt động",
+    "filterLabel": "Lọc theo chủ đề",
+    "topics": {
+      "all": "Tất cả",
+      "language": "Ngôn ngữ",
+      "pm": "PM",
+      "design": "UX/Thiết kế",
+      "engineering": "Kỹ thuật",
+      "other": "Khác"
+    },
+    "showing": "Hiển thị {count} trong {total} chứng chỉ",
+    "flipHint": "Nhấn để xem thông tin chứng chỉ",
+    "showDetails": "Chứng chỉ",
+    "showFront": "Quay lại",
+    "credentialId": "Mã chứng chỉ",
+    "verify": "Xác minh",
+    "viewFile": "Xem tệp"
+  },
   "common": {
     "present": "Hiện tại",
     "close": "Đóng"

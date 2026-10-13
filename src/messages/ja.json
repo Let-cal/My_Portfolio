@@ -212,6 +212,28 @@
     "codeN": "コード{n}",
     "newTab": "(新しいタブで開きます)"
   },
+  "certificates": {
+    "intro": "講座、資格、学校での活動です。提灯を選ぶと認定情報が見られます。",
+    "tabsLabel": "資格と活動",
+    "tabCertificates": "資格",
+    "tabActivities": "活動",
+    "filterLabel": "分野で絞り込む",
+    "topics": {
+      "all": "すべて",
+      "language": "言語",
+      "pm": "PM",
+      "design": "UX/デザイン",
+      "engineering": "エンジニアリング",
+      "other": "その他"
+    },
+    "showing": "{total}件中{count}件を表示",
+    "flipHint": "押すと認定情報を表示します",
+    "showDetails": "認定情報",
+    "showFront": "戻る",
+    "credentialId": "認定ID",
+    "verify": "認定を確認",
+    "viewFile": "ファイルを見る"
+  },
   "common": {
     "present": "現在",
     "close": "閉じる"

@@ -777,3 +777,200 @@ html[data-hello-seen] [data-hello] {
     display: none;
   }
 }
+
+/* ---- certificates: lanterns (src/components/sections/certificates) ---- */
+/* A lantern hangs from its cord and bobs gently (staggered per card through --bob-delay / --bob-dur). The body has an
+   orange border and a warm inner light; hover, focus and the flipped state light it in the role accent. */
+.lantern-scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  --lantern-edge: var(--brand-400);
+}
+.light .lantern-scene {
+  --lantern-edge: var(--brand-500);
+}
+.lantern-bob {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  transform-origin: 50% 0;
+  animation: lantern-bob var(--bob-dur, 6s) ease-in-out var(--bob-delay, 0s) infinite;
+}
+@keyframes lantern-bob {
+  0%,
+  100% {
+    transform: translateY(calc(var(--bob-y, 5px) * -1)) rotate(-0.6deg);
+  }
+  50% {
+    transform: translateY(var(--bob-y, 5px)) rotate(0.6deg);
+  }
+}
+/* Hold still while you read or aim at it. */
+.lantern-scene:is(:hover, [data-flipped], :has(:focus-visible)) .lantern-bob {
+  animation-play-state: paused;
+}
+@media (hover: none) {
+  .lantern-bob {
+    --bob-y: 3px;
+  }
+}
+
+.lantern-cord {
+  width: 1px;
+  height: 1.4rem;
+  background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--lantern-edge) 75%, transparent));
+}
+.lantern-cap {
+  width: 44%;
+  height: 0.65rem;
+  border-radius: 0.3rem;
+  background: linear-gradient(to bottom, var(--lantern-edge), color-mix(in srgb, var(--lantern-edge) 55%, #7c2d12));
+  transition: box-shadow 300ms ease;
+}
+.lantern-tassel {
+  position: relative;
+  width: 1px;
+  height: 0.9rem;
+  background: color-mix(in srgb, var(--lantern-edge) 75%, transparent);
+}
+.lantern-tassel::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 0.55rem;
+  height: 1rem;
+  translate: -50% 0;
+  border-radius: 0.2rem 0.2rem 0.5rem 0.5rem;
+  background: linear-gradient(to bottom, var(--lantern-edge), color-mix(in srgb, var(--lantern-edge) 40%, transparent));
+}
+
+.lantern-body {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  perspective: 1100px;
+  border: 1.5px solid color-mix(in srgb, var(--lantern-edge) 80%, transparent);
+  border-radius: 2.4rem / 1.8rem;
+  background:
+    radial-gradient(ellipse 75% 62% at 50% 56%, color-mix(in srgb, var(--brand-500) 17%, transparent), transparent 78%),
+    color-mix(in srgb, var(--card) 62%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transition:
+    box-shadow 300ms ease,
+    border-color 300ms ease;
+}
+/* The paper ribs: faint vertical lines that fade out towards the caps. */
+.lantern-body::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 calc(25% - 0.5px),
+    color-mix(in srgb, var(--lantern-edge) 13%, transparent) calc(25% - 0.5px) 25%
+  );
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent);
+}
+
+.lantern-scene:has(.lantern-hit:focus-visible) .lantern-body {
+  outline: 2px solid var(--ring);
+  outline-offset: 4px;
+}
+.lantern-scene[data-flipped] .lantern-body,
+.lantern-scene:has(.lantern-hit:focus-visible) .lantern-body {
+  border-color: var(--role-accent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--role-accent) 35%, transparent),
+    0 0 34px -4px color-mix(in srgb, var(--role-accent) 55%, transparent),
+    inset 0 0 44px -14px color-mix(in srgb, var(--role-accent) 45%, transparent);
+}
+.lantern-scene[data-flipped] .lantern-cap,
+.lantern-scene:has(.lantern-hit:focus-visible) .lantern-cap {
+  box-shadow: 0 0 14px color-mix(in srgb, var(--role-accent) 70%, transparent);
+}
+@media (hover: hover) {
+  .lantern-scene:hover .lantern-body {
+    border-color: var(--role-accent);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--role-accent) 35%, transparent),
+      0 0 34px -4px color-mix(in srgb, var(--role-accent) 55%, transparent),
+      inset 0 0 44px -14px color-mix(in srgb, var(--role-accent) 45%, transparent);
+  }
+  .lantern-scene:hover .lantern-cap {
+    box-shadow: 0 0 14px color-mix(in srgb, var(--role-accent) 70%, transparent);
+  }
+}
+
+/* The toggle button covers the whole body underneath the faces; the faces ignore the pointer (except their links),
+   so any click that is not on a link lands on the button. */
+.lantern-hit {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  cursor: pointer;
+  outline: none;
+}
+.lantern-flip {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  flex: 1 1 auto;
+  min-height: 16rem;
+  pointer-events: none;
+  transform-style: preserve-3d;
+  transition: transform 750ms cubic-bezier(0.3, 0.8, 0.25, 1);
+}
+.lantern-scene[data-flipped] .lantern-flip {
+  transform: rotateY(180deg);
+}
+.lantern-face {
+  display: flex;
+  flex-direction: column;
+  grid-area: 1 / 1;
+  padding: 1.6rem 1.7rem;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.lantern-back {
+  transform: rotateY(180deg);
+}
+.lantern-static {
+  flex: 1 1 auto;
+  min-height: 16rem;
+}
+
+/* Reduced motion: no bobbing and no rotation; the two faces crossfade instead. */
+@media (prefers-reduced-motion: reduce) {
+  .lantern-bob {
+    animation: none;
+  }
+  .lantern-flip {
+    transform: none !important;
+    transition: none;
+  }
+  .lantern-face {
+    -webkit-backface-visibility: visible;
+    backface-visibility: visible;
+    transition: opacity 250ms ease;
+  }
+  .lantern-back {
+    transform: none;
+    opacity: 0;
+  }
+  .lantern-scene[data-flipped] .lantern-front {
+    opacity: 0;
+  }
+  .lantern-scene[data-flipped] .lantern-back {
+    opacity: 1;
+  }
+}

@@ -212,6 +212,28 @@
     "codeN": "Code {n}",
     "newTab": "(opens in new tab)"
   },
+  "certificates": {
+    "intro": "Courses, certificates and school activities. Pick a lantern to see its credential.",
+    "tabsLabel": "Certificates and activities",
+    "tabCertificates": "Certificates",
+    "tabActivities": "Activities",
+    "filterLabel": "Filter by topic",
+    "topics": {
+      "all": "All",
+      "language": "Language",
+      "pm": "PM",
+      "design": "UX/Design",
+      "engineering": "Engineering",
+      "other": "Other"
+    },
+    "showing": "Showing {count} of {total} certificates",
+    "flipHint": "Press to show the credential details",
+    "showDetails": "Credential",
+    "showFront": "Back",
+    "credentialId": "Credential ID",
+    "verify": "Verify",
+    "viewFile": "View file"
+  },
   "common": {
     "present": "Present",
     "close": "Close"
