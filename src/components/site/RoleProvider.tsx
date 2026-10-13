@@ -14,6 +14,7 @@ import {
 import { useSearchParams } from "next/navigation";
 import { useRouter, usePathname } from "@/i18n/navigation";
 import type { RoleKey } from "@/content/schema";
+import { ROLE_ACCENT } from "@/lib/role-accent";
 import { DEFAULT_ROLE, parseRole } from "@/lib/roles";
 
 type RoleContextValue = { role: RoleKey; setRole: (role: RoleKey) => void };
@@ -59,7 +60,8 @@ function RoleUrlSync({ onRole }: { onRole: (role: RoleKey) => void }) {
 /**
  * Current role, kept in sync with `?role=`. The static HTML is rendered with the default role;
  * the URL value is applied right after hydration. `setRole` updates immediately, then rewrites the URL
- * with `router.replace` (no scroll), keeping the other query params and the hash.
+ * with `router.replace` (no scroll), keeping the other query params and the hash. The role's accent colour is
+ * written to `--role-accent` on <html>.
  */
 export function RoleProvider({ children }: { children: ReactNode }) {
   const [store] = useState(createRoleStore);
@@ -78,6 +80,11 @@ export function RoleProvider({ children }: { children: ReactNode }) {
     },
     [store, router, pathname],
   );
+
+  // The accent of the chosen role feeds every `var(--role-accent)` on the page (globals.css holds the default).
+  useEffect(() => {
+    document.documentElement.style.setProperty("--role-accent", ROLE_ACCENT[role]);
+  }, [role]);
 
   const value = useMemo(() => ({ role, setRole }), [role, setRole]);
 

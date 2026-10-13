@@ -3,13 +3,14 @@ import en from "@/messages/en.json";
 import ja from "@/messages/ja.json";
 import vi from "@/messages/vi.json";
 
-type Tree = { [key: string]: string | Tree };
+/** Message bundles nest objects and, for lists (chips, rotating words), string arrays. */
+type Tree = { [key: string]: string | string[] | Tree };
 
-/** Flattens nested messages into dotted leaf paths, e.g. `nav.hero`. */
+/** Flattens nested messages into dotted leaf paths, e.g. `nav.hero` (array items become `.0`, `.1`, ...). */
 function leaves(tree: Tree, prefix = ""): [string, string][] {
   return Object.entries(tree).flatMap(([key, value]) => {
     const path = prefix ? `${prefix}.${key}` : key;
-    return typeof value === "string" ? [[path, value] as [string, string]] : leaves(value, path);
+    return typeof value === "string" ? [[path, value] as [string, string]] : leaves(value as Tree, path);
   });
 }
 

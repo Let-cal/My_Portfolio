@@ -59,10 +59,100 @@
   },
   "hero": {
     "openToWork": "求職中",
-    "portraitAlt": "{name}のポートレート",
     "downloadCv": "CVをダウンロード",
     "contact": "お問い合わせ",
-    "quickView": "60秒で見る"
+    "quickView": "60秒で見る",
+    "nameJa": "レ・チャン・カット・ラム",
+    "nameVi": "Lê Trần Cát Lâm",
+    "phrase": "日本のお客様向けに<item></item>を作っています",
+    "phraseItems": [
+      "Webアプリ",
+      "AIエージェント",
+      "IoTロッカーシステム"
+    ],
+    "wheel": {
+      "label": "役割を選ぶ",
+      "hint": "スライスや円弧にカーソルを合わせる · クリックで選択 · ← → キー",
+      "touchHint": "写真をタップ、または左右にスワイプして役割を切り替え",
+      "alt": {
+        "fullstack": "コードで描いた肖像(ターミナル風の青)",
+        "techlead": "設計図グリッド上のローポリ肖像とアーキテクチャのノード",
+        "pm": "スプリントカレンダーのマスで作った肖像(黄金色)"
+      }
+    },
+    "roles": {
+      "fullstack": {
+        "eyebrow": "デベロッパー",
+        "arc": "デベロッパー",
+        "title": "'<builds/>' <accent></accent>",
+        "accent": "一気通貫",
+        "body": "日本のお客様向けに、Next.js と React のフロントエンド、AWS のサーバーレス API、決済と IoT ロッカーの連携を開発しました。",
+        "chips": [
+          "Next.js",
+          "TypeScript",
+          "AWS Lambda",
+          ".NET 8"
+        ]
+      },
+      "techlead": {
+        "eyebrow": "テックリード",
+        "arc": "テックリード",
+        "title": "設計し、<accent></accent>し、育てる",
+        "accent": "レビュー",
+        "body": "基本設計書・詳細設計書の作成、決まったチェックリストに沿ったコードレビュー、お客様プロジェクトでのインターン指導を担当しました。",
+        "chips": [
+          "アーキテクチャ",
+          "コードレビュー",
+          "DB設計",
+          "メンタリング"
+        ]
+      },
+      "pm": {
+        "eyebrow": "テクニカルPM",
+        "arc": "テクニカルPM",
+        "title": "計画し、<accent></accent>、届ける",
+        "accent": "すり合わせ",
+        "body": "日本語での見積もり・スケジュール作成と要件定義、リリース計画、2つのプロジェクトの並行推進を担当しました。",
+        "chips": [
+          "見積もり",
+          "スケジュール",
+          "JLPT N3",
+          "リリース"
+        ]
+      }
+    },
+    "stats": {
+      "label": "主な数字",
+      "monthsAtSkg": "SKGでの在籍月数",
+      "jpProjects": "日本のお客様向けプロジェクト",
+      "parallel": "並行プロジェクト",
+      "jlpt": "日本語(JLPT)"
+    },
+    "status": {
+      "label": "プロフィールの状況",
+      "localTime": "現地時間",
+      "copyEmail": "メールをコピー",
+      "copied": "コピーしました"
+    },
+    "facts": {
+      "label": "クイックファクト",
+      "location": {
+        "label": "所在地",
+        "value": "ホーチミン市",
+        "detail": "10.82° N, 106.63° E · GMT+7"
+      },
+      "languages": {
+        "label": "言語",
+        "value": "ベトナム語 · 英語 · 日本語",
+        "detail": "ベトナム語 ネイティブ · 英語 ビジネスレベル · 日本語 JLPT N3"
+      },
+      "education": {
+        "label": "学歴"
+      },
+      "now": {
+        "label": "現在"
+      }
+    }
   },
   "footer": {
     "rights": "無断転載を禁じます。",

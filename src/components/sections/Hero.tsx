@@ -1,18 +1,23 @@
-import { MapPinIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
-import Image from "next/image";
+import { KineticText } from "@/components/fx/KineticText";
 import { ROLE_KEYS, type Content, type Locale, type RoleKey } from "@/content/schema";
 import { pickLocale } from "@/lib/i18n-text";
-import { HeroRole, type HeroRoleData } from "./HeroRole";
+import { HeroStats } from "./hero/HeroStats";
+import { NameMarquee } from "./hero/NameMarquee";
+import { ProfileStatusCard } from "./hero/ProfileStatusCard";
+import { QuickFacts } from "./hero/QuickFacts";
+import { RoleStage } from "./hero/RoleStage";
+import { RotatingPhrase } from "./hero/RotatingPhrase";
+import { HeroRoleBody, HeroRoleTitle, type HeroRoleData } from "./HeroRole";
 
 /**
- * First section. The name is the h1 (LCP). Role-dependent parts live in the client component HeroRole,
- * which only receives the three roles' display data. The right half is intentionally empty:
- * it is the water surface where the koi swim (3D canvas behind the page).
+ * First section, built around the role wheel. Top: the name (h1, per-letter entrance, still the HTML text) and
+ * the scrambled title of the chosen role. Middle: the wheel with its three annotated role panels, over a glow in the
+ * role accent and the empty water zone the 3D koi swim in. Then the rotating intro line, summary and CTAs, the status
+ * card, the numbers, the trilingual name ticker and the quick facts. Role-dependent parts are small client components
+ * that only receive the three roles' display data.
  */
 export function Hero({ content, locale }: { content: Content; locale: Locale }) {
-  const t = useTranslations("hero");
-  const { profile, roles } = content;
+  const { profile, roles, education } = content;
 
   const roleData = Object.fromEntries(
     ROLE_KEYS.map((key) => {
@@ -27,55 +32,56 @@ export function Hero({ content, locale }: { content: Content; locale: Locale }) 
       ];
     }),
   ) as Record<RoleKey, HeroRoleData>;
+  const cvUrls = Object.fromEntries(ROLE_KEYS.map((key) => [key, roleData[key].cvFileUrl])) as Record<RoleKey, string>;
+  const availabilityNote = pickLocale(profile.availabilityNote, locale);
+  const school = [...education].sort((a, b) => a.sortIndex - b.sortIndex)[0];
 
   return (
     <section
       id="hero"
       aria-labelledby="hero-heading"
-      className="relative mx-auto flex min-h-[calc(100svh-3.5rem)] max-w-6xl scroll-mt-14 items-center px-4 py-16 sm:px-6 sm:py-24"
+      className="relative mx-auto w-full max-w-6xl scroll-mt-14 px-4 pt-10 pb-16 sm:px-6 sm:pt-14 lg:pt-16"
     >
-      <div className="grid w-full items-center gap-12 lg:grid-cols-2">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-            {profile.avatarUrl && (
-              <Image
-                src={profile.avatarUrl}
-                alt={t("portraitAlt", { name: profile.name })}
-                width={96}
-                height={96}
-                sizes="(min-width: 640px) 96px, 72px"
-                priority={false}
-                className="size-[72px] rounded-full object-cover ring-2 ring-brand-400/60 ring-offset-2 ring-offset-background sm:size-24"
-              />
-            )}
-            <div className="flex min-w-0 flex-col items-start gap-2">
-              {profile.openToWork && (
-                <p className="inline-flex items-center gap-2 rounded-2xl border border-border bg-card/60 py-1.5 pr-3 pl-2.5 text-sm sm:rounded-full sm:py-1 backdrop-blur-md">
-                  <span aria-hidden className="relative flex size-2">
-                    <span className="absolute inline-flex size-full rounded-full bg-emerald-400 opacity-60 motion-safe:animate-ping" />
-                    <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
-                  </span>
-                  <span className="font-medium whitespace-nowrap">{t("openToWork")}</span>
-                  <span aria-hidden className="text-muted-foreground">·</span>
-                  <span className="text-muted-foreground">{pickLocale(profile.availabilityNote, locale)}</span>
-                </p>
-              )}
-              <p className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                <MapPinIcon aria-hidden className="size-4" />
-                {profile.location}
-              </p>
-            </div>
-          </div>
+      <header className="relative z-[3] text-center">
+        <h1
+          id="hero-heading"
+          className="font-heading text-[clamp(2.4rem,6vw,4.25rem)] leading-[1.02] font-extrabold tracking-[-0.025em] text-balance"
+        >
+          <KineticText text={profile.name} />
+        </h1>
+        <HeroRoleTitle roles={roleData} />
+      </header>
 
-          <h1 id="hero-heading" className="mt-8 text-5xl leading-[1.05] font-bold tracking-tight sm:text-6xl lg:text-7xl">
-            {profile.name}
-          </h1>
+      <div className="hero-stage-wrap mt-4 sm:mt-6">
+        <RoleStage />
+      </div>
 
-          <HeroRole roles={roleData} locale={locale} />
-        </div>
+      <div className="mx-auto mt-14 max-w-3xl text-center">
+        <RotatingPhrase className="font-heading text-xl font-medium text-balance sm:text-2xl" />
+        <HeroRoleBody roles={roleData} locale={locale} />
+      </div>
 
-        {/* Water surface: left empty on purpose so the koi can swim behind/through it. */}
-        <div data-water-zone aria-hidden className="hidden min-h-[24rem] lg:block" />
+      <div className="mt-14 flex flex-col gap-4">
+        <ProfileStatusCard
+          openToWork={profile.openToWork}
+          availabilityNote={availabilityNote}
+          location={profile.location}
+          email={profile.email}
+          cvUrls={cvUrls}
+        />
+        <HeroStats />
+      </div>
+
+      <div className="-mx-4 mt-14 sm:-mx-6">
+        <NameMarquee name={profile.name} />
+      </div>
+
+      <div className="mt-10">
+        <QuickFacts
+          education={{ school: school?.school ?? "", major: pickLocale(school?.major, locale), gpa: school?.gpa }}
+          openToWork={profile.openToWork}
+          availabilityNote={availabilityNote}
+        />
       </div>
     </section>
   );

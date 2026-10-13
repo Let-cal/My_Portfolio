@@ -260,3 +260,407 @@ html[data-hello-seen] [data-hello] {
     display: none;
   }
 }
+
+/* ---- hero: role wheel (src/components/sections/hero). Approved prototype: hero-desc-variants.html, variant A ---- */
+/* Default accent before hydration; RoleProvider writes the chosen role's accent inline on <html>. */
+:root {
+  --role-accent: #e4571e;
+  --role-accent-text: var(--role-accent);
+}
+.light {
+  /* Darker accent for text on the light background (WCAG AA for large text). */
+  --role-accent-text: color-mix(in srgb, var(--role-accent) 68%, #000);
+}
+
+@property --from {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@property --sweep {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes hero-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.hero-role-title {
+  color: var(--role-accent-text);
+  transition: color 0.4s;
+}
+.hero-phrase-word {
+  font-family: var(--font-serif), Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--role-accent-text);
+}
+:lang(ja) .hero-phrase-word {
+  font-family: inherit;
+  font-style: normal;
+}
+
+.hero-stage-wrap {
+  container-type: inline-size;
+}
+.hero-stage {
+  --wheel: min(360px, 80vw);
+  position: relative;
+  isolation: isolate;
+  padding-top: 8px;
+}
+/* Accent glow behind the wheel. Its own box fades to transparent at every edge (closest-side), so it never shows
+   a hard edge, and it never sticks out sideways (no horizontal scroll). */
+.hero-stage::before {
+  content: "";
+  position: absolute;
+  z-index: -2;
+  left: 50%;
+  top: calc(8px + var(--wheel) / 2 - 310px);
+  width: min(880px, 100%);
+  height: 620px;
+  translate: -50% 0;
+  pointer-events: none;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--role-accent) 15%, transparent), transparent);
+  transition: background 0.6s;
+}
+.hero-water {
+  position: absolute;
+  inset: 0 0 auto;
+  height: calc(var(--wheel) + 16px);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.hero-wheel {
+  position: relative;
+  z-index: 2;
+  width: var(--wheel);
+  aspect-ratio: 1;
+  margin-inline: auto;
+}
+.hero-disc {
+  position: absolute;
+  inset: 7.2727%; /* 32px of the 440px ring */
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  touch-action: pan-y;
+  background: #0b1220;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 8%),
+    0 40px 90px -30px color-mix(in srgb, var(--role-accent) 70%, transparent);
+  transition: box-shadow 0.5s;
+}
+.hero-layer {
+  position: absolute;
+  inset: 0;
+}
+.hero-layer img {
+  object-fit: cover;
+  object-position: 50% 30%;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.hero-peek {
+  -webkit-mask-image: conic-gradient(from var(--from), #000 0 var(--sweep), transparent 0);
+  mask-image: conic-gradient(from var(--from), #000 0 var(--sweep), transparent 0);
+}
+.hero-peek img {
+  opacity: 0;
+}
+.hero-peek img[data-on] {
+  opacity: 1;
+}
+
+.hero-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.hero-arc {
+  cursor: pointer;
+  outline: none;
+}
+.hero-arc-hit,
+.hero-arc-line {
+  fill: none;
+  stroke-linecap: round;
+  pointer-events: stroke;
+}
+.hero-arc-hit {
+  stroke: transparent;
+  stroke-width: 26;
+}
+.hero-arc:focus-visible .hero-arc-hit {
+  stroke: color-mix(in srgb, var(--ring) 40%, transparent);
+}
+.hero-arc-line {
+  stroke: var(--c);
+  stroke-width: 3;
+  stroke-opacity: 0.35;
+  transition:
+    stroke-width 0.3s,
+    stroke-opacity 0.3s,
+    filter 0.3s;
+}
+.hero-arc[data-on] .hero-arc-line {
+  stroke-width: 7;
+  stroke-opacity: 1;
+  filter: drop-shadow(0 0 8px var(--c));
+}
+.hero-arc-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  letter-spacing: 0.32em;
+  fill: var(--muted);
+  transition: fill 0.3s;
+  pointer-events: none;
+}
+.hero-arc[data-on] .hero-arc-label {
+  fill: var(--fg);
+}
+.hero-orbit {
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+  animation: hero-spin 18s linear infinite;
+  fill: var(--role-accent);
+  pointer-events: none;
+}
+
+.hero-lines {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: none;
+  overflow: visible;
+  pointer-events: none;
+}
+.hero-line {
+  fill: none;
+  stroke-width: 1.5;
+  opacity: 0;
+  transition:
+    stroke-dashoffset 0.6s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.3s;
+}
+.hero-line-dot {
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.hero-lines [data-on] .hero-line {
+  opacity: 0.9;
+}
+.hero-lines [data-on] .hero-line-dot {
+  opacity: 1;
+}
+
+/* Panels: stacked accordion under the wheel by default; around the wheel when there is room (below). */
+.hero-panels {
+  display: contents;
+}
+.hero-panel {
+  position: relative;
+  z-index: 3;
+  max-width: 32rem;
+  margin: 18px auto 0;
+  text-align: center;
+  cursor: pointer;
+}
+.hero-panel-button {
+  display: block;
+  width: 100%;
+  border-radius: 0.5rem;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  outline: none;
+}
+.hero-panel-button:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 50%, transparent);
+}
+.hero-panel-tag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.hero-panel-tag i {
+  display: inline-block;
+  width: 18px;
+  height: 2px;
+  background: var(--c);
+}
+.hero-panel-title {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--font-space-grotesk), var(--font-stack-sans), sans-serif;
+  font-size: clamp(22px, 6vw, 28px);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.hero-panel-title em {
+  font-family: var(--font-serif), Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--c);
+  white-space: nowrap;
+}
+.light .hero-panel-title em {
+  color: color-mix(in srgb, var(--c) 68%, #000);
+}
+/* Collapsed panels are dimmed with solid colours instead of opacity, so the text keeps AA contrast for large text. */
+.hero-panel-title,
+.hero-panel-title em {
+  transition: color 0.35s;
+}
+.hero-panel[data-state="collapsed"] .hero-panel-title {
+  color: color-mix(in srgb, var(--fg) 50%, var(--bg));
+}
+.hero-panel[data-state="collapsed"] .hero-panel-title em {
+  color: color-mix(in srgb, var(--c) 55%, var(--muted));
+}
+.light .hero-panel[data-state="collapsed"] .hero-panel-title em {
+  color: color-mix(in srgb, var(--c) 45%, var(--muted));
+}
+:lang(ja) .hero-panel-title em {
+  font-family: inherit;
+  font-style: normal;
+  font-weight: 700;
+}
+.hero-panel-more {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.hero-panel-more > div {
+  min-height: 0;
+  overflow: hidden;
+}
+.hero-panel[data-state="active"] .hero-panel-more {
+  grid-template-rows: 1fr;
+}
+.hero-panel-body {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--fg) 82%, transparent);
+}
+.hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 10px 0 2px;
+  padding: 0;
+  list-style: none;
+}
+.hero-chip {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11.5px;
+  color: var(--muted);
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity 0.35s,
+    transform 0.35s;
+}
+.hero-panel[data-state="active"] .hero-chip {
+  opacity: 1;
+  transform: none;
+  transition-delay: calc(var(--i, 0) * 50ms);
+}
+
+.hero-hint {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+.hero-hint-fine {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .hero-hint-fine {
+    display: inline;
+  }
+  .hero-hint-touch {
+    display: none;
+  }
+}
+
+/* Wide content column: Developer on the left, Tech Lead on the right, Technical PM below, with leader lines. */
+@container (min-width: 52rem) {
+  .hero-stage {
+    --wheel: clamp(320px, 40cqw, 440px);
+    --panel-gap: calc(var(--wheel) / 2 + 28px);
+  }
+  .hero-lines {
+    display: block;
+  }
+  .hero-panel[data-side="left"],
+  .hero-panel[data-side="right"] {
+    position: absolute;
+    top: calc(8px + var(--wheel) / 2 - 44px);
+    width: min(300px, calc(50cqw - var(--panel-gap) - 4px));
+    margin: 0;
+  }
+  .hero-panel[data-side="left"] {
+    right: calc(50% + var(--panel-gap));
+    text-align: right;
+  }
+  .hero-panel[data-side="right"] {
+    left: calc(50% + var(--panel-gap));
+    text-align: left;
+  }
+  .hero-panel[data-side="left"] :is(.hero-panel-tag, .hero-chips) {
+    justify-content: flex-end;
+  }
+  .hero-panel[data-side="right"] :is(.hero-panel-tag, .hero-chips) {
+    justify-content: flex-start;
+  }
+  .hero-panel[data-side="bottom"] {
+    width: min(420px, 100%);
+    margin: 64px auto 0;
+  }
+  .hero-panel-title {
+    font-size: clamp(22px, 2.9cqw, 28px);
+  }
+}
+
+.hero-stroke-text {
+  color: transparent;
+  -webkit-text-stroke: 1px color-mix(in srgb, var(--fg) 30%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-orbit {
+    animation: none;
+  }
+  .hero-line,
+  .hero-line-dot,
+  .hero-arc-line,
+  .hero-panel-title,
+  .hero-panel-title em,
+  .hero-panel-more,
+  .hero-chip,
+  .hero-disc,
+  .hero-role-title {
+    transition: none !important;
+  }
+}

@@ -9,24 +9,29 @@ function subscribe(onChange: () => void) {
   return () => clearInterval(timer);
 }
 
-function parts(timeZone: string) {
+function parts(timeZone: string, date: Date) {
   const list = new Intl.DateTimeFormat("en-GB", {
     timeZone,
     hour: "2-digit",
     minute: "2-digit",
     hourCycle: "h23",
     timeZoneName: "shortOffset",
-  }).formatToParts(new Date());
+  }).formatToParts(date);
   const get = (type: string) => list.find((p) => p.type === type)?.value ?? "";
   return { time: `${get("hour")}:${get("minute")}`, offset: get("timeZoneName") };
 }
 
 const formatTime = (timeZone: string) => {
-  const { time, offset } = parts(timeZone);
+  const { time, offset } = parts(timeZone, new Date());
   return `${time} (${offset})`;
 };
+/**
+ * The placeholder reads the offset at a fixed date, not "now": the server (and the prerender) must not read the
+ * current time (Next.js cacheComponents rejects `new Date()` there). The live label replaces it after hydration.
+ */
+const PLACEHOLDER_DATE = new Date(Date.UTC(2026, 0, 1));
 /** Same shape and length as the real label (`HH:mm (GMT+7)`), so hydration does not change the width. */
-const formatPlaceholder = (timeZone: string) => `--:-- (${parts(timeZone).offset})`;
+const formatPlaceholder = (timeZone: string) => `--:-- (${parts(timeZone, PLACEHOLDER_DATE).offset})`;
 
 /**
  * Local time of the portfolio owner as `HH:mm (GMT+7)`, refreshed every 30 s.

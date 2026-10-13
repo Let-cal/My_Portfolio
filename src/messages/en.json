@@ -59,10 +59,100 @@
   },
   "hero": {
     "openToWork": "Open to work",
-    "portraitAlt": "Portrait of {name}",
     "downloadCv": "Download CV",
     "contact": "Contact",
-    "quickView": "60-second view"
+    "quickView": "60-second view",
+    "nameJa": "レ・チャン・カット・ラム",
+    "nameVi": "Lê Trần Cát Lâm",
+    "phrase": "I build <item></item> for Japanese clients",
+    "phraseItems": [
+      "web apps",
+      "AI agents",
+      "IoT locker systems"
+    ],
+    "wheel": {
+      "label": "Choose a role",
+      "hint": "Hover a slice or an arc · click to choose · ← → keys",
+      "touchHint": "Tap the portrait or swipe to switch role",
+      "alt": {
+        "fullstack": "Portrait rendered from code, in terminal blue",
+        "techlead": "Low-poly portrait on a blueprint grid with architecture nodes",
+        "pm": "Portrait built from sprint-calendar cells in Ogon gold"
+      }
+    },
+    "roles": {
+      "fullstack": {
+        "eyebrow": "Developer",
+        "arc": "DEVELOPER",
+        "title": "'<builds/>' <accent></accent>",
+        "accent": "end to end",
+        "body": "Next.js and React front ends, serverless APIs on AWS, payments and IoT locker integration for Japanese clients.",
+        "chips": [
+          "Next.js",
+          "TypeScript",
+          "AWS Lambda",
+          ".NET 8"
+        ]
+      },
+      "techlead": {
+        "eyebrow": "Tech Lead",
+        "arc": "TECH LEAD",
+        "title": "Designs, <accent></accent>, mentors",
+        "accent": "reviews",
+        "body": "Basic and detailed design documents, code review against a fixed checklist, and mentoring interns on client projects.",
+        "chips": [
+          "Architecture",
+          "Code review",
+          "DB design",
+          "Mentoring"
+        ]
+      },
+      "pm": {
+        "eyebrow": "Technical PM",
+        "arc": "TECHNICAL PM",
+        "title": "Plans, <accent></accent>, ships",
+        "accent": "aligns",
+        "body": "Estimates, schedules and requirements definition in Japanese, release planning, and two projects run in parallel.",
+        "chips": [
+          "Estimation",
+          "Scheduling",
+          "JLPT N3",
+          "Release"
+        ]
+      }
+    },
+    "stats": {
+      "label": "Key numbers",
+      "monthsAtSkg": "months at SKG",
+      "jpProjects": "Japanese client projects",
+      "parallel": "projects in parallel",
+      "jlpt": "Japanese (JLPT)"
+    },
+    "status": {
+      "label": "Profile status",
+      "localTime": "Local time",
+      "copyEmail": "Copy email",
+      "copied": "Copied"
+    },
+    "facts": {
+      "label": "Quick facts",
+      "location": {
+        "label": "Location",
+        "value": "Ho Chi Minh City",
+        "detail": "10.82° N, 106.63° E · GMT+7"
+      },
+      "languages": {
+        "label": "Languages",
+        "value": "Vietnamese · English · Japanese",
+        "detail": "Vietnamese native · English professional working · Japanese JLPT N3"
+      },
+      "education": {
+        "label": "Education"
+      },
+      "now": {
+        "label": "Now"
+      }
+    }
   },
   "footer": {
     "rights": "All rights reserved.",
