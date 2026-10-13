@@ -266,6 +266,9 @@ html[data-hello-seen] [data-hello] {
 :root {
   --role-accent: #0ea5e9;
   --role-accent-text: var(--role-accent);
+  /* Text on a surface filled with the role accent: near-black reaches >= 4.5:1 on all three accents
+     (#0ea5e9, #38bdf8, #e0a84e) in both themes; the page background colour does not. */
+  --role-accent-contrast: #0b0908;
 }
 .light {
   /* Darker accent for text on the light background: 60% of each accent with black is >= 5:1 on #fafaf9

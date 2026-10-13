@@ -61,6 +61,13 @@ describe("Certificates section", () => {
     expect(screen.getByRole("tab", { name: "Certificates" })).toHaveFocus();
   });
 
+  it("the selected tab uses the accent-contrast text colour, the other one does not", () => {
+    renderCerts();
+    expect(screen.getByRole("tab", { name: "Certificates" })).toHaveClass("text-(--role-accent-contrast)");
+    expect(screen.getByRole("tab", { name: "Certificates" })).not.toHaveClass("text-background");
+    expect(screen.getByRole("tab", { name: "Activities" })).not.toHaveClass("text-(--role-accent-contrast)");
+  });
+
   it("only the selected tab is in the tab order", () => {
     renderCerts();
     expect(screen.getByRole("tab", { name: "Certificates" })).toHaveAttribute("tabindex", "0");

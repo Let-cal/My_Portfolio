@@ -92,7 +92,7 @@ export function CertificatesBoard({ certificates, activities }: { certificates: 
               onClick={() => setPane(p)}
               className={cn(
                 "relative rounded-full px-4 py-1.5 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-                selected ? "text-background" : "text-muted-foreground hover:text-foreground",
+                selected ? "text-(--role-accent-contrast)" : "text-muted-foreground hover:text-foreground",
               )}
             >
               {selected ? (
