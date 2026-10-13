@@ -825,9 +825,9 @@
         "vi": "Quản lý dự án"
       },
       "body": {
-        "en": "Ran FlexyBox Phase 2 and the AI Agent project in parallel, handling estimates, schedules, releases and client meetings for both, with teams of 3 to 8.",
-        "ja": "FlexyBox Phase 2とAI Agentを並行して担当し、両方の見積もり、スケジュール、リリース、お客様との会議を3〜8名のチームで進めました。",
-        "vi": "Điều phối song song FlexyBox Phase 2 và AI Agent: estimate, lập lịch, release và họp với khách cho cả hai dự án, với team từ 3 đến 8 người."
+        "en": "Ran FlexyBox Phase 2 and the AI Agent project in parallel, handling estimates, schedules and client meetings for both, with teams of 3 to 8.",
+        "ja": "FlexyBox Phase 2とAI Agentを並行して担当し、両方の見積もり、スケジュール、お客様との会議を3〜8名のチームで進めました。",
+        "vi": "Điều phối song song FlexyBox Phase 2 và AI Agent: estimate, lập lịch và họp với khách cho cả hai dự án, với team từ 3 đến 8 người."
       },
       "colors": ["#118AB2", "#5AC8E3"],
       "evidenceLink": "#exp-skg-ai-agent",
