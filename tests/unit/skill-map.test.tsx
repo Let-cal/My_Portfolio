@@ -19,6 +19,7 @@ vi.mock("@/i18n/navigation", () => ({
 import { Experience } from "@/components/sections/Experience";
 import { Projects } from "@/components/sections/Projects";
 import { Skills } from "@/components/sections/Skills";
+import { stubIntersectionObserver } from "../helpers/io-stub";
 import { HighlightProvider } from "@/components/site/HighlightProvider";
 import { RoleProvider, useRole } from "@/components/site/RoleProvider";
 
@@ -94,6 +95,8 @@ function reducedMotion(reduce: boolean) {
 }
 
 beforeEach(() => {
+  // Skills contains <Reveal>, whose whileInView needs an IntersectionObserver.
+  stubIntersectionObserver();
   reducedMotion(false);
 });
 afterEach(() => {
@@ -257,18 +260,8 @@ describe("Skills terminal", () => {
 
   it("types whoami, then skills --group <first group>, then prints the skills", async () => {
     vi.useFakeTimers();
-    // The terminal starts once it scrolls into view; tests/setup.ts only has a no-op observer, so report it as visible.
-    vi.stubGlobal(
-      "IntersectionObserver",
-      class {
-        constructor(private cb: (entries: unknown[]) => void) {}
-        observe(target: Element) {
-          this.cb([{ isIntersecting: true, intersectionRatio: 1, target }]);
-        }
-        unobserve() {}
-        disconnect() {}
-      },
-    );
+    // The terminal types once it is on screen, so this test needs an observer that reports it visible.
+    stubIntersectionObserver({ visible: true });
     renderSkills();
     expect(screenText()).not.toContain("whoami");
     await act(async () => {

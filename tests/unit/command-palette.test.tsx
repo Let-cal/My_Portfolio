@@ -365,6 +365,17 @@ describe("SmoothScroll", () => {
     expect(scrollTo).toHaveBeenCalledTimes(2);
   });
 
+  it("ignores a link whose hash is a malformed escape instead of throwing", async () => {
+    const link = document.createElement("a");
+    link.setAttribute("href", "#%E0%A4%A");
+    mount(link);
+    render(<SmoothScroll />);
+    await waitFor(() => expect(lenisInstances).toHaveLength(1));
+    const click = new MouseEvent("click", { bubbles: true, cancelable: true });
+    expect(() => link.dispatchEvent(click)).not.toThrow();
+    expect(lenisInstances[0].scrollTo).not.toHaveBeenCalled();
+  });
+
   it("leaves modified clicks and other links alone", async () => {
     mountSection("skills");
     const link = document.createElement("a");

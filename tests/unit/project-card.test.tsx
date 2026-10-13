@@ -8,6 +8,7 @@ import seed from "@/content/seed.json";
 import { contentSchema, type Content, type Locale } from "@/content/schema";
 import { Projects } from "@/components/sections/Projects";
 import { projectKind } from "@/components/sections/projects/ProjectCard";
+import { stubIntersectionObserver } from "../helpers/io-stub";
 
 const base: Content = contentSchema.parse(seed);
 
@@ -39,6 +40,10 @@ const media = (hover: boolean) => (query: string) => ({
   addEventListener() {},
   removeEventListener() {},
 });
+
+// These tests render sections that contain <Reveal>, whose whileInView needs an IntersectionObserver.
+beforeEach(() => stubIntersectionObserver());
+afterEach(() => vi.unstubAllGlobals());
 
 describe("Projects bento", () => {
   it("is a section labelled by its heading", () => {

@@ -1,13 +1,15 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "@/messages/en.json";
 import ja from "@/messages/ja.json";
 import vi_ from "@/messages/vi.json";
 import seed from "@/content/seed.json";
 import { contentSchema, type Content, type Locale } from "@/content/schema";
 import { Certificates } from "@/components/sections/Certificates";
+
+import { stubIntersectionObserver } from "../helpers/io-stub";
 
 const base: Content = contentSchema.parse(seed);
 const messages = { en, ja, vi: vi_ } as const;
@@ -24,6 +26,10 @@ function renderCerts(opts: { locale?: Locale; content?: Content } = {}) {
 const JLPT = /Japanese Language Proficiency Test/;
 const lanternOf = (button: HTMLElement) => button.closest("li") as HTMLElement;
 const backOf = (button: HTMLElement) => lanternOf(button).querySelector("[data-lantern-back]") as HTMLElement;
+
+// These tests render sections that contain <Reveal>, whose whileInView needs an IntersectionObserver.
+beforeEach(() => stubIntersectionObserver());
+afterEach(() => vi.unstubAllGlobals());
 
 describe("Certificates section", () => {
   it("is a section labelled by its heading", () => {

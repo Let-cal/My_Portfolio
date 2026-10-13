@@ -1,11 +1,12 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "@/messages/en.json";
 import ja from "@/messages/ja.json";
 import seed from "@/content/seed.json";
 import { contentSchema, type Content, type Locale } from "@/content/schema";
+import { stubIntersectionObserver } from "../helpers/io-stub";
 
 const replace = vi.hoisted(() => vi.fn());
 const search = vi.hoisted(() => ({ value: "" }));
@@ -40,6 +41,10 @@ const el = (id: string) => {
   return node;
 };
 const before = (a: HTMLElement, b: HTMLElement) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+
+// These tests render sections that contain <Reveal>, whose whileInView needs an IntersectionObserver.
+beforeEach(() => stubIntersectionObserver());
+afterEach(() => vi.unstubAllGlobals());
 
 describe("Experience river", () => {
   beforeEach(() => {

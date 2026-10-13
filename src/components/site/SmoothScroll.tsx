@@ -11,7 +11,13 @@ function anchorTarget(event: MouseEvent): { el: HTMLElement; hash: string } | nu
   if (!link || (link.target && link.target !== "_self") || link.hasAttribute("download")) return null;
   const url = new URL(link.href, window.location.href);
   if (url.origin !== window.location.origin || url.pathname !== window.location.pathname || url.hash.length < 2) return null;
-  const el = document.getElementById(decodeURIComponent(url.hash.slice(1)));
+  let id = url.hash.slice(1);
+  try {
+    id = decodeURIComponent(id);
+  } catch {
+    // A malformed escape such as "#%E0%A4%A": look the raw text up instead of throwing out of the click handler.
+  }
+  const el = document.getElementById(id);
   return el ? { el, hash: url.hash } : null;
 }
 

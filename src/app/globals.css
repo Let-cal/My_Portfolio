@@ -227,10 +227,18 @@ body:lang(ja) {
   }
 }
 
-/* <Reveal> server-renders hidden; visitors who reduce motion get the final state before hydration. */
+/* <Reveal> server-renders hidden. Visitors who reduce motion get the final state before hydration, and a printout (or a
+   print-to-PDF taken before the reveals have run) shows everything. Keep the noscript copy in reveal-style.ts in step. */
 :root[data-motion="reduced"] [data-reveal] {
   opacity: 1 !important;
   transform: none !important;
+}
+
+@media print {
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
 :root[data-motion="reduced"] {
