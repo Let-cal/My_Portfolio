@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { contentSchema } from "@/content/schema";
 import seed from "@/content/seed.json";
-import { loadContent } from "@/lib/data/get-content";
+import { loadContent, loadContentWithSource } from "@/lib/data/get-content";
 import type { ContentRepository } from "@/lib/data/repository";
 
 const seedContent = contentSchema.parse(seed);
@@ -52,5 +52,34 @@ describe("loadContent", () => {
     const repo: ContentRepository = { getContent: async () => custom };
     const result = await loadContent(withUrl, () => repo);
     expect(result.whyCards).toEqual([]);
+  });
+});
+
+describe("loadContentWithSource", () => {
+  it("reports seed-unconfigured without a Supabase URL", async () => {
+    const r = await loadContentWithSource({});
+    expect(r.source).toBe("seed-unconfigured");
+    expect(r.content).toEqual(seedContent);
+  });
+
+  it("reports seed-fallback when the repository throws", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const failing: ContentRepository = {
+      getContent: async () => {
+        throw new Error("paused");
+      },
+    };
+    expect((await loadContentWithSource(withUrl, () => failing)).source).toBe("seed-fallback");
+  });
+
+  it("reports seed-fallback when the repository returns invalid data", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const invalid = { getContent: async () => ({ nope: true }) } as unknown as ContentRepository;
+    expect((await loadContentWithSource(withUrl, () => invalid)).source).toBe("seed-fallback");
+  });
+
+  it("reports supabase when the repository returns valid data", async () => {
+    const repo: ContentRepository = { getContent: async () => seedContent };
+    expect((await loadContentWithSource(withUrl, () => repo)).source).toBe("supabase");
   });
 });
