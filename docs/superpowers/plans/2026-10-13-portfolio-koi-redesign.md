@@ -657,3 +657,32 @@ Quy ước chung:
 - Chọn PM thì `--role-accent` là `#e0a84e` và ảnh base có `src` chứa `role-pm`.
 - RolePanels: role techlead thì panel Tech Lead có class/`data-state="active"` và chứa đủ 4 chip; 2 panel còn lại không hiện chi tiết (`aria-hidden` trên phần chi tiết hoặc `data-state="collapsed"`).
 - Khi reduced-motion, chọn vai trò thì base đổi ngay (không cần chờ timer).
+
+
+### Task 29: Nút Motion on/off (chủ dự án yêu cầu 2026-10-13)
+
+**Lý do:** máy chủ dự án tắt "Animation effects" trong Windows, nên trình duyệt báo `prefers-reduced-motion: reduce` và trang hiện bản tĩnh. Nhà tuyển dụng có máy cài như vậy cũng sẽ thấy bản tĩnh dù trang đã deploy. Cần một nút để người xem tự bật animation lên.
+
+**Hành vi:**
+- Ba trạng thái: `system` (mặc định, theo cài đặt máy), `on` (luôn có chuyển động), `off` (luôn tĩnh).
+- Nút trong header chỉ chuyển qua lại giữa On và Off, và hiện trạng thái đang có hiệu lực. Lần bấm đầu tiên sẽ chuyển từ `system` sang giá trị ngược với trạng thái hiện tại.
+- Trong ⌘K (Task 12) có thêm lệnh "Motion: System / On / Off".
+- Lựa chọn lưu ở `localStorage['motion']`.
+- Trạng thái có hiệu lực: `reduced = pref === 'off' || (pref === 'system' && OS reduce)`.
+
+**Files:** Create `src/components/site/motion-preference.ts` (store + `useMotionPreference()` + `useReducedMotionEffective()`), `src/components/site/motion-script.ts` (script inline chạy trước khi paint, giống theme-script), `src/components/site/MotionToggle.tsx`. Modify `src/app/[locale]/layout.tsx` (thêm script; bọc trong `<MotionConfig reducedMotion={reduced ? "always" : "never"}>` của `motion/react`), `src/app/globals.css`, `src/components/fx/use-media-query.ts`, `src/components/site/Header.tsx`, cùng mọi file đang đọc trực tiếp `prefers-reduced-motion`. Messages en/ja/vi. Test `tests/unit/motion-preference.test.tsx`.
+
+**Interfaces:**
+- `<html data-motion="reduced" | "full">`: script trước paint đặt giá trị này từ localStorage + `matchMedia`. Store cũng cập nhật khi OS đổi cài đặt (nếu pref là `system`) và khi người dùng bấm.
+- **CSS:** thay mọi `@media (prefers-reduced-motion: reduce)` trong `globals.css` bằng selector `:root[data-motion="reduced"] …`. Định nghĩa lại variant Tailwind v4: `@custom-variant motion-reduce (&:where([data-motion=reduced], [data-motion=reduced] *));` và `@custom-variant motion-safe (&:where([data-motion=full], [data-motion=full] *));`.
+- **JS:** `usePrefersReducedMotion()` trong `use-media-query.ts` trả về giá trị có hiệu lực (đọc `data-motion` qua store) thay vì `matchMedia` trực tiếp, để toàn bộ fx, wheel, beam, carousel, terminal… tự theo. Grep `prefers-reduced-motion` và `useReducedMotion` trong `src/`: chỗ nào còn đọc trực tiếp thì chuyển sang hook này.
+- `MotionToggle`: nút icon (Sparkles / Pause, lucide) có `aria-pressed` (true = motion on), label lấy từ messages, đặt cạnh ThemeToggle trong header (cả desktop lẫn mobile).
+
+**Test (fail trước):**
+- Store: pref mặc định `system`; OS reduce + system thì `reduced=true`; set `on` thì `reduced=false` và `localStorage.motion === 'on'`; set `off` thì `reduced=true`.
+- Script inline: với `localStorage.motion='on'` và matchMedia reduce=true thì đặt `data-motion="full"`.
+- `MotionToggle`: bấm thì `aria-pressed` đổi và `document.documentElement.dataset.motion` đổi.
+- Một component dùng `usePrefersReducedMotion` (ví dụ NumberTicker) đếm bình thường khi pref=on dù OS reduce.
+- Không còn `@media (prefers-reduced-motion` trong `src/app/globals.css` (test đọc file).
+
+Commit `feat(site): add motion on/off toggle that overrides the OS preference`.
