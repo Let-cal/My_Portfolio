@@ -1,0 +1,58 @@
+{
+  "meta": {
+    "title": "Le Tran Cat Lam | Kỹ sư phần mềm",
+    "description": "Portfolio của Le Tran Cat Lam, kỹ sư phần mềm ở TP. Hồ Chí Minh, đã tham gia các dự án cho khách hàng Nhật."
+  },
+  "nav": {
+    "hero": "Trang chủ",
+    "experience": "Kinh nghiệm",
+    "projects": "Dự án",
+    "skills": "Kỹ năng",
+    "certificates": "Chứng chỉ",
+    "why": "Vì sao chọn tôi",
+    "contact": "Liên hệ"
+  },
+  "sections": {
+    "hero": "Le Tran Cat Lam",
+    "experience": "Kinh nghiệm",
+    "projects": "Dự án",
+    "skills": "Kỹ năng",
+    "certificates": "Chứng chỉ",
+    "why": "Vì sao nên làm việc cùng tôi",
+    "contact": "Liên hệ"
+  },
+  "header": {
+    "home": "Trang chủ LETCAL",
+    "primaryNav": "Điều hướng chính",
+    "openMenu": "Mở menu",
+    "closeMenu": "Đóng menu",
+    "openCommand": "Mở bảng lệnh",
+    "skipToContent": "Bỏ qua tới nội dung"
+  },
+  "language": {
+    "label": "Ngôn ngữ",
+    "en": "English",
+    "ja": "日本語",
+    "vi": "Tiếng Việt"
+  },
+  "theme": {
+    "toLight": "Chuyển sang giao diện sáng",
+    "toDark": "Chuyển sang giao diện tối"
+  },
+  "roles": {
+    "label": "Vai trò",
+    "fullstack": "Full-stack",
+    "techlead": "Tech Lead",
+    "pm": "Quản lý dự án"
+  },
+  "footer": {
+    "rights": "Bảo lưu mọi quyền.",
+    "links": "Liên kết",
+    "github": "GitHub",
+    "linkedin": "LinkedIn",
+    "email": "Email"
+  },
+  "common": {
+    "present": "Hiện tại"
+  }
+}

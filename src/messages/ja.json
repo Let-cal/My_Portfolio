@@ -1,0 +1,58 @@
+{
+  "meta": {
+    "title": "Le Tran Cat Lam | ソフトウェアエンジニア",
+    "description": "ホーチミン市在住のソフトウェアエンジニア、Le Tran Cat Lamのポートフォリオです。日本のお客様向けプロジェクトに携わってきました。"
+  },
+  "nav": {
+    "hero": "ホーム",
+    "experience": "職務経歴",
+    "projects": "プロジェクト",
+    "skills": "スキル",
+    "certificates": "資格",
+    "why": "強み",
+    "contact": "連絡先"
+  },
+  "sections": {
+    "hero": "Le Tran Cat Lam",
+    "experience": "職務経歴",
+    "projects": "プロジェクト",
+    "skills": "スキル",
+    "certificates": "資格",
+    "why": "一緒に働く理由",
+    "contact": "連絡先"
+  },
+  "header": {
+    "home": "LETCAL ホーム",
+    "primaryNav": "メインナビゲーション",
+    "openMenu": "メニューを開く",
+    "closeMenu": "メニューを閉じる",
+    "openCommand": "コマンドパレットを開く",
+    "skipToContent": "本文へスキップ"
+  },
+  "language": {
+    "label": "言語",
+    "en": "English",
+    "ja": "日本語",
+    "vi": "Tiếng Việt"
+  },
+  "theme": {
+    "toLight": "ライトテーマに切り替える",
+    "toDark": "ダークテーマに切り替える"
+  },
+  "roles": {
+    "label": "役割",
+    "fullstack": "フルスタック",
+    "techlead": "テックリード",
+    "pm": "プロジェクトマネージャー"
+  },
+  "footer": {
+    "rights": "無断転載を禁じます。",
+    "links": "リンク",
+    "github": "GitHub",
+    "linkedin": "LinkedIn",
+    "email": "メール"
+  },
+  "common": {
+    "present": "現在"
+  }
+}

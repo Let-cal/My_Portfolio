@@ -1,0 +1,58 @@
+{
+  "meta": {
+    "title": "Le Tran Cat Lam | Software Engineer",
+    "description": "Portfolio of Le Tran Cat Lam, a software engineer in Ho Chi Minh City who has worked on projects for Japanese clients."
+  },
+  "nav": {
+    "hero": "Home",
+    "experience": "Experience",
+    "projects": "Projects",
+    "skills": "Skills",
+    "certificates": "Certificates",
+    "why": "Why me",
+    "contact": "Contact"
+  },
+  "sections": {
+    "hero": "Le Tran Cat Lam",
+    "experience": "Experience",
+    "projects": "Projects",
+    "skills": "Skills",
+    "certificates": "Certificates",
+    "why": "Why work with me",
+    "contact": "Contact"
+  },
+  "header": {
+    "home": "LETCAL home",
+    "primaryNav": "Main navigation",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "openCommand": "Open command palette",
+    "skipToContent": "Skip to content"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "ja": "日本語",
+    "vi": "Tiếng Việt"
+  },
+  "theme": {
+    "toLight": "Switch to light theme",
+    "toDark": "Switch to dark theme"
+  },
+  "roles": {
+    "label": "Role",
+    "fullstack": "Full-stack",
+    "techlead": "Tech Lead",
+    "pm": "Project Manager"
+  },
+  "footer": {
+    "rights": "All rights reserved.",
+    "links": "Links",
+    "github": "GitHub",
+    "linkedin": "LinkedIn",
+    "email": "Email"
+  },
+  "common": {
+    "present": "Present"
+  }
+}
