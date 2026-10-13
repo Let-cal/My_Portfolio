@@ -17,6 +17,9 @@ vi.mock("@react-three/fiber", () => ({
   },
   useFrame: () => {},
 }));
+// The creature and the stage need WebGL; their logic is covered by creature-math.test.ts.
+vi.mock("@/scene/creature/Creature", () => ({ Creature: () => null }));
+vi.mock("@/scene/TempStage", () => ({ TempStage: () => null }));
 
 describe("SceneRoot", () => {
   it("never catches pointer events: the canvas container is pointer-events none", () => {

@@ -2,6 +2,8 @@
 
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useEffect, useRef, useState } from "react";
+import { Creature } from "./creature/Creature";
+import { TempStage } from "./TempStage";
 import { MIN_FPS_SAMPLES, shouldDowngrade, type Tier } from "./tier";
 
 /** The first frames include shader compilation and context setup; they say nothing about steady-state speed. */
@@ -37,7 +39,8 @@ type SceneRootProps = {
 };
 
 /**
- * The 3D layer. For now an empty transparent canvas; the creature, water and lights are added on top.
+ * The 3D layer: a transparent canvas with the koi/dragon creature. `TempStage` is a stand-in camera and lighting
+ * until the pond scene (Task 16) replaces it.
  * Rendering stops while the tab is hidden. The canvas is `position: fixed`, so it is never off-screen.
  */
 export default function SceneRoot({ tier, onReadyChange, onDowngrade }: SceneRootProps) {
@@ -59,12 +62,16 @@ export default function SceneRoot({ tier, onReadyChange, onDowngrade }: SceneRoo
       dpr={[1, tier === "high" ? 1.5 : 1.25]}
       frameloop={hidden ? "never" : "always"}
       gl={{ alpha: true, antialias: tier === "high", powerPreference: "high-performance" }}
+      camera={{ fov: 40, near: 0.1, far: 60, position: [0, 3.2, 3.5] }}
       onCreated={({ gl }) => {
         gl.setClearColor(0x000000, 0);
+        gl.toneMappingExposure = 1.05;
         onReadyChange(true);
       }}
     >
       {tier === "high" && <FpsProbe onDowngrade={onDowngrade} />}
+      <TempStage />
+      <Creature />
     </Canvas>
   );
 }
