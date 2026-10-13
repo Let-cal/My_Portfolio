@@ -47,7 +47,7 @@ Portfolio hiện tại được build khoảng 1 năm trước (5/2025), trướ
 
 ## 3. Ràng buộc
 
-- Deploy trên Vercel, repo GitHub hiện có, dùng gói free (Vercel Hobby, Supabase Free).
+- **Không tốn chi phí [Chủ dự án, 2026-10-13]:** mọi dịch vụ, thư viện, tên miền và asset đều phải miễn phí. Deploy trên Vercel Hobby, DB trên Supabase Free, tên miền is-a.dev, chỉ dùng font và asset có license miễn phí. Supabase Free tự tạm dừng project sau khoảng 7 ngày không có request, khi đó lớp data tự rơi về seed để trang không chết, và README hướng dẫn cách bật lại.
 - Máy dev là Windows, Node 22, không có Docker, nên không chạy được Supabase local.
 - Claude không được tạo tài khoản hay nhập mật khẩu. Việc tạo project Supabase, tạo user admin và cấu hình env trên Vercel là do chủ dự án làm, theo hướng dẫn trong README.
 - Giữ tông màu cam chủ đạo hiện tại (`#fb923c` / `#f97316`) **[Chủ dự án]**, nền tối là chủ đạo.
