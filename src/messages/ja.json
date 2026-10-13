@@ -59,6 +59,24 @@
     "linkedin": "LinkedIn",
     "email": "メール"
   },
+  "experience": {
+    "education": "学歴",
+    "teamSize": "チーム規模: {size}",
+    "viewCaseStudy": "事例を見る",
+    "techLabel": "技術スタック",
+    "moreTech": "ほか{count}件",
+    "skgIntern": "ソフトウェアエンジニアインターン",
+    "skgEngineer": "ソフトウェアエンジニア(プロジェクトマネージャー/テックリード代行)",
+    "gpa": "GPA {gpa}"
+  },
+  "caseStudy": {
+    "problem": "課題",
+    "role": "役割",
+    "decisions": "判断",
+    "result": "結果",
+    "tech": "技術スタック",
+    "team": "チーム規模: {size}"
+  },
   "common": {
     "present": "現在"
   }

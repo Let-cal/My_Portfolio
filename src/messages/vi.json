@@ -59,6 +59,24 @@
     "linkedin": "LinkedIn",
     "email": "Email"
   },
+  "experience": {
+    "education": "Học vấn",
+    "teamSize": "Quy mô team: {size}",
+    "viewCaseStudy": "Xem case study",
+    "techLabel": "Công nghệ",
+    "moreTech": "+{count} nữa",
+    "skgIntern": "Thực tập sinh kỹ sư phần mềm",
+    "skgEngineer": "Kỹ sư phần mềm, kiêm Project Manager / Tech Lead",
+    "gpa": "GPA {gpa}"
+  },
+  "caseStudy": {
+    "problem": "Vấn đề",
+    "role": "Vai trò",
+    "decisions": "Quyết định",
+    "result": "Kết quả",
+    "tech": "Công nghệ",
+    "team": "Quy mô team: {size}"
+  },
   "common": {
     "present": "Hiện tại"
   }

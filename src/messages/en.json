@@ -59,6 +59,24 @@
     "linkedin": "LinkedIn",
     "email": "Email"
   },
+  "experience": {
+    "education": "Education",
+    "teamSize": "Team size: {size}",
+    "viewCaseStudy": "View case study",
+    "techLabel": "Tech stack",
+    "moreTech": "+{count} more",
+    "skgIntern": "Software Engineer Intern",
+    "skgEngineer": "Software Engineer — acting Project Manager / Tech Lead",
+    "gpa": "GPA {gpa}"
+  },
+  "caseStudy": {
+    "problem": "Problem",
+    "role": "Role",
+    "decisions": "Decisions",
+    "result": "Result",
+    "tech": "Tech stack",
+    "team": "Team size: {size}"
+  },
   "common": {
     "present": "Present"
   }
