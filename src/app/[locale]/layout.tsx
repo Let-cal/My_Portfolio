@@ -96,7 +96,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
               <Header cvUrls={cvUrls} />
               {/* z-10 keeps the content above the pointer spotlight (z-0) and the 3D canvas (z-index -1).
                   From 1024px: rail (30%) | content (70%). Below that the rail is hidden and the pill nav shows. */}
-              <div className="relative z-10 flex flex-1 flex-col pt-14 pb-24 lg:grid lg:grid-cols-[minmax(17rem,30%)_minmax(0,1fr)] lg:pt-0 lg:pb-0">
+              <div data-site-shell="" className="relative z-10 flex flex-1 flex-col pt-14 pb-24 lg:grid lg:grid-cols-[minmax(17rem,30%)_minmax(0,1fr)] lg:pt-0 lg:pb-0">
                 <SideRail name={profile.name} titles={titles} links={{ github: profile.github, linkedin: profile.linkedin, email: profile.email }} />
                 <div className="flex min-w-0 flex-1 flex-col">
                   <div className="flex flex-1 flex-col">

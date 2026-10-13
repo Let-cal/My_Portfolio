@@ -241,6 +241,52 @@ body:lang(ja) {
   }
 }
 
+/* ---- 60-second view (/[locale]/quick): a one-page layout without the site chrome ----
+   The page's root element carries data-quick-view. While it is shown, every other child of <body> (skip link,
+   header, pill nav, toaster, spotlight, grain, progress koi, hello greeting, and later the 3D canvas) is hidden,
+   and so are the side rail and the footer inside the shell, whose rail column and padding are flattened.
+   A soft navigation can leave a hidden copy of this page in the DOM; React hides it with an inline
+   display:none, so those copies are skipped and the chrome of the page you came back to stays. */
+body:has([data-quick-view]:not([style*="display: none"])) {
+  & > :not(:has([data-quick-view])) {
+    display: none !important;
+  }
+  & [data-site-shell] {
+    display: block;
+    padding: 0;
+  }
+  & [data-site-shell] :is(aside, footer):not([data-quick-view] *) {
+    display: none;
+  }
+}
+
+@page {
+  size: A4;
+  margin: 12mm;
+}
+
+/* Paper is light: on a dark theme the quick view prints with the light tokens, and no background is needed. */
+@media print {
+  html:has([data-quick-view]),
+  body:has([data-quick-view]) {
+    background: #fff !important;
+    color: #18181b !important;
+  }
+  body:has([data-quick-view]) {
+    --bg: #fff;
+    --fg: #18181b;
+    --muted: #52525b;
+    --card: #fff;
+    --border: rgb(0 0 0 / 18%);
+    --brand-text: #c2410c;
+    --muted-surface: #f1f1ef;
+    --background: var(--bg);
+    --foreground: var(--fg);
+    --card-foreground: var(--fg);
+    color-scheme: light;
+  }
+}
+
 :root[data-motion="reduced"] {
   .fx-wave,
   .fx-char,

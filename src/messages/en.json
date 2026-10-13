@@ -300,6 +300,17 @@
     "openToWork": "Open to work",
     "localTime": "Local time"
   },
+  "quick": {
+    "title": "60-second view",
+    "metaTitle": "60-second view | Le Tran Cat Lam",
+    "description": "A one-page summary of Le Tran Cat Lam for recruiters: role, recent experience, skills, certificates and contact. It prints on one A4 page.",
+    "back": "Back to full site",
+    "print": "Print",
+    "toolsLabel": "Page tools",
+    "loading": "Loading the 60-second view",
+    "keyExperience": "Recent experience",
+    "contactLabel": "Contact details"
+  },
   "common": {
     "present": "Present",
     "close": "Close"

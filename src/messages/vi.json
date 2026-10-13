@@ -300,6 +300,17 @@
     "openToWork": "Đang tìm việc",
     "localTime": "Giờ địa phương"
   },
+  "quick": {
+    "title": "Xem nhanh 60 giây",
+    "metaTitle": "Xem nhanh 60 giây | Le Tran Cat Lam",
+    "description": "Tóm tắt một trang về Le Tran Cat Lam dành cho nhà tuyển dụng: vai trò, kinh nghiệm gần đây, kỹ năng, chứng chỉ và liên hệ. In vừa một trang A4.",
+    "back": "Quay lại trang đầy đủ",
+    "print": "In",
+    "toolsLabel": "Công cụ của trang",
+    "loading": "Đang tải bản xem nhanh 60 giây",
+    "keyExperience": "Kinh nghiệm gần đây",
+    "contactLabel": "Thông tin liên hệ"
+  },
   "common": {
     "present": "Hiện tại",
     "close": "Đóng"

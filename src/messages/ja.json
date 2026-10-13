@@ -300,6 +300,17 @@
     "openToWork": "求職中",
     "localTime": "現地時間"
   },
+  "quick": {
+    "title": "60秒で見る",
+    "metaTitle": "60秒で見る | Le Tran Cat Lam",
+    "description": "採用ご担当者向けに、Le Tran Cat Lamの役割、最近の経歴、スキル、資格、連絡先を1ページにまとめました。A4で1ページに印刷できます。",
+    "back": "サイト全体に戻る",
+    "print": "印刷",
+    "toolsLabel": "ページの操作",
+    "loading": "60秒ビューを読み込み中",
+    "keyExperience": "最近の経歴",
+    "contactLabel": "連絡先"
+  },
   "common": {
     "present": "現在",
     "close": "閉じる"
