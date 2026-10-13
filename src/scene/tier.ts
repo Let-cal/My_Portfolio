@@ -34,8 +34,13 @@ export function detectWebGL(): boolean {
     const canvas = document.createElement("canvas");
     const gl = canvas.getContext("webgl2") ?? canvas.getContext("webgl");
     webglSupport = !!gl;
-    // Give the probe context back right away; browsers cap the number of live contexts.
-    (gl as WebGLRenderingContext | null)?.getExtension("WEBGL_lose_context")?.loseContext();
+    // Give the probe context back right away (browsers cap the number of live contexts). A failure
+    // here must not turn a working WebGL into "unsupported".
+    try {
+      (gl as WebGLRenderingContext | null)?.getExtension("WEBGL_lose_context")?.loseContext();
+    } catch {
+      // ignore
+    }
   } catch {
     webglSupport = false;
   }

@@ -6,7 +6,7 @@ import { MIN_FPS_SAMPLES, shouldDowngrade, type Tier } from "./tier";
 
 /** The first frames include shader compilation and context setup; they say nothing about steady-state speed. */
 const WARMUP_FRAMES = 8;
-/** A frame this long means the tab was hidden or the main thread was blocked, not that the scene is slow. */
+/** Longest frame time a sample may report (seconds). */
 const MAX_SAMPLE_DELTA = 0.25;
 
 /**
@@ -19,8 +19,9 @@ function FpsProbe({ onDowngrade }: { onDowngrade: () => void }) {
   const done = useRef(false);
   useFrame((_, delta) => {
     if (done.current) return;
-    if (frames.current++ < WARMUP_FRAMES || delta <= 0 || delta > MAX_SAMPLE_DELTA) return;
-    samples.current.push(1 / delta);
+    if (frames.current++ < WARMUP_FRAMES || delta <= 0) return;
+    // A long frame (hidden tab, blocked thread) counts as a slow one, but no slower than 4 fps.
+    samples.current.push(1 / Math.min(delta, MAX_SAMPLE_DELTA));
     if (samples.current.length < MIN_FPS_SAMPLES) return;
     done.current = true;
     if (shouldDowngrade(samples.current)) onDowngrade();
@@ -52,6 +53,9 @@ export default function SceneRoot({ tier, onReadyChange, onDowngrade }: SceneRoo
 
   return (
     <Canvas
+      // R3F's wrapper div defaults to pointer-events: auto when there is no eventSource, which would catch every
+      // click over the viewport. The scene reads the pointer from the store instead, so nothing here needs events.
+      style={{ pointerEvents: "none" }}
       dpr={[1, tier === "high" ? 1.5 : 1.25]}
       frameloop={hidden ? "never" : "always"}
       gl={{ alpha: true, antialias: tier === "high", powerPreference: "high-performance" }}

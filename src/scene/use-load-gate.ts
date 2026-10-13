@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { MOBILE_IDLE_LOAD_MS } from "./loading";
 
-const INTERACTION_EVENTS = ["pointerdown", "touchstart", "keydown", "wheel", "scroll"] as const;
+const INTERACTION_EVENTS = ["pointerdown", "touchstart", "keydown", "wheel"] as const;
 
 function whenIdle(cb: () => void): () => void {
   if (typeof window.requestIdleCallback === "function") {
@@ -16,7 +16,7 @@ function whenIdle(cb: () => void): () => void {
 
 /**
  * The three facts `shouldLoadScene` needs. `pageLoaded` turns true after the `load` event and a browser idle
- * callback; `idleMs` jumps to 3000 three seconds after that; `interacted` after the first touch, key, wheel or scroll.
+ * callback; `idleMs` jumps to 3000 three seconds after that; `interacted` after the first touch, click, key press or wheel turn (not scroll: a restored scroll position would count).
  */
 export function useLoadGate(): { pageLoaded: boolean; interacted: boolean; idleMs: number } {
   const [pageLoaded, setPageLoaded] = useState(false);

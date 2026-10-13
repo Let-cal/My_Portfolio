@@ -70,10 +70,21 @@ export function usePointerTracking(enabled: boolean) {
       next = over ? { x: (e.clientX / window.innerWidth) * 2 - 1, y: -((e.clientY / window.innerHeight) * 2 - 1) } : null;
       if (!frame) frame = requestAnimationFrame(flush);
     };
+    // The pointer left the page or the window lost focus: nothing is hovering the water any more.
+    const onLeave = () => {
+      if (frame) cancelAnimationFrame(frame);
+      frame = 0;
+      next = null;
+      sceneStore.setState({ pointer: null });
+    };
     window.addEventListener("pointermove", onMove, { passive: true });
+    document.documentElement.addEventListener("pointerleave", onLeave);
+    window.addEventListener("blur", onLeave);
     return () => {
       if (frame) cancelAnimationFrame(frame);
       window.removeEventListener("pointermove", onMove);
+      document.documentElement.removeEventListener("pointerleave", onLeave);
+      window.removeEventListener("blur", onLeave);
       sceneStore.setState({ pointer: null });
     };
   }, [enabled]);

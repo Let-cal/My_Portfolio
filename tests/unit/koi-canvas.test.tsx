@@ -11,8 +11,10 @@ vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams("
 vi.mock("@/i18n/navigation", () => ({ useRouter: () => ({ replace: vi.fn() }), usePathname: () => "/en" }));
 vi.mock("@/scene/tier", async (orig) => ({ ...(await orig<typeof import("@/scene/tier")>()), detectWebGL: vi.fn(() => true) }));
 // Stands in for the real three.js scene so the test never needs WebGL.
+const sceneFault = vi.hoisted(() => ({ throwOnRender: false }));
 vi.mock("@/scene/SceneRoot", () => ({
   default: function FakeSceneRoot({ tier, onReadyChange }: { tier: string; onReadyChange: (r: boolean) => void }) {
+    if (sceneFault.throwOnRender) throw new Error("renderer creation failed");
     return <canvas data-testid="scene" data-tier={tier} ref={() => onReadyChange(true)} />;
   },
 }));
@@ -34,6 +36,7 @@ beforeEach(() => {
   document.documentElement.className = "dark";
   setMotionPreference("on");
   sceneStore.reset();
+  sceneFault.throwOnRender = false;
   vi.mocked(detectWebGL).mockReturnValue(true);
 });
 afterEach(() => {
@@ -132,6 +135,55 @@ describe("KoiCanvas", () => {
   });
 });
 
+describe("KoiCanvas failure handling", () => {
+  it("a scene that throws leaves the page and the fallback image in place, and warns once", async () => {
+    sceneFault.throwOnRender = true;
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const error = vi.spyOn(console, "error").mockImplementation(() => {}); // React logs caught render errors
+    render(
+      <>
+        <p>page content</p>
+        <KoiCanvas />
+      </>,
+    );
+    await waitFor(() => expect(warn).toHaveBeenCalledTimes(1));
+    await settle();
+    expect(screen.getByText("page content")).toBeInTheDocument();
+    expect(screen.queryByTestId("scene")).toBeNull();
+    expect(document.querySelector("canvas")).toBeNull();
+    expect(img()).not.toBeNull();
+    expect(img()!.style.opacity).toBe("0.6");
+    expect(sceneStore.getState().tier).toBe("off");
+    expect(warn).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
+    error.mockRestore();
+  });
+});
+
+describe("KoiCanvas mobile loading", () => {
+  it("scrolling alone does not load the scene; the first touch does", async () => {
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: query.includes("max-width: 767px"),
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+    }));
+    render(<KoiCanvas />);
+    await waitFor(() => expect(img()).not.toBeNull());
+    act(() => {
+      window.dispatchEvent(new Event("scroll"));
+    });
+    await settle();
+    expect(screen.queryByTestId("scene")).toBeNull();
+    act(() => {
+      window.dispatchEvent(new Event("touchstart"));
+    });
+    expect(await screen.findByTestId("scene")).toHaveAttribute("data-tier", "low");
+  });
+});
+
 describe("KoiCanvas input tracking", () => {
   it("writes chapter and t into the store on scroll", async () => {
     const tops = { hero: 0, experience: 1000, projects: 2000, skills: 3000, certificates: 4000, why: 5000, contact: 6000 };
@@ -180,6 +232,19 @@ describe("KoiCanvas input tracking", () => {
     await waitFor(() => expect(sceneStore.getState().pointer).toBeNull());
     move(zone, 1000, 0);
     await waitFor(() => expect(sceneStore.getState().pointer).toEqual({ x: 1, y: 1 }));
+    // Leaving the page (or losing focus) clears it, even over the water.
+    move(zone, 500, 400);
+    await waitFor(() => expect(sceneStore.getState().pointer).not.toBeNull());
+    act(() => {
+      document.documentElement.dispatchEvent(new Event("pointerleave"));
+    });
+    expect(sceneStore.getState().pointer).toBeNull();
+    move(zone, 500, 400);
+    await waitFor(() => expect(sceneStore.getState().pointer).not.toBeNull());
+    act(() => {
+      window.dispatchEvent(new Event("blur"));
+    });
+    expect(sceneStore.getState().pointer).toBeNull();
     zone.remove();
     other.remove();
   });

@@ -8,6 +8,7 @@ import { useRole } from "@/components/site/RoleProvider";
 import { useTheme } from "@/components/site/theme";
 import { DRAGON_CHAPTER } from "./chapters";
 import { shouldLoadScene } from "./loading";
+import { SceneErrorBoundary } from "./SceneErrorBoundary";
 import { sceneStore, useSceneStore } from "./store";
 import { detectTier, detectWebGL, MOBILE_QUERY, type Tier } from "./tier";
 import { useLoadGate } from "./use-load-gate";
@@ -44,10 +45,11 @@ export function KoiCanvas() {
   const gate = useLoadGate();
   const [downgraded, setDowngraded] = useState(false);
   const [ready, setReady] = useState(false);
+  const [failed, setFailed] = useState(false);
   const dragon = useSceneStore((s) => s.chapter >= DRAGON_CHAPTER);
 
   // Until WebGL has been probed the tier is `off`, so nothing loads and the image shows.
-  const detected: Tier = webgl === null ? "off" : detectTier({ webgl, reducedMotion, isMobile, cores });
+  const detected: Tier = webgl === null || failed ? "off" : detectTier({ webgl, reducedMotion, isMobile, cores });
   const tier: Tier = detected === "high" && downgraded ? "low" : detected;
   const load = shouldLoadScene({ tier, isMobile, ...gate });
 
@@ -60,6 +62,11 @@ export function KoiCanvas() {
   if (!body) return null;
 
   const src = `/fallback/${dragon ? "dragon" : "koi"}-${theme === "light" ? "day" : "night"}.jpg`;
+  const onSceneError = (error: unknown) => {
+    // Once is enough: `failed` keeps the tier off, so the scene is not mounted (and cannot throw) again.
+    console.warn("3D scene failed to start; showing the static image instead.", error);
+    setFailed(true);
+  };
   const sceneVisible = load && ready && tier !== "off";
   return createPortal(
     <>
@@ -97,7 +104,9 @@ export function KoiCanvas() {
             transition: `opacity ${FADE_MS}ms ease`,
           }}
         >
-          <SceneRoot tier={tier} onReadyChange={setReady} onDowngrade={() => setDowngraded(true)} />
+          <SceneErrorBoundary onError={onSceneError}>
+            <SceneRoot tier={tier} onReadyChange={setReady} onDowngrade={() => setDowngraded(true)} />
+          </SceneErrorBoundary>
         </div>
       )}
     </>,
