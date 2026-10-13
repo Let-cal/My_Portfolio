@@ -181,11 +181,24 @@ Nguồn duy nhất: spec bộ CV §3 (`01_Personal/02_CV_Ung_tuyen/CV_English/do
 7. Khi chủ dự án đã tạo Supabase: chạy seed, đăng nhập admin, tạo/sửa/xóa 1 certificate và thấy trang công khai cập nhật.
 
 ## 10. Việc của chủ dự án (Claude không làm thay được)
+- Gửi pull request đăng ký `letcal.is-a.dev` (file do Claude soạn sẵn), đổi tên project Vercel thành `letcal`.
 - Tạo project Supabase (free), lấy URL, anon key, service role key; tạo user admin bằng email của mình.
 - Thêm env vào Vercel. Đồng ý trước khi Claude push nhánh hoặc merge vào `main` (merge vào `main` sẽ deploy production).
 - Duyệt bản dịch JA/VI và các mô tả dự án.
 
-## 11. Để lại cho người build
+## 11. Tên miền và nhận diện [Chủ dự án, 2026-10-13]
+
+- **Tên miền chính: `letcal.is-a.dev`.** Miễn phí vĩnh viễn, đã kiểm tra còn trống ngày 2026-10-13, trùng username GitHub/LinkedIn và logo LETCAL STUDIO. Không thêm chữ "portfolio" vào tên miền, giống cách các portfolio tham khảo đặt tên (brittanychiang.com, rauno.me, elliott.mangham.dev).
+- Đăng ký bằng pull request vào `github.com/is-a-dev/register`. Claude soạn sẵn file `domains/letcal.json` theo docs mới nhất của is-a.dev (CNAME tới Vercel, tắt redirect `www`). **Chủ dự án tự gửi PR** từ tài khoản GitHub của mình. Sau khi PR được duyệt thì thêm domain trong Vercel → Settings → Domains.
+- Đổi tên project Vercel thành `letcal` để có địa chỉ dự phòng `letcal.vercel.app` (chủ dự án thao tác, hoặc Claude hướng dẫn).
+- **Nhận diện "đây là portfolio" mà không cần chữ portfolio trong URL:**
+  - `<title>`: `Le Tran Cat Lam · Software Engineer Portfolio` (theo từng ngôn ngữ).
+  - Ảnh Open Graph và Twitter card (1200×630, tạo bằng `next/og`): tên, vai trò đang chọn, chữ "Portfolio", hình cá koi. Khi dán link vào LinkedIn, email hay Slack sẽ hiện thẻ xem trước.
+  - Meta description, favicon cá koi, `manifest`, `robots.txt`, `sitemap.xml`, JSON-LD `Person` để Google hiểu đây là trang cá nhân.
+  - Trong CV và LinkedIn ghi rõ nhãn "Portfolio: letcal.is-a.dev".
+- Phương án sau này (tốn phí): `letcal.dev` khoảng 12 USD/năm; hoặc `.id.vn` miễn phí 2 năm nếu còn đủ điều kiện tuổi. Không nằm trong phạm vi bản này.
+
+## 12. Để lại cho người build
 - Cấu trúc thư mục, tên component, chi tiết shader, đường cong easing, thông số camera theo từng chương.
 - Bố cục chi tiết từng section trong khuôn khổ storyboard và quy tắc ở trên.
 - Thư viện nhỏ (icon: lucide; toast: sonner…).
