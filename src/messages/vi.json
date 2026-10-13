@@ -12,6 +12,15 @@
     "why": "Vì sao chọn tôi",
     "contact": "Liên hệ"
   },
+  "pill": {
+    "hero": "Trang chủ",
+    "experience": "Công việc",
+    "projects": "Dự án",
+    "skills": "Kỹ năng",
+    "certificates": "Chứng chỉ",
+    "why": "Vì sao",
+    "contact": "Liên hệ"
+  },
   "sections": {
     "hero": "Le Tran Cat Lam",
     "experience": "Kinh nghiệm",
@@ -38,6 +47,9 @@
   "theme": {
     "toLight": "Chuyển sang giao diện sáng",
     "toDark": "Chuyển sang giao diện tối"
+  },
+  "sound": {
+    "label": "Âm thanh"
   },
   "roles": {
     "label": "Vai trò",
@@ -89,6 +101,7 @@
     "newTab": "(mở trong tab mới)"
   },
   "common": {
-    "present": "Hiện tại"
+    "present": "Hiện tại",
+    "close": "Đóng"
   }
 }

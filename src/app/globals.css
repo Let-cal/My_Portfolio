@@ -230,3 +230,33 @@ body:lang(ja) {
     animation: none !important;
   }
 }
+
+/* ---- site chrome: hello intro ---- */
+@keyframes hello-word-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.25em);
+  }
+}
+/* Safety net: if scripts never run, the overlay hides itself after 4s instead of covering the page for good. */
+@keyframes hello-failsafe {
+  to {
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+[data-hello] {
+  animation: hello-failsafe 0s linear 4s forwards;
+}
+.hello-word {
+  animation: hello-word-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+/* Returning visitors (head script sets data-hello-seen) and reduced motion never see the overlay. */
+html[data-hello-seen] [data-hello] {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-hello] {
+    display: none;
+  }
+}

@@ -1,54 +1,45 @@
 "use client";
 
-import { MenuIcon } from "lucide-react";
+import { DownloadIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { MagneticButton } from "@/components/fx/MagneticButton";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import type { RoleKey } from "@/content/schema";
 import { Link } from "@/i18n/navigation";
 import { DEFAULT_ROLE } from "@/lib/roles";
 import { LanguageSwitch } from "./LanguageSwitch";
 import { useRole } from "./RoleProvider";
-import { SECTION_IDS } from "./sections";
+import { SoundToggle } from "./SoundToggle";
 import { ThemeToggle } from "./ThemeToggle";
 
-export function Header() {
+/**
+ * Top bar. Below 1024px it is a slim full-width bar (logo and quick controls; the section links live in the
+ * bottom pill nav). From 1024px the side rail carries the name and the section links, so the header shrinks
+ * to a small floating cluster in the top-right corner: language, theme, sound, command palette, CV download.
+ */
+export function Header({ cvUrls }: { cvUrls: Record<RoleKey, string> }) {
   const t = useTranslations();
   const { role } = useRole();
-  const [menuOpen, setMenuOpen] = useState(false);
 
-  // Keep the chosen role when jumping to a section.
+  // Keep the chosen role when going back to the top.
   const query = role === DEFAULT_ROLE ? "" : `?role=${role}`;
-  const sectionHref = (id: string) => `/${query}#${id}`;
-
   const openCommand = () => window.dispatchEvent(new Event("open-command"));
 
   return (
-    <header className="fixed inset-x-0 top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 sm:px-6">
+    <header className="fixed inset-x-0 top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md lg:inset-x-auto lg:top-4 lg:right-4 lg:rounded-full lg:border lg:bg-background/60 lg:shadow-sm lg:backdrop-blur-xl">
+      <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-4 sm:px-6 lg:h-11 lg:max-w-none lg:gap-1 lg:pr-2 lg:pl-3">
         <Link
-          href={sectionHref("hero")}
+          href={`/${query}#hero`}
           aria-label={t("header.home")}
-          className="font-heading text-lg font-bold tracking-[0.18em] outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="font-heading text-lg font-bold tracking-[0.18em] outline-none focus-visible:ring-3 focus-visible:ring-ring/50 lg:hidden"
         >
           LET<span className="text-brand-text">CAL</span>
         </Link>
 
-        <nav aria-label={t("header.primaryNav")} className="ml-4 hidden items-center gap-1 lg:flex">
-          {SECTION_IDS.map((id) => (
-            <Link
-              key={id}
-              href={sectionHref(id)}
-              className="rounded-md px-2.5 py-1.5 text-sm text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
-            >
-              {t(`nav.${id}`)}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="ml-auto flex items-center gap-1 sm:gap-2">
+        <div className="ml-auto flex items-center gap-1 sm:gap-2 lg:ml-0 lg:gap-1">
           <LanguageSwitch />
           <ThemeToggle />
+          <SoundToggle />
           <Button
             type="button"
             variant="outline"
@@ -59,43 +50,14 @@ export function Header() {
           >
             <kbd className="font-sans text-xs text-muted-foreground">⌘K</kbd>
           </Button>
-
-          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-            <SheetTrigger asChild>
-              <Button type="button" variant="ghost" size="icon" className="lg:hidden" aria-label={t("header.openMenu")}>
-                <MenuIcon aria-hidden />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right">
-              <SheetTitle className="p-4 pb-0">{t("header.primaryNav")}</SheetTitle>
-              <SheetDescription className="sr-only">{t("header.primaryNav")}</SheetDescription>
-              <nav aria-label={t("header.primaryNav")} className="flex flex-col gap-1 px-2">
-                {SECTION_IDS.map((id) => (
-                  <Link
-                    key={id}
-                    href={sectionHref(id)}
-                    onClick={() => setMenuOpen(false)}
-                    className="rounded-md px-3 py-2.5 text-base text-foreground outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
-                  >
-                    {t(`nav.${id}`)}
-                  </Link>
-                ))}
-              </nav>
-              <div className="mt-auto p-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    openCommand();
-                  }}
-                >
-                  {t("header.openCommand")} <kbd className="font-sans text-xs text-muted-foreground">⌘K</kbd>
-                </Button>
-              </div>
-            </SheetContent>
-          </Sheet>
+          <MagneticButton asChild>
+            <Button asChild size="sm" className="ml-1 hidden lg:inline-flex">
+              <a href={cvUrls[role]} download>
+                <DownloadIcon aria-hidden />
+                {t("hero.downloadCv")}
+              </a>
+            </Button>
+          </MagneticButton>
         </div>
       </div>
     </header>

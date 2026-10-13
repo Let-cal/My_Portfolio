@@ -12,6 +12,15 @@
     "why": "強み",
     "contact": "連絡先"
   },
+  "pill": {
+    "hero": "ホーム",
+    "experience": "経歴",
+    "projects": "制作",
+    "skills": "技術",
+    "certificates": "資格",
+    "why": "強み",
+    "contact": "連絡"
+  },
   "sections": {
     "hero": "Le Tran Cat Lam",
     "experience": "職務経歴",
@@ -38,6 +47,9 @@
   "theme": {
     "toLight": "ライトテーマに切り替える",
     "toDark": "ダークテーマに切り替える"
+  },
+  "sound": {
+    "label": "効果音"
   },
   "roles": {
     "label": "役割",
@@ -89,6 +101,7 @@
     "newTab": "(新しいタブで開きます)"
   },
   "common": {
-    "present": "現在"
+    "present": "現在",
+    "close": "閉じる"
   }
 }

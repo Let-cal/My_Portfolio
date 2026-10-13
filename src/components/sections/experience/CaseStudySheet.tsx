@@ -38,11 +38,13 @@ export function CaseStudySheet({
   returnFocusRef,
 }: CaseStudySheetProps) {
   const t = useTranslations("caseStudy");
+  const tc = useTranslations("common");
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
+        closeLabel={tc("close")}
         className="gap-0 overflow-y-auto data-[side=right]:w-full data-[side=right]:sm:max-w-xl"
         onCloseAutoFocus={(event) => {
           const target = returnFocusRef?.current;

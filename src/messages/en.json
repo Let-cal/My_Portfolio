@@ -12,6 +12,15 @@
     "why": "Why me",
     "contact": "Contact"
   },
+  "pill": {
+    "hero": "Home",
+    "experience": "Work",
+    "projects": "Projects",
+    "skills": "Skills",
+    "certificates": "Certs",
+    "why": "Why me",
+    "contact": "Contact"
+  },
   "sections": {
     "hero": "Le Tran Cat Lam",
     "experience": "Experience",
@@ -38,6 +47,9 @@
   "theme": {
     "toLight": "Switch to light theme",
     "toDark": "Switch to dark theme"
+  },
+  "sound": {
+    "label": "Sound effects"
   },
   "roles": {
     "label": "Role",
@@ -89,6 +101,7 @@
     "newTab": "(opens in new tab)"
   },
   "common": {
-    "present": "Present"
+    "present": "Present",
+    "close": "Close"
   }
 }

@@ -5,8 +5,9 @@ import { usePrefersReducedMotion } from "./use-media-query";
 import { usePointerFine } from "./use-pointer-fine";
 
 /**
- * Full-page glow that follows the pointer. The position is written to CSS variables inside a
- * requestAnimationFrame callback, so a mouse move never triggers a React render.
+ * Full-page glow that follows the pointer. It sits at z-0: above the 3D canvas (z-index -1), under the page
+ * content (z-10). The position is written to CSS variables inside a requestAnimationFrame callback, so a
+ * mouse move never triggers a React render.
  */
 export function Spotlight() {
   const fine = usePointerFine();
@@ -48,7 +49,7 @@ export function Spotlight() {
     <div
       ref={ref}
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 z-30 opacity-0 transition-opacity duration-300"
+      className="pointer-events-none fixed inset-0 z-0 opacity-0 transition-opacity duration-300"
       style={{
         background:
           "radial-gradient(600px circle at var(--fx-spot-x, 50%) var(--fx-spot-y, 50%), rgb(249 115 22 / .10), transparent 80%)",
