@@ -1,6 +1,7 @@
 import { cacheLife } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import { getContent } from "@/lib/data/get-content";
+import { FooterPrinciples } from "./FooterPrinciples";
 
 /** The year is read inside a cache scope so the static shell can include it (see `cacheComponents`). */
 async function CurrentYear() {
@@ -21,6 +22,9 @@ export async function Footer() {
 
   return (
     <footer className="border-t border-border">
+      <div className="mx-auto max-w-6xl px-4 pt-16 pb-6 sm:px-6">
+        <FooterPrinciples />
+      </div>
       <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <p>
           © <CurrentYear /> {profile.name}. {t("rights")}

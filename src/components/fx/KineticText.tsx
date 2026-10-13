@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, type CSSProperties } from "react";
+import type { CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 import { usePrefersReducedMotion } from "./use-media-query";
 
@@ -23,8 +23,9 @@ function graphemes(s: string): string[] {
 /**
  * Per-character entrance. Every character is an aria-hidden span (`data-char`); the real text sits in an
  * sr-only span, so assistive tech reads one clean string. Characters are split by grapheme (decomposed
- * Vietnamese diacritics and emoji stay attached). Space-separated text is grouped per word so lines only
- * wrap between words; text without spaces (Japanese) is left flat so it can wrap between any two characters.
+ * Vietnamese diacritics and emoji stay attached). Space-separated text is grouped per word, and the space that
+ * follows a word stays inside its group, so lines only wrap between words and a wrapped line never starts with
+ * a blank; text without spaces (Japanese) is left flat so it can wrap between any two characters.
  * Reduced motion renders the letters in place without the animation.
  */
 export function KineticText({ as: Tag = "span", text, staggerMs = 35, className }: KineticTextProps) {
@@ -52,13 +53,11 @@ export function KineticText({ as: Tag = "span", text, staggerMs = 35, className 
     <Tag className={className}>
       <span className="sr-only">{text}</span>
       {hasSpaces
-        ? text.split(" ").map((word, w) => (
-            <Fragment key={w}>
-              {w > 0 && renderChar(" ", "whitespace-pre")}
-              <span aria-hidden="true" className="inline-block whitespace-nowrap">
-                {graphemes(word).map((ch) => renderChar(ch))}
-              </span>
-            </Fragment>
+        ? text.split(" ").map((word, w, words) => (
+            <span key={w} aria-hidden="true" className="inline-block whitespace-nowrap">
+              {graphemes(word).map((ch) => renderChar(ch))}
+              {w < words.length - 1 && renderChar(" ", "whitespace-pre")}
+            </span>
           ))
         : graphemes(text).map((ch) => renderChar(ch))}
     </Tag>

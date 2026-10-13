@@ -2,6 +2,7 @@ import { hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { Certificates } from "@/components/sections/Certificates";
+import { Contact } from "@/components/sections/Contact";
 import { Experience } from "@/components/sections/Experience";
 import { Hero } from "@/components/sections/Hero";
 import { Projects } from "@/components/sections/Projects";
@@ -21,7 +22,6 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
   const tn = await getTranslations("nav");
   const content = await getContent();
 
-  // Task 11 replaces each remaining placeholder <section> with its real component.
   // Each section after the hero sits in a `relative` wrapper that carries its chapter label, with a slow
   // water wave on top as the divider. Section backgrounds stay transparent for the 3D canvas behind.
   return (
@@ -40,6 +40,8 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
             <Certificates content={content} locale={locale} />
           ) : id === "why" ? (
             <Why content={content} locale={locale} />
+          ) : id === "contact" ? (
+            <Contact content={content} locale={locale} />
           ) : (
             <section id={id} aria-labelledby={`${id}-heading`} className="mx-auto max-w-6xl scroll-mt-14 px-4 py-24 sm:px-6">
               <h2 id={`${id}-heading`} className="text-3xl font-semibold">

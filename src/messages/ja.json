@@ -159,7 +159,14 @@
     "links": "リンク",
     "github": "GitHub",
     "linkedin": "LinkedIn",
-    "email": "メール"
+    "email": "メール",
+    "principlesLabel": "仕事の進め方",
+    "principles": [
+      "コードを書く前に、要件をはっきりさせます。",
+      "見積もりは正直に出し、変わるときは早めに伝えます。",
+      "決めたことは文書に残し、次の人が迷わないようにします。",
+      "リリース前にレビューし、リリース後に振り返ります。"
+    ]
   },
   "experience": {
     "education": "学歴",
@@ -243,6 +250,22 @@
     "goTo": "{n}枚目のカードへ",
     "seeEvidence": "根拠を見る",
     "hint": "ドラッグ、スワイプ、または矢印キーで切り替えられます。"
+  },
+  "contact": {
+    "headline": "一緒に作りましょう",
+    "intro": "ポジション、プロジェクト、私の仕事についてのご質問など、メールが一番早くつながります。",
+    "cta": "連絡する",
+    "detailsLabel": "連絡先",
+    "email": "メール",
+    "copyEmail": "メールをコピー",
+    "copied": "コピーしました",
+    "linkedin": "LinkedIn",
+    "github": "GitHub",
+    "downloadCv": "CVをダウンロード",
+    "booking": "通話を予約",
+    "statusLabel": "現在の状況",
+    "openToWork": "求職中",
+    "localTime": "現地時間"
   },
   "common": {
     "present": "現在",

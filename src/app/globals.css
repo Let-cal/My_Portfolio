@@ -1088,3 +1088,32 @@ html[data-hello-seen] [data-hello] {
     transform: none;
   }
 }
+
+/* ---- contact + footer principles (Task 11) ---- */
+/* The contact headline waits off-screen with its letters held at their hidden pose (ContactHeadline). */
+[data-contact-headline][data-held] .fx-char {
+  animation-play-state: paused;
+}
+/* Footer principles come in one after another; --i is the line index. Plain visible text until armed. */
+.footer-principle {
+  transition-property: opacity, transform;
+  transition-duration: 700ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: calc(var(--i, 0) * 140ms);
+}
+[data-footer-principles][data-armed]:not([data-shown]) .footer-principle {
+  opacity: 0;
+  transform: translateY(1rem);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-contact-headline][data-held] .fx-char {
+    animation-play-state: running;
+  }
+  .footer-principle {
+    transition: none;
+  }
+  [data-footer-principles][data-armed]:not([data-shown]) .footer-principle {
+    opacity: 1;
+    transform: none;
+  }
+}

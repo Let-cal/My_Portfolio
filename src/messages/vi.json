@@ -159,7 +159,14 @@
     "links": "Liên kết",
     "github": "GitHub",
     "linkedin": "LinkedIn",
-    "email": "Email"
+    "email": "Email",
+    "principlesLabel": "Cách tôi làm việc",
+    "principles": [
+      "Làm rõ yêu cầu trước khi viết code.",
+      "Estimate thành thật, và báo sớm khi có thay đổi.",
+      "Quyết định nào cũng ghi lại, để người sau không phải đoán.",
+      "Review trước khi release, rút kinh nghiệm sau khi release."
+    ]
   },
   "experience": {
     "education": "Học vấn",
@@ -243,6 +250,22 @@
     "goTo": "Đến thẻ {n}",
     "seeEvidence": "Xem bằng chứng",
     "hint": "Kéo, vuốt hoặc dùng phím mũi tên để xem tiếp."
+  },
+  "contact": {
+    "headline": "Cùng nhau xây dựng",
+    "intro": "Một vị trí, một dự án hay câu hỏi về công việc của mình: email là cách nhanh nhất để liên hệ.",
+    "cta": "Liên hệ",
+    "detailsLabel": "Thông tin liên hệ",
+    "email": "Email",
+    "copyEmail": "Sao chép email",
+    "copied": "Đã sao chép",
+    "linkedin": "LinkedIn",
+    "github": "GitHub",
+    "downloadCv": "Tải CV",
+    "booking": "Đặt lịch gọi",
+    "statusLabel": "Tình trạng",
+    "openToWork": "Đang tìm việc",
+    "localTime": "Giờ địa phương"
   },
   "common": {
     "present": "Hiện tại",

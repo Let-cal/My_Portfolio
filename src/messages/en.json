@@ -159,7 +159,14 @@
     "links": "Links",
     "github": "GitHub",
     "linkedin": "LinkedIn",
-    "email": "Email"
+    "email": "Email",
+    "principlesLabel": "How I work",
+    "principles": [
+      "Get the requirements clear before writing code.",
+      "Give honest estimates, and say early when they change.",
+      "Write decisions down, so the next person does not have to guess.",
+      "Review before the release, and look back after it."
+    ]
   },
   "experience": {
     "education": "Education",
@@ -243,6 +250,22 @@
     "goTo": "Go to card {n}",
     "seeEvidence": "See evidence",
     "hint": "Drag, swipe or use the arrow keys to browse."
+  },
+  "contact": {
+    "headline": "Let's build together",
+    "intro": "A role, a project or a question about my work: email is the quickest way to reach me.",
+    "cta": "Get in touch",
+    "detailsLabel": "Contact details",
+    "email": "Email",
+    "copyEmail": "Copy email",
+    "copied": "Copied",
+    "linkedin": "LinkedIn",
+    "github": "GitHub",
+    "downloadCv": "Download CV",
+    "booking": "Book a call",
+    "statusLabel": "Availability",
+    "openToWork": "Open to work",
+    "localTime": "Local time"
   },
   "common": {
     "present": "Present",

@@ -138,6 +138,14 @@ describe("KineticText", () => {
     expect(container.querySelectorAll(".whitespace-nowrap")).toHaveLength(2);
   });
 
+  it("keeps each space inside the word group before it, so a wrapped line never starts with a blank", () => {
+    const { container } = render(<KineticText text="Let us build" />);
+    const groups = Array.from(container.querySelectorAll(".whitespace-nowrap"));
+    expect(groups.map((g) => g.textContent)).toEqual(["Let ", "us ", "build"]);
+    expect(Array.from(container.querySelectorAll("[data-char]"))).toHaveLength("Let us build".length);
+    container.querySelectorAll(".whitespace-pre").forEach((sp) => expect(sp.closest(".whitespace-nowrap")).not.toBeNull());
+  });
+
   it("renders the requested heading level", () => {
     render(<KineticText as="h1" text="Hi" />);
     expect(screen.getByRole("heading", { level: 1, name: "Hi" })).toBeInTheDocument();
