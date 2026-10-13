@@ -6,9 +6,15 @@
 export function SectionLabel({ index, title, kanji }: { index: string; title: string; kanji: string }) {
   return (
     <>
-      <p className="absolute inset-x-0 top-14 mx-auto max-w-6xl px-4 text-xs font-medium tracking-[0.2em] text-muted-foreground uppercase sm:px-6">
-        {`${index} — ${title}`}
-      </p>
+      {/* Chapter "00" (the hero) has no numbered line, only the vertical kanji. */}
+      {index !== "00" && (
+        <p
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-14 mx-auto max-w-6xl px-4 text-xs font-medium tracking-[0.2em] text-muted-foreground uppercase sm:px-6"
+        >
+          {`${index} — ${title}`}
+        </p>
+      )}
       <span
         aria-hidden="true"
         className="pointer-events-none absolute top-24 left-1 hidden font-[family-name:var(--font-mincho)] text-xs tracking-[0.25em] whitespace-nowrap select-none md:block"

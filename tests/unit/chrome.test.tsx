@@ -9,17 +9,23 @@ vi.mock("@/i18n/navigation", () => ({
   useRouter: () => ({ replace: vi.fn() }),
   usePathname: () => "/en",
   getPathname: ({ locale }: { locale: string }) => `/${locale}`,
+  Link: ({ href, children, ...rest }: { href: string; children: React.ReactNode }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
+  ),
 }));
 
 import { LanguageSwitch } from "@/components/site/LanguageSwitch";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
+import { Header } from "@/components/site/Header";
 import { HelloIntro } from "@/components/site/HelloIntro";
 import { PillNav } from "@/components/site/PillNav";
 import { ScrollProgressKoi } from "@/components/site/ScrollProgressKoi";
 import { SectionLabel } from "@/components/site/SectionLabel";
 import { SideRail } from "@/components/site/SideRail";
 import { SoundToggle } from "@/components/site/SoundToggle";
-import { SECTION_IDS } from "@/components/site/sections";
+import { SECTION_CHAPTERS, SECTION_IDS } from "@/components/site/sections";
 import en from "@/messages/en.json";
 import ja from "@/messages/ja.json";
 import vi_ from "@/messages/vi.json";
@@ -118,6 +124,25 @@ describe("SideRail", () => {
     expect(io.options[0]?.rootMargin).toBe("-45% 0px -50% 0px");
   });
 
+  it("names the home link with its visible text and points it at the hero", () => {
+    render(withIntl(<SideRail {...railProps} />));
+    const home = screen.getByRole("link", { name: "Le Tran Cat Lam" });
+    expect(home).toHaveAttribute("href", "#hero");
+    expect(home).not.toHaveAttribute("aria-label");
+  });
+
+  it("marks the last section active when scrolled to the bottom of the page", () => {
+    mountSections();
+    render(withIntl(<SideRail {...railProps} />));
+    const nav = screen.getByRole("navigation", { name: en.header.primaryNav });
+    vi.spyOn(document.documentElement, "scrollHeight", "get").mockReturnValue(3000);
+    vi.stubGlobal("scrollY", 2200);
+    vi.stubGlobal("innerHeight", 800);
+    act(() => void window.dispatchEvent(new Event("scroll")));
+    expect(within(nav).getByRole("link", { name: en.nav.contact })).toHaveAttribute("aria-current", "true");
+    vi.restoreAllMocks();
+  });
+
   it("shows the name, the title of the current role and the three contact links", () => {
     render(withIntl(<SideRail {...railProps} />));
     expect(screen.getByText("Le Tran Cat Lam")).toBeInTheDocument();
@@ -150,16 +175,28 @@ describe("HelloIntro", () => {
     const overlay = container.querySelector<HTMLElement>("[data-hello]")!;
     expect(overlay).toHaveAttribute("aria-hidden", "true");
     expect(overlay).toHaveTextContent("Hello");
-    act(() => void vi.advanceTimersByTime(400));
+    act(() => void vi.advanceTimersByTime(350));
     expect(overlay).toHaveTextContent("こんにちは");
-    act(() => void vi.advanceTimersByTime(400));
+    act(() => void vi.advanceTimersByTime(350));
     expect(overlay).toHaveTextContent("Xin chào");
     expect(window.sessionStorage.getItem("hello")).toBeNull();
-    act(() => void vi.advanceTimersByTime(400));
+    act(() => void vi.advanceTimersByTime(350));
     expect(overlay.style.transform).toBe("translateY(-100%)");
     act(() => void vi.advanceTimersByTime(300));
     expect(container.querySelector("[data-hello]")).toBeNull();
     expect(window.sessionStorage.getItem("hello")).toBe("1");
+  });
+
+  it("takes 1.35s in total, inside the 1.4s budget", () => {
+    vi.useFakeTimers();
+    const { container } = render(<HelloIntro />);
+    act(() => void vi.advanceTimersByTime(350));
+    act(() => void vi.advanceTimersByTime(350));
+    act(() => void vi.advanceTimersByTime(350));
+    act(() => void vi.advanceTimersByTime(299));
+    expect(container.querySelector("[data-hello]")).not.toBeNull();
+    act(() => void vi.advanceTimersByTime(1));
+    expect(container.querySelector("[data-hello]")).toBeNull();
   });
 
   it("does not render when this session already saw it", () => {
@@ -211,6 +248,40 @@ describe("SectionLabel", () => {
     expect(vertical).toHaveAttribute("aria-hidden", "true");
     expect(vertical.style.writingMode).toBe("vertical-rl");
     expect(vertical.style.opacity).toBe("0.35");
+  });
+
+  it("shows only the kanji for chapter 00 and hides the decorative eyebrow from assistive tech", () => {
+    const { container } = render(<SectionLabel index="00" title="Home" kanji="序章" />);
+    expect(screen.getByText("序章")).toBeInTheDocument();
+    expect(container.textContent).not.toContain("00");
+    render(<SectionLabel index="01" title="Experience" kanji="第一章 経歴" />);
+    const eyebrow = screen.getByText("01 — Experience");
+    expect(eyebrow).toHaveAttribute("aria-hidden", "true");
+    expect(eyebrow).toHaveClass("pointer-events-none");
+  });
+});
+
+describe("SECTION_CHAPTERS", () => {
+  it("pins the seven chapter labels of spec 13.3 E3", () => {
+    expect(Object.fromEntries(SECTION_IDS.map((id) => [id, [SECTION_CHAPTERS[id].index, SECTION_CHAPTERS[id].kanji]]))).toEqual({
+      hero: ["00", "序章"],
+      experience: ["01", "第一章 経歴"],
+      projects: ["02", "第二章 作品"],
+      skills: ["03", "第三章 技術"],
+      certificates: ["04", "第四章 資格"],
+      why: ["05", "第五章 昇龍"],
+      contact: ["06", "終章 連絡"],
+    });
+  });
+});
+
+describe("Header", () => {
+  const urls = { fullstack: "/cv/a.pdf", techlead: "/cv/b.pdf", pm: "" };
+  it("shows the CV download of the current role and hides it when the URL is empty", () => {
+    const { rerender } = render(withIntl(<Header cvUrls={urls} />));
+    expect(screen.getByRole("link", { name: en.hero.downloadCv })).toHaveAttribute("href", "/cv/a.pdf");
+    rerender(withIntl(<Header cvUrls={{ ...urls, fullstack: "" }} />));
+    expect(screen.queryByRole("link", { name: en.hero.downloadCv })).toBeNull();
   });
 });
 

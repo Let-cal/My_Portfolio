@@ -38,11 +38,10 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
               </h2>
             </section>
           );
-        if (id === "hero") return <div key={id}>{section}</div>;
         const chapter = SECTION_CHAPTERS[id];
         return (
           <div key={id} className="relative">
-            <WaveEdge className="text-foreground/[0.05] [mask-image:linear-gradient(to_bottom,#000_15%,transparent)]" />
+            {id !== "hero" && <WaveEdge className="text-foreground/[0.05] [mask-image:linear-gradient(to_bottom,#000_15%,transparent)]" />}
             <SectionLabel index={chapter.index} title={tn(id)} kanji={chapter.kanji} />
             {section}
           </div>

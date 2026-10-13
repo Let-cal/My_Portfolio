@@ -27,7 +27,16 @@ export function useActiveSection(): SectionId | null {
       const el = document.getElementById(id);
       if (el) observer.observe(el);
     }
-    return () => observer.disconnect();
+    // A short last section can never reach the reading line; at the very bottom of the page it counts as active.
+    const last = SECTION_IDS[SECTION_IDS.length - 1];
+    const onScroll = () => {
+      if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2) setActive(last);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", onScroll);
+    };
   }, []);
 
   return active;

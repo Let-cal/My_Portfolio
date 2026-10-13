@@ -238,7 +238,7 @@ body:lang(ja) {
     transform: translateY(0.25em);
   }
 }
-/* Safety net: if scripts never run, the overlay hides itself after 4s instead of covering the page for good. */
+/* Safety net: if scripts never run, the overlay hides itself after 2.5s instead of covering the page for good. */
 @keyframes hello-failsafe {
   to {
     visibility: hidden;
@@ -246,7 +246,7 @@ body:lang(ja) {
   }
 }
 [data-hello] {
-  animation: hello-failsafe 0s linear 4s forwards;
+  animation: hello-failsafe 0s linear 2.5s forwards;
 }
 .hello-word {
   animation: hello-word-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;

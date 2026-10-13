@@ -41,7 +41,6 @@ export function SideRail({ name, titles, links }: SideRailProps) {
         <div>
           <a
             href="#hero"
-            aria-label={t("header.home")}
             className="block rounded-sm font-heading text-3xl leading-tight font-bold tracking-tight outline-none focus-visible:ring-3 focus-visible:ring-ring/50 xl:text-4xl"
           >
             {name}

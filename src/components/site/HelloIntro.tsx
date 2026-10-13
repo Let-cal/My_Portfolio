@@ -10,7 +10,8 @@ const GREETINGS = [
   { text: "Xin chào", lang: "vi" },
 ] as const;
 
-const WORD_MS = 400;
+/** 3 x 350 + 300 = 1.35s, inside the 1.4s budget of spec 13.1 G3. */
+const WORD_MS = 350;
 const SLIDE_MS = 300;
 
 function readSeen(): boolean {
@@ -24,13 +25,13 @@ function readSeen(): boolean {
 const noopSubscribe = () => () => {};
 
 /**
- * Full-screen greeting shown once per browser session: Hello, こんにちは, Xin chào (400ms each), then the
+ * Full-screen greeting shown once per browser session: Hello, こんにちは, Xin chào (350ms each), then the
  * curtain slides up (300ms). A click or any key skips it. It is aria-hidden and the page is already rendered
  * underneath. Not shown with reduced motion or when `sessionStorage.hello` is "1".
  *
  * The overlay is part of the server HTML so there is no flash of content. A tiny head script marks
  * returning visitors (see hello-script.ts) and CSS hides the overlay for them and for reduced motion
- * before hydration; a CSS animation also hides it after 4s if scripts never run.
+ * before hydration; a CSS animation also hides it after 2.5s if scripts never run.
  */
 export function HelloIntro() {
   const reduced = usePrefersReducedMotion();

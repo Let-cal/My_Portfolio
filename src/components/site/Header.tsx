@@ -50,14 +50,16 @@ export function Header({ cvUrls }: { cvUrls: Record<RoleKey, string> }) {
           >
             <kbd className="font-sans text-xs text-muted-foreground">⌘K</kbd>
           </Button>
-          <MagneticButton asChild>
-            <Button asChild size="sm" className="ml-1 hidden lg:inline-flex">
-              <a href={cvUrls[role]} download>
-                <DownloadIcon aria-hidden />
-                {t("hero.downloadCv")}
-              </a>
-            </Button>
-          </MagneticButton>
+          {cvUrls[role] && (
+            <MagneticButton asChild>
+              <Button asChild size="sm" className="ml-1 hidden lg:inline-flex">
+                <a href={cvUrls[role]} download>
+                  <DownloadIcon aria-hidden />
+                  {t("hero.downloadCv")}
+                </a>
+              </Button>
+            </MagneticButton>
+          )}
         </div>
       </div>
     </header>
