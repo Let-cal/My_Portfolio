@@ -13,6 +13,7 @@ import { SectionLabel } from "@/components/site/SectionLabel";
 import { SECTION_CHAPTERS, SECTION_IDS } from "@/components/site/sections";
 import { routing } from "@/i18n/routing";
 import { getContent } from "@/lib/data/get-content";
+import { KoiCanvas } from "@/scene/KoiCanvas";
 
 export default async function HomePage({ params }: PageProps<"/[locale]">) {
   const { locale } = await params;
@@ -26,6 +27,8 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
   // water wave on top as the divider. Section backgrounds stay transparent for the 3D canvas behind.
   return (
     <main id="main" className="flex-1">
+      {/* Portals itself to <body> as a fixed layer behind the content; renders nothing here. */}
+      <KoiCanvas />
       {SECTION_IDS.map((id) => {
         const section =
           id === "hero" ? (
