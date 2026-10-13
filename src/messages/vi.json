@@ -45,6 +45,13 @@
     "techlead": "Tech Lead",
     "pm": "Quản lý dự án"
   },
+  "hero": {
+    "openToWork": "Đang tìm việc",
+    "portraitAlt": "Chân dung {name}",
+    "downloadCv": "Tải CV",
+    "contact": "Liên hệ",
+    "quickView": "Xem nhanh 60 giây"
+  },
   "footer": {
     "rights": "Bảo lưu mọi quyền.",
     "links": "Liên kết",

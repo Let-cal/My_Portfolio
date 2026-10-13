@@ -45,6 +45,13 @@
     "techlead": "Tech Lead",
     "pm": "Project Manager"
   },
+  "hero": {
+    "openToWork": "Open to work",
+    "portraitAlt": "Portrait of {name}",
+    "downloadCv": "Download CV",
+    "contact": "Contact",
+    "quickView": "60-second view"
+  },
   "footer": {
     "rights": "All rights reserved.",
     "links": "Links",

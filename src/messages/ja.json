@@ -45,6 +45,13 @@
     "techlead": "テックリード",
     "pm": "プロジェクトマネージャー"
   },
+  "hero": {
+    "openToWork": "求職中",
+    "portraitAlt": "{name}のポートレート",
+    "downloadCv": "CVをダウンロード",
+    "contact": "お問い合わせ",
+    "quickView": "60秒で見る"
+  },
   "footer": {
     "rights": "無断転載を禁じます。",
     "links": "リンク",
