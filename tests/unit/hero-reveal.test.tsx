@@ -112,6 +112,21 @@ describe("RoleWheel", () => {
     await waitFor(() => expect(baseImage(container)?.getAttribute("src")).toContain("role-pm"), { timeout: 2000 });
   });
 
+  it("choosing the same role twice during its sweep still finishes the sweep (no frozen wedge)", async () => {
+    const { container } = wrap(<RoleWheel />);
+    const pm = screen.getByRole("radio", { name: "TECHNICAL PM" });
+    fireEvent.click(pm);
+    fireEvent.click(pm);
+    const peek = container.querySelector<HTMLElement>("[data-layer='peek']")!;
+    await waitFor(
+      () => {
+        expect(baseImage(container)?.getAttribute("src")).toContain("role-pm");
+        expect(peek.style.getPropertyValue("--sweep")).toBe("0deg");
+      },
+      { timeout: 2000 },
+    );
+  });
+
   it("swaps the base image at once under reduced motion (no sweep timer)", () => {
     stubMedia(reduced);
     const { container } = wrap(<RoleWheel />);

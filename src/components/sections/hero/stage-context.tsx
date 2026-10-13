@@ -97,12 +97,12 @@ export function RoleStageProvider({ children }: { children: ReactNode }) {
   const select = useCallback(
     (key: RoleKey) => {
       const running = sweepRef.current;
-      if (key === role && !running) return;
+      // Same role again (or its sweep is already running, e.g. a double click): let the sweep finish on its own.
+      if (key === role || running?.target === key) return;
       if (running) {
-        // A new choice during a sweep: finish the old one at once and start from there.
+        // A different choice during a sweep: finish the old one at once and start from there.
         cancelAnimationFrame(running.frame);
         sweepRef.current = null;
-        if (running.target === key) return;
         setBase(running.target);
       }
       setRole(key);
