@@ -54,6 +54,36 @@
   "sound": {
     "label": "Âm thanh"
   },
+  "command": {
+    "title": "Bảng lệnh",
+    "description": "Tìm một lệnh rồi nhấn Enter để chạy.",
+    "inputLabel": "Tìm lệnh",
+    "placeholder": "Nhập lệnh hoặc tên mục",
+    "empty": "Không có lệnh phù hợp.",
+    "hint": "Lên xuống để di chuyển, Enter để chạy, Esc để đóng.",
+    "groups": {
+      "goTo": "Đi tới",
+      "role": "Vai trò",
+      "language": "Ngôn ngữ",
+      "theme": "Giao diện",
+      "motion": "Chuyển động",
+      "actions": "Thao tác"
+    },
+    "theme": {
+      "dark": "Giao diện: Tối",
+      "light": "Giao diện: Sáng"
+    },
+    "motion": {
+      "system": "Chuyển động: Theo hệ thống",
+      "on": "Chuyển động: Bật",
+      "off": "Chuyển động: Tắt"
+    },
+    "actions": {
+      "downloadCv": "Tải CV",
+      "copyEmail": "Sao chép email",
+      "quickView": "Xem nhanh 60 giây"
+    }
+  },
   "roles": {
     "label": "Vai trò",
     "fullstack": "Full-stack",

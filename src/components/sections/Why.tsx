@@ -4,6 +4,7 @@ import type { Content, Locale } from "@/content/schema";
 import { pickLocale } from "@/lib/i18n-text";
 import { WhyCarousel } from "./why/WhyCarousel";
 import type { WhyCardView } from "./why/WhyCard";
+import { Reveal } from "@/components/site/Reveal";
 
 /**
  * Why Hire Me section ("the koi becomes a dragon"). A manifesto sentence that lights up word by word while it
@@ -33,9 +34,11 @@ export function Why({ content, locale }: { content: Content; locale: Locale }) {
 
   return (
     <section id="why" aria-labelledby="why-heading" className="relative mx-auto max-w-6xl scroll-mt-14 px-4 py-24 sm:px-6">
-      <h2 id="why-heading" className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
-        {ts("why")}
-      </h2>
+      <Reveal>
+        <h2 id="why-heading" className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+          {ts("why")}
+        </h2>
+      </Reveal>
       <div data-manifesto="" className="mt-10 max-w-4xl">
         <ScrollTextReveal
           text={t("manifesto")}

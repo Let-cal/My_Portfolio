@@ -5,6 +5,7 @@ import { pickLocale } from "@/lib/i18n-text";
 import type { ActivityView } from "./certificates/ActivityCard";
 import { CertificatesBoard } from "./certificates/CertificatesBoard";
 import type { CertificateView } from "./certificates/LanternCard";
+import { Reveal } from "@/components/site/Reveal";
 
 /**
  * Certificates section ("lanterns"). Builds localized view-models (published certificates and all activities, in
@@ -49,10 +50,12 @@ export function Certificates({ content, locale }: { content: Content; locale: Lo
       aria-labelledby="certificates-heading"
       className="relative mx-auto max-w-6xl scroll-mt-14 px-4 py-24 sm:px-6"
     >
-      <h2 id="certificates-heading" className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
-        {ts("certificates")}
-      </h2>
-      <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">{t("intro")}</p>
+      <Reveal>
+        <h2 id="certificates-heading" className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+          {ts("certificates")}
+        </h2>
+        <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">{t("intro")}</p>
+      </Reveal>
       <CertificatesBoard certificates={certificates} activities={activities} />
     </section>
   );

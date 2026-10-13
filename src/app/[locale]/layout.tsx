@@ -5,6 +5,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { GrainOverlay } from "@/components/fx/GrainOverlay";
 import { Spotlight } from "@/components/fx/Spotlight";
+import { CommandPalette } from "@/components/site/CommandPalette";
 import { Footer } from "@/components/site/Footer";
 import { Header } from "@/components/site/Header";
 import { HelloIntro } from "@/components/site/HelloIntro";
@@ -14,6 +15,7 @@ import { PillNav } from "@/components/site/PillNav";
 import { RoleProvider } from "@/components/site/RoleProvider";
 import { ScrollProgressKoi } from "@/components/site/ScrollProgressKoi";
 import { SideRail } from "@/components/site/SideRail";
+import { SmoothScroll } from "@/components/site/SmoothScroll";
 import { MotionProvider } from "@/components/site/MotionProvider";
 import { MOTION_INIT_SCRIPT } from "@/components/site/motion-script";
 import { ThemeSync } from "@/components/site/ThemeSync";
@@ -100,6 +102,8 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
               </div>
               <PillNav />
               <Toaster />
+              <SmoothScroll />
+              <CommandPalette cvUrls={cvUrls} email={profile.email} />
               <Spotlight />
               <GrainOverlay />
               <ScrollProgressKoi />

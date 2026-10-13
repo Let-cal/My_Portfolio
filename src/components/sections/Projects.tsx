@@ -3,6 +3,7 @@ import type { Content, Locale } from "@/content/schema";
 import { formatPeriod } from "@/lib/format";
 import { pickLocale } from "@/lib/i18n-text";
 import { ProjectsBento, type ProjectView } from "./projects/ProjectsBento";
+import { Reveal } from "@/components/site/Reveal";
 
 type Translate = ReturnType<typeof useTranslations<"projects">>;
 
@@ -73,9 +74,11 @@ export function Projects({ content, locale }: { content: Content; locale: Locale
       aria-labelledby="projects-heading"
       className="relative mx-auto max-w-6xl scroll-mt-14 px-4 py-24 sm:px-6"
     >
-      <h2 id="projects-heading" className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
-        {ts("projects")}
-      </h2>
+      <Reveal>
+        <h2 id="projects-heading" className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+          {ts("projects")}
+        </h2>
+      </Reveal>
       <div className="mt-10">
         <ProjectsBento projects={projects} />
       </div>

@@ -99,6 +99,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.restoreAllMocks();
   vi.useRealTimers();
+  vi.unstubAllGlobals();
   // Remove the stub so other tests see jsdom's default (no matchMedia).
   delete (window as { matchMedia?: unknown }).matchMedia;
 });
@@ -256,6 +257,18 @@ describe("Skills terminal", () => {
 
   it("types whoami, then skills --group <first group>, then prints the skills", async () => {
     vi.useFakeTimers();
+    // The terminal starts once it scrolls into view; tests/setup.ts only has a no-op observer, so report it as visible.
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class {
+        constructor(private cb: (entries: unknown[]) => void) {}
+        observe(target: Element) {
+          this.cb([{ isIntersecting: true, intersectionRatio: 1, target }]);
+        }
+        unobserve() {}
+        disconnect() {}
+      },
+    );
     renderSkills();
     expect(screenText()).not.toContain("whoami");
     await act(async () => {

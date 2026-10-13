@@ -12,6 +12,7 @@ import { useRole } from "./RoleProvider";
 import { MotionToggle } from "./MotionToggle";
 import { SoundToggle } from "./SoundToggle";
 import { ThemeToggle } from "./ThemeToggle";
+import { useShortcutHint } from "./use-shortcut-hint";
 
 /**
  * Top bar. Below 1024px it is a slim full-width bar (logo and quick controls; the section links live in the
@@ -21,6 +22,7 @@ import { ThemeToggle } from "./ThemeToggle";
 export function Header({ cvUrls }: { cvUrls: Record<RoleKey, string> }) {
   const t = useTranslations();
   const { role } = useRole();
+  const shortcut = useShortcutHint();
 
   // Keep the chosen role when going back to the top.
   const query = role === DEFAULT_ROLE ? "" : `?role=${role}`;
@@ -50,7 +52,7 @@ export function Header({ cvUrls }: { cvUrls: Record<RoleKey, string> }) {
             onClick={openCommand}
             className="hidden sm:inline-flex"
           >
-            <kbd className="font-sans text-xs text-muted-foreground">⌘K</kbd>
+            <kbd className="font-sans text-xs text-muted-foreground">{shortcut}</kbd>
           </Button>
           {cvUrls[role] && (
             <MagneticButton asChild>

@@ -9,6 +9,7 @@ import { evidenceFor } from "@/lib/skills";
 import { glyphId, SkillGlyph, SkillMonogram } from "./skills/SkillGlyph";
 import { monogramOf, skillIconFor } from "./skills/skill-icons";
 import { SkillMap, type EvidenceView, type SkillMapData, type SkillView } from "./skills/SkillMap";
+import { Reveal } from "@/components/site/Reveal";
 
 /**
  * Skills section ("waterfall"): two opposite marquees of skill names, then the skill map. Server component: it
@@ -97,10 +98,12 @@ export function Skills({ content, locale }: { content: Content; locale: Locale }
         </defs>
       </svg>
 
-      <h2 id="skills-heading" className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
-        {ts("skills")}
-      </h2>
-      <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">{t("intro")}</p>
+      <Reveal>
+        <h2 id="skills-heading" className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+          {ts("skills")}
+        </h2>
+        <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">{t("intro")}</p>
+      </Reveal>
 
       {/* The same names as the map below, as decoration: hidden from assistive tech and from the tab order. */}
       <div

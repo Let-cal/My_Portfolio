@@ -54,6 +54,36 @@
   "sound": {
     "label": "Sound effects"
   },
+  "command": {
+    "title": "Command palette",
+    "description": "Search for a command, then press Enter to run it.",
+    "inputLabel": "Search commands",
+    "placeholder": "Type a command or a section name",
+    "empty": "No matching command.",
+    "hint": "Up and down to move, Enter to run, Esc to close.",
+    "groups": {
+      "goTo": "Go to",
+      "role": "Role",
+      "language": "Language",
+      "theme": "Theme",
+      "motion": "Motion",
+      "actions": "Actions"
+    },
+    "theme": {
+      "dark": "Theme: Dark",
+      "light": "Theme: Light"
+    },
+    "motion": {
+      "system": "Motion: System",
+      "on": "Motion: On",
+      "off": "Motion: Off"
+    },
+    "actions": {
+      "downloadCv": "Download CV",
+      "copyEmail": "Copy email",
+      "quickView": "60-second view"
+    }
+  },
   "roles": {
     "label": "Role",
     "fullstack": "Full-stack",

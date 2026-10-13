@@ -54,6 +54,36 @@
   "sound": {
     "label": "効果音"
   },
+  "command": {
+    "title": "コマンドパレット",
+    "description": "コマンドを検索し、Enterキーで実行します。",
+    "inputLabel": "コマンドを検索",
+    "placeholder": "コマンドまたはセクション名を入力",
+    "empty": "該当するコマンドがありません。",
+    "hint": "上下キーで移動、Enterで実行、Escで閉じる。",
+    "groups": {
+      "goTo": "移動",
+      "role": "役割",
+      "language": "言語",
+      "theme": "テーマ",
+      "motion": "モーション",
+      "actions": "操作"
+    },
+    "theme": {
+      "dark": "テーマ: ダーク",
+      "light": "テーマ: ライト"
+    },
+    "motion": {
+      "system": "モーション: システム設定",
+      "on": "モーション: オン",
+      "off": "モーション: オフ"
+    },
+    "actions": {
+      "downloadCv": "CVをダウンロード",
+      "copyEmail": "メールをコピー",
+      "quickView": "60秒で見る"
+    }
+  },
   "roles": {
     "label": "役割",
     "fullstack": "フルスタック",

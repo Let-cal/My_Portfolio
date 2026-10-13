@@ -4,6 +4,7 @@ import { formatPeriod } from "@/lib/format";
 import { pickLocale } from "@/lib/i18n-text";
 import { orderExperiences } from "@/lib/roles";
 import { Timeline, type CompanyView, type TimelineData, type TimelineItem } from "./experience/Timeline";
+import { Reveal } from "@/components/site/Reveal";
 
 /** Parent company whose header carries the two position lines (intern, then engineer). From the CV fact bank. */
 const SKG = "SKG Software (Splus)";
@@ -97,9 +98,11 @@ export function Experience({ content, locale }: { content: Content; locale: Loca
       aria-labelledby="experience-heading"
       className="relative mx-auto max-w-6xl scroll-mt-14 px-4 py-24 sm:px-6"
     >
-      <h2 id="experience-heading" className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
-        {ts("experience")}
-      </h2>
+      <Reveal>
+        <h2 id="experience-heading" className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+          {ts("experience")}
+        </h2>
+      </Reveal>
       <div className="mt-10">
         <Timeline data={data} />
       </div>
