@@ -421,3 +421,186 @@ Quy ước chung cho Phase B: section là Server Component, nhận `content` + `
 
 - **O1: Đổi tên project Vercel** đang deploy `my-portfolio-mauve-psi-28.vercel.app` thành `letcal` (Settings → General → Project Name), kiểm tra `letcal.vercel.app` mở được.
 - **O2: Đăng ký `letcal.is-a.dev`:** fork `is-a-dev/register`, tạo `domains/letcal.json` đúng format trong docs hiện hành của is-a.dev (owner = GitHub `Let-cal` + email, record `CNAME: cname.vercel-dns.com`), mở PR có mô tả ngắn và link tới site đang chạy. Sau khi PR được merge thì thêm domain trong Vercel → Domains.
+
+
+---
+
+## Phase B+: Chữ ký thiết kế (bổ sung 2026-10-13, spec §13)
+
+**Thứ tự thực hiện mới:** Task 1–7 (đã xong) → **25 → 26 → 27 → 28** → 8 → 9 → 10 → 11 → 12 → 13 → 14 … 24. Các task 8–11 có thêm phần "Bổ sung §13" ở cuối mục này, và phần đó là một phần yêu cầu của task tương ứng.
+
+Quy ước chung:
+- Mọi hiệu ứng nằm trong `src/components/fx/`.
+- Khi `prefers-reduced-motion`, hiệu ứng trả về trạng thái tĩnh cuối cùng.
+- Trên thiết bị cảm ứng (`(hover: none)`), tắt các hiệu ứng theo chuột.
+- Không thêm thư viện trả phí. Icon dùng `lucide-react` hoặc `simple-icons` (MIT/CC0).
+
+### Task 25: Thư viện hiệu ứng `fx`
+
+**Files:** Create `src/components/fx/{Spotlight,GrainOverlay,WaveEdge,Marquee,NumberTicker,KineticText,GlowCard,ScrollTextReveal,TextScramble,MagneticButton,LocalTime}.tsx`, `src/components/fx/sound.ts`, `src/components/fx/use-pointer-fine.ts`. Test `tests/unit/fx.test.tsx`, `tests/unit/sound.test.ts`.
+
+**Interfaces (Produces):**
+- `usePointerFine(): boolean`: true khi `(hover: hover) and (pointer: fine)`.
+- `<Spotlight />`: lớp fixed toàn trang, `radial-gradient(600px circle at x y, rgb(249 115 22 / .10), transparent 80%)`, cập nhật bằng CSS var qua rAF. Không render khi `!usePointerFine()`.
+- `<GrainOverlay opacity?: number = 0.06 />`: fixed, SVG feTurbulence, `pointer-events:none`, `aria-hidden`.
+- `<WaveEdge flip?: boolean />`: SVG sóng cao 48px, path động chậm (CSS 12s). Reduced-motion thì đứng yên.
+- `<Marquee speed?: number = 40 (px/s), reverse?: boolean, pauseOnHover?: boolean = true, children />`: nhân đôi nội dung, bản sao có `aria-hidden`. Reduced-motion thì không chạy (hiện 1 bản, cuộn ngang được).
+- `<NumberTicker value: number, prefix?: string, suffix?: string, durationMs?: number = 1200 />`: đếm khi vào viewport, easeOutCubic. Reduced-motion hoặc SSR thì hiện ngay giá trị cuối. Text cuối luôn có trong DOM (`aria-label`).
+- `<KineticText as?: 'h1'|'h2'|'span', text: string, staggerMs?: number = 35 />`: từng ký tự là span `aria-hidden`, kèm text thật trong span `sr-only`.
+- `<GlowCard tilt?: boolean, maxTiltDeg?: number = 6, className, children />`: viền sáng theo chuột (CSS var `--gx/--gy` trên pseudo-element), có attribute `data-glow-card`, nghiêng 3D khi `tilt`.
+- `<ScrollTextReveal text: string />`: mỗi từ có opacity từ 0.15 lên 1 theo tiến độ cuộn (motion `useScroll` + `useTransform`).
+- `<TextScramble text: string, durationMs?: number = 500 />`: khi `text` đổi, các ký tự xáo trộn rồi chốt dần về chữ mới (charset `A-Z0-9#%&`). Tên đọc cho trình đọc màn hình luôn là text cuối.
+- `<MagneticButton strength?: number = 0.35, asChild … />`: dịch tối đa 12px về phía con trỏ, spring về 0 khi rời.
+- `<LocalTime timeZone='Asia/Ho_Chi_Minh' />`: hiện `HH:mm (GMT+7)`, cập nhật mỗi 30 giây. SSR render ô giữ chỗ để không bị hydration mismatch.
+- `sound.ts`: `createSoundEngine(): { play(kind: 'drop'|'click'): void; setEnabled(v: boolean): void; readonly enabled: boolean }`, tổng hợp bằng WebAudio (sine + envelope), không dùng file asset. `useSound()` đọc/ghi `localStorage['sound']` (mặc định off).
+
+- [ ] **Step 1: Test (fail):**
+  - NumberTicker khi reduced-motion render ngay "14".
+  - KineticText với "Le Tran Cat Lam" có 15 span ký tự và text sr-only đầy đủ.
+  - Marquee render 2 bản, bản thứ 2 có `aria-hidden="true"`.
+  - TextScramble sau `durationMs` (fake timers) hiện đúng text mới.
+  - LocalTime với Date giả `2026-10-13T07:32:00Z` ra `14:32 (GMT+7)`.
+  - MagneticButton không đặt transform khi `usePointerFine` false.
+  - Sound engine: mặc định disabled, và `play` không tạo AudioContext khi disabled.
+- [ ] **Step 2–4:** FAIL → implement → PASS (`npx vitest run`, `tsc`, `lint`). Commit `feat(fx): add signature effect primitives`.
+
+### Task 26: Khung trang: cột mục lục, menu viên thuốc, lời chào, lớp hiệu ứng toàn trang
+
+**Files:** Create `src/components/site/{SideRail,PillNav,HelloIntro,ScrollProgressKoi,SoundToggle,SectionLabel}.tsx`. Modify `src/app/[locale]/layout.tsx`, `src/app/[locale]/page.tsx`, `src/components/site/Header.tsx`, messages en/ja/vi. Test `tests/unit/chrome.test.tsx`.
+
+**Interfaces:**
+- `SideRail` (từ 1024px trở lên, cột trái sticky):
+  - Tên, chức danh theo vai trò (TextScramble), 7 link.
+  - Mỗi link có vạch `span` rộng 32px. Mục active (IntersectionObserver, rootMargin `-45% 0px -50% 0px`) có vạch 64px màu `var(--role-accent)` và `aria-current="true"`.
+  - Dưới cùng là icon GitHub, LinkedIn, Email.
+  - Layout desktop là lưới 2 cột (rail khoảng 30% | nội dung khoảng 70%).
+  - Header trên desktop bỏ menu link section, thu gọn thành cụm nổi góc phải gồm ngôn ngữ, theme, SoundToggle, ⌘K, Download CV (MagneticButton).
+- `PillNav` (dưới 1024px): thanh kính mờ nổi phía dưới màn hình, 7 icon + label ngắn, mục active có nền viên thuốc chạy theo (`layoutId`).
+- `HelloIntro`:
+  - Overlay toàn màn hình nền tối, 3 lời chào (Hello / こんにちは / Xin chào) mỗi lời 400ms, sau đó trượt lên 300ms.
+  - Chỉ chạy khi `sessionStorage['hello'] !== '1'` và không reduced-motion. Click hoặc phím bất kỳ thì bỏ qua.
+  - Có `aria-hidden`. Nội dung vẫn render bên dưới.
+- `ScrollProgressKoi`: thanh 2px fixed top, gradient teal → `var(--role-accent)`. Đầu thanh là icon cá SVG nhỏ, đổi sang icon rồng khi `#why` đã vào viewport.
+- `SectionLabel { index: string; title: string; kanji: string }`: hiện "01 — Experience" và nhãn chữ dọc (font Shippori Mincho, `writing-mode: vertical-rl`, opacity .35) ở lề trái của section.
+- `SoundToggle`: nút icon loa có `aria-pressed`.
+- Mount `Spotlight`, `GrainOverlay`, `ScrollProgressKoi`, `HelloIntro` trong `[locale]/layout.tsx`. Đặt `WaveEdge` giữa các section trong page.tsx.
+- Font: thêm `Instrument Serif` (italic, latin) và `Shippori Mincho` (500) qua next/font/google. Biến CSS là `--font-serif` và `--font-mincho`.
+
+- [ ] **Step 1: Test (fail):**
+  - SideRail đặt `aria-current` cho section đang giao (mock IntersectionObserver).
+  - HelloIntro không render khi sessionStorage đã có `hello=1`, và tự set `hello=1` sau khi chạy.
+  - HelloIntro không render khi reduced-motion.
+  - SoundToggle đổi `aria-pressed` và ghi localStorage.
+  - SectionLabel render "01 — Experience" và `第一章 経歴`.
+- [ ] **Step 2–4:** FAIL → implement → PASS, `npm run build` ok. Kiểm tra bằng mắt ở 1440px (rail trái) và 390px (pill dưới). Commit `feat(site): add side rail, pill nav, hello intro and global fx layers`.
+
+### Task 27: Hero làm lại: Role Reveal Portrait + chữ ký Hero
+
+**Files:** Create `src/components/sections/hero/{RolePortrait,HeroStats,ProfileStatusCard,RotatingPhrase,QuickFacts,NameMarquee}.tsx`, `src/lib/role-accent.ts`. Modify `src/components/sections/Hero.tsx`, `src/components/sections/HeroRole.tsx`, `src/components/site/RoleSwitcher.tsx`, `src/components/site/RoleProvider.tsx` (đặt `--role-accent` lên `<html>`), messages en/ja/vi. Test `tests/unit/hero-reveal.test.tsx`, `tests/unit/role-accent.test.ts`.
+
+**Interfaces:**
+- `ROLE_ACCENT: Record<RoleKey, string> = { fullstack: '#e4571e', techlead: '#dc2626', pm: '#e0a84e' }`.
+- `bandForX(x: number, width: number): RoleKey`: 3 dải đều nhau từ trái sang phải (fullstack | techlead | pm), x nằm ngoài khoảng thì clamp.
+- `RolePortrait { src: string; roles: { key: RoleKey; label: string }[] }`:
+  - Nền là ảnh grayscale. Ba lớp lăng kính cùng dùng `mask-image:url(src)` (lấy theo alpha):
+    - Developer: duotone `#0ea5e9`/`#0b1220` cộng chữ code monospace mờ (SVG pattern).
+    - Tech Lead: lưới blueprint, 5 node và các đường nối (SVG).
+    - PM: tông vàng cộng 4 thanh Gantt (SVG).
+  - Desktop: dải dưới con trỏ (`bandForX`) lộ ra bằng `clip-path: inset()`, transition 250ms, ranh giới có vạch sáng 2px. Khi không hover thì hiện lăng kính của vai trò đang chọn.
+  - Click hoặc Enter/Space trên dải: gọi `setRole`, kèm wipe `clip-path: circle()` lan ra từ điểm bấm (500ms).
+  - Mobile: vuốt ngang ±40px hoặc bấm để đổi vai trò.
+  - Ba nhãn vai trò đặt quanh ảnh. Nhãn ứng với dải đang lộ scale lên 1.1 và có màu accent, các nhãn khác opacity .4.
+  - Ảnh là `public/images/test0123-removebg-preview.png`, dùng `next/image`.
+- `HeroRole`: chức danh chạy `TextScramble`, summary crossfade (`AnimatePresence`, 200ms).
+- `NameMarquee`: Marquee chữ viền (`-webkit-text-stroke`) gồm tên EN, JA (message `hero.nameJa` = "レ・チャン・カット・ラム") và VI (message `hero.nameVi` = "Lê Trần Cát Lâm"), ngăn cách bằng " — ".
+- `HeroStats`: NumberTicker 14 (months at SKG), 6 (Japanese client projects), 2 (projects in parallel), cộng ô tĩnh "N3" (JLPT). Label lấy qua messages.
+- `ProfileStatusCard`:
+  - Chấm xanh pulse, "Open to work" lấy từ `profile.openToWork` và `availabilityNote`.
+  - "Ho Chi Minh City" kèm `LocalTime`.
+  - Nút Copy Email (toast "Copied") và Download CV (MagneticButton).
+  - Ẩn badge khi `openToWork=false`.
+- `RotatingPhrase`: "I build {web apps | AI agents | IoT locker systems} for Japanese clients", đổi mỗi 2.2 giây, có bản ja/vi trong messages. Reduced-motion thì cố định cụm từ đầu tiên.
+- `QuickFacts`: 4 GlowCard. Rê chuột hoặc focus thì mở rộng 1 dòng chi tiết. Chỉ dùng dữ liệu từ content và messages.
+  - Location: "10.82° N, 106.63° E · GMT+7".
+  - Languages: Vietnamese native · English professional working · Japanese JLPT N3.
+  - Education: FPT University · Software Engineering · GPA 7.66/10.
+  - Now: Open to work.
+- Bố cục desktop:
+  - Trái: KineticText tên, RotatingPhrase, HeroRole, CTA.
+  - Phải: RolePortrait và ProfileStatusCard.
+  - Dưới: HeroStats, NameMarquee, QuickFacts.
+  - Vẫn giữ vùng `data-water-zone` (nền sau portrait) cho cá 3D.
+
+- [ ] **Step 1: Test (fail):**
+  - `bandForX(10,300)==='fullstack'`, `bandForX(150,300)==='techlead'`, `bandForX(299,300)==='pm'`, `bandForX(-5,300)==='fullstack'`.
+  - Chọn role pm thì `--role-accent` trên `document.documentElement` là `#e0a84e`.
+  - RolePortrait có 3 nút mang tên vai trò. Nhấn Enter trên nút PM thì role thành `pm`.
+  - HeroStats khi reduced-motion render đủ 14, 6, 2, N3.
+  - ProfileStatusCard: copy email gọi `clipboard.writeText('letcal2003@gmail.com')`, và không có chuỗi khớp `/\+84|0964/`.
+  - NameMarquee chứa "レ・チャン・カット・ラム" và "Lê Trần Cát Lâm".
+- [ ] **Step 2–4:** FAIL → implement → PASS, build ok. Kiểm tra bằng mắt: rê chuột qua ảnh lộ đúng 3 lăng kính; bấm đổi vai trò có wipe, scramble và đổi màu nhấn. Commit `feat(hero): add role reveal portrait and hero signature effects`.
+
+### Task 28: Experience + Projects: tracing beam, glow card, nhãn chương
+
+**Files:** Create `src/components/fx/TracingBeam.tsx`. Modify `src/components/sections/experience/Timeline.tsx`, `src/components/sections/projects/{ProjectsBento,ProjectCard}.tsx`, `src/app/[locale]/page.tsx` (thêm `SectionLabel` cho 7 section). Test `tests/unit/tracing-beam.test.tsx`, cập nhật `timeline.test.tsx` và `project-card.test.tsx`.
+
+**Interfaces:**
+- `TracingBeam { children }`:
+  - Bọc timeline. Đường SVG dọc có gradient teal → `var(--role-accent)`.
+  - Phần "đã đầy" chạy theo `scrollYProgress` của section (motion `useScroll({ target, offset: ['start 70%','end 50%'] })`), đầu beam có chấm sáng.
+  - Thay cho SVG dòng sông tĩnh hiện có, giữ nguyên vị trí cột.
+  - Có `data-progress`, bằng 1 khi reduced-motion.
+- Card Experience và card Project bọc trong `GlowCard`, card Project bật `tilt`. Giữ nguyên các hành vi đã có: làm mờ mục khác, sheet case study, video.
+- ProjectCard:
+  - Nhãn "NN · TYPE": NN là số thứ tự 2 chữ số theo thứ tự hiển thị. TYPE là "WEB", "MOBILE" hoặc "WEB + MOBILE", suy ra từ tech (có Flutter hoặc Dart thì là MOBILE; có React, Next.js hoặc Java Servlet thì là WEB).
+  - Đáy card có `Marquee` tên tech (`pauseOnHover`).
+- 7 SectionLabel (tiêu đề lấy từ messages `nav.*`):
+
+  | Section | Số | Kanji |
+  |---|---|---|
+  | hero | 00 | 序章 (chỉ hiện kanji) |
+  | experience | 01 | 第一章 経歴 |
+  | projects | 02 | 第二章 作品 |
+  | skills | 03 | 第三章 技術 |
+  | certificates | 04 | 第四章 資格 |
+  | why | 05 | 第五章 昇龍 |
+  | contact | 06 | 終章 連絡 |
+
+- [ ] **Step 1: Test (fail):**
+  - TracingBeam khi reduced-motion có `data-progress="1"`.
+  - Card experience nằm trong `[data-glow-card]`.
+  - ProjectCard đầu tiên (SitePlus) hiện "01 · WEB + MOBILE".
+  - Cả 7 section có nhãn số đúng như bảng.
+- [ ] **Step 2–4:** FAIL → implement → PASS, build ok. Commit `feat(sections): add tracing beam, glow cards and chapter labels`.
+
+### Bổ sung §13 cho Task 8–11 (là một phần yêu cầu của các task này)
+
+**Task 8 (Skills):**
+- Đầu section có 2 `Marquee` chạy ngược chiều, hiện tên skill (S3).
+- Bấm một skill thì vẽ `svg[data-beam]` (S1): mỗi path nối chip skill tới một phần tử `#exp-*` hoặc `#proj-*` liên quan đang thấy trên màn hình. Nếu không phần tử nào trong viewport thì giữ danh sách bằng chứng như cũ, thêm nút "Scroll to evidence".
+- Terminal mini (S4): tự gõ `whoami`, in ra tên và chức danh theo vai trò. Sau đó gõ `skills --group <nhóm đang chọn>` và in danh sách. Reduced-motion thì hiện ngay toàn bộ.
+- Lưới skill có icon (simple-icons) đổi từ xám sang màu thương hiệu khi rê chuột.
+- Test thêm:
+  - Bấm "Next.js" (mock `getBoundingClientRect` để các mục trong viewport) thì có `svg[data-beam]` với số path bằng số bằng chứng đang thấy.
+  - Terminal chứa chuỗi "skills --group".
+
+**Task 9 (Certificates):**
+- Card đèn lồng (C1): trôi nhẹ lên xuống, hover thì glow `var(--role-accent)`.
+- Lật card (C2): mặt trước là tên, tổ chức, ngày; mặt sau là credential ID và nút Verify. Bàn phím: Enter để lật, có `aria-pressed`.
+- Test thêm: Enter trên card thì `aria-pressed="true"` và thấy credential ID (hoặc "—" nếu null).
+
+**Task 10 (Why Hire Me):**
+- `ScrollTextReveal` (W1) hiện một câu tuyên ngôn trước carousel. Câu soạn từ sự thật (ý: biến yêu cầu của khách hàng Nhật thành sản phẩm đã release), có đủ 3 bản dịch, cần chủ dự án duyệt.
+- Mỗi card có `NumberTicker` cho 1 số liệu thật (W2), giữ dấu "~" nếu là ước lượng.
+  - Thêm vào `whyCardSchema` field tùy chọn `stat: { value: number; prefix?: string; suffix?: string; label: I18nText } | null`, cập nhật seed và mapper (cột `stat` jsonb).
+  - Gợi ý stat: P1 card là `2` lockers; parallel card là `2` projects; JP card là `6` client projects; UI/UX card là `null`.
+- Test thêm:
+  - Card có stat render giá trị cuối khi reduced-motion.
+  - Schema chấp nhận `stat: null`.
+
+**Task 11 (Contact):**
+- K1: tiêu đề khổng lồ `text-[clamp(3rem,10vw,9rem)]` "Let's build together" (có bản ja/vi), kèm nút tròn 160px "Get in touch" (MagneticButton, `mailto:letcal2003@gmail.com`) có `id="contact-core"`.
+- K2: footer có 3–5 dòng nguyên tắc làm việc xuất hiện lần lượt. Nội dung đặt trong messages `footer.principles` (mảng chuỗi). Claude soạn nháp và ghi trong báo cáo là cần chủ dự án duyệt.
+- Test thêm:
+  - Nút "Get in touch" có `href` bắt đầu bằng `mailto:letcal2003@gmail.com`.
+  - Footer có ít nhất 3 dòng nguyên tắc.
