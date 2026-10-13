@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useMemo, useRef, useState, type FocusEvent } from "react";
 import { GlowCard } from "@/components/fx/GlowCard";
 import { TracingBeam } from "@/components/fx/TracingBeam";
+import { useHighlight } from "@/components/site/HighlightProvider";
 import { useRole } from "@/components/site/RoleProvider";
 import type { RoleKey } from "@/content/schema";
 import { cn } from "@/lib/utils";
@@ -92,6 +93,7 @@ export function Timeline({ data }: { data: TimelineData }) {
   const t = useTranslations("experience");
   const { role } = useRole();
   const reduced = useReducedMotion();
+  const { ids: highlightIds } = useHighlight();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [shownId, setShownId] = useState<string | null>(null);
@@ -120,12 +122,14 @@ export function Timeline({ data }: { data: TimelineData }) {
   function renderItem(item: TimelineItem, grouped: boolean) {
     const Heading = grouped ? "h4" : "h3";
     const active = hoveredId === item.id;
+    const lit = highlightIds.includes(`exp-${item.id}`);
     const cs = item.caseStudy;
     const extra = Math.max(0, item.tech.length - MAX_CHIPS);
     return (
       <motion.li
         key={item.id}
         id={`exp-${item.id}`}
+        data-highlight={lit ? "true" : undefined}
         layout={reduced ? false : "position"}
         transition={{ type: "spring", stiffness: 380, damping: 38 }}
         className={cn("scroll-mt-24 py-3 transition-opacity duration-200", dimmed(item.id) && "opacity-50")}
@@ -139,12 +143,14 @@ export function Timeline({ data }: { data: TimelineData }) {
               NODE,
               "mt-1.5 size-3 border-2 border-brand-400 bg-background transition-all duration-200 md:mt-6",
               active && "scale-125 bg-brand-400 shadow-[0_0_14px_2px_var(--brand-500)]",
+              lit && "border-(--role-accent) shadow-[0_0_14px_2px_var(--role-accent)]",
             )}
           />
           <GlowCard
             className={cn(
               "relative col-start-2 row-start-2 min-w-0 rounded-xl border border-border bg-card/60 p-4 backdrop-blur-md transition-colors duration-200 sm:p-5 md:col-start-3 md:row-start-1",
               active && "border-brand-400/60 bg-card/80",
+              lit && "border-(--role-accent) bg-card/80 shadow-[0_0_30px_-8px_var(--role-accent)]",
               cs && "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
             )}
           >

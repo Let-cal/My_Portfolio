@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Experience } from "@/components/sections/Experience";
 import { Hero } from "@/components/sections/Hero";
 import { Projects } from "@/components/sections/Projects";
+import { Skills } from "@/components/sections/Skills";
 import { WaveEdge } from "@/components/fx/WaveEdge";
 import { SectionLabel } from "@/components/site/SectionLabel";
 import { SECTION_CHAPTERS, SECTION_IDS } from "@/components/site/sections";
@@ -18,7 +19,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
   const tn = await getTranslations("nav");
   const content = await getContent();
 
-  // Tasks 8-11 replace each remaining placeholder <section> with its real component.
+  // Tasks 9-11 replace each remaining placeholder <section> with its real component.
   // Each section after the hero sits in a `relative` wrapper that carries its chapter label, with a slow
   // water wave on top as the divider. Section backgrounds stay transparent for the 3D canvas behind.
   return (
@@ -31,6 +32,8 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
             <Experience content={content} locale={locale} />
           ) : id === "projects" ? (
             <Projects content={content} locale={locale} />
+          ) : id === "skills" ? (
+            <Skills content={content} locale={locale} />
           ) : (
             <section id={id} aria-labelledby={`${id}-heading`} className="mx-auto max-w-6xl scroll-mt-14 px-4 py-24 sm:px-6">
               <h2 id={`${id}-heading`} className="text-3xl font-semibold">

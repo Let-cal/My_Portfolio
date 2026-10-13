@@ -171,6 +171,28 @@
     "skgEngineer": "Software Engineer — acting Project Manager / Tech Lead",
     "gpa": "GPA {gpa}"
   },
+  "skills": {
+    "intro": "Pick a skill to see which experience and projects it comes from.",
+    "groupsLabel": "Skill groups",
+    "groups": {
+      "languages": "Languages",
+      "frameworks": "Frameworks",
+      "cloud": "Cloud & DevOps",
+      "ai": "AI / LLM",
+      "databases": "Databases",
+      "delivery": "Delivery",
+      "testing": "Testing",
+      "design": "Design"
+    },
+    "evidence": "Evidence",
+    "evidenceTitle": "Where I used {skill}",
+    "evidenceHint": "Select a skill to see the experience and projects behind it.",
+    "noEvidence": "No linked experience or project recorded yet.",
+    "linked": "{count, plural, one {# linked record} other {# linked records}}",
+    "kindExperience": "Experience",
+    "kindProject": "Project",
+    "terminal": "Skills terminal"
+  },
   "caseStudy": {
     "problem": "Problem",
     "role": "Role",

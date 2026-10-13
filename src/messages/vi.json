@@ -171,6 +171,28 @@
     "skgEngineer": "Kỹ sư phần mềm, kiêm Project Manager / Tech Lead",
     "gpa": "GPA {gpa}"
   },
+  "skills": {
+    "intro": "Chọn một kỹ năng để xem nó đến từ kinh nghiệm và dự án nào.",
+    "groupsLabel": "Nhóm kỹ năng",
+    "groups": {
+      "languages": "Ngôn ngữ",
+      "frameworks": "Framework",
+      "cloud": "Cloud & DevOps",
+      "ai": "AI / LLM",
+      "databases": "Cơ sở dữ liệu",
+      "delivery": "Triển khai dự án",
+      "testing": "Kiểm thử",
+      "design": "Thiết kế"
+    },
+    "evidence": "Bằng chứng",
+    "evidenceTitle": "Nơi mình đã dùng {skill}",
+    "evidenceHint": "Chọn một kỹ năng để xem kinh nghiệm và dự án đứng sau nó.",
+    "noEvidence": "Chưa có kinh nghiệm hay dự án nào được liên kết.",
+    "linked": "{count} mục liên quan",
+    "kindExperience": "Kinh nghiệm",
+    "kindProject": "Dự án",
+    "terminal": "Terminal kỹ năng"
+  },
   "caseStudy": {
     "problem": "Vấn đề",
     "role": "Vai trò",

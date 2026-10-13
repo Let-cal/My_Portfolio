@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, type PointerEvent } from "react";
 import type { CaseStudyView } from "@/components/sections/experience/CaseStudySheet";
 import { GlowCard } from "@/components/fx/GlowCard";
 import { Marquee } from "@/components/fx/Marquee";
+import { useIsHighlighted } from "@/components/site/HighlightProvider";
 import { cn } from "@/lib/utils";
 
 /** One project with every string already picked for the current locale. */
@@ -71,6 +72,7 @@ export function ProjectCard({ project, index, featured = false, wide = false, on
   const cardRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [active, setActive] = useState(false);
+  const lit = useIsHighlighted(`proj-${project.id}`);
   const { videoUrl, posterUrl, caseStudy: cs } = project;
 
   function play() {
@@ -118,6 +120,7 @@ export function ProjectCard({ project, index, featured = false, wide = false, on
       tilt
       maxTiltDeg={4}
       id={`proj-${project.id}`}
+      data-highlight={lit ? "true" : undefined}
       onPointerEnter={onPointerEnter}
       onPointerLeave={onPointerLeave}
       className={cn(
@@ -125,6 +128,7 @@ export function ProjectCard({ project, index, featured = false, wide = false, on
         (featured || wide) && "md:col-span-2",
         featured && "md:grid md:grid-cols-2",
         active && "border-brand-400/60 bg-card/80",
+        lit && "border-(--role-accent) bg-card/80 shadow-[0_0_30px_-8px_var(--role-accent)]",
         cs && "has-[button:focus-visible]:ring-2 has-[button:focus-visible]:ring-ring",
       )}
     >

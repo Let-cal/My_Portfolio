@@ -8,6 +8,7 @@ import { Spotlight } from "@/components/fx/Spotlight";
 import { Footer } from "@/components/site/Footer";
 import { Header } from "@/components/site/Header";
 import { HelloIntro } from "@/components/site/HelloIntro";
+import { HighlightProvider } from "@/components/site/HighlightProvider";
 import { HELLO_SEEN_SCRIPT } from "@/components/site/hello-script";
 import { PillNav } from "@/components/site/PillNav";
 import { RoleProvider } from "@/components/site/RoleProvider";
@@ -87,7 +88,9 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
             <div className="relative z-10 flex flex-1 flex-col pt-14 pb-24 lg:grid lg:grid-cols-[minmax(17rem,30%)_minmax(0,1fr)] lg:pt-0 lg:pb-0">
               <SideRail name={profile.name} titles={titles} links={{ github: profile.github, linkedin: profile.linkedin, email: profile.email }} />
               <div className="flex min-w-0 flex-1 flex-col">
-                <div className="flex flex-1 flex-col">{children}</div>
+                <div className="flex flex-1 flex-col">
+                  <HighlightProvider>{children}</HighlightProvider>
+                </div>
                 <Footer />
               </div>
             </div>

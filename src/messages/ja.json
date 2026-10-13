@@ -171,6 +171,28 @@
     "skgEngineer": "ソフトウェアエンジニア(プロジェクトマネージャー/テックリード代行)",
     "gpa": "GPA {gpa}"
   },
+  "skills": {
+    "intro": "スキルを選ぶと、どの経験・プロジェクトで使ったかが分かります。",
+    "groupsLabel": "スキルグループ",
+    "groups": {
+      "languages": "言語",
+      "frameworks": "フレームワーク",
+      "cloud": "クラウド・DevOps",
+      "ai": "AI / LLM",
+      "databases": "データベース",
+      "delivery": "デリバリー",
+      "testing": "テスト",
+      "design": "設計・デザイン"
+    },
+    "evidence": "実績",
+    "evidenceTitle": "{skill} を使った場所",
+    "evidenceHint": "スキルを選ぶと、その根拠となる経験とプロジェクトが表示されます。",
+    "noEvidence": "関連づけられた経験・プロジェクトはまだありません。",
+    "linked": "関連実績 {count} 件",
+    "kindExperience": "経歴",
+    "kindProject": "プロジェクト",
+    "terminal": "スキルターミナル"
+  },
   "caseStudy": {
     "problem": "課題",
     "role": "役割",
