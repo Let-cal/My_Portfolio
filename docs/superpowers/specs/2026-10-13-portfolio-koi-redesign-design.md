@@ -271,3 +271,11 @@ Space Grotesk (heading) + Inter (body), thêm **Instrument Serif italic** cho c�
 ### 13.10 Không làm (đã cân nhắc)
 - Chatbot "Ask me anything" của pszostak: cần LLM trả phí, và điều khoản is-a.dev cấm trang dạng AI hội thoại.
 - Quả cầu icon 3D, card xếp chồng khi cuộn, ảnh xem trước bay theo chuột, lịch GitHub: không được chọn trên bảng.
+
+### 13.11 Ảnh chân dung theo vai trò (cập nhật 2026-10-13, yêu cầu của chủ dự án)
+Thay cho cách "mask ảnh gốc" ở §13.2: dùng **3 ảnh được dựng lại hoàn toàn** từ ảnh thẻ của chủ dự án bằng thuật toán chạy cục bộ (`scripts/generate-role-portraits.mjs`, dùng sharp + delaunator, không AI, không tốn phí). Ảnh gốc **không** được commit hay đưa lên web.
+- Developer: khuôn mặt ghép từ code thật (agent, IoT locker, COA, SQL, Terraform), tông xanh terminal.
+- Tech Lead: khuôn mặt low-poly trên nền blueprint, có node và đường nối kiến trúc.
+- Technical PM: khuôn mặt vẽ bằng nét cọ vàng Ogon, phía sau là các thanh Gantt mờ.
+
+File: `public/images/roles/role-{developer,techlead,pm}.webp`. Tương tác giữ như §13.2: rê chuột chia 3 dải có vạch sáng; bấm thì wipe hình tròn, chức danh scramble, đổi màu nhấn; mobile vuốt hoặc chạm. Prototype đã duyệt: `.superpowers/brainstorm/766-1791840729/content/role-portrait-proto.html`.
