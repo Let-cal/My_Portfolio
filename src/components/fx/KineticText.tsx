@@ -12,10 +12,20 @@ type KineticTextProps = {
   className?: string;
 };
 
+/** User-perceived characters: a base letter keeps its combining marks, an emoji sequence stays whole. */
+function graphemes(s: string): string[] {
+  if (typeof Intl !== "undefined" && "Segmenter" in Intl) {
+    return Array.from(new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(s), (seg) => seg.segment);
+  }
+  return Array.from(s);
+}
+
 /**
  * Per-character entrance. Every character is an aria-hidden span (`data-char`); the real text sits in an
- * sr-only span, so assistive tech reads one clean string. Characters are grouped per word so lines only
- * wrap between words. Reduced motion renders the letters in place without the animation.
+ * sr-only span, so assistive tech reads one clean string. Characters are split by grapheme (decomposed
+ * Vietnamese diacritics and emoji stay attached). Space-separated text is grouped per word so lines only
+ * wrap between words; text without spaces (Japanese) is left flat so it can wrap between any two characters.
+ * Reduced motion renders the letters in place without the animation.
  */
 export function KineticText({ as: Tag = "span", text, staggerMs = 35, className }: KineticTextProps) {
   const reduced = usePrefersReducedMotion();
@@ -24,26 +34,33 @@ export function KineticText({ as: Tag = "span", text, staggerMs = 35, className 
   const charStyle = (i: number): CSSProperties | undefined =>
     reduced ? undefined : { animationDelay: `${i * staggerMs}ms` };
   const charClass = reduced ? "inline-block" : "fx-char inline-block";
+  const renderChar = (ch: string, extra?: string) => (
+    <span
+      key={index}
+      data-char=""
+      aria-hidden="true"
+      className={cn(charClass, extra)}
+      style={charStyle(index++)}
+    >
+      {ch}
+    </span>
+  );
+
+  const hasSpaces = text.includes(" ");
 
   return (
     <Tag className={className}>
       <span className="sr-only">{text}</span>
-      {text.split(" ").map((word, w) => (
-        <Fragment key={w}>
-          {w > 0 && (
-            <span data-char="" aria-hidden="true" className={cn("whitespace-pre", charClass)} style={charStyle(index++)}>
-              {" "}
-            </span>
-          )}
-          <span aria-hidden="true" className="inline-block whitespace-nowrap">
-            {Array.from(word).map((ch, c) => (
-              <span key={c} data-char="" aria-hidden="true" className={charClass} style={charStyle(index++)}>
-                {ch}
+      {hasSpaces
+        ? text.split(" ").map((word, w) => (
+            <Fragment key={w}>
+              {w > 0 && renderChar(" ", "whitespace-pre")}
+              <span aria-hidden="true" className="inline-block whitespace-nowrap">
+                {graphemes(word).map((ch) => renderChar(ch))}
               </span>
-            ))}
-          </span>
-        </Fragment>
-      ))}
+            </Fragment>
+          ))
+        : graphemes(text).map((ch) => renderChar(ch))}
     </Tag>
   );
 }

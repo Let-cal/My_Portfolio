@@ -1,3 +1,4 @@
+import { renderToString } from "react-dom/server";
 import { act, fireEvent, render, renderHook, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -60,8 +61,7 @@ describe("NumberTicker", () => {
   it("shows the final value immediately under reduced motion", () => {
     stubMedia(reduced);
     render(<NumberTicker value={14} />);
-    expect(screen.getByText("14")).toBeInTheDocument();
-    expect(screen.getByLabelText("14")).toBeInTheDocument();
+    expect(screen.getByLabelText("14").querySelector("[data-ticker-value]")?.textContent).toBe("14");
   });
 
   it("keeps the final text (with prefix and suffix) in the accessible label while counting", () => {
@@ -85,12 +85,29 @@ describe("NumberTicker", () => {
     vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => setTimeout(() => cb(performance.now()), 16));
     vi.stubGlobal("cancelAnimationFrame", (id: number) => clearTimeout(id));
     render(<NumberTicker value={14} durationMs={1000} />);
-    expect(screen.getByLabelText("14").textContent).toBe("0");
+    const shown = () => screen.getByLabelText("14").querySelector("[data-ticker-value]")?.textContent;
+    expect(shown()).toBe("0");
+    // Width is reserved by the invisible final text, so counting 0 -> 14 never changes the box.
+    expect(screen.getByLabelText("14").querySelector("[data-ticker-reserve]")?.textContent).toBe("14");
     act(() => trigger([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver));
     act(() => {
       vi.advanceTimersByTime(1100);
     });
-    expect(screen.getByLabelText("14").textContent).toBe("14");
+    expect(shown()).toBe("14");
+  });
+
+  it("reserves the width of the final text (prefix, commas, suffix) with an invisible element", () => {
+    stubMedia(() => false);
+    vi.stubGlobal("IntersectionObserver", FakeObserver);
+    render(<NumberTicker value={1200} prefix="~" suffix="+" />);
+    const root = screen.getByLabelText("~1,200+");
+    const reserve = root.querySelector("[data-ticker-reserve]");
+    expect(reserve).toHaveTextContent("~1,200+");
+    expect(reserve).toHaveClass("invisible");
+    expect(reserve).toHaveAttribute("aria-hidden", "true");
+    expect(root).toHaveClass("inline-grid");
+    // Counting text sits in the same grid cell as the reserve, so it overlays instead of adding width.
+    expect(root.querySelector("[data-ticker-value]")).toHaveClass("col-start-1", "row-start-1");
   });
 });
 
@@ -101,6 +118,24 @@ describe("KineticText", () => {
     expect(chars).toHaveLength(15);
     chars.forEach((c) => expect(c).toHaveAttribute("aria-hidden", "true"));
     expect(screen.getByText("Le Tran Cat Lam")).toHaveClass("sr-only");
+  });
+
+  it("leaves Japanese text flat so it can wrap between characters", () => {
+    const { container } = render(<KineticText text="フルスタックエンジニアのポートフォリオ" />);
+    expect(container.querySelector(".whitespace-nowrap")).toBeNull();
+    expect(document.querySelectorAll("[data-char]")).toHaveLength(Array.from("フルスタックエンジニアのポートフォリオ").length);
+  });
+
+  it("keeps decomposed Vietnamese diacritics attached to their letter", () => {
+    const { container } = render(<KineticText text={"Lâm"} />);
+    const chars = Array.from(container.querySelectorAll("[data-char]"));
+    expect(chars).toHaveLength(3);
+    expect(chars[1]?.textContent).toBe("â");
+  });
+
+  it("still groups space-separated words so lines break only between words", () => {
+    const { container } = render(<KineticText text="Le Tran" />);
+    expect(container.querySelectorAll(".whitespace-nowrap")).toHaveLength(2);
   });
 
   it("renders the requested heading level", () => {
@@ -169,6 +204,12 @@ describe("LocalTime", () => {
     vi.setSystemTime(new Date("2026-10-13T07:32:00Z"));
     render(<LocalTime timeZone="Asia/Ho_Chi_Minh" />);
     expect(screen.getByText("14:32 (GMT+7)")).toBeInTheDocument();
+  });
+
+  it("server render uses a placeholder with the same shape as the real label", () => {
+    const html = renderToString(<LocalTime timeZone="Asia/Ho_Chi_Minh" />);
+    expect(html).toContain("--:-- (GMT+7)");
+    expect(html).toContain("min-width:13ch");
   });
 
   it("refreshes every 30 seconds", () => {

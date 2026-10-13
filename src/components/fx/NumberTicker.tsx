@@ -22,6 +22,9 @@ function decimalsOf(n: number) {
 /**
  * Counts from 0 to `value` when scrolled into view. Server HTML and reduced motion show the final value;
  * the accessible label always carries the final text, so a screen reader never hears a half-counted number.
+ *
+ * No layout shift: the final text is rendered invisibly in the same grid cell as the counting text, so the
+ * element is always as wide as the final value (digit and comma count never change its width).
  */
 export function NumberTicker({ value, prefix = "", suffix = "", durationMs = 1200, className }: NumberTickerProps) {
   const reduced = usePrefersReducedMotion();
@@ -29,7 +32,8 @@ export function NumberTicker({ value, prefix = "", suffix = "", durationMs = 120
   const [node, setNode] = useState<HTMLSpanElement | null>(null);
   const decimals = decimalsOf(value);
   const format = (n: number) =>
-    n.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    `${prefix}${n.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}${suffix}`;
+  const finalText = format(value);
 
   useEffect(() => {
     if (reduced || !node || typeof IntersectionObserver === "undefined") return;
@@ -57,12 +61,13 @@ export function NumberTicker({ value, prefix = "", suffix = "", durationMs = 120
   }, [node, reduced, value, durationMs]);
 
   return (
-    <span role="img" aria-label={`${prefix}${format(value)}${suffix}`} className={className}>
-      {prefix}
-      <span ref={setNode} className="tabular-nums">
+    <span role="img" aria-label={finalText} className={`inline-grid tabular-nums${className ? ` ${className}` : ""}`}>
+      <span aria-hidden="true" data-ticker-reserve="" className="invisible col-start-1 row-start-1">
+        {finalText}
+      </span>
+      <span ref={setNode} aria-hidden="true" data-ticker-value="" className="col-start-1 row-start-1">
         {format(shown)}
       </span>
-      {suffix}
     </span>
   );
 }
