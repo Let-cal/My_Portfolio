@@ -1,7 +1,11 @@
 import type { RoleKey } from "@/content/schema";
 
-/** Accent colour of each role, after its koi: Kohaku (full-stack), Showa (tech lead), Ogon (PM). Set as `--role-accent` on <html>. */
-export const ROLE_ACCENT: Record<RoleKey, string> = { fullstack: "#e4571e", techlead: "#dc2626", pm: "#e0a84e" };
+/**
+ * Accent colour of each role, as approved in the hero prototype: terminal blue (developer), blueprint sky blue
+ * (tech lead), Ogon gold (PM). They match the three role portraits. Set as `--role-accent` on <html>; text on the
+ * light theme uses the darker `--role-accent-text` (globals.css).
+ */
+export const ROLE_ACCENT: Record<RoleKey, string> = { fullstack: "#0ea5e9", techlead: "#38bdf8", pm: "#e0a84e" };
 
 /**
  * Start angle of each role's 120° slice of the hero wheel, as a CSS angle (0° = top, clockwise):

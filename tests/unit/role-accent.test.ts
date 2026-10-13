@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import { ROLE_ACCENT, SECTOR_FROM, angleFromPoint, sectorForAngle } from "@/lib/role-accent";
 
 describe("ROLE_ACCENT", () => {
-  it("maps each role to its koi accent colour", () => {
-    expect(ROLE_ACCENT).toEqual({ fullstack: "#e4571e", techlead: "#dc2626", pm: "#e0a84e" });
+  it("uses the approved prototype colours", () => {
+    expect(ROLE_ACCENT.fullstack).toBe("#0ea5e9");
+    expect(ROLE_ACCENT.techlead).toBe("#38bdf8");
+    expect(ROLE_ACCENT.pm).toBe("#e0a84e");
   });
 });
 

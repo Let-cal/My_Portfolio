@@ -83,8 +83,10 @@ describe("RoleWheel", () => {
     const dev = screen.getByRole("radio", { name: "DEVELOPER" });
     expect(dev).toHaveAttribute("tabindex", "0");
     expect(screen.getByRole("radio", { name: "TECH LEAD" })).toHaveAttribute("tabindex", "-1");
+    expect(document.documentElement.style.getPropertyValue("--role-accent")).toBe("#0ea5e9");
     act(() => dev.focus());
     await userEvent.keyboard("{ArrowRight}");
+    expect(document.documentElement.style.getPropertyValue("--role-accent")).toBe("#38bdf8");
     const tl = screen.getByRole("radio", { name: "TECH LEAD" });
     expect(tl).toHaveAttribute("aria-checked", "true");
     expect(tl).toHaveAttribute("tabindex", "0");

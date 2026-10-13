@@ -264,12 +264,13 @@ html[data-hello-seen] [data-hello] {
 /* ---- hero: role wheel (src/components/sections/hero). Approved prototype: hero-desc-variants.html, variant A ---- */
 /* Default accent before hydration; RoleProvider writes the chosen role's accent inline on <html>. */
 :root {
-  --role-accent: #e4571e;
+  --role-accent: #0ea5e9;
   --role-accent-text: var(--role-accent);
 }
 .light {
-  /* Darker accent for text on the light background (WCAG AA for large text). */
-  --role-accent-text: color-mix(in srgb, var(--role-accent) 68%, #000);
+  /* Darker accent for text on the light background: 60% of each accent with black is >= 5:1 on #fafaf9
+     (#0ea5e9 ~5.9, #38bdf8 ~5.2, #e0a84e ~5.1), so small text passes WCAG AA. */
+  --role-accent-text: color-mix(in srgb, var(--role-accent) 60%, #000);
 }
 
 @property --from {
@@ -520,7 +521,7 @@ html[data-hello-seen] [data-hello] {
   white-space: nowrap;
 }
 .light .hero-panel-title em {
-  color: color-mix(in srgb, var(--c) 68%, #000);
+  color: color-mix(in srgb, var(--c) 60%, #000);
 }
 /* Collapsed panels are dimmed with solid colours instead of opacity, so the text keeps AA contrast for large text. */
 .hero-panel-title,
