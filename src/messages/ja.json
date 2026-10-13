@@ -77,6 +77,17 @@
     "tech": "技術スタック",
     "team": "チーム規模: {size}"
   },
+  "projects": {
+    "viewCaseStudy": "事例を見る",
+    "techLabel": "技術スタック",
+    "moreTech": "ほか{count}件",
+    "demo": "デモ",
+    "code": "コード",
+    "codeWeb": "コード(Web)",
+    "codeMobile": "コード(モバイル)",
+    "codeN": "コード{n}",
+    "newTab": "(新しいタブで開きます)"
+  },
   "common": {
     "present": "現在"
   }

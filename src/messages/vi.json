@@ -77,6 +77,17 @@
     "tech": "Công nghệ",
     "team": "Quy mô team: {size}"
   },
+  "projects": {
+    "viewCaseStudy": "Xem case study",
+    "techLabel": "Công nghệ",
+    "moreTech": "+{count} nữa",
+    "demo": "Demo",
+    "code": "Code",
+    "codeWeb": "Code (Web)",
+    "codeMobile": "Code (Mobile)",
+    "codeN": "Code {n}",
+    "newTab": "(mở trong tab mới)"
+  },
   "common": {
     "present": "Hiện tại"
   }

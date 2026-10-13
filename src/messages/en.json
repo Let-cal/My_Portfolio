@@ -77,6 +77,17 @@
     "tech": "Tech stack",
     "team": "Team size: {size}"
   },
+  "projects": {
+    "viewCaseStudy": "View case study",
+    "techLabel": "Tech stack",
+    "moreTech": "+{count} more",
+    "demo": "Demo",
+    "code": "Code",
+    "codeWeb": "Code (Web)",
+    "codeMobile": "Code (Mobile)",
+    "codeN": "Code {n}",
+    "newTab": "(opens in new tab)"
+  },
   "common": {
     "present": "Present"
   }
