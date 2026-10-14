@@ -71,7 +71,7 @@ describe("QuickView", () => {
     expect(within(container).getByRole("heading", { name: "スキル" })).toBeInTheDocument();
   });
 
-  it("drops data-quick-view while React keeps the page as a hidden copy, and puts it back when it shows again", () => {
+  it("marks <html data-quick> and its <main> only while the page is really shown (not as a hidden copy)", () => {
     const tree = (mode: "visible" | "hidden") => (
       <NextIntlClientProvider locale="en" messages={messages.en}>
         <Activity mode={mode}>
@@ -79,22 +79,41 @@ describe("QuickView", () => {
         </Activity>
       </NextIntlClientProvider>
     );
-    const { container, rerender } = render(tree("visible"));
+    const html = document.documentElement;
+    const { container, rerender, unmount } = render(tree("visible"));
     const main = container.querySelector("main")!;
     expect(main).toHaveAttribute("data-quick-view");
+    expect(html).toHaveAttribute("data-quick");
     rerender(tree("hidden"));
     expect(main).not.toHaveAttribute("data-quick-view");
+    expect(html).not.toHaveAttribute("data-quick");
     rerender(tree("visible"));
     expect(main).toHaveAttribute("data-quick-view");
+    expect(html).toHaveAttribute("data-quick");
+    unmount();
+    expect(html).not.toHaveAttribute("data-quick");
+  });
+
+  it("server HTML marks <html> before paint with an inline script, and keeps a no-JS fallback", () => {
+    const { container } = renderQuick();
+    const script = container.querySelector("main[data-quick-view] script");
+    expect(script?.innerHTML).toContain("data-quick");
   });
 });
 
 describe("quick-view chrome rule", () => {
-  it("does not depend on the style attribute (a :has() over [style] restyles the whole page on every inline style change)", () => {
-    const css = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
-    const hasArgs = [...css.matchAll(/:has\(([^{]*)\{/g)].map((m) => m[1]);
-    expect(hasArgs.length).toBeGreaterThan(0);
-    for (const arg of hasArgs) expect(arg).not.toMatch(/\[style/);
-    expect(css).toMatch(/body:has\(\[data-quick-view\]\)\s*\{/);
+  const css = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
+  // Rules inside `@media print { ... }` (closed by a "}" at the start of a line) only apply to paper.
+  const screenCss = css.replace(/@media print\s*\{[\s\S]*?\r?\n\}/g, "");
+
+  it("uses no body-level :has() on screen (a :has() on <body> restyles the whole page on DOM and style changes)", () => {
+    expect(screenCss).not.toMatch(/body:has\(/);
+    expect(screenCss).not.toMatch(/html:has\(/);
+    expect(screenCss).toMatch(/html\[data-quick\] body\s*\{/);
+  });
+
+  it("never tests the style attribute inside :has()", () => {
+    const selectors = css.replace(/\/\*[\s\S]*?\*\//g, "");
+    for (const m of selectors.matchAll(/:has\(([^{]*)\{/g)) expect(m[1]).not.toMatch(/\[style/);
   });
 });

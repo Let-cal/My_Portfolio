@@ -3,6 +3,7 @@ import { hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { QuickMarkScript } from "@/components/quick/quick-mark";
 import { QuickView } from "@/components/quick/QuickView";
 import type { Locale } from "@/content/schema";
 import { routing } from "@/i18n/routing";
@@ -30,6 +31,7 @@ export default async function QuickPage({ params, searchParams }: PageProps<"/[l
     <Suspense
       fallback={
         <main id="main" data-quick-view="" aria-busy="true" className="mx-auto w-full max-w-4xl flex-1 px-4 py-10 text-muted-foreground">
+          <QuickMarkScript />
           <p role="status">{t("loading")}</p>
         </main>
       }

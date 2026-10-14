@@ -242,14 +242,15 @@ body:lang(ja) {
 }
 
 /* ---- 60-second view (/[locale]/quick): a one-page layout without the site chrome ----
-   The page's root element carries data-quick-view. While it is shown, every other child of <body> (skip link,
-   header, pill nav, toaster, spotlight, grain, progress koi, hello greeting, and later the 3D canvas) is hidden,
-   and so are the side rail and the footer inside the shell, whose rail column and padding are flattened.
-   A soft navigation can leave a hidden copy of this page in the DOM; QuickViewMarker removes the attribute from
-   that copy, so the chrome of the page you came back to stays. Never test [style] inside this :has(): Chrome then
-   restyles the whole body on every inline style change (every animation frame). */
-body:has([data-quick-view]) {
-  & > :not(:has([data-quick-view])) {
+   The page's root element carries data-quick-view, and <html data-quick> is set while it is shown (an inline script
+   before the first paint, then QuickViewMarker; see src/components/quick/quick-mark.tsx). Then every other child of
+   <body> (skip link, header, pill nav, toaster, spotlight, grain, progress koi, hello greeting, the 3D backdrop) is
+   hidden, and so are the side rail and the footer inside the shell, whose rail column and padding are flattened.
+   A soft navigation can leave a hidden copy of this page in the DOM; its marks are removed with it, so the chrome of
+   the page you came back to stays. No body-level :has() here: Chrome restyles the whole page whenever one of those
+   may have changed (DOM insertions, and with a [style] test every inline style change, i.e. every frame). */
+html[data-quick] body {
+  & > :not([data-site-shell]) {
     display: none !important;
   }
   & [data-site-shell] {
