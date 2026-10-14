@@ -2,7 +2,8 @@
 
 import { useTranslations } from "next-intl";
 import { useRef, type KeyboardEvent } from "react";
-import { ROLE_KEYS, type KoiVariety, type RoleKey } from "@/content/schema";
+import { ROLE_KEYS } from "@/content/constants";
+import type { KoiVariety, RoleKey } from "@/content/schema";
 import { cn } from "@/lib/utils";
 import { useRole } from "./RoleProvider";
 

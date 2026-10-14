@@ -24,7 +24,8 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ROLE_KEYS, type RoleKey } from "@/content/schema";
+import { ROLE_KEYS } from "@/content/constants";
+import type { RoleKey } from "@/content/schema";
 import { getPathname, usePathname } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { getLenis, scrollToElement } from "./lenis-instance";

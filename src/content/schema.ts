@@ -1,22 +1,9 @@
 import { z } from "zod";
+import { LOCALES, ROLE_KEYS, KOI_VARIETIES, SKILL_GROUPS, CERT_TOPICS } from "./constants";
+export { LOCALES, ROLE_KEYS, KOI_VARIETIES, SKILL_GROUPS, CERT_TOPICS } from "./constants";
 
 // Shared content model for the public site, the admin CRUD and the Supabase mappers.
 // Every type below is z.infer of the schema with the matching name.
-
-export const LOCALES = ["en", "ja", "vi"] as const;
-export const ROLE_KEYS = ["fullstack", "techlead", "pm"] as const;
-export const KOI_VARIETIES = ["kohaku", "showa", "ogon"] as const;
-export const SKILL_GROUPS = [
-  "languages",
-  "frameworks",
-  "cloud",
-  "ai",
-  "databases",
-  "delivery",
-  "testing",
-  "design",
-] as const;
-export const CERT_TOPICS = ["language", "pm", "design", "engineering", "other"] as const;
 
 export const localeSchema = z.enum(LOCALES);
 export const roleKeySchema = z.enum(ROLE_KEYS);

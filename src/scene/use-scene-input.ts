@@ -19,8 +19,9 @@ function measureTops(): number[] {
  * scroll events are enough. Everything runs in requestAnimationFrame callbacks and only the store's
  * subscribers hear about it: no React state, no page re-render.
  */
-export function useChapterTracking() {
+export function useChapterTracking(enabled = true) {
   useEffect(() => {
+    if (!enabled) return;
     let tops = measureTops();
     let frame = 0;
     const flush = () => {
@@ -49,7 +50,7 @@ export function useChapterTracking() {
       window.removeEventListener("resize", remeasure);
       window.removeEventListener("load", remeasure);
     };
-  }, []);
+  }, [enabled]);
 }
 
 /**

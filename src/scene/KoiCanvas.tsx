@@ -44,28 +44,57 @@ export function KoiCanvas() {
   const { theme } = useTheme();
   const { role } = useRole();
   const gate = useLoadGate();
+  const [capture, setCapture] = useState<null | { creature: "koi" | "dragon"; theme: "light" | "dark" }>(null);
+  const [captureConfigured, setCaptureConfigured] = useState(false);
+  const [captureSettled, setCaptureSettled] = useState(false);
   const [downgraded, setDowngraded] = useState(false);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
-  const dragon = useSceneStore((s) => s.chapter >= DRAGON_CHAPTER);
+  const storedDragon = useSceneStore((s) => s.chapter >= DRAGON_CHAPTER);
+  const dragon = capture ? capture.creature === "dragon" : storedDragon;
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const creature = params.get("capture");
+    if (creature !== "koi" && creature !== "dragon") return;
+    const capturedTheme = params.get("theme") === "day" ? "light" : "dark";
+    document.documentElement.setAttribute("data-scene-capture", "");
+    const frame = requestAnimationFrame(() => setCapture({ creature, theme: capturedTheme }));
+    return () => {
+      cancelAnimationFrame(frame);
+      document.documentElement.removeAttribute("data-scene-capture");
+    };
+  }, []);
 
   // Until WebGL has been probed the tier is `off`, so nothing loads and the image shows.
-  const detected: Tier = webgl === null || failed ? "off" : detectTier({ webgl, reducedMotion, isMobile, cores });
+  const detected: Tier = webgl === null || failed ? "off" : capture ? "high" : detectTier({ webgl, reducedMotion, isMobile, cores });
   const tier: Tier = detected === "high" && downgraded ? "low" : detected;
-  const load = shouldLoadScene({ tier, isMobile, ...gate });
+  const load = capture ? captureConfigured : shouldLoadScene({ tier, isMobile, ...gate });
 
-  useChapterTracking();
-  usePointerTracking(tier !== "off");
-  useAvoidTracking(tier !== "off");
-  useCtaTracking(tier !== "off");
-  useFeedClicks(tier !== "off");
+  useChapterTracking(capture === null);
+  usePointerTracking(tier !== "off" && capture === null);
+  useAvoidTracking(tier !== "off" && capture === null);
+  useCtaTracking(tier !== "off" && capture === null);
+  useFeedClicks(tier !== "off" && capture === null);
   useEffect(() => {
-    sceneStore.setState({ tier, theme, role });
-  }, [tier, theme, role]);
+    sceneStore.setState({ tier, theme: capture?.theme ?? theme, role, ...(capture ? { chapter: capture.creature === "dragon" ? 6 : 0, t: 0, pointer: null } : {}) });
+    if (!capture) return;
+    const frame = requestAnimationFrame(() => setCaptureConfigured(true));
+    return () => cancelAnimationFrame(frame);
+  }, [tier, theme, role, capture]);
+  useEffect(() => {
+    if (!capture || !ready) return;
+    const timer = window.setTimeout(() => {
+      setCaptureSettled(true);
+      (window as Window & { __sceneCaptureReady?: boolean }).__sceneCaptureReady = true;
+    }, 3200);
+    return () => window.clearTimeout(timer);
+  }, [capture, ready]);
 
   if (!body) return null;
 
-  const src = `/fallback/${dragon ? "dragon" : "koi"}-${theme === "light" ? "day" : "night"}.jpg`;
+  const activeTheme = capture?.theme ?? theme;
+  const src = `/fallback/${dragon ? "dragon" : "koi"}-${activeTheme === "light" ? "day" : "night"}.jpg`;
   const onSceneError = (error: unknown) => {
     // Once is enough: `failed` keeps the tier off, so the scene is not mounted (and cannot throw) again.
     console.warn("3D scene failed to start; showing the static image instead.", error);
@@ -102,14 +131,20 @@ export function KoiCanvas() {
           style={{
             position: "fixed",
             inset: 0,
-            zIndex: -1,
+            zIndex: capture ? 0 : -1,
             pointerEvents: "none",
             opacity: sceneVisible ? 1 : 0,
             transition: `opacity ${FADE_MS}ms ease`,
           }}
         >
           <SceneErrorBoundary onError={onSceneError}>
-            <SceneRoot tier={tier} onReadyChange={setReady} onDowngrade={() => setDowngraded(true)} />
+            <SceneRoot
+              tier={tier}
+              onReadyChange={setReady}
+              onDowngrade={() => setDowngraded(true)}
+              capture={capture !== null}
+              captureSettled={captureSettled}
+            />
           </SceneErrorBoundary>
           <TextVeil />
         </div>

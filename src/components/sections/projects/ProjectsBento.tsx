@@ -1,8 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { CaseStudySheet } from "@/components/sections/experience/CaseStudySheet";
+import dynamic from "next/dynamic";
 import { ProjectCard, type ProjectView } from "./ProjectCard";
+
+const CaseStudySheet = dynamic(() => import("@/components/sections/experience/CaseStudySheet").then((module) => module.CaseStudySheet), { ssr: false });
 
 export type { ProjectView };
 

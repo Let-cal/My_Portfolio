@@ -146,7 +146,7 @@ body {
   --font-stack-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 body:lang(ja) {
-  --font-stack-sans: var(--font-inter), var(--font-noto-sans-jp), ui-sans-serif, system-ui, sans-serif;
+  --font-stack-sans: var(--font-inter), var(--font-noto-sans-jp, "Yu Gothic"), ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {
@@ -260,6 +260,18 @@ html[data-quick] body {
   & [data-site-shell] :is(aside, footer):not([data-quick-view] *) {
     display: none;
   }
+}
+
+/* Explicit, query-only scene capture used by scripts/capture-fallbacks.mjs; absent from normal visits. */
+html[data-scene-capture],
+html[data-scene-capture] body {
+  background: #08090d !important;
+}
+html[data-scene-capture] body > :not([data-koi-canvas]) {
+  visibility: hidden !important;
+}
+html[data-scene-capture] body > [data-koi-canvas] {
+  visibility: visible !important;
 }
 
 @page {

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Instrument_Serif, Noto_Sans_JP, Shippori_Mincho, Space_Grotesk } from "next/font/google";
+import { Inter, Instrument_Serif, Shippori_Mincho, Space_Grotesk } from "next/font/google";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -9,6 +9,7 @@ import { CommandPalette } from "@/components/site/CommandPalette";
 import { Footer } from "@/components/site/Footer";
 import { Header } from "@/components/site/Header";
 import { HelloIntro } from "@/components/site/HelloIntro";
+import { JapaneseTypography } from "@/components/site/JapaneseTypography";
 import { HighlightProvider } from "@/components/site/HighlightProvider";
 import { HELLO_SEEN_SCRIPT } from "@/components/site/hello-script";
 import { REVEAL_SHOW_CSS } from "@/components/site/reveal-style";
@@ -30,8 +31,6 @@ import "../globals.css";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin", "vietnamese"], display: "swap" });
 const spaceGrotesk = Space_Grotesk({ variable: "--font-space-grotesk", subsets: ["latin", "vietnamese"], display: "swap" });
-// Only attached to <html> on /ja. The font is split by unicode-range, so only the glyphs used are fetched.
-const notoSansJp = Noto_Sans_JP({ variable: "--font-noto-sans-jp", subsets: ["latin"], display: "swap", preload: false });
 // Accent faces: the italic serif (role title in the side rail, later headings) and the Mincho used by the vertical chapter labels.
 const instrumentSerif = Instrument_Serif({ variable: "--font-serif", subsets: ["latin"], weight: "400", style: "italic", display: "swap" });
 const shipporiMincho = Shippori_Mincho({ variable: "--font-mincho", subsets: ["latin"], weight: "500", display: "swap", preload: false });
@@ -65,7 +64,6 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
     spaceGrotesk.variable,
     instrumentSerif.variable,
     shipporiMincho.variable,
-    locale === "ja" ? notoSansJp.variable : "",
     "flex min-h-full flex-col",
   ]
     .filter(Boolean)
@@ -85,6 +83,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
       <body className={bodyClassName}>
         <NextIntlClientProvider>
           <ThemeSync />
+          {locale === "ja" && <JapaneseTypography />}
           <MotionProvider>
             <RoleProvider>
               <a

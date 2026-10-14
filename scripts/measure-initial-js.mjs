@@ -1,6 +1,7 @@
 // Initial JS budget check (spec 7.5: <= 200 KB gzip before the 3D chunks).
 // Reads the prerendered HTML of a route from `.next/server/app`, takes every script the HTML loads
 // (`<script src>` and `<link rel="preload" as="script">`), gzips each chunk and prints the sizes.
+// Modern browsers ignore nomodule scripts, so their legacy polyfills are excluded.
 // Lazy chunks (the 3D scene, dialogs) are not in the HTML, so they are not counted.
 //
 //   node scripts/measure-initial-js.mjs            -> /en, /ja, /vi, /en/quick (quick only if prerendered)
@@ -18,7 +19,11 @@ const list = routes.length ? routes : ["en", "ja", "vi", "en/quick"];
 
 function scriptsOf(html) {
   const found = new Set();
-  for (const m of html.matchAll(/<script[^>]*\ssrc="([^"]+)"/g)) found.add(m[1]);
+  for (const m of html.matchAll(/<script\b[^>]*>/gi)) {
+    if (/\snomodule(?:\s|=|>)/i.test(m[0])) continue;
+    const src = m[0].match(/\ssrc="([^"]+)"/i)?.[1];
+    if (src) found.add(src);
+  }
   for (const m of html.matchAll(/<link[^>]*rel="preload"[^>]*as="script"[^>]*href="([^"]+)"/g)) found.add(m[1]);
   for (const m of html.matchAll(/<link[^>]*as="script"[^>]*rel="preload"[^>]*href="([^"]+)"/g)) found.add(m[1]);
   return [...found].filter((s) => s.startsWith("/_next/static/"));
@@ -29,12 +34,14 @@ let failed = false;
 for (const route of list) {
   const file = join(root, ".next/server/app", `${route}.html`);
   if (!existsSync(file)) {
-    if (!json) console.log(`/${route}: no prerendered HTML (skipped)`);
+    failed = true;
+    if (!json) console.error(`/${route}: no production HTML; build this route before checking its budget`);
     continue;
   }
   const html = readFileSync(file, "utf8");
   const chunks = scriptsOf(html).map((src) => {
-    const buf = readFileSync(join(root, ".next", src.replace(/^\/_next\//, "")));
+    const assetPath = decodeURIComponent(src.replace(/^\/_next\//, ""));
+    const buf = readFileSync(join(root, ".next", assetPath));
     return { src, raw: buf.length, gzip: gzipSync(buf, { level: 9 }).length };
   });
   chunks.sort((a, b) => b.gzip - a.gzip);

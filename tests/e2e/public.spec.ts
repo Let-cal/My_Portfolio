@@ -18,6 +18,15 @@ async function hydrated(page: Page, selector: string) {
 }
 
 test.describe("home page", () => {
+  test("a lazily loaded project case study opens and returns focus after Escape", async ({ page }) => {
+    await page.goto("/en");
+    const trigger = page.locator("#proj-siteplus").getByRole("button");
+    await trigger.click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toBeHidden();
+    await expect(trigger).toBeFocused();
+  });
   test("/en renders the seven sections", async ({ page }) => {
     await page.goto("/en");
     for (const id of SECTION_IDS) {

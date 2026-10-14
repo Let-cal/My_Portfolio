@@ -178,7 +178,7 @@ describe("Projects bento", () => {
   it("opens the case study sheet when a card with a case study is clicked", async () => {
     renderProjects();
     await userEvent.click(within(card("siteplus")).getByRole("button", { name: /case study/i }));
-    const dialog = await screen.findByRole("dialog");
+    const dialog = await screen.findByRole("dialog", {}, { timeout: 5000 });
     const cs = base.projects.find((p) => p.id === "siteplus")!.caseStudy!;
     expect(within(dialog).getByText(cs.problem.en)).toBeInTheDocument();
     expect(within(dialog).getByText(cs.result.en)).toBeInTheDocument();

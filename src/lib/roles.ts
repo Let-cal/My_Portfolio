@@ -1,11 +1,5 @@
-import {
-  ROLE_KEYS,
-  SKILL_GROUPS,
-  type Experience,
-  type Role,
-  type RoleKey,
-  type SkillGroup,
-} from "@/content/schema";
+import { ROLE_KEYS, SKILL_GROUPS } from "@/content/constants";
+import type { Experience, Role, RoleKey, SkillGroup } from "@/content/schema";
 
 export const DEFAULT_ROLE: RoleKey = "fullstack";
 

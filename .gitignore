@@ -50,4 +50,5 @@ next-env.d.ts
 
 # project
 .superpowers/
-lighthouse.json
+lighthouse*.json
+.lighthouseci/

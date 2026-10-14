@@ -3,6 +3,7 @@
 import { ChevronRightIcon } from "lucide-react";
 import { motion } from "motion/react";
 import { useTranslations } from "next-intl";
+import dynamic from "next/dynamic";
 import { useMemo, useRef, useState, type FocusEvent } from "react";
 import { GlowCard } from "@/components/fx/GlowCard";
 import { TracingBeam } from "@/components/fx/TracingBeam";
@@ -11,7 +12,9 @@ import { useHighlight } from "@/components/site/HighlightProvider";
 import { useRole } from "@/components/site/RoleProvider";
 import type { RoleKey } from "@/content/schema";
 import { cn } from "@/lib/utils";
-import { CaseStudySheet, type CaseStudyView } from "./CaseStudySheet";
+import type { CaseStudyView } from "./CaseStudySheet";
+
+const CaseStudySheet = dynamic(() => import("./CaseStudySheet").then((module) => module.CaseStudySheet), { ssr: false });
 
 /** One experience with every string already picked for the current locale. */
 export type TimelineItem = {

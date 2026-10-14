@@ -26,7 +26,8 @@ function readSeen(): boolean {
 const noopSubscribe = () => () => {};
 
 /**
- * Full-screen greeting shown once per browser session: Hello, こんにちは, Xin chào (350ms each), then the
+ * Greeting shown once per browser session: a compact pill on phones, a curtain on larger screens.
+ * Hello, こんにちは, Xin chào (350ms each), then the
  * curtain slides up (300ms). A click or any key skips it. It is aria-hidden and the page is already rendered
  * underneath. Not shown when motion is off (the Motion toggle, else the OS setting) or when `sessionStorage.hello` is "1".
  *
@@ -76,7 +77,7 @@ export function HelloIntro() {
       data-hello
       aria-hidden="true"
       onClick={finish}
-      className="fixed inset-0 z-[100] flex cursor-pointer items-center justify-center bg-[#0a0a0b] text-[#f4f4f5]"
+      className="fixed inset-0 z-[100] flex cursor-pointer items-center justify-center bg-[#0a0a0b] text-[#f4f4f5] max-md:inset-auto max-md:right-4 max-md:bottom-24 max-md:rounded-full max-md:border max-md:border-white/15 max-md:px-4 max-md:py-3"
       style={{
         transform: step === 3 ? "translateY(-100%)" : "translateY(0)",
         transition: `transform ${SLIDE_MS}ms cubic-bezier(0.76, 0, 0.24, 1)`,
@@ -85,7 +86,7 @@ export function HelloIntro() {
       <p
         key={greeting.text}
         lang={greeting.lang}
-        className="hello-word flex items-center gap-4 font-heading text-5xl font-medium tracking-tight sm:text-7xl"
+        className="hello-word flex items-center gap-4 font-heading text-base font-medium tracking-tight md:text-5xl lg:text-7xl"
       >
         <span aria-hidden="true" className="size-2.5 rounded-full sm:size-3.5" style={{ backgroundColor: "var(--role-accent, #f97316)" }} />
         {greeting.text}
