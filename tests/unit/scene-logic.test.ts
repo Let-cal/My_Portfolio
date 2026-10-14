@@ -124,6 +124,8 @@ describe("scene store", () => {
       role: "fullstack",
       tier: "off",
       foods: [],
+      avoid: [],
+      drop: null,
     });
   });
   it("merges partial state and notifies subscribers", () => {

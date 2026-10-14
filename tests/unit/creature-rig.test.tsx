@@ -18,6 +18,8 @@ const state = (patch: Partial<SceneState> = {}): SceneState => ({
   role: "fullstack",
   tier: "high",
   foods: [],
+  avoid: [],
+  drop: null,
   ...patch,
 });
 
@@ -29,9 +31,15 @@ function camera() {
   return c;
 }
 
-function run(rig: ReturnType<typeof createCreatureRig>, frames: number, s: SceneState, t0 = 0) {
+function run(
+  rig: ReturnType<typeof createCreatureRig>,
+  frames: number,
+  s: SceneState,
+  t0 = 0,
+  extra: { day?: number; viewport?: { width: number; height: number } } = {},
+) {
   const cam = camera();
-  for (let f = 0; f < frames; f++) rig.update({ dt: 1 / 60, time: t0 + f / 60, camera: cam, state: s });
+  for (let f = 0; f < frames; f++) rig.update({ dt: 1 / 60, time: t0 + f / 60, camera: cam, state: s, ...extra });
   return t0 + frames / 60;
 }
 
@@ -93,6 +101,47 @@ describe("creature rig", () => {
     expect(rig.bodyUniforms.uFade.value).toBeLessThan(0.8);
     run(rig, 20, state({ role: "pm" }), t);
     expect(rig.bodyUniforms.uFade.value).toBe(1);
+    rig.dispose();
+  });
+
+  it("swims to the nearest pellet that has landed, before the pointer, and ignores one still falling", () => {
+    const rig = createCreatureRig({ rings: 40, sides: 10 });
+    const pointer = { x: 0.9, y: 0.4 };
+    // A pellet is still in the air (it drops far in the future), the pointer is far to the right: the pointer wins.
+    let t = 0;
+    const falling = [{ id: 1, x: -1.5, z: 0.5, t0: 1000 }];
+    for (let i = 0; i < 4; i++) t = run(rig, 30, state({ pointer: { x: pointer.x, y: pointer.y - (i % 2) * 1e-6 }, foods: falling }), t);
+    expect(creatureLive.head.x).toBeGreaterThan(0);
+    // Once it has landed the koi goes for it, though the pointer is still moving.
+    const landed = [{ id: 1, x: -1.5, z: 0.5, t0: 0 }];
+    for (let i = 0; i < 8; i++) t = run(rig, 30, state({ pointer: { x: pointer.x, y: pointer.y - (i % 2) * 1e-6 }, foods: landed }), t);
+    expect(Math.hypot(creatureLive.head.x + 1.5, creatureLive.head.z - 0.5)).toBeLessThan(0.3);
+    rig.dispose();
+  });
+
+  it("fades while its body is under a block of text, and shows where it is on screen", () => {
+    const rig = createCreatureRig({ rings: 40, sides: 10 });
+    const viewport = { width: 1280, height: 720 };
+    // The whole screen is "text".
+    const cover = [{ x0: 0, y0: 0, x1: 1280, y1: 720 }];
+    const t = run(rig, 90, state({ avoid: cover }), 0, { viewport });
+    expect(creatureLive.visibility).toBeLessThan(0.4);
+    expect(rig.bodyMaterial.emissiveIntensity).toBeLessThan(0.5);
+    expect(creatureLive.screen.valid).toBe(true);
+    expect(creatureLive.screen.x1).toBeGreaterThan(creatureLive.screen.x0);
+    // The text goes away: it comes back.
+    run(rig, 120, state({ avoid: [] }), t, { viewport });
+    expect(creatureLive.visibility).toBeGreaterThan(0.95);
+    rig.dispose();
+  });
+
+  it("glows less by day, following the blend it is given rather than the theme", () => {
+    const rig = createCreatureRig({ rings: 40, sides: 10 });
+    run(rig, 30, state(), 0, { day: 0 });
+    const night = rig.bodyMaterial.emissiveIntensity;
+    run(rig, 30, state(), 0, { day: 1 });
+    const day = rig.bodyMaterial.emissiveIntensity;
+    expect(day).toBeLessThan(night * 0.8);
     rig.dispose();
   });
 

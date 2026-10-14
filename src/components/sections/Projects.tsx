@@ -75,7 +75,7 @@ export function Projects({ content, locale }: { content: Content; locale: Locale
       className="relative mx-auto max-w-6xl scroll-mt-14 px-4 py-24 sm:px-6"
     >
       <Reveal>
-        <h2 id="projects-heading" className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+        <h2 id="projects-heading" data-scene-avoid="" className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
           {ts("projects")}
         </h2>
       </Reveal>

@@ -53,7 +53,7 @@ export function Contact({ content, locale }: { content: Content; locale: Locale 
         </div>
 
         <div className="grid gap-10 pt-24 md:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] md:gap-16 md:pt-0">
-          <div className="flex flex-col gap-6 md:pt-10">
+          <div data-scene-avoid="" className="flex flex-col gap-6 md:pt-10">
             <p className="max-w-md text-lg text-pretty text-muted-foreground sm:text-xl">{t("intro")}</p>
             <AvailabilityStatus
               openToWork={profile.openToWork}
@@ -62,7 +62,7 @@ export function Contact({ content, locale }: { content: Content; locale: Locale 
               labels={{ openToWork: t("openToWork"), localTime: t("localTime") }}
             />
           </div>
-          <div className="md:pt-24">
+          <div data-scene-avoid="" className="md:pt-24">
             <ContactDetails
               email={profile.email}
               linkedin={profile.linkedin}

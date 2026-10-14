@@ -17,9 +17,14 @@ vi.mock("@react-three/fiber", () => ({
   },
   useFrame: () => {},
 }));
-// The creature and the stage need WebGL; their logic is covered by creature-math.test.ts.
+// The creature, the pond and its post-processing need WebGL; their logic is covered by creature-math, scene-environment and feed tests.
 vi.mock("@/scene/creature/Creature", () => ({ Creature: () => null }));
-vi.mock("@/scene/TempStage", () => ({ TempStage: () => null }));
+vi.mock("@/scene/environment/Stage", () => ({ Stage: () => null }));
+vi.mock("@/scene/environment/Lighting", () => ({ Lighting: () => null }));
+vi.mock("@/scene/environment/Water", () => ({ Water: () => null }));
+vi.mock("@/scene/environment/Props", () => ({ Props: () => null }));
+vi.mock("@/scene/interactions/Feeding", () => ({ Feeding: () => null }));
+vi.mock("@/scene/environment/PostFX", () => ({ default: () => null }));
 
 describe("SceneRoot", () => {
   it("never catches pointer events: the canvas container is pointer-events none", () => {

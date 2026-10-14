@@ -2,6 +2,7 @@
 
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo } from "react";
+import { sceneLive } from "../environment/live";
 import { sceneStore, useSceneStore } from "../store";
 import { qualityForTier } from "./config";
 import { createCreatureRig } from "./rig";
@@ -18,7 +19,14 @@ export function Creature() {
   useEffect(() => () => rig.dispose(), [rig]);
 
   useFrame((state, delta) => {
-    rig.update({ dt: delta, time: state.clock.elapsedTime, camera: state.camera, state: sceneStore.getState() });
+    rig.update({
+      dt: delta,
+      time: state.clock.elapsedTime,
+      camera: state.camera,
+      state: sceneStore.getState(),
+      day: sceneLive.day,
+      viewport: state.size,
+    });
   });
 
   return <primitive object={rig.root} />;

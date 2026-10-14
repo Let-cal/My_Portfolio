@@ -35,11 +35,11 @@ export function Why({ content, locale }: { content: Content; locale: Locale }) {
   return (
     <section id="why" aria-labelledby="why-heading" className="relative mx-auto max-w-6xl scroll-mt-14 px-4 py-24 sm:px-6">
       <Reveal>
-        <h2 id="why-heading" className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+        <h2 id="why-heading" data-scene-avoid="" className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
           {ts("why")}
         </h2>
       </Reveal>
-      <div data-manifesto="" className="mt-10 max-w-4xl">
+      <div data-manifesto="" data-scene-avoid="" className="mt-10 max-w-4xl">
         <ScrollTextReveal
           text={t("manifesto")}
           locale={locale}

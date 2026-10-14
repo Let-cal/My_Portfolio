@@ -1,10 +1,14 @@
 import { useSyncExternalStore } from "react";
 import type { RoleKey } from "@/content/schema";
 import type { Theme } from "@/components/site/theme";
+import type { Rect } from "./environment/legibility";
+import type { Food } from "./interactions/feed";
 import type { Tier } from "./tier";
 
-/** A pellet of fish food on the water. `x`/`z` are pond coordinates, `t0` the drop time in seconds. */
-export type Food = { id: number; x: number; z: number; t0: number };
+export type { Food };
+
+/** A click on the water that has not been turned into food yet: the spot in normalised device coordinates. */
+export type DropRequest = { x: number; y: number; id: number };
 
 export type SceneState = {
   /** Section index (0 hero ... 6 contact). */
@@ -17,6 +21,13 @@ export type SceneState = {
   role: RoleKey;
   tier: Tier;
   foods: Food[];
+  /**
+   * Blocks of text on screen (viewport pixels, `[data-scene-avoid]`), measured on scroll and resize. The water
+   * keeps them readable and the creature fades while it swims under them.
+   */
+  avoid: Rect[];
+  /** The latest click on a `[data-water-zone]`, waiting for the scene to raycast it onto the water. */
+  drop: DropRequest | null;
 };
 
 const INITIAL: SceneState = {
@@ -27,6 +38,8 @@ const INITIAL: SceneState = {
   role: "fullstack",
   tier: "off",
   foods: [],
+  avoid: [],
+  drop: null,
 };
 
 type Patch = Partial<SceneState> | ((s: SceneState) => Partial<SceneState>);

@@ -99,7 +99,7 @@ export function Experience({ content, locale }: { content: Content; locale: Loca
       className="relative mx-auto max-w-6xl scroll-mt-14 px-4 py-24 sm:px-6"
     >
       <Reveal>
-        <h2 id="experience-heading" className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+        <h2 id="experience-heading" data-scene-avoid="" className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
           {ts("experience")}
         </h2>
       </Reveal>

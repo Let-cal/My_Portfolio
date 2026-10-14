@@ -42,7 +42,7 @@ export function Hero({ content, locale }: { content: Content; locale: Locale }) 
       aria-labelledby="hero-heading"
       className="relative mx-auto w-full max-w-6xl scroll-mt-14 px-4 pt-10 pb-16 sm:px-6 sm:pt-14 lg:pt-16"
     >
-      <header className="relative z-[3] text-center">
+      <header data-scene-avoid="" className="relative z-[3] text-center">
         <h1
           id="hero-heading"
           className="font-heading text-[clamp(2.4rem,6vw,4.25rem)] leading-[1.02] font-extrabold tracking-[-0.025em] text-balance"
@@ -56,12 +56,12 @@ export function Hero({ content, locale }: { content: Content; locale: Locale }) 
         <RoleStage />
       </div>
 
-      <div className="mx-auto mt-14 max-w-3xl text-center">
+      <div data-scene-avoid="" className="mx-auto mt-14 max-w-3xl text-center">
         <RotatingPhrase className="font-heading text-xl font-medium text-balance sm:text-2xl" />
         <HeroRoleBody roles={roleData} locale={locale} />
       </div>
 
-      <div className="mt-14 flex flex-col gap-4">
+      <div data-scene-avoid="" className="mt-14 flex flex-col gap-4">
         <ProfileStatusCard
           openToWork={profile.openToWork}
           availabilityNote={availabilityNote}
@@ -72,11 +72,11 @@ export function Hero({ content, locale }: { content: Content; locale: Locale }) 
         <HeroStats />
       </div>
 
-      <div className="-mx-4 mt-14 sm:-mx-6">
+      <div data-scene-avoid="" className="-mx-4 mt-14 sm:-mx-6">
         <NameMarquee name={profile.name} />
       </div>
 
-      <div className="mt-10">
+      <div data-scene-avoid="" className="mt-10">
         <QuickFacts
           education={{ school: school?.school ?? "", major: pickLocale(school?.major, locale), gpa: school?.gpa }}
           openToWork={profile.openToWork}

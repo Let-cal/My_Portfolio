@@ -10,6 +10,7 @@ export function SectionLabel({ index, title, kanji }: { index: string; title: st
       {index !== "00" && (
         <p
           aria-hidden="true"
+          data-scene-avoid=""
           className="pointer-events-none absolute inset-x-0 top-14 mx-auto max-w-6xl px-4 text-xs font-medium tracking-[0.2em] text-muted-foreground uppercase sm:px-6"
         >
           {`${index} — ${title}`}

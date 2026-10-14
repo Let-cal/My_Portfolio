@@ -99,10 +99,10 @@ export function Skills({ content, locale }: { content: Content; locale: Locale }
       </svg>
 
       <Reveal>
-        <h2 id="skills-heading" className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+        <h2 id="skills-heading" data-scene-avoid="" className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
           {ts("skills")}
         </h2>
-        <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">{t("intro")}</p>
+        <p data-scene-avoid="" className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">{t("intro")}</p>
       </Reveal>
 
       {/* The same names as the map below, as decoration: hidden from assistive tech and from the tab order. */}

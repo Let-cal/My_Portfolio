@@ -22,6 +22,9 @@ import {
 } from "three";
 import type { KoiVariety } from "@/content/schema";
 import { transformState } from "../chapters";
+import { creatureVisibility } from "../environment/legibility";
+import { dampValue } from "../environment/math";
+import { nearestFood } from "../interactions/feed";
 import type { SceneState } from "../store";
 import { varietyForRole, VARIETY_SURFACE, type CreatureQuality } from "./config";
 import {
@@ -35,7 +38,7 @@ import {
   type FanGeometry,
 } from "./fins";
 import { createBodyGeometry, writeBody } from "./geometry";
-import { creatureLive } from "./live";
+import { BODY_SAMPLES, creatureLive } from "./live";
 import {
   createAccentMaterial,
   createBodyMaterial,
@@ -45,7 +48,18 @@ import {
   type BodyUniforms,
 } from "./materials";
 import { bodyLength, clamp, lerp, ringRadii, swimOffset } from "./profiles";
-import { buildFrames, followChain, idleTarget, steer, type Frame, type SteerState } from "./spine";
+import {
+  buildFrames,
+  followChain,
+  idleModeForChapter,
+  idleTarget,
+  pondLimits,
+  REF_ASPECT,
+  steer,
+  type Frame,
+  type PondLimits,
+  type SteerState,
+} from "./spine";
 import {
   makeCircuitTexture,
   makeDragonTexture,
@@ -62,6 +76,10 @@ export type FrameInput = {
   time: number;
   camera: Camera;
   state: SceneState;
+  /** Night (0) to day (1), already eased. Defaults to the theme in `state`. */
+  day?: number;
+  /** Canvas size in CSS pixels, to find where the creature is on screen. Without it the creature is never dimmed. */
+  viewport?: { width: number; height: number };
 };
 
 export type CreatureRig = {
@@ -81,6 +99,18 @@ export type CreatureRig = {
 const FADE_SECONDS = 0.6;
 /** Pointer still for this long: the koi goes back to wandering. */
 const POINTER_IDLE_SECONDS = 2.5;
+/** A koi darting at a pellet turns on a circle this share of its usual one, so it can reach one inside the usual circle. */
+const FOOD_TURN_SCALE = 0.4;
+/** Text protection: the creature fades to this share of its brightness while it swims under text. */
+const DIM_FLOOR = 0.2;
+/** The dragon, the climax of the page, is only dimmed this far (the veil behind the text still does its part). */
+const DIM_FLOOR_DRAGON = 0.4;
+/** Speed of that fade, per second. */
+const DIM_RATE = 5;
+/** Feather (px) around a text block over which the creature fades. */
+const DIM_FEATHER = 90;
+/** Spine positions (0 snout to 1 tail tip) whose screen position decides how much text hides the creature. */
+const DIM_SAMPLES = [0.04, 0.25, 0.5, 0.75, 0.96];
 const MORPH_RATE = 4;
 const SPIKES = 26;
 /** Head rounding: rings before this u bulge to an ellipsoid of this depth (in u). */
@@ -219,6 +249,7 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
   let lastPointer: SceneState["pointer"] = null;
   let lastMove = -Infinity;
   let first = true;
+  let visibility = 1;
 
   const target = new Vector3();
   const hit = new Vector3();
@@ -237,6 +268,11 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
   const dummy = new Object3D();
   const finColorA = new Color();
   const finColorB = new Color();
+  const limits: PondLimits = { idleX: 0, idleZ: 0, pointerX: 0, zMin: 0, zMax: 0 };
+  const samplePx = DIM_SAMPLES.map(() => ({ x: 0, y: 0 }));
+  const sampleIndex = DIM_SAMPLES.map((u) => Math.round(u * (N - 1)));
+  let prevHeadX = 0;
+  let prevHeadZ = 0;
 
   const setFrameVectors = (i: number) => {
     const f = frames[i];
@@ -372,7 +408,7 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
     flames.instanceMatrix.needsUpdate = true;
   }
 
-  function update({ dt: rawDt, time: t, camera, state }: FrameInput) {
+  function update({ dt: rawDt, time: t, camera, state, day: dayInput, viewport }: FrameInput) {
     const dt = clamp(rawDt, 0, 0.1);
     const frameScale = dt * 60;
 
@@ -404,24 +440,36 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
     body.uniforms.uFade.value = ease;
     fin.uniforms.uFade.value = ease;
 
-    // Target: the pointer on the water, or an idle figure of eight.
+    // Target: the nearest pellet that has landed, else the pointer on the water, else the chapter's idle wander.
+    // The pond is as wide as the screen allows: a portrait phone sees much less sideways.
+    const aspect = (camera as { aspect?: number }).aspect || REF_ASPECT;
+    pondLimits(aspect, m, limits);
     if (state.pointer !== lastPointer) {
       lastPointer = state.pointer;
       lastMove = t;
     }
-    let follow = false;
-    if (state.pointer && t - lastMove < POINTER_IDLE_SECONDS) {
-      ndc.set(state.pointer.x, state.pointer.y);
-      ray.setFromCamera(ndc, camera);
-      if (ray.ray.intersectPlane(water, hit)) {
-        // Keep it in the pond, never right under the camera where it would fill the screen.
-        target.set(clamp(hit.x, -4.5, 4.5), 0, clamp(hit.z, -3, 1.6));
-        follow = true;
+    let turnScale = 1;
+    const food = state.foods.length ? nearestFood(state.foods, head, t) : null;
+    if (food) {
+      target.set(food.x, 0, food.z);
+      turnScale = FOOD_TURN_SCALE;
+    } else {
+      let follow = false;
+      if (state.pointer && t - lastMove < POINTER_IDLE_SECONDS) {
+        ndc.set(state.pointer.x, state.pointer.y);
+        ray.setFromCamera(ndc, camera);
+        if (ray.ray.intersectPlane(water, hit)) {
+          // Keep it in the pond, never right under the camera where it would fill the screen.
+          target.set(clamp(hit.x, -limits.pointerX, limits.pointerX), 0, clamp(hit.z, limits.zMin, limits.zMax));
+          follow = true;
+        }
       }
+      if (!follow) idleTarget(t, m, target, { aspect, mode: idleModeForChapter(state.chapter) });
     }
-    if (!follow) idleTarget(t, m, target);
 
-    steer(head, heading, target, m, frameScale, steerState);
+    prevHeadX = head.x;
+    prevHeadZ = head.z;
+    steer(head, heading, target, m, frameScale, steerState, turnScale);
     head.copy(steerState.head as Vector3);
     heading = steerState.heading;
 
@@ -540,22 +588,65 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
     // Materials.
     const surfA = VARIETY_SURFACE[prevVariety];
     const surfB = VARIETY_SURFACE[variety];
-    const glowScale = state.theme === "light" ? 0.55 : 1;
+    const day = dayInput ?? (state.theme === "light" ? 1 : 0);
+    const glowScale = lerp(1, 0.55, day);
+
+    // Text protection: dim the creature while its body is under a block of text (the veil does the rest per pixel).
+    let wantVisible = 1;
+    const screen = creatureLive.screen;
+    screen.valid = false;
+    if (viewport) {
+      let x0 = Infinity;
+      let y0 = Infinity;
+      let x1 = -Infinity;
+      let y1 = -Infinity;
+      for (let k = 0; k < sampleIndex.length; k++) {
+        tmp.copy(P[sampleIndex[k]]).project(camera);
+        const px = (tmp.x * 0.5 + 0.5) * viewport.width;
+        const py = (0.5 - tmp.y * 0.5) * viewport.height;
+        samplePx[k].x = px;
+        samplePx[k].y = py;
+        if (px < x0) x0 = px;
+        if (px > x1) x1 = px;
+        if (py < y0) y0 = py;
+        if (py > y1) y1 = py;
+      }
+      screen.x0 = x0;
+      screen.y0 = y0;
+      screen.x1 = x1;
+      screen.y1 = y1;
+      screen.valid = true;
+      if (state.avoid.length) wantVisible = creatureVisibility(state.avoid, samplePx, DIM_FEATHER, lerp(DIM_FLOOR, DIM_FLOOR_DRAGON, m));
+    }
+    visibility = dampValue(visibility, wantVisible, DIM_RATE, dt);
+    const shade = 0.3 + 0.7 * visibility;
     body.uniforms.uTime.value = t;
     body.uniforms.uMorph.value = m;
-    body.material.color.copy(WHITE).lerp(GOLD, m);
+    body.material.color.copy(WHITE).lerp(GOLD, m).multiplyScalar(shade);
     body.material.metalness = lerp(lerp(surfA.metalness, surfB.metalness, ease), 0.7, m);
     body.material.roughness = lerp(lerp(surfA.roughness, surfB.roughness, ease), 0.28, m);
-    body.material.emissiveIntensity = (0.8 + 0.35 * Math.sin(t * 2.2) + 0.4 * m) * glowScale;
+    body.material.emissiveIntensity = (0.8 + 0.35 * Math.sin(t * 2.2) + 0.4 * m) * glowScale * visibility;
     body.material.envMapIntensity = lerp(0.5, 0.35, m);
-    glowMat.emissiveIntensity = (1.2 + 0.4 * Math.sin(t * 3.1)) * glowScale;
-    fin.material.color.copy(finColorA.set(surfA.fin)).lerp(finColorB.set(surfB.fin), ease);
-    eyeMat.emissiveIntensity = m * 3 * glowScale;
+    glowMat.emissiveIntensity = (1.2 + 0.4 * Math.sin(t * 3.1)) * glowScale * visibility;
+    fin.material.color.copy(finColorA.set(surfA.fin)).lerp(finColorB.set(surfB.fin), ease).multiplyScalar(shade);
+    eyeMat.emissiveIntensity = m * 3 * glowScale * visibility;
 
     creatureLive.morph = m;
     creatureLive.head.x = P[0].x;
     creatureLive.head.y = P[0].y;
     creatureLive.head.z = P[0].z;
+    creatureLive.tail.x = P[N - 1].x;
+    creatureLive.tail.y = P[N - 1].y;
+    creatureLive.tail.z = P[N - 1].z;
+    // How fast the head moves, in pond units per second (wakes and ripples follow it).
+    creatureLive.speed = dt > 0 ? Math.hypot(head.x - prevHeadX, head.z - prevHeadZ) / dt : 0;
+    creatureLive.visibility = visibility;
+    for (let k = 0; k < BODY_SAMPLES; k++) {
+      const i = Math.round((k / (BODY_SAMPLES - 1)) * (N - 1));
+      creatureLive.body[k * 3] = P[i].x;
+      creatureLive.body[k * 3 + 1] = P[i].y;
+      creatureLive.body[k * 3 + 2] = P[i].z;
+    }
   }
 
   return {

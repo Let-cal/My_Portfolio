@@ -41,15 +41,16 @@ export function SideRail({ name, titles, links }: SideRailProps) {
         <div>
           <a
             href="#hero"
+            data-scene-avoid=""
             className="block rounded-sm font-heading text-3xl leading-tight font-bold tracking-tight outline-none focus-visible:ring-3 focus-visible:ring-ring/50 xl:text-4xl"
           >
             {name}
           </a>
-          <p className="mt-3 font-[family-name:var(--font-serif)] text-xl text-balance text-brand-text italic [&:lang(ja)]:not-italic">
+          <p data-scene-avoid="" className="mt-3 font-[family-name:var(--font-serif)] text-xl text-balance text-brand-text italic [&:lang(ja)]:not-italic">
             <TextScramble text={titles[role]} />
           </p>
 
-          <nav aria-label={t("header.primaryNav")} className="mt-14">
+          <nav aria-label={t("header.primaryNav")} data-scene-avoid="" className="mt-14">
             <ul className="flex flex-col gap-1">
               {SECTION_IDS.map((id) => {
                 const current = active === id;

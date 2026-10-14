@@ -44,6 +44,7 @@ function Panel({ roleKey, index }: { roleKey: RoleKey; index: number }) {
   return (
     <div
       data-panel={roleKey}
+      data-scene-avoid=""
       data-side={PANEL_SIDE[roleKey]}
       data-state={open ? "active" : "collapsed"}
       className="hero-panel"

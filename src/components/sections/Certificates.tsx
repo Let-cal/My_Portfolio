@@ -51,10 +51,10 @@ export function Certificates({ content, locale }: { content: Content; locale: Lo
       className="relative mx-auto max-w-6xl scroll-mt-14 px-4 py-24 sm:px-6"
     >
       <Reveal>
-        <h2 id="certificates-heading" className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+        <h2 id="certificates-heading" data-scene-avoid="" className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
           {ts("certificates")}
         </h2>
-        <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">{t("intro")}</p>
+        <p data-scene-avoid="" className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">{t("intro")}</p>
       </Reveal>
       <CertificatesBoard certificates={certificates} activities={activities} />
     </section>

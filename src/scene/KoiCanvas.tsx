@@ -10,9 +10,10 @@ import { DRAGON_CHAPTER } from "./chapters";
 import { shouldLoadScene } from "./loading";
 import { SceneErrorBoundary } from "./SceneErrorBoundary";
 import { sceneStore, useSceneStore } from "./store";
+import { TextVeil } from "./TextVeil";
 import { detectTier, detectWebGL, MOBILE_QUERY, type Tier } from "./tier";
 import { useLoadGate } from "./use-load-gate";
-import { useChapterTracking, usePointerTracking } from "./use-scene-input";
+import { useAvoidTracking, useChapterTracking, useFeedClicks, usePointerTracking } from "./use-scene-input";
 
 // three and @react-three/fiber live behind this import: the chunk is fetched only once the scene may load.
 const SceneRoot = dynamic(() => import("./SceneRoot"), { ssr: false });
@@ -55,6 +56,8 @@ export function KoiCanvas() {
 
   useChapterTracking();
   usePointerTracking(tier !== "off");
+  useAvoidTracking(tier !== "off");
+  useFeedClicks(tier !== "off");
   useEffect(() => {
     sceneStore.setState({ tier, theme, role });
   }, [tier, theme, role]);
@@ -107,6 +110,7 @@ export function KoiCanvas() {
           <SceneErrorBoundary onError={onSceneError}>
             <SceneRoot tier={tier} onReadyChange={setReady} onDowngrade={() => setDowngraded(true)} />
           </SceneErrorBoundary>
+          <TextVeil />
         </div>
       )}
     </>,

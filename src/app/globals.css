@@ -1181,3 +1181,35 @@ html[data-hello-seen] [data-hello] {
     transform: none;
   }
 }
+
+/*
+ * Text veil over the 3D backdrop (src/scene/TextVeil.tsx): calm, soft-edged panels behind blocks of text, so the pond
+ * never makes them hard to read. Near-black at night, near-white by day; the colour change runs with the pond's own
+ * 600 ms day/night crossfade.
+ */
+[data-koi-veil] {
+  --veil: 4 7 10;
+  --veil-a: 0.88;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.light [data-koi-veil] {
+  --veil: 250 250 249;
+  --veil-a: 1;
+}
+[data-koi-veil] > i {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: none;
+  border-radius: 34px;
+  background: rgb(var(--veil) / var(--veil-a));
+  box-shadow: 0 0 72px 44px rgb(var(--veil) / var(--veil-a));
+  will-change: transform;
+  transition:
+    opacity 0.35s ease,
+    background-color 0.6s ease,
+    box-shadow 0.6s ease;
+}

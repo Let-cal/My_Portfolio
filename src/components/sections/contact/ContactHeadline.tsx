@@ -13,7 +13,7 @@ import { useRevealOnView } from "@/components/fx/use-reveal-on-view";
 export function ContactHeadline({ id, text, className }: { id: string; text: string; className?: string }) {
   const { ref, armed, shown } = useRevealOnView<HTMLHeadingElement>(0.3);
   return (
-    <h2 id={id} ref={ref} className={className} data-contact-headline="" data-held={armed && !shown ? "" : undefined}>
+    <h2 id={id} ref={ref} className={className} data-scene-avoid="" data-contact-headline="" data-held={armed && !shown ? "" : undefined}>
       <KineticText key={armed ? "armed" : "initial"} text={text} staggerMs={30} />
     </h2>
   );
