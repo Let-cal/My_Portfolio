@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { aspectPullback, cameraAt, chapterPosition, CHAPTER_CAMERA, type CameraPose } from "@/scene/chapters";
-import { creatureVisibility, MAX_AVOID, mergeRects, rectCoverage, rectsNear, selectRects, veilOpacity, type Rect } from "@/scene/environment/legibility";
+import { creatureVisibility, LARGE_DAY_SHARE, MAX_AVOID, mergeRects, rectCoverage, rectsNear, selectRects, veilOpacity, type Rect } from "@/scene/environment/legibility";
 import { dampValue, propWeight, stepDay } from "@/scene/environment/math";
 import { addRipple, createRipples, MAX_RIPPLES, RIPPLE_IDLE } from "@/scene/environment/ripples";
 
@@ -206,9 +206,14 @@ describe("veilOpacity for large text", () => {
   const near: Rect = { x0: 250, y0: 150, x1: 400, y1: 250 };
   const opts = { day: 0, props: 0, floor: 0.3, margin: 100 };
 
-  it("by day needs no veil of its own, not even next to the creature", () => {
-    expect(veilOpacity(big, near, { ...opts, day: 1 })).toBe(0.3);
-    expect(veilOpacity(big, null, { ...opts, day: 1 })).toBe(0.3);
+  it("by day keeps most of the veil (a muted large title still needs a calm backdrop), and all of it next to the creature", () => {
+    const calm = veilOpacity(big, null, { ...opts, day: 1 });
+    expect(calm).toBeCloseTo(0.3 + 0.7 * LARGE_DAY_SHARE, 10);
+    expect(calm).toBeGreaterThanOrEqual(0.6);
+    expect(calm).toBeLessThan(1);
+    expect(veilOpacity(big, near, { ...opts, day: 1 })).toBe(1);
+    // Small text gets the full veil by day.
+    expect(veilOpacity({ ...big, large: false }, null, { ...opts, day: 1 })).toBe(1);
   });
 
   it("at night is treated like any other text, and scenery calls for a veil by day too", () => {

@@ -142,11 +142,11 @@ const PINNED_SELECTOR = '[class*="fixed"], [class*="sticky"]';
 
 /**
  * Finds the elements worth protecting and measures the ones near the screen. `refresh` is the full pass (every
- * candidate and where it sits on the page: about a millisecond for a page this size); `measure` is the cheap one for
+ * candidate, where it sits on the page and whether its text is large: about a millisecond for a page this size); `measure` is the cheap one for
  * each scroll frame: it only reads the rectangles of the candidates near the viewport, plus the pinned ones.
  */
 export function createAvoidMeter() {
-  let items: { el: Element; top: number; bottom: number; pinned: boolean }[] = [];
+  let items: { el: Element; top: number; bottom: number; pinned: boolean; large: boolean }[] = [];
   return {
     refresh() {
       const sy = window.scrollY;
@@ -154,7 +154,7 @@ export function createAvoidMeter() {
       for (const el of document.querySelectorAll(AVOID_SELECTOR)) {
         const b = el.getBoundingClientRect();
         if (b.width <= 0 || b.height <= 0) continue;
-        items.push({ el, top: b.top + sy, bottom: b.bottom + sy, pinned: !!el.closest(PINNED_SELECTOR) });
+        items.push({ el, top: b.top + sy, bottom: b.bottom + sy, pinned: !!el.closest(PINNED_SELECTOR), large: isLargeText(el) });
       }
     },
     /** The screen-space rectangles near the viewport (see `selectRects`, `mergeRects`). */
@@ -171,7 +171,7 @@ export function createAvoidMeter() {
         const r = protectedRect(it.el, box);
         // Visually hidden text (screen-reader-only labels) is a pixel or two wide: nothing to protect.
         if (r.width < 6 || r.height < 6) continue;
-        found.push({ x0: r.left, y0: r.top, x1: r.right, y1: r.bottom, large: isLargeText(it.el) });
+        found.push({ x0: r.left, y0: r.top, x1: r.right, y1: r.bottom, large: it.large });
       }
       return selectRects(mergeRects(found, MERGE_GAP), w, h);
     },
@@ -214,6 +214,11 @@ export function useAvoidTracking(enabled: boolean) {
       dirty = true;
       schedule();
     };
+    // The veil panels animate their own opacity: their transitions say nothing about the page layout.
+    const onTransition = (e: Event) => {
+      if (e.target instanceof Element && e.target.closest("[data-koi-veil]")) return;
+      relayout();
+    };
     const onScroll = () => {
       schedule();
       // When the scroll stops, check the page did not shift under the cached positions (late images, fonts).
@@ -230,8 +235,8 @@ export function useAvoidTracking(enabled: boolean) {
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", relayout);
     window.addEventListener("load", relayout);
-    document.addEventListener("transitionend", relayout, true);
-    document.addEventListener("animationend", relayout, true);
+    document.addEventListener("transitionend", onTransition, true);
+    document.addEventListener("animationend", onTransition, true);
     document.addEventListener("click", afterClick, true);
     schedule();
     return () => {
@@ -242,8 +247,8 @@ export function useAvoidTracking(enabled: boolean) {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", relayout);
       window.removeEventListener("load", relayout);
-      document.removeEventListener("transitionend", relayout, true);
-      document.removeEventListener("animationend", relayout, true);
+      document.removeEventListener("transitionend", onTransition, true);
+      document.removeEventListener("animationend", onTransition, true);
       document.removeEventListener("click", afterClick, true);
       sceneStore.setState({ avoid: [] });
     };

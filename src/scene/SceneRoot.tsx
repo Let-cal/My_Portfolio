@@ -68,9 +68,9 @@ export default function SceneRoot({ tier, onReadyChange, onDowngrade }: SceneRoo
       style={{ pointerEvents: "none" }}
       dpr={[1, tier === "high" ? 1.5 : 1.25]}
       frameloop={hidden ? "never" : "always"}
-      // Opaque: the pond is the background, and bloom needs a canvas without alpha. On the `high` tier the composer
-      // smooths edges itself (multisampling), so the default framebuffer needs none.
-      gl={{ alpha: false, antialias: tier === "low", powerPreference: "high-performance" }}
+      // Opaque: the pond is the background, and bloom needs a canvas without alpha. Always antialiased: a downgrade
+      // from high to low unmounts the post-processing, which then relies on the context's own multisampling.
+      gl={{ alpha: false, antialias: true, powerPreference: "high-performance" }}
       camera={{ fov: 40, near: 0.1, far: 80, position: [0, 3.8, 4.2] }}
       onCreated={({ gl }) => {
         gl.toneMappingExposure = 1.05;

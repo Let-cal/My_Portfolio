@@ -109,9 +109,11 @@ export function rectsNear(a: Rect, b: Rect, margin: number): boolean {
  * How strongly the veil behind a block of text is drawn, `floor` to 1. A calm, dark night pond needs almost none:
  * water and grid are far below what light text needs. It comes up to full while the creature (a bright thing) is
  * within `margin` pixels of the text, where scenery is on screen (`props`, 0 to 1), and by day (`day`, 0 to 1) when
- * the whole pond is bright. The largest of those wins. Large text needs less: by day its dark letters stand out of the
- * pale pond (and of a koi) on their own, so only scenery can call for a veil there.
+ * the whole pond is bright. The largest of those wins. Large text needs a little less by day (`LARGE_DAY_SHARE`).
  */
+/** By day large text keeps this share of the full veil: it tolerates less contrast, but a muted large title still needs a calm backdrop. */
+export const LARGE_DAY_SHARE = 0.8;
+
 export function veilOpacity(
   rect: Rect,
   creature: Rect | null,
@@ -119,7 +121,7 @@ export function veilOpacity(
 ): number {
   const dayShare = Math.min(1, Math.max(0, day));
   const large = rect.large === true;
-  const near = creature && rectsNear(rect, creature, margin) ? (large ? 1 - dayShare : 1) : 0;
-  const need = Math.max(near, Math.min(1, Math.max(0, props)), large ? 0 : dayShare);
+  const near = creature && rectsNear(rect, creature, margin) ? 1 : 0;
+  const need = Math.max(near, Math.min(1, Math.max(0, props)), dayShare * (large ? LARGE_DAY_SHARE : 1));
   return floor + (1 - floor) * need;
 }

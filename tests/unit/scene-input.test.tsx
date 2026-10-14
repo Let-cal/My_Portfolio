@@ -146,6 +146,29 @@ describe("measureAvoid", () => {
     expect(measureAvoid()).toMatchObject([{ x0: 100, y0: 100, x1: 300, y1: 124 }]);
   });
 
+  it("re-measures after a page transition, but not after the veil's own fade", async () => {
+    document.body.innerHTML = `<main><h2 id="h">Heading</h2></main><div data-koi-veil=""><i id="panel"></i></div>`;
+    box(document.getElementById("h")!, rect(100, 100, 300, 140));
+    // Frames run a moment after they are requested, as in a browser.
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+      void Promise.resolve().then(() => cb(0));
+      return 1;
+    });
+    const scan = vi.spyOn(document, "querySelectorAll");
+    render(<AvoidProbe />);
+    await act(async () => {});
+    const mounted = scan.mock.calls.length;
+    const fire = (el: Element) =>
+      act(async () => {
+        el.dispatchEvent(new Event("transitionend", { bubbles: true }));
+      });
+    await fire(document.getElementById("panel")!);
+    expect(scan.mock.calls.length).toBe(mounted);
+    await fire(document.getElementById("h")!);
+    expect(scan.mock.calls.length).toBeGreaterThan(mounted);
+    vi.unstubAllGlobals();
+  });
+
   it("is written into the store on mount and cleared on unmount", () => {
     document.body.innerHTML = `<main><h2 id="h">Heading</h2></main>`;
     box(document.getElementById("h")!, rect(100, 100, 300, 140));
