@@ -18,20 +18,24 @@ export function fitRing(cx: number, cy: number, rx: number, ry: number, width: n
   return out;
 }
 
-/** Points sampled round the ring when scoring a candidate centre. */
-const RING_SAMPLES = 16;
-/** The button stays inside this share of the ring's half-axes, so the dragon still circles it. */
-const KEEP_INSIDE = 0.8;
-const OFFSET_STEPS_X = 4;
-const OFFSET_STEPS_Y = 2;
-const RING_FEATHER = 36;
-/** How strongly a centre far from the button is penalised (per ring half-axis of offset). */
-const OFFSET_COST = 0.12;
+/** Points sampled along the ring's path when scoring a candidate centre. */
+const RING_SAMPLES = 24;
+/**
+ * The button must lie inside the ring or within this share of the ring's half-axes of its path (so the dragon still
+ * guards it): in units of the half-axes, a candidate centre is allowed while the button is at most `1 + NEAR_PATH` of them away.
+ */
+export const NEAR_PATH = 0.25;
+const OFFSET_STEPS_X = 6;
+const OFFSET_STEPS_Y = 3;
+/** Feather (px) over which text counts as under a point of the path: the veil's solid pad is 24 px. */
+const RING_FEATHER = 28;
+/** A small pull towards the button, so with equally open choices the ring stays round it. */
+const OFFSET_COST = 0.04;
 
 const scratch: Pt = { x: 0, y: 0 };
 
-/** How crowded the ring is: the text coverage averaged over points round it. */
-function ringCrowd(rects: readonly Rect[], cx: number, cy: number, rx: number, ry: number): number {
+/** How much of the ring's path lies on text: the coverage (0 clear, 1 under a block) averaged over points along it. */
+export function ringCrowd(rects: readonly Rect[], cx: number, cy: number, rx: number, ry: number): number {
   let sum = 0;
   for (let k = 0; k < RING_SAMPLES; k++) {
     const a = (k / RING_SAMPLES) * Math.PI * 2;
@@ -41,10 +45,10 @@ function ringCrowd(rects: readonly Rect[], cx: number, cy: number, rx: number, r
 }
 
 /**
- * Where on the screen the guardian's ring is centred: round the button, but on whichever side leaves most of the lap on
- * open water (away from big headlines and blocks of text), and always entirely on screen (see `fitRing`). Candidates
- * are centres within reach of the button (it must stay inside the ring), each moved on screen, scored by how much text
- * the ring crosses; a centre far from the button costs a little. Writes into `out`.
+ * Where on the screen the guardian's ring is centred. The rule: the button lies inside the ring or within a quarter of its
+ * half-axes of the path (`NEAR_PATH`); within that, the centre (a grid around the button reaching out to 1.25 half-axes
+ * each way, each moved on screen by `fitRing`) is the one whose path crosses the least text, so most of every lap, head
+ * and body, is on open water. A centre far from the button costs a little. Writes into `out`.
  */
 export function ringCentre(
   cta: { x: number; y: number; r: number },
@@ -59,14 +63,16 @@ export function ringCentre(
   let best = Infinity;
   let bx = cta.x;
   let by = cta.y;
+  const reach = 1 + NEAR_PATH;
   for (let j = -OFFSET_STEPS_Y; j <= OFFSET_STEPS_Y; j++) {
     for (let i = -OFFSET_STEPS_X; i <= OFFSET_STEPS_X; i++) {
-      fitRing(cta.x + (i / OFFSET_STEPS_X) * KEEP_INSIDE * rx, cta.y + (j / OFFSET_STEPS_Y) * KEEP_INSIDE * ry, rx, ry, width, height, margin, scratch);
-      // Still round the button after the move? (The unmoved centre is always a candidate.)
-      const dx = (cta.x - scratch.x) / (KEEP_INSIDE * rx);
-      const dy = (cta.y - scratch.y) / (KEEP_INSIDE * ry);
-      if (dx * dx + dy * dy > 1 && !(i === 0 && j === 0)) continue;
-      const cost = ringCrowd(rects, scratch.x, scratch.y, rx, ry) + OFFSET_COST * (Math.abs(scratch.x - cta.x) / rx + Math.abs(scratch.y - cta.y) / ry);
+      fitRing(cta.x + (i / OFFSET_STEPS_X) * reach * rx, cta.y + (j / OFFSET_STEPS_Y) * reach * ry, rx, ry, width, height, margin, scratch);
+      // Is the button still inside the ring or just by its path after the move? (The unmoved centre is always a candidate.)
+      const dx = (cta.x - scratch.x) / rx;
+      const dy = (cta.y - scratch.y) / ry;
+      const away = Math.hypot(dx, dy);
+      if (away > reach && !(i === 0 && j === 0)) continue;
+      const cost = ringCrowd(rects, scratch.x, scratch.y, rx, ry) + OFFSET_COST * away;
       if (cost < best) {
         best = cost;
         bx = scratch.x;

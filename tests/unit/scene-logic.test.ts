@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getChapterProgress, scatterAt, transformState } from "@/scene/chapters";
 import { cloudIndices } from "@/scene/creature/cloud";
-import { fitRing, ringCentre } from "@/scene/creature/guardian";
+import { fitRing, NEAR_PATH, ringCentre, ringCrowd } from "@/scene/creature/guardian";
 import { CAP_RINGS } from "@/scene/creature/geometry";
 import { orbitTarget, ORBIT_SPEED, guardianRadius } from "@/scene/creature/spine";
 import { shouldLoadScene } from "@/scene/loading";
@@ -219,25 +219,48 @@ describe("fitRing", () => {
 });
 
 describe("ringCentre", () => {
-  const out = { x: 0, y: 0 };
   const cta = { x: 1238, y: 400, r: 80 };
   const ring = { rx: 300, ry: 130 };
-  it("keeps the whole ring on screen and the button inside it", () => {
-    const p = ringCentre(cta, ring.rx, ring.ry, [], 1366, 800, 30, out);
-    expect(p.x + ring.rx).toBeLessThanOrEqual(1366 - 30 + 1e-9);
-    expect(p.x - ring.rx).toBeGreaterThanOrEqual(30 - 1e-9);
-    expect(p.y - ring.ry).toBeGreaterThanOrEqual(30 - 1e-9);
-    expect(p.y + ring.ry).toBeLessThanOrEqual(800 - 30 + 1e-9);
-    expect(Math.hypot((cta.x - p.x) / ring.rx, (cta.y - p.y) / ring.ry)).toBeLessThan(1);
+  const away = (p: { x: number; y: number }) => Math.hypot((cta.x - p.x) / ring.rx, (cta.y - p.y) / ring.ry);
+
+  it("keeps the whole ring on screen and the button inside it or by its path", () => {
+    for (const rects of [[], [{ x0: 430, y0: 40, x1: 1080, y1: 330 }]]) {
+      const p = ringCentre(cta, ring.rx, ring.ry, rects, 1366, 800, 30, { x: 0, y: 0 });
+      expect(p.x + ring.rx).toBeLessThanOrEqual(1366 - 30 + 1e-9);
+      expect(p.x - ring.rx).toBeGreaterThanOrEqual(30 - 1e-9);
+      expect(p.y - ring.ry).toBeGreaterThanOrEqual(30 - 1e-9);
+      expect(p.y + ring.ry).toBeLessThanOrEqual(800 - 30 + 1e-9);
+      expect(away(p)).toBeLessThanOrEqual(1 + NEAR_PATH + 1e-9);
+    }
   });
-  it("puts most of the lap on open water: with a headline above the button, the ring sits lower", () => {
+
+  it("moves the ring off a headline above the button, strictly lower than with no text at all", () => {
     const headline = [{ x0: 430, y0: 40, x1: 1080, y1: 330 }];
     const none = ringCentre(cta, ring.rx, ring.ry, [], 1366, 800, 30, { x: 0, y: 0 });
     const withText = ringCentre(cta, ring.rx, ring.ry, headline, 1366, 800, 30, { x: 0, y: 0 });
-    expect(withText.y).toBeGreaterThanOrEqual(none.y);
-    expect(withText.x).toBeGreaterThanOrEqual(none.x);
+    expect(withText.y).toBeGreaterThan(none.y + 40);
+    // And the path really is clearer for it.
+    expect(ringCrowd(headline, withText.x, withText.y, ring.rx, ring.ry)).toBeLessThan(ringCrowd(headline, none.x, none.y, ring.rx, ring.ry));
   });
+
+  it("finds the open water of a page like Contact: a ring round the button that crosses little of the text", () => {
+    // The headline, the intro paragraph and the contact list, as on a 1366x800 screen.
+    const text = [
+      { x0: 435, y0: 40, x1: 1075, y1: 300 },
+      { x0: 435, y0: 440, x1: 850, y1: 520 },
+      { x0: 925, y0: 495, x1: 1340, y1: 720 },
+    ];
+    const r = { rx: 300, ry: 97 };
+    const where = ringCentre(cta, r.rx, r.ry, text, 1366, 800, 30, { x: 0, y: 0 });
+    const naive = fitRing(cta.x, cta.y, r.rx, r.ry, 1366, 800, 30, { x: 0, y: 0 });
+    const chosen = ringCrowd(text, where.x, where.y, r.rx, r.ry);
+    expect(chosen).toBeLessThan(ringCrowd(text, naive.x, naive.y, r.rx, r.ry) * 0.7);
+    expect(chosen).toBeLessThan(0.3);
+    expect(Math.hypot((cta.x - where.x) / r.rx, (cta.y - where.y) / r.ry)).toBeLessThanOrEqual(1 + NEAR_PATH + 1e-9);
+  });
+
   it("writes into `out`", () => {
+    const out = { x: 0, y: 0 };
     expect(ringCentre(cta, ring.rx, ring.ry, [], 1366, 800, 30, out)).toBe(out);
   });
 });

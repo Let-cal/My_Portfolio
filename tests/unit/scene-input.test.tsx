@@ -266,15 +266,18 @@ describe("useCtaTracking", () => {
     );
   });
 
-  it("is null when the page has no such button, and clears on unmount", () => {
+  it("is null when the page has no such button", () => {
+    sceneStore.setState({ chapter: 6 });
+    render(<CtaProbe />);
+    expect(sceneStore.getState().cta).toBeNull();
+  });
+
+  it("clears on unmount: set first, then unmounted, then null", () => {
+    const a = cta();
+    box(a, rect(800, 300, 960, 460));
     sceneStore.setState({ chapter: 6 });
     const { unmount } = render(<CtaProbe />);
-    expect(sceneStore.getState().cta).toBeNull();
-    const a = cta();
-    box(a, rect(0, 0, 100, 100));
-    act(() => {
-      window.dispatchEvent(new Event("resize"));
-    });
+    expect(sceneStore.getState().cta).toEqual({ x: 880, y: 380, r: 80 });
     unmount();
     expect(sceneStore.getState().cta).toBeNull();
   });

@@ -202,6 +202,12 @@ describe("Footer principles", () => {
     );
   }
 
+  it("is protected from the 3D scene like the rest of the text: the label and the list carry data-scene-avoid", () => {
+    const { container } = renderPrinciples();
+    expect(container.querySelector("h2")).toHaveAttribute("data-scene-avoid");
+    expect(screen.getByRole("list", { name: "How I work" })).toHaveAttribute("data-scene-avoid", "box");
+  });
+
   it("lists at least 3 principles, in order", () => {
     renderPrinciples();
     const list = screen.getByRole("list", { name: "How I work" });

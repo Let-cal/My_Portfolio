@@ -1,6 +1,7 @@
 import { PerspectiveCamera, Vector3, type BufferAttribute, type Mesh, type Object3D } from "three";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createCreatureRig } from "@/scene/creature/rig";
+import { aspectPullback } from "@/scene/chapters";
 import { creatureLive } from "@/scene/creature/live";
 import type { SceneState } from "@/scene/store";
 
@@ -300,6 +301,37 @@ describe("creature rig", () => {
       const left = lap(state({ chapter: 6, cta: { x: 300, y: 400, r: 80 } }));
       expect(left).toBeLessThan(right - 3);
       rig.dispose();
+    });
+
+    // The last chapter's camera for a thin portrait screen, pulled back as the stage does or (the worst case) not at all.
+    describe.each([
+      ["pulled back", true],
+      ["not pulled back", false],
+    ])("on a thin phone screen (aspect 0.46), camera %s", (_name, pulled) => {
+      it("scales the ring to the screen: the head stays on screen and the lap is seen whole", () => {
+        const rig = createCreatureRig({ rings: 40, sides: 10 });
+        const phone = { width: 390, height: 844 };
+        const cam = new PerspectiveCamera(40, phone.width / phone.height, 0.1, 80);
+        const pull = pulled ? aspectPullback(phone.width / phone.height) : 1;
+        cam.position.set(0, 0.9 + (5.4 - 0.9) * pull, -0.2 + (7.8 + 0.2) * pull);
+        cam.lookAt(0, 0.9, -0.2);
+        cam.updateMatrixWorld();
+        const s = state({ chapter: 6, cta: { x: 294, y: 430, r: 80 } });
+        let t = 0;
+        const v = new Vector3();
+        const xs: number[] = [];
+        for (let f = 0; f < 60 * 60; f++, t += 1 / 60) {
+          rig.update({ dt: 1 / 60, time: t, camera: cam, state: s, viewport: phone });
+          if (f > 60 * 16 && f % 10 === 0) {
+            v.set(creatureLive.head.x, creatureLive.head.y, creatureLive.head.z).project(cam);
+            xs.push((v.x * 0.5 + 0.5) * phone.width);
+          }
+        }
+        expect(Math.min(...xs)).toBeGreaterThan(0);
+        expect(Math.max(...xs)).toBeLessThan(phone.width);
+        expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(phone.width * 0.3);
+        rig.dispose();
+      });
     });
 
     it("takes the open water instead while the button is scrolled out of sight", () => {

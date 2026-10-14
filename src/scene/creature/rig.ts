@@ -135,6 +135,8 @@ const GUARDIAN_MARGIN_PX = 36;
 /** How fast the ring's centre on screen glides to a new place (per second), and how often it is looked for again (seconds). */
 const GUARDIAN_FOLLOW = 2.2;
 const GUARDIAN_REFRESH = 0.3;
+/** The ring's half-width is at most this share of the screen's width (a thin phone cannot hold the full ring). */
+const GUARDIAN_HALF_WIDTH = 0.4;
 /** How far ahead of the head (radians round the ring) its target is. */
 const GUARDIAN_LEAD = 0.5;
 /** Height of the dragon's head above the water (see `swimOffset`: lift 0.75 at the snout). */
@@ -298,6 +300,8 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
   const ringSpot = { x: 0, y: 0 };
   const ringAim = { x: 0, y: 0 };
   const ringEnd = { x: 0, y: 0 };
+  /** What the ring's centre was last chosen for. */
+  const ringFor = { avoid: null as SceneState["avoid"] | null, x: 0, y: 0, r: 0, rx: 0, ry: 0, w: 0, h: 0 };
   let ringAt = -Infinity;
   let ringRadius = 0;
   let hasRing = false;
@@ -476,10 +480,38 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
     // The ring's half-axes on the screen, from the point on the water under the button.
     toPixels(camera, center.x, center.z, w, h, ringPx);
     toPixels(camera, center.x + ringRadius, center.z, w, h, ringEnd);
-    const rx = Math.abs(ringEnd.x - ringPx.x);
+    let rx = Math.abs(ringEnd.x - ringPx.x);
     toPixels(camera, center.x, center.z + ringRadius * ORBIT_DEPTH, w, h, ringEnd);
-    const ry = Math.abs(ringEnd.y - ringPx.y);
-    ringCentre(cta, rx, ry, state.avoid, w, h, GUARDIAN_MARGIN_PX, ringSpot);
+    let ry = Math.abs(ringEnd.y - ringPx.y);
+    // A narrow screen: the ring is no wider than a share of it, so the head is not off screen for most of a lap.
+    const cap = GUARDIAN_HALF_WIDTH * w;
+    if (rx > cap) {
+      const f = cap / rx;
+      ringRadius *= f;
+      rx = cap;
+      ry *= f;
+    }
+    // Choosing the centre is the costly part (a grid of candidates, each scored along the ring): only when something it depends on moved.
+    const moved =
+      state.avoid !== ringFor.avoid ||
+      Math.abs(cta.x - ringFor.x) > 2 ||
+      Math.abs(cta.y - ringFor.y) > 2 ||
+      Math.abs(cta.r - ringFor.r) > 2 ||
+      Math.abs(rx - ringFor.rx) > 2 ||
+      Math.abs(ry - ringFor.ry) > 2 ||
+      w !== ringFor.w ||
+      h !== ringFor.h;
+    if (moved) {
+      ringFor.avoid = state.avoid;
+      ringFor.x = cta.x;
+      ringFor.y = cta.y;
+      ringFor.r = cta.r;
+      ringFor.rx = rx;
+      ringFor.ry = ry;
+      ringFor.w = w;
+      ringFor.h = h;
+      ringCentre(cta, rx, ry, state.avoid, w, h, GUARDIAN_MARGIN_PX, ringSpot);
+    }
     return true;
   }
 

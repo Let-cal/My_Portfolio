@@ -16,12 +16,13 @@ export function FooterPrinciples() {
 
   return (
     <div>
-      <h2 className="text-xs font-medium tracking-[0.2em] text-muted-foreground uppercase">{t("principlesLabel")}</h2>
+      <h2 data-scene-avoid="" className="text-xs font-medium tracking-[0.2em] text-muted-foreground uppercase">{t("principlesLabel")}</h2>
       <ol
         ref={ref}
         role="list"
         aria-label={t("principlesLabel")}
         data-footer-principles=""
+        data-scene-avoid="box"
         data-armed={armed ? "" : undefined}
         data-shown={shown ? "" : undefined}
         className="mt-6 grid gap-x-12 sm:grid-cols-2"
