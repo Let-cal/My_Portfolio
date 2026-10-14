@@ -38,6 +38,7 @@ import {
   type FanGeometry,
 } from "./fins";
 import { createBodyGeometry, writeBody } from "./geometry";
+import { ringCentre } from "./guardian";
 import { BODY_SAMPLES, creatureLive } from "./live";
 import {
   createAccentMaterial,
@@ -54,6 +55,8 @@ import {
   idleModeForChapter,
   guardianRadius,
   idleTarget,
+  ORBIT_DEPTH,
+  ORBIT_SPEED,
   orbitTarget,
   pondLimits,
   REF_ASPECT,
@@ -127,9 +130,15 @@ const STAGE_REFRESH = 0.3;
 const STAGE_FOLLOW = 1.6;
 /** The guardian dragon's chapter. */
 const GUARDIAN_CHAPTER = 6;
-/** Where the call to action may be on screen for the dragon to circle it (share of the viewport): near an edge it circles the nearest spot inside. */
-const GUARDIAN_MARGIN_X = 0.06;
-const GUARDIAN_MARGIN_Y = 0.12;
+/** The whole ring must clear the screen's edges by this many pixels (the dragon has a body of its own). */
+const GUARDIAN_MARGIN_PX = 36;
+/** How fast the ring's centre on screen glides to a new place (per second), and how often it is looked for again (seconds). */
+const GUARDIAN_FOLLOW = 2.2;
+const GUARDIAN_REFRESH = 0.3;
+/** How far ahead of the head (radians round the ring) its target is. */
+const GUARDIAN_LEAD = 0.5;
+/** Height of the dragon's head above the water (see `swimOffset`: lift 0.75 at the snout). */
+const GUARDIAN_HEIGHT = 0.75;
 /** The button counts as in sight while any of it lies between these shares of the screen's height. */
 const GUARDIAN_SEEN_TOP = 0.08;
 const GUARDIAN_SEEN_BOTTOM = 0.95;
@@ -284,8 +293,18 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
   let stageSpotAt = -Infinity;
   let hasStage = false;
   const center = new Vector3();
+  const ringProbe = new Vector3();
+  const ringPx = { x: 0, y: 0 };
+  const ringSpot = { x: 0, y: 0 };
+  const ringAim = { x: 0, y: 0 };
+  const ringEnd = { x: 0, y: 0 };
+  let ringAt = -Infinity;
+  let ringRadius = 0;
+  let hasRing = false;
   const ray = new Raycaster();
   const water = new Plane(UP, 0);
+  // The plane the guardian is seen on: the height the dragon's head flies at, so the ring on screen is round the button.
+  const flight = new Plane(UP, -GUARDIAN_HEIGHT);
   const tmp = new Vector3();
   const tmp2 = new Vector3();
   const vT = new Vector3();
@@ -438,33 +457,71 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
     flames.instanceMatrix.needsUpdate = true;
   }
 
+  /** Viewport pixels of the point (x, z) at the dragon's flying height. */
+  function toPixels(camera: Camera, x: number, z: number, w: number, h: number, out: { x: number; y: number }) {
+    ringProbe.set(x, GUARDIAN_HEIGHT, z).project(camera);
+    out.x = (ringProbe.x * 0.5 + 0.5) * w;
+    out.y = (0.5 - ringProbe.y * 0.5) * h;
+  }
+
+  /** Looks for where the ring goes: its size on the water and on the screen, then the centre that fits the screen and spares the text. */
+  function refreshRing(state: SceneState, camera: Camera, w: number, h: number, cta: { x: number; y: number; r: number }) {
+    ndc.set((cta.x / w) * 2 - 1, -((cta.y / h) * 2 - 1));
+    ray.setFromCamera(ndc, camera);
+    if (!ray.ray.intersectPlane(flight, center)) return false;
+    ndc.set(((cta.x + cta.r) / w) * 2 - 1, -((cta.y / h) * 2 - 1));
+    ray.setFromCamera(ndc, camera);
+    const rim = ray.ray.intersectPlane(flight, hit2) ? Math.hypot(hit2.x - center.x, hit2.z - center.z) : 0;
+    ringRadius = guardianRadius(rim);
+    // The ring's half-axes on the screen, from the point on the water under the button.
+    toPixels(camera, center.x, center.z, w, h, ringPx);
+    toPixels(camera, center.x + ringRadius, center.z, w, h, ringEnd);
+    const rx = Math.abs(ringEnd.x - ringPx.x);
+    toPixels(camera, center.x, center.z + ringRadius * ORBIT_DEPTH, w, h, ringEnd);
+    const ry = Math.abs(ringEnd.y - ringPx.y);
+    ringCentre(cta, rx, ry, state.avoid, w, h, GUARDIAN_MARGIN_PX, ringSpot);
+    return true;
+  }
+
   /**
-   * The dragon guards the call to action: the target is a point on an ellipse round the button, which is found on the
-   * water by sending a ray through the middle of its box on the screen (and through its rim, for the size of the ring).
-   * A button outside the screen counts as the nearest spot inside it. False when there is no button or no screen size.
+   * The dragon guards the call to action: the target is a point on an ellipse round the button. Where the ring goes on
+   * screen is worked out a few times a second (`refreshRing`: the whole ring on screen with a margin, the button inside it,
+   * on the side with least text), the centre glides there, and a ray through it puts it on the water. False when there is no
+   * button, no screen size, or the button is scrolled out of sight (then the dragon takes the open water instead).
    */
   function guardianTarget(
     state: SceneState,
     camera: Camera,
     viewport: FrameInput["viewport"],
     t: number,
+    dt: number,
     out: Vector3,
   ): boolean {
     const cta = state.cta;
     if (!cta || !viewport || !(viewport.width > 0) || !(viewport.height > 0)) return false;
     const { width: w, height: h } = viewport;
-    // Scrolled out of sight (the section is taller than the screen): nothing to circle, so the dragon takes the open water.
     if (cta.y + cta.r < h * GUARDIAN_SEEN_TOP || cta.y - cta.r > h * GUARDIAN_SEEN_BOTTOM) return false;
-    const cx = clamp(cta.x, w * GUARDIAN_MARGIN_X, w * (1 - GUARDIAN_MARGIN_X));
-    const cy = clamp(cta.y, h * GUARDIAN_MARGIN_Y, h * (1 - GUARDIAN_MARGIN_Y));
-    ndc.set((cx / w) * 2 - 1, -((cy / h) * 2 - 1));
+    if (!hasRing || t - ringAt > GUARDIAN_REFRESH || t < ringAt) {
+      ringAt = t;
+      if (!refreshRing(state, camera, w, h, cta)) return false;
+    }
+    if (!hasRing) {
+      hasRing = true;
+      ringAim.x = ringSpot.x;
+      ringAim.y = ringSpot.y;
+    } else {
+      const k = 1 - Math.exp(-GUARDIAN_FOLLOW * dt);
+      ringAim.x += (ringSpot.x - ringAim.x) * k;
+      ringAim.y += (ringSpot.y - ringAim.y) * k;
+    }
+    ndc.set((ringAim.x / w) * 2 - 1, -((ringAim.y / h) * 2 - 1));
     ray.setFromCamera(ndc, camera);
-    if (!ray.ray.intersectPlane(water, center)) return false;
+    if (!ray.ray.intersectPlane(flight, center)) return false;
     center.z = Math.min(center.z, GUARDIAN_Z_MAX);
-    ndc.set(((cx + cta.r) / w) * 2 - 1, -((cy / h) * 2 - 1));
-    ray.setFromCamera(ndc, camera);
-    const rim = ray.ray.intersectPlane(water, hit2) ? Math.hypot(hit2.x - center.x, hit2.z - center.z) : 0;
-    orbitTarget(center, t, guardianRadius(rim), out);
+    // The target runs a little ahead of the head, along the ring: the head follows the path rather than a clock it
+    // cannot keep time with (chasing a moving point, a long dragon swings far wide at the ends of the ellipse).
+    const phase = Math.atan2(head.z - center.z, (head.x - center.x) * ORBIT_DEPTH) + GUARDIAN_LEAD;
+    orbitTarget(center, phase / ORBIT_SPEED, ringRadius, out);
     return true;
   }
 
@@ -564,8 +621,11 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
         }
       }
       if (!follow) {
-        const guarding = state.chapter >= GUARDIAN_CHAPTER && guardianTarget(state, camera, viewport, t, target);
+        const guarding = state.chapter >= GUARDIAN_CHAPTER && guardianTarget(state, camera, viewport, t, dt, target);
         const staged = state.chapter >= GUARDIAN_CHAPTER || (state.chapter === DRAGON_CHAPTER && state.t >= STAGE_FROM);
+        // Out of the staged part of the story (scrolled back up): the next visit starts afresh.
+        if (!staged) hasStage = false;
+        if (state.chapter < GUARDIAN_CHAPTER) hasRing = false;
         const staging = !guarding && staged && stageTarget(state, camera, viewport, t, dt, target);
         if (!guarding && !staging) idleTarget(t, m, target, { aspect, mode: idleModeForChapter(state.chapter) });
       }

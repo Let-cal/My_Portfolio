@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getChapterProgress, scatterAt, transformState } from "@/scene/chapters";
 import { cloudIndices } from "@/scene/creature/cloud";
+import { fitRing, ringCentre } from "@/scene/creature/guardian";
 import { CAP_RINGS } from "@/scene/creature/geometry";
 import { orbitTarget, ORBIT_SPEED, guardianRadius } from "@/scene/creature/spine";
 import { shouldLoadScene } from "@/scene/loading";
@@ -185,12 +186,59 @@ describe("orbitTarget", () => {
 });
 
 describe("guardianRadius", () => {
-  it("keeps the dragon's ring outside the button and no tighter than it can turn", () => {
-    expect(guardianRadius(0.1)).toBeGreaterThan(1.2);
-    expect(guardianRadius(0.1)).toBeGreaterThan(0.1 * 2);
-    expect(guardianRadius(0.9)).toBeGreaterThan(0.9 * 1.5);
-    expect(guardianRadius(50)).toBeLessThanOrEqual(3.2);
-    expect(guardianRadius(Number.NaN)).toBeGreaterThan(1.2);
+  it("keeps the dragon's ring outside the button, and wide enough that the ends of the ellipse are no tighter than it can turn", () => {
+    // The ellipse's ends curve with radius (0.6 r)^2 / r = 0.36 r; the dragon turns no tighter than minTurnRadius(1) (about 1.1).
+    expect(0.36 * guardianRadius(0.1)).toBeGreaterThanOrEqual(1.05);
+    expect(guardianRadius(0.9)).toBeGreaterThan(0.9 * 2);
+    expect(guardianRadius(50)).toBeLessThanOrEqual(3.6);
+    expect(guardianRadius(Number.NaN)).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe("fitRing", () => {
+  const out = { x: 0, y: 0 };
+  it("leaves a ring that already fits where it is", () => {
+    expect(fitRing(600, 400, 200, 80, 1366, 800, 30, out)).toEqual({ x: 600, y: 400 });
+  });
+  it("moves a ring hanging off the right edge left until it clears it by the margin", () => {
+    // The button at 1238 with a ring 230 wide: the ring's right end would be at 1468.
+    const p = fitRing(1238, 400, 230, 80, 1366, 800, 30, out);
+    expect(p.x + 230).toBeCloseTo(1366 - 30, 9);
+    expect(p.y).toBe(400);
+  });
+  it("is symmetric on the left, the top and the bottom", () => {
+    expect(fitRing(10, 400, 230, 80, 1366, 800, 30, out).x - 230).toBeCloseTo(30, 9);
+    expect(fitRing(600, 5, 230, 80, 1366, 800, 30, out).y - 80).toBeCloseTo(30, 9);
+    expect(fitRing(600, 790, 230, 80, 1366, 800, 30, out).y + 80).toBeCloseTo(800 - 30, 9);
+  });
+  it("centres a ring that is wider than the screen, and writes into `out`", () => {
+    const p = fitRing(100, 100, 900, 500, 1000, 600, 20, out);
+    expect(p).toBe(out);
+    expect(p).toEqual({ x: 500, y: 300 });
+  });
+});
+
+describe("ringCentre", () => {
+  const out = { x: 0, y: 0 };
+  const cta = { x: 1238, y: 400, r: 80 };
+  const ring = { rx: 300, ry: 130 };
+  it("keeps the whole ring on screen and the button inside it", () => {
+    const p = ringCentre(cta, ring.rx, ring.ry, [], 1366, 800, 30, out);
+    expect(p.x + ring.rx).toBeLessThanOrEqual(1366 - 30 + 1e-9);
+    expect(p.x - ring.rx).toBeGreaterThanOrEqual(30 - 1e-9);
+    expect(p.y - ring.ry).toBeGreaterThanOrEqual(30 - 1e-9);
+    expect(p.y + ring.ry).toBeLessThanOrEqual(800 - 30 + 1e-9);
+    expect(Math.hypot((cta.x - p.x) / ring.rx, (cta.y - p.y) / ring.ry)).toBeLessThan(1);
+  });
+  it("puts most of the lap on open water: with a headline above the button, the ring sits lower", () => {
+    const headline = [{ x0: 430, y0: 40, x1: 1080, y1: 330 }];
+    const none = ringCentre(cta, ring.rx, ring.ry, [], 1366, 800, 30, { x: 0, y: 0 });
+    const withText = ringCentre(cta, ring.rx, ring.ry, headline, 1366, 800, 30, { x: 0, y: 0 });
+    expect(withText.y).toBeGreaterThanOrEqual(none.y);
+    expect(withText.x).toBeGreaterThanOrEqual(none.x);
+  });
+  it("writes into `out`", () => {
+    expect(ringCentre(cta, ring.rx, ring.ry, [], 1366, 800, 30, out)).toBe(out);
   });
 });
 

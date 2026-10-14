@@ -373,7 +373,18 @@ describe("findOpenSpot", () => {
     expect(moved.x).toBeGreaterThan(450);
   });
 
-  it("writes into the given object and allocates nothing for it", () => {
+  it("keeps clear of a block at the bottom left, such as the social icons of the side rail", () => {
+    // Everything is free except a small block in the corner and a card column on the right.
+    const icons = rect(30, 700, 180, 760);
+    const p = findOpenSpot([icons, rect(700, 0, W, H)], W, H);
+    const clear = Math.hypot(Math.max(icons.x0 - p.x, 0, p.x - icons.x1), Math.max(icons.y0 - p.y, 0, p.y - icons.y1));
+    expect(clear).toBeGreaterThan(120);
+    // And with the whole left column covered except that corner's neighbourhood, it still does not pick the corner.
+    const q = findOpenSpot([icons, rect(0, 0, 400, 690), rect(700, 0, W, H)], W, H);
+    expect(Math.hypot(Math.max(icons.x0 - q.x, 0, q.x - icons.x1), Math.max(icons.y0 - q.y, 0, q.y - icons.y1))).toBeGreaterThan(60);
+  });
+
+  it("writes into the object it is given", () => {
     const out = { x: 0, y: 0 };
     expect(findOpenSpot([rect(500, 0, W, H)], W, H, null, out)).toBe(out);
     expect(out.x).toBeLessThan(400);

@@ -109,7 +109,7 @@ export type PointCloud = {
   /** Add this to the scene (it lives at the origin: the body's vertices are already in world space). */
   points: Points;
   /** Writes this frame's uniforms from the rig. Call right after `rig.update`. */
-  update(rig: CreatureRig, time: number, frame: { day: number; pixelHeight: number }): void;
+  update(rig: CreatureRig, time: number, day: number, pixelHeight: number): void;
   dispose(): void;
 };
 
@@ -163,7 +163,7 @@ export function createPointCloud(rig: CreatureRig, tier: Exclude<Tier, "off">): 
   const u = material.uniforms;
   return {
     points,
-    update(r, time, { day, pixelHeight }) {
+    update(r, time, day, pixelHeight) {
       const scatter = r.scatter;
       points.visible = scatter > 0;
       if (!points.visible) return;

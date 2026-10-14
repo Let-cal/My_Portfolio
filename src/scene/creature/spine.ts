@@ -183,12 +183,13 @@ export function orbitTarget(center: Vec3, time: number, radius: number, out: Vec
 }
 
 /** Tightest and widest ring (world units) the guardian dragon circles the call to action on. */
-const GUARDIAN_MIN = 1.45;
-const GUARDIAN_MAX = 3.2;
+const GUARDIAN_MIN = 3;
+const GUARDIAN_MAX = 3.6;
 
 /**
  * Half-width of the guardian dragon's ring for a call to action whose own radius on the water is `ctaRadius`:
- * clear of the button (twice its radius), at least as wide as the dragon can turn, and not so wide it leaves the pond.
+ * clear of the button (twice its radius), wide enough that the ends of the ellipse (they curve with radius 0.36 r) are not
+ * tighter than the dragon can turn, and not so wide it leaves the pond.
  */
 export function guardianRadius(ctaRadius: number): number {
   const r = Number.isFinite(ctaRadius) ? ctaRadius : 0;

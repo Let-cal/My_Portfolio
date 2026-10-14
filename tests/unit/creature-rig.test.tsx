@@ -1,4 +1,4 @@
-import { PerspectiveCamera, Plane, Raycaster, Vector2, Vector3, type BufferAttribute, type Mesh, type Object3D } from "three";
+import { PerspectiveCamera, Vector3, type BufferAttribute, type Mesh, type Object3D } from "three";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createCreatureRig } from "@/scene/creature/rig";
 import { creatureLive } from "@/scene/creature/live";
@@ -245,37 +245,38 @@ describe("creature rig", () => {
     const viewport = { width: 1366, height: 800 };
     const contactCamera = () => {
       const c = new PerspectiveCamera(40, viewport.width / viewport.height, 0.1, 80);
-      c.position.set(1.4, 5.4, 7.8);
-      c.lookAt(1.4, 0.9, -0.2);
+      c.position.set(0, 5.4, 7.8);
+      c.lookAt(0, 0.9, -0.2);
       c.updateMatrixWorld();
       return c;
     };
-    const centre = (cam: PerspectiveCamera, c: { x: number; y: number }) => {
-      const ray = new Raycaster();
-      const hit = new Vector3();
-      ray.setFromCamera(new Vector2((c.x / viewport.width) * 2 - 1, -((c.y / viewport.height) * 2 - 1)), cam);
-      ray.ray.intersectPlane(new Plane(new Vector3(0, 1, 0), 0), hit);
-      return hit;
-    };
-
-    it("circles the call to action projected onto the water", () => {
+    it("circles the call to action with the whole lap on screen, never over the button's label", () => {
       const rig = createCreatureRig({ rings: 40, sides: 10 });
       const cam = contactCamera();
-      const want = centre(cam, cta);
       let t = 0;
       const s = state({ chapter: 6, cta });
-      const samples: number[] = [];
-      for (let f = 0; f < 60 * 40; f++) {
+      const px: { x: number; y: number }[] = [];
+      const v = new Vector3();
+      for (let f = 0; f < 60 * 60; f++) {
         rig.update({ dt: 1 / 60, time: t, camera: cam, state: s, viewport });
         t += 1 / 60;
-        if (f > 60 * 16 && f % 10 === 0) samples.push(Math.hypot(creatureLive.head.x - want.x, creatureLive.head.z - want.z));
+        if (f > 60 * 16 && f % 10 === 0) {
+          v.set(creatureLive.head.x, creatureLive.head.y, creatureLive.head.z).project(cam);
+          px.push({ x: (v.x * 0.5 + 0.5) * viewport.width, y: (0.5 - v.y * 0.5) * viewport.height });
+        }
       }
-      const mean = samples.reduce((a, b) => a + b, 0) / samples.length;
-      // Never on top of it, never far from it.
-      expect(Math.min(...samples)).toBeGreaterThan(0.6);
-      expect(Math.max(...samples)).toBeLessThan(3.5);
-      expect(mean).toBeGreaterThan(1);
-      expect(mean).toBeLessThan(2.5);
+      // The head never leaves the screen: the ring that its target runs on was fitted inside it.
+      expect(Math.min(...px.map((p) => p.x))).toBeGreaterThan(0);
+      expect(Math.max(...px.map((p) => p.x))).toBeLessThan(viewport.width);
+      expect(Math.min(...px.map((p) => p.y))).toBeGreaterThan(0);
+      expect(Math.max(...px.map((p) => p.y))).toBeLessThan(viewport.height);
+      // It goes round the button: seen left and right of it, and above and below it.
+      expect(Math.min(...px.map((p) => p.x))).toBeLessThan(cta.x - cta.r);
+      expect(Math.min(...px.map((p) => p.y))).toBeLessThan(cta.y);
+      expect(Math.max(...px.map((p) => p.y))).toBeGreaterThan(cta.y);
+      // And never on top of its label (a box about 150 x 60 px at the middle of the button).
+      const over = px.filter((p) => Math.abs(p.x - cta.x) <= 75 && Math.abs(p.y - cta.y) <= 30);
+      expect(over).toEqual([]);
       rig.dispose();
     });
 
@@ -283,13 +284,21 @@ describe("creature rig", () => {
       const rig = createCreatureRig({ rings: 40, sides: 10 });
       const cam = contactCamera();
       let t = 0;
-      const go = (s: SceneState, frames: number) => {
-        for (let f = 0; f < frames; f++, t += 1 / 60) rig.update({ dt: 1 / 60, time: t, camera: cam, state: s, viewport });
+      const lap = (s: SceneState) => {
+        let sum = 0;
+        let n = 0;
+        for (let f = 0; f < 60 * 40; f++, t += 1 / 60) {
+          rig.update({ dt: 1 / 60, time: t, camera: cam, state: s, viewport });
+          if (f > 60 * 15) {
+            sum += creatureLive.head.x;
+            n++;
+          }
+        }
+        return sum / n;
       };
-      go(state({ chapter: 6, cta: { x: 1100, y: 400, r: 80 } }), 60 * 30);
-      const right = creatureLive.head.x;
-      go(state({ chapter: 6, cta: { x: 300, y: 400, r: 80 } }), 60 * 30);
-      expect(creatureLive.head.x).toBeLessThan(right - 3);
+      const right = lap(state({ chapter: 6, cta: { x: 1100, y: 400, r: 80 } }));
+      const left = lap(state({ chapter: 6, cta: { x: 300, y: 400, r: 80 } }));
+      expect(left).toBeLessThan(right - 3);
       rig.dispose();
     });
 

@@ -30,7 +30,7 @@ export function Creature() {
       day: sceneLive.day,
       viewport: state.size,
     });
-    cloud.update(rig, state.clock.elapsedTime, { day: sceneLive.day, pixelHeight: state.size.height * state.gl.getPixelRatio() });
+    cloud.update(rig, state.clock.elapsedTime, sceneLive.day, state.size.height * state.gl.getPixelRatio());
   });
 
   return (

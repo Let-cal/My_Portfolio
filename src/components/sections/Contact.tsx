@@ -40,6 +40,8 @@ export function Contact({ content, locale }: { content: Content; locale: Locale 
           <MagneticButton asChild strength={0.4}>
             <a
               id="contact-core"
+              // A solid round button: the veil and the creature's dimming leave it out, so the dragon can circle it in full colour.
+              data-scene-ignore=""
               href={`mailto:${profile.email}`}
               className="group/cta grid size-40 place-content-center justify-items-center gap-1 rounded-full bg-[var(--role-accent)] font-heading text-lg font-semibold text-[var(--role-accent-contrast)] outline-none transition-[scale,box-shadow] duration-300 hover:scale-105 hover:shadow-[0_0_60px_-8px_var(--role-accent)] focus-visible:scale-105 focus-visible:ring-4 focus-visible:ring-ring/60 focus-visible:ring-offset-4 focus-visible:ring-offset-background motion-reduce:transition-none"
             >

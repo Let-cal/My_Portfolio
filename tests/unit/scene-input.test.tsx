@@ -116,6 +116,17 @@ describe("measureAvoid", () => {
     delete (Range.prototype as unknown as Record<string, unknown>).getBoundingClientRect;
   });
 
+  it("leaves out anything inside a [data-scene-ignore] element, such as the solid round call to action", () => {
+    document.body.innerHTML = `<main>
+      <h2 id="h">Heading</h2>
+      <a id="cta" data-scene-ignore="" href="#x"><span id="label">Get in touch</span></a>
+    </main>`;
+    box(document.getElementById("h")!, rect(100, 100, 300, 140));
+    box(document.getElementById("cta")!, rect(800, 300, 960, 460));
+    box(document.getElementById("label")!, rect(820, 360, 940, 400));
+    expect(measureAvoid()).toMatchObject([{ x0: 100, y0: 100, x1: 300, y1: 140 }]);
+  });
+
   it("collects marked text, glass cards and the page's own headings, near the screen only", () => {
     document.body.innerHTML = `<main>
       <h2 id="h">Heading</h2>
@@ -196,18 +207,50 @@ describe("useCtaTracking", () => {
     return a;
   }
 
-  it("publishes the centre and radius of #contact-core, in viewport pixels", () => {
+  it("publishes the centre and radius of #contact-core, in viewport pixels, once the story is at the Why chapter", () => {
     const a = cta();
     box(a, rect(800, 300, 960, 460));
+    sceneStore.setState({ chapter: 5 });
     render(<CtaProbe />);
     expect(sceneStore.getState().cta).toEqual({ x: 880, y: 380, r: 80 });
   });
 
-  it("follows the button as the page scrolls and resizes, one read per frame", () => {
+  it("reads nothing before that, and starts as soon as the chapter is reached", () => {
     const a = cta();
     const spy = vi.spyOn(a, "getBoundingClientRect").mockReturnValue(rect(800, 300, 960, 460));
     vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => window.setTimeout(() => cb(0), 0));
+    sceneStore.setState({ chapter: 3 });
     render(<CtaProbe />);
+    act(() => {
+      window.dispatchEvent(new Event("scroll"));
+    });
+    return new Promise<void>((resolve) =>
+      setTimeout(() => {
+        expect(spy).not.toHaveBeenCalled();
+        expect(sceneStore.getState().cta).toBeNull();
+        act(() => sceneStore.setState({ chapter: 5 }));
+        setTimeout(() => {
+          expect(spy).toHaveBeenCalledTimes(1);
+          expect(sceneStore.getState().cta).toEqual({ x: 880, y: 380, r: 80 });
+          // Scrolled back up: it is cleared.
+          act(() => sceneStore.setState({ chapter: 2 }));
+          setTimeout(() => {
+            expect(sceneStore.getState().cta).toBeNull();
+            vi.unstubAllGlobals();
+            resolve();
+          }, 30);
+        }, 30);
+      }, 30),
+    );
+  });
+
+  it("follows the button as the page scrolls, one read per frame", () => {
+    const a = cta();
+    const spy = vi.spyOn(a, "getBoundingClientRect").mockReturnValue(rect(800, 300, 960, 460));
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => window.setTimeout(() => cb(0), 0));
+    sceneStore.setState({ chapter: 6 });
+    render(<CtaProbe />);
+    spy.mockClear();
     spy.mockReturnValue(rect(800, 100, 960, 260));
     act(() => {
       window.dispatchEvent(new Event("scroll"));
@@ -215,6 +258,7 @@ describe("useCtaTracking", () => {
     });
     return new Promise<void>((resolve) =>
       setTimeout(() => {
+        expect(spy).toHaveBeenCalledTimes(1);
         expect(sceneStore.getState().cta).toEqual({ x: 880, y: 180, r: 80 });
         vi.unstubAllGlobals();
         resolve();
@@ -223,10 +267,14 @@ describe("useCtaTracking", () => {
   });
 
   it("is null when the page has no such button, and clears on unmount", () => {
+    sceneStore.setState({ chapter: 6 });
     const { unmount } = render(<CtaProbe />);
     expect(sceneStore.getState().cta).toBeNull();
     const a = cta();
     box(a, rect(0, 0, 100, 100));
+    act(() => {
+      window.dispatchEvent(new Event("resize"));
+    });
     unmount();
     expect(sceneStore.getState().cta).toBeNull();
   });
@@ -234,6 +282,7 @@ describe("useCtaTracking", () => {
   it("does not write when nothing moved", () => {
     const a = cta();
     box(a, rect(800, 300, 960, 460));
+    sceneStore.setState({ chapter: 6 });
     render(<CtaProbe />);
     const first = sceneStore.getState();
     act(() => {

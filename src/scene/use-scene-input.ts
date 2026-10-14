@@ -137,6 +137,9 @@ function isLargeText(el: Element): boolean {
   return size >= 24 || (size >= 18.66 && (parseInt(cs.fontWeight, 10) || 400) >= 700);
 }
 
+/** Marks an element (and everything in it) the scene need not protect: it is drawn on an opaque surface of its own. */
+const IGNORE_SELECTOR = "[data-scene-ignore]";
+
 /** Elements pinned to the screen (fixed or sticky) do not move with the page: their position is never stale. */
 const PINNED_SELECTOR = '[class*="fixed"], [class*="sticky"]';
 
@@ -152,6 +155,8 @@ export function createAvoidMeter() {
       const sy = window.scrollY;
       items = [];
       for (const el of document.querySelectorAll(AVOID_SELECTOR)) {
+        // Something that sits on a solid surface of its own (the round call to action) needs no protection from the scene.
+        if (el.closest(IGNORE_SELECTOR)) continue;
         const b = el.getBoundingClientRect();
         if (b.width <= 0 || b.height <= 0) continue;
         items.push({ el, top: b.top + sy, bottom: b.bottom + sy, pinned: !!el.closest(PINNED_SELECTOR), large: isLargeText(el) });
@@ -262,23 +267,30 @@ function sameCta(a: CtaCircle | null, b: CtaCircle | null): boolean {
   return a.x === b.x && a.y === b.y && a.r === b.r;
 }
 
+/** The button only matters to the dragon from the chapter before the last: nothing is read or written until then. */
+const CTA_FROM_CHAPTER = 5;
+
 /**
  * Keeps `cta` in the scene store up to date: where the round "Get in touch" button is on the screen, which the guardian
  * dragon circles. One rectangle is read when the page scrolls or its layout changes (once per frame at most), never from
- * the render loop; nothing is written when it did not move. No React state.
+ * the render loop, and only once the story has reached the "Why me" chapter (a cheap store read decides; coming back up
+ * clears it); nothing is written when it did not move. No React state.
  */
 export function useCtaTracking(enabled: boolean) {
   useEffect(() => {
     if (!enabled) return;
     let frame = 0;
     const read = () => {
-      const el = document.getElementById(CTA_ID);
+      const state = sceneStore.getState();
       let next: CtaCircle | null = null;
-      if (el) {
-        const b = el.getBoundingClientRect();
-        if (b.width > 0 && b.height > 0) next = { x: b.left + b.width / 2, y: b.top + b.height / 2, r: Math.min(b.width, b.height) / 2 };
+      if (state.chapter >= CTA_FROM_CHAPTER) {
+        const el = document.getElementById(CTA_ID);
+        if (el) {
+          const b = el.getBoundingClientRect();
+          if (b.width > 0 && b.height > 0) next = { x: b.left + b.width / 2, y: b.top + b.height / 2, r: Math.min(b.width, b.height) / 2 };
+        }
       }
-      if (!sameCta(next, sceneStore.getState().cta)) sceneStore.setState({ cta: next });
+      if (!sameCta(next, state.cta)) sceneStore.setState({ cta: next });
     };
     const flush = () => {
       frame = 0;
@@ -287,6 +299,14 @@ export function useCtaTracking(enabled: boolean) {
     const schedule = () => {
       if (!frame) frame = requestAnimationFrame(flush);
     };
+    // Reaching the chapter is what starts the measuring (the scroll event that got it there may have come first).
+    let chapter = sceneStore.getState().chapter;
+    const unsubscribe = sceneStore.subscribe(() => {
+      const c = sceneStore.getState().chapter;
+      if (c === chapter) return;
+      chapter = c;
+      schedule();
+    });
     const resizeObserver = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(schedule);
     resizeObserver?.observe(document.body);
     window.addEventListener("scroll", schedule, { passive: true });
@@ -295,6 +315,7 @@ export function useCtaTracking(enabled: boolean) {
     read();
     return () => {
       if (frame) cancelAnimationFrame(frame);
+      unsubscribe();
       resizeObserver?.disconnect();
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);

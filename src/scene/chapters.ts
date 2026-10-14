@@ -65,7 +65,7 @@ export type CameraPose = { pos: [number, number, number]; look: [number, number,
  * One camera per chapter, in pond units (water at y = -0.3, the koi swims around the origin, the camera sits at +z).
  * 0 pond from above and in front (as in the prototype), 1 river: lower and slanted, 2 lotus pond: nearly straight
  * down, 3 waterfall: low, looking along the water at the fall, 4 lanterns: low and wide so both banks show,
- * 5 gate: pulled back for the dragon, 6 contact: high and far and panned right, towards the call to action the dragon circles.
+ * 5 gate: pulled back for the dragon, 6 contact: high and far, the dragon circles the call to action.
  */
 export const CHAPTER_CAMERA: CameraPose[] = [
   { pos: [0, 3.8, 4.2], look: [0, -0.15, 0.1] },
@@ -74,7 +74,7 @@ export const CHAPTER_CAMERA: CameraPose[] = [
   { pos: [0, 1.6, 5.2], look: [0, 0.7, -5] },
   { pos: [0, 2.7, 5.6], look: [0, 0.1, -1.6] },
   { pos: [0, 3.6, 6.4], look: [0, 0.35, -1] },
-  { pos: [1.4, 5.4, 7.8], look: [1.4, 0.9, -0.2] },
+  { pos: [0, 5.4, 7.8], look: [0, 0.9, -0.2] },
 ];
 
 /** The camera holds a chapter's pose for this share of the chapter, then eases to the next chapter's pose. */

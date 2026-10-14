@@ -1,4 +1,4 @@
-import { InstancedBufferGeometry, PerspectiveCamera, type BufferAttribute, type ShaderMaterial } from "three";
+import { InstancedBufferGeometry, PerspectiveCamera, type ShaderMaterial } from "three";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createPointCloud, cloudQualityForTier } from "@/scene/creature/PointCloudMorph";
 import { createCreatureRig } from "@/scene/creature/rig";
@@ -63,10 +63,10 @@ describe("point cloud", () => {
     const cloud = createPointCloud(rig, "high");
     const mat = cloud.points.material as ShaderMaterial;
     let t = drive(rig, 30, state({ chapter: 4, t: 1 }));
-    cloud.update(rig, t, { day: 0, pixelHeight: 1000 });
+    cloud.update(rig, t, 0, 1000);
     expect(cloud.points.visible).toBe(false);
     for (let i = 0; i < 180; i++) t = drive(rig, 1, state({ chapter: 5, t: 0.5 }), t);
-    cloud.update(rig, t, { day: 0, pixelHeight: 1000 });
+    cloud.update(rig, t, 0, 1000);
     expect(cloud.points.visible).toBe(true);
     expect(mat.uniforms.uScatter.value).toBeGreaterThan(0.95);
     expect(mat.uniforms.uMorph.value).toBeCloseTo(0.5, 2);
@@ -74,13 +74,13 @@ describe("point cloud", () => {
     expect(mat.uniforms.uMap.value).toBe(rig.bodyMaterial.map);
     // The dragon is whole again.
     t = drive(rig, 500, state({ chapter: 6 }), t);
-    cloud.update(rig, t, { day: 0, pixelHeight: 1000 });
+    cloud.update(rig, t, 0, 1000);
     expect(cloud.points.visible).toBe(false);
     cloud.dispose();
     rig.dispose();
   });
 
-  it("frees its geometry and material, and only its own (the body's buffers belong to the rig)", () => {
+  it("disposes its own geometry and material once each", () => {
     const rig = createCreatureRig({ rings: 40, sides: 10 });
     const cloud = createPointCloud(rig, "high");
     const geoSpy = vi.spyOn(cloud.points.geometry, "dispose");
@@ -91,17 +91,16 @@ describe("point cloud", () => {
     rig.dispose();
   });
 
-  it("does not allocate on update (it only writes uniforms)", () => {
+  it("reuses its uniform objects from frame to frame (update only writes values)", () => {
     const rig = createCreatureRig({ rings: 40, sides: 10 });
     const cloud = createPointCloud(rig, "high");
     const mat = cloud.points.material as ShaderMaterial;
     const uniforms = mat.uniforms;
     const scatter = mat.uniforms.uScatter;
-    cloud.update(rig, 1, { day: 1, pixelHeight: 800 });
-    cloud.update(rig, 2, { day: 1, pixelHeight: 800 });
+    cloud.update(rig, 1, 1, 800);
+    cloud.update(rig, 2, 1, 800);
     expect(mat.uniforms).toBe(uniforms);
     expect(mat.uniforms.uScatter).toBe(scatter);
-    expect((cloud.points.geometry.getAttribute("position") as BufferAttribute).array.length).toBeGreaterThan(0);
     cloud.dispose();
     rig.dispose();
   });

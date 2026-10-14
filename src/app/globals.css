@@ -1206,7 +1206,8 @@ html[data-hello-seen] [data-hello] {
   display: none;
   border-radius: 34px;
   background: rgb(var(--veil) / var(--veil-a));
-  box-shadow: 0 0 72px 44px rgb(var(--veil) / var(--veil-a));
+  /* The solid part reaches 24px past the text (TextVeil's PAD); the soft edge only needs a short fade, so whatever swims close to the text, the dragon included, stays in colour. */
+  box-shadow: 0 0 40px 14px rgb(var(--veil) / var(--veil-a));
   will-change: transform;
   transition:
     opacity 0.35s ease,

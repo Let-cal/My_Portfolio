@@ -81,7 +81,7 @@ export function SideRail({ name, titles, links }: SideRailProps) {
           </nav>
         </div>
 
-        <ul aria-label={t("footer.links")} className="flex items-center gap-5">
+        <ul aria-label={t("footer.links")} data-scene-avoid="box" className="flex items-center gap-5">
           {socials.map(({ label, href, Icon }) => (
             <li key={label}>
               <a
