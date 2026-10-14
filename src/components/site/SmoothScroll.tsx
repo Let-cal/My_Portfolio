@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
+import { useMediaQuery, usePrefersReducedMotion } from "@/components/fx/use-media-query";
+import { MOBILE_QUERY } from "@/scene/tier";
+import { getMotionReduced } from "./motion-preference";
 import { scrollToElement, setLenis } from "./lenis-instance";
 
 /** An in-page link (`#section` on this page) that a plain left click should smooth-scroll to; otherwise null. */
@@ -30,9 +32,12 @@ function anchorTarget(event: MouseEvent): { el: HTMLElement; hash: string } | nu
  */
 export function SmoothScroll() {
   const reduced = usePrefersReducedMotion();
+  const isMobile = useMediaQuery(MOBILE_QUERY);
 
   useEffect(() => {
-    if (reduced) return;
+    // Hydration first uses the SSR media snapshot; read the browser before starting any imports.
+    const mobileNow = typeof window.matchMedia === "function" && window.matchMedia(MOBILE_QUERY).matches;
+    if (reduced || isMobile || mobileNow || getMotionReduced()) return;
     // gsap, ScrollTrigger and Lenis load after hydration so they stay out of the first page load.
     let cancelled = false;
     let teardown: (() => void) | undefined;
@@ -73,7 +78,7 @@ export function SmoothScroll() {
       cancelled = true;
       teardown?.();
     };
-  }, [reduced]);
+  }, [reduced, isMobile]);
 
   return null;
 }

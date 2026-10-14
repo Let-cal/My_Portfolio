@@ -22,9 +22,12 @@ const noSubscription = () => () => {};
 const FADE_MS = 700;
 
 /** Client-only facts, read without an effect: null / 4 on the server so hydration matches. */
-function useBrowserFacts() {
+function useBrowserFacts(skipWebGL: boolean) {
   const body = useSyncExternalStore(noSubscription, () => document.body, () => null);
-  const webgl = useSyncExternalStore<boolean | null>(noSubscription, detectWebGL, () => null);
+  const webgl = useSyncExternalStore<boolean | null>(noSubscription, () => {
+    const mobileNow = typeof window.matchMedia === "function" && window.matchMedia(MOBILE_QUERY).matches;
+    return skipWebGL || mobileNow ? false : detectWebGL();
+  }, () => null);
   const cores = useSyncExternalStore(noSubscription, () => navigator.hardwareConcurrency || 4, () => 4);
   return { body, webgl, cores };
 }
@@ -38,9 +41,9 @@ function useBrowserFacts() {
  * brings the image back; switching it on loads the scene again.
  */
 export function KoiCanvas() {
-  const { body, webgl, cores } = useBrowserFacts();
-  const reducedMotion = usePrefersReducedMotion();
   const isMobile = useMediaQuery(MOBILE_QUERY);
+  const { body, webgl, cores } = useBrowserFacts(isMobile);
+  const reducedMotion = usePrefersReducedMotion();
   const { theme } = useTheme();
   const { role } = useRole();
   const gate = useLoadGate();
@@ -67,7 +70,7 @@ export function KoiCanvas() {
   }, []);
 
   // Until WebGL has been probed the tier is `off`, so nothing loads and the image shows.
-  const detected: Tier = webgl === null || failed ? "off" : capture ? "high" : detectTier({ webgl, reducedMotion, isMobile, cores });
+  const detected: Tier = webgl !== true || failed ? "off" : capture ? "high" : detectTier({ webgl, reducedMotion, isMobile, cores });
   const tier: Tier = detected === "high" && downgraded ? "low" : detected;
   const load = capture ? captureConfigured : shouldLoadScene({ tier, isMobile, ...gate });
 

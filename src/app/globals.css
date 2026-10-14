@@ -57,6 +57,10 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+:root {
+  --font-mincho: "Yu Mincho", "Hiragino Mincho ProN", serif;
+}
+
 /*
  * Design tokens. Dark is the default (<html class="dark">); a ".light" class
  * on <html> switches to the light variant.

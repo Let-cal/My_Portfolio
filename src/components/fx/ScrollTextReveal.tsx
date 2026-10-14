@@ -1,6 +1,7 @@
 "use client";
 
-import { motion, useScroll, useTransform, type MotionValue } from "motion/react";
+import * as motion from "motion/react-m";
+import { useScroll, useTransform, type MotionValue } from "motion/react";
 import { useMemo, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { usePrefersReducedMotion } from "./use-media-query";

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, type ComponentType } from "react";
+import { useMediaQuery } from "@/components/fx/use-media-query";
+import { MOBILE_QUERY } from "@/scene/tier";
 import type { RoleKey } from "@/content/schema";
 import { isPaletteShortcut } from "./command-shortcut";
 
@@ -20,6 +22,7 @@ const loadDialog = () => import("./CommandPaletteDialog");
  */
 export function CommandPalette({ cvUrls, email }: PaletteProps) {
   const [Dialog, setDialog] = useState<DialogComponent | null>(null);
+  const isMobile = useMediaQuery(MOBILE_QUERY);
 
   useEffect(() => {
     if (Dialog) return;
@@ -43,15 +46,18 @@ export function CommandPalette({ cvUrls, email }: PaletteProps) {
     window.addEventListener("open-command", request);
 
     const warm = () => void loadDialog().catch(() => {});
-    const idle = typeof window.requestIdleCallback === "function" ? window.requestIdleCallback(warm, { timeout: 4000 }) : window.setTimeout(warm, 2000);
+    const mobileNow = isMobile || (typeof window.matchMedia === "function" && window.matchMedia(MOBILE_QUERY).matches);
+    const idle = mobileNow ? null : typeof window.requestIdleCallback === "function" ? window.requestIdleCallback(warm, { timeout: 4000 }) : window.setTimeout(warm, 2000);
     return () => {
       alive = false;
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("open-command", request);
-      if (typeof window.requestIdleCallback === "function") window.cancelIdleCallback(idle);
-      else window.clearTimeout(idle);
+      if (idle !== null) {
+        if (typeof window.requestIdleCallback === "function") window.cancelIdleCallback(idle);
+        else window.clearTimeout(idle);
+      }
     };
-  }, [Dialog]);
+  }, [Dialog, isMobile]);
 
   return Dialog ? <Dialog cvUrls={cvUrls} email={email} initialOpen /> : null;
 }

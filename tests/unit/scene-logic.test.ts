@@ -16,7 +16,7 @@ describe("detectTier", () => {
   it("off wins over mobile and low core counts", () => {
     expect(detectTier({ webgl: false, reducedMotion: false, isMobile: true, cores: 2 })).toBe("off");
   });
-  it("is low on mobile", () => expect(detectTier({ ...base, isMobile: true })).toBe("low"));
+  it("uses the static fallback on mobile to protect its startup budget", () => expect(detectTier({ ...base, isMobile: true })).toBe("off"));
   it("is low with 4 cores or fewer", () => {
     expect(detectTier({ ...base, cores: 4 })).toBe("low");
     expect(detectTier({ ...base, cores: 1 })).toBe("low");

@@ -296,6 +296,13 @@ describe("CommandPalette", () => {
 });
 
 describe("SmoothScroll", () => {
+  it("uses native mobile scrolling without starting Lenis or the GSAP ticker", async () => {
+    vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("max-width: 767px"), media: query, addEventListener() {}, removeEventListener() {} }));
+    render(<SmoothScroll />);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(lenisInstances).toHaveLength(0);
+    expect(gsapTicker.add).not.toHaveBeenCalled();
+  });
   it("starts Lenis tied to gsap.ticker and ScrollTrigger", async () => {
     render(<SmoothScroll />);
     await waitFor(() => expect(lenisInstances).toHaveLength(1));

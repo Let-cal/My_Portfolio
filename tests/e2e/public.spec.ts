@@ -18,6 +18,15 @@ async function hydrated(page: Page, selector: string) {
 }
 
 test.describe("home page", () => {
+  test("only fetches the active role portrait before interaction", async ({ page }) => {
+    const portraits: string[] = [];
+    page.on("request", (request) => {
+      if (request.url().includes("role-techlead.webp") || request.url().includes("role-pm.webp")) portraits.push(request.url());
+    });
+    await page.goto("/en");
+    await page.waitForTimeout(1000);
+    expect(portraits).toEqual([]);
+  });
   test("a lazily loaded project case study opens and returns focus after Escape", async ({ page }) => {
     await page.goto("/en");
     const trigger = page.locator("#proj-siteplus").getByRole("button");

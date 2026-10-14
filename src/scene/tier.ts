@@ -3,10 +3,10 @@ export type Tier = "high" | "low" | "off";
 
 export type TierInput = { webgl: boolean; reducedMotion: boolean; isMobile: boolean; cores: number };
 
-/** No WebGL or reduced motion: `off`. Mobile or 4 cores or fewer: `low`. Everything else: `high`. */
+/** Mobile, no WebGL or reduced motion: static scene. Low-core desktops keep the lighter live scene. */
 export function detectTier(i: TierInput): Tier {
-  if (!i.webgl || i.reducedMotion) return "off";
-  if (i.isMobile || i.cores <= 4) return "low";
+  if (!i.webgl || i.reducedMotion || i.isMobile) return "off";
+  if (i.cores <= 4) return "low";
   return "high";
 }
 

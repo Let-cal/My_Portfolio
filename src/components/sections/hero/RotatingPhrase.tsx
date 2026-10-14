@@ -1,6 +1,7 @@
 "use client";
 
-import { AnimatePresence, motion, useIsPresent } from "motion/react";
+import * as motion from "motion/react-m";
+import { AnimatePresence, useIsPresent } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { usePrefersReducedMotion } from "@/components/fx/use-media-query";

@@ -1,8 +1,10 @@
 "use client";
 
-import { MotionConfig } from "motion/react";
+import { LazyMotion, MotionConfig } from "motion/react";
 import { useLayoutEffect, type ReactNode } from "react";
 import { syncMotionAttribute, useReducedMotionEffective } from "./motion-preference";
+
+const loadFeatures = () => import("./motion-features").then((module) => module.default);
 
 /**
  * Makes the `motion` library follow the effective motion preference (instead of only the OS one) and
@@ -14,5 +16,9 @@ export function MotionProvider({ children }: { children: ReactNode }) {
   useLayoutEffect(() => {
     syncMotionAttribute();
   }, []);
-  return <MotionConfig reducedMotion={reduced ? "always" : "never"}>{children}</MotionConfig>;
+  return (
+    <LazyMotion features={loadFeatures} strict>
+      <MotionConfig reducedMotion={reduced ? "always" : "never"}>{children}</MotionConfig>
+    </LazyMotion>
+  );
 }

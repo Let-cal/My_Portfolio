@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronRightIcon } from "lucide-react";
-import { motion } from "motion/react";
+import * as motion from "motion/react-m";
 import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import { useMemo, useRef, useState, type FocusEvent } from "react";

@@ -8,6 +8,29 @@ import { fileURLToPath } from "node:url";
 
 const script = fileURLToPath(new URL("../../scripts/measure-initial-js.mjs", import.meta.url));
 
+test("critical typography does not schedule a late swap on slow connections", { skip: !existsSync(".next/server/app/en.html") }, () => {
+  const html = readFileSync(".next/server/app/en.html", "utf8");
+  for (const tag of html.matchAll(/<link\b[^>]*>/g)) {
+    if (!tag[0].includes('rel="stylesheet"')) continue;
+    const href = tag[0].match(/href="([^"]+)"/)?.[1];
+    if (!href?.startsWith("/_next/static/")) continue;
+    const css = readFileSync(join(".next", decodeURIComponent(href.replace(/^\/_next\//, ""))), "utf8");
+    for (const face of css.matchAll(/@font-face\{([^}]+)\}/g)) {
+      if (!face[1].includes("src:url(")) continue;
+      assert.equal(face[1].includes("font-display:optional"), true, `${href} permits a delayed font swap`);
+    }
+  }
+});
+
+test("quick-view buttons do not pull unrelated Radix Select code into startup", { skip: !existsSync(".next/server/app/en/quick.html") }, () => {
+  const result = spawnSync(process.execPath, [script, "en/quick", "--json"], { encoding: "utf8" });
+  const [{ chunks }] = JSON.parse(result.stdout);
+  for (const { src } of chunks) {
+    const path = join(".next", decodeURIComponent(src.replace(/^\/_next\//, "")));
+    assert.equal(readFileSync(path, "utf8").includes("SelectScrollDownButton"), false, `${src} eagerly loads unused Select components`);
+  }
+});
+
 function fixture(run) {
   const root = mkdtempSync(join(tmpdir(), "letcal-budget-"));
   try { run(root); } finally { rmSync(root, { recursive: true }); }
@@ -30,17 +53,19 @@ test("budget verification fails when the requested route has no production HTML"
   assert.equal(result.status, 1);
 }));
 
-test("the built initial route does not ship the content-validation runtime", { skip: !existsSync(".next/server/app/en.html") }, () => {
+test("the built initial route omits deferred validation, dialogs, gestures and toasts", { skip: !existsSync(".next/server/app/en.html") }, () => {
   const result = spawnSync(process.execPath, [script, "en", "--json"], { encoding: "utf8" });
   const [{ chunks }] = JSON.parse(result.stdout);
   for (const { src } of chunks) {
     const path = join(".next", decodeURIComponent(src.replace(/^\/_next\//, "")));
     assert.equal(readFileSync(path, "utf8").includes("ZodError"), false, `${src} contains server content validation`);
     assert.equal(readFileSync(path, "utf8").includes("DialogContent"), false, `${src} eagerly loads the case-study dialog`);
+    assert.equal(readFileSync(path, "utf8").includes("dragSnapToOrigin"), false, `${src} eagerly loads gesture features`);
+    assert.equal(readFileSync(path, "utf8").includes("data-sonner-toaster"), false, `${src} eagerly loads toast rendering`);
   }
 });
 
-test("English does not load the Japanese body-font stylesheet", { skip: !existsSync(".next/server/app/en.html") }, () => {
+test("English initial CSS excludes noncritical Japanese font faces", { skip: !existsSync(".next/server/app/en.html") }, () => {
   const html = readFileSync(".next/server/app/en.html", "utf8");
   for (const tag of html.matchAll(/<link\b[^>]*>/g)) {
     if (!tag[0].includes('rel="stylesheet"')) continue;
@@ -48,5 +73,6 @@ test("English does not load the Japanese body-font stylesheet", { skip: !existsS
     if (!href?.startsWith("/_next/static/")) continue;
     const css = readFileSync(join(".next", decodeURIComponent(href.replace(/^\/_next\//, ""))), "utf8");
     assert.equal(css.includes("font-family:Noto Sans JP;"), false, href);
+    assert.equal(css.includes("font-family:Shippori Mincho;"), false, href);
   }
 });

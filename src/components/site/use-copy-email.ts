@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
 
 const COPIED_MS = 2000;
 
@@ -22,7 +21,8 @@ export function useCopyEmail(email: string, copiedLabel: string) {
     try {
       await navigator.clipboard.writeText(email);
       setCopied(true);
-      toast(copiedLabel, { description: email });
+      // Inline confirmation is already visible; optional toast failure must not undo a successful copy.
+      void import("sonner").then(({ toast }) => toast(copiedLabel, { description: email })).catch(() => {});
     } catch {
       window.location.href = `mailto:${email}`;
     }

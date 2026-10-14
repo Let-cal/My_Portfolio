@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "motion/react";
+import * as motion from "motion/react-m";
 import { useTranslations } from "next-intl";
 import { useId, useMemo, useState, type KeyboardEvent } from "react";
 import { usePrefersReducedMotion } from "@/components/fx/use-media-query";

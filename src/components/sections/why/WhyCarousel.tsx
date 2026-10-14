@@ -1,7 +1,8 @@
 "use client";
 
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
-import { animate, motion, useMotionValue } from "motion/react";
+import * as motion from "motion/react-m";
+import { animate, useMotionValue } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 import { usePrefersReducedMotion } from "@/components/fx/use-media-query";

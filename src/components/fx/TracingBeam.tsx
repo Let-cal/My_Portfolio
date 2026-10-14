@@ -1,7 +1,7 @@
 "use client";
 
+import * as motion from "motion/react-m";
 import {
-  motion,
   useMotionValueEvent,
   useScroll,
   useSpring,

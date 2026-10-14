@@ -1,7 +1,8 @@
 "use client";
 
 import { DownloadIcon, MailIcon, TimerIcon } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import * as motion from "motion/react-m";
+import { AnimatePresence } from "motion/react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { MagneticButton } from "@/components/fx/MagneticButton";

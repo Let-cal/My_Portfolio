@@ -3,7 +3,6 @@
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useId, useRef, type CSSProperties, type KeyboardEvent, type PointerEvent } from "react";
-import { ROLE_KEYS } from "@/content/constants";
 import type { RoleKey } from "@/content/schema";
 import { ROLE_ACCENT, SECTOR_FROM, WHEEL_ORDER, angleFromPoint, sectorForAngle } from "@/lib/role-accent";
 import { cn } from "@/lib/utils";
@@ -133,17 +132,15 @@ function WheelView({ className }: { className?: string }) {
           />
         </div>
         <div ref={peekRef} data-layer="peek" aria-hidden="true" className="hero-layer hero-peek">
-          {ROLE_KEYS.map((key) => (
-            <Image
-              key={key}
-              src={ROLE_IMAGE[key]}
-              alt=""
-              fill
-              sizes={SIZES}
-              draggable={false}
-              data-on={key === peekRole ? "" : undefined}
-            />
-          ))}
+          <Image
+            key={peekRole}
+            src={ROLE_IMAGE[peekRole]}
+            alt=""
+            fill
+            sizes={SIZES}
+            draggable={false}
+            data-on=""
+          />
         </div>
       </div>
 

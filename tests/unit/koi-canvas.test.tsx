@@ -161,7 +161,7 @@ describe("KoiCanvas failure handling", () => {
 });
 
 describe("KoiCanvas mobile loading", () => {
-  it("scrolling alone does not load the scene; the first touch does", async () => {
+  it("keeps the static scene on mobile after scrolling and touch", async () => {
     vi.stubGlobal("matchMedia", (query: string) => ({
       matches: query.includes("max-width: 767px"),
       media: query,
@@ -180,7 +180,10 @@ describe("KoiCanvas mobile loading", () => {
     act(() => {
       window.dispatchEvent(new Event("touchstart"));
     });
-    expect(await screen.findByTestId("scene")).toHaveAttribute("data-tier", "low");
+    await settle();
+    expect(screen.queryByTestId("scene")).toBeNull();
+    expect(img()).not.toBeNull();
+    expect(detectWebGL).not.toHaveBeenCalled();
   });
 });
 

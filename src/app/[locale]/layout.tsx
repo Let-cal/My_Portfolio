@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Instrument_Serif, Shippori_Mincho, Space_Grotesk } from "next/font/google";
+import { Inter, Instrument_Serif, Space_Grotesk } from "next/font/google";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -10,6 +10,7 @@ import { Footer } from "@/components/site/Footer";
 import { Header } from "@/components/site/Header";
 import { HelloIntro } from "@/components/site/HelloIntro";
 import { JapaneseTypography } from "@/components/site/JapaneseTypography";
+import { AccentTypography } from "@/components/site/AccentTypography";
 import { HighlightProvider } from "@/components/site/HighlightProvider";
 import { HELLO_SEEN_SCRIPT } from "@/components/site/hello-script";
 import { REVEAL_SHOW_CSS } from "@/components/site/reveal-style";
@@ -26,14 +27,13 @@ import { ROLE_KEYS } from "@/content/schema";
 import { routing } from "@/i18n/routing";
 import { getContent } from "@/lib/data/get-content";
 import { pickLocale } from "@/lib/i18n-text";
-import { Toaster } from "@/components/ui/sonner";
+import { DeferredToaster } from "@/components/site/DeferredToaster";
 import "../globals.css";
 
-const inter = Inter({ variable: "--font-inter", subsets: ["latin", "vietnamese"], display: "swap" });
-const spaceGrotesk = Space_Grotesk({ variable: "--font-space-grotesk", subsets: ["latin", "vietnamese"], display: "swap" });
+const inter = Inter({ variable: "--font-inter", subsets: ["latin", "vietnamese"], display: "optional" });
+const spaceGrotesk = Space_Grotesk({ variable: "--font-space-grotesk", subsets: ["latin", "vietnamese"], display: "optional" });
 // Accent faces: the italic serif (role title in the side rail, later headings) and the Mincho used by the vertical chapter labels.
-const instrumentSerif = Instrument_Serif({ variable: "--font-serif", subsets: ["latin"], weight: "400", style: "italic", display: "swap" });
-const shipporiMincho = Shippori_Mincho({ variable: "--font-mincho", subsets: ["latin"], weight: "500", display: "swap", preload: false });
+const instrumentSerif = Instrument_Serif({ variable: "--font-serif", subsets: ["latin"], weight: "400", style: "italic", display: "optional" });
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -63,7 +63,6 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
     inter.variable,
     spaceGrotesk.variable,
     instrumentSerif.variable,
-    shipporiMincho.variable,
     "flex min-h-full flex-col",
   ]
     .filter(Boolean)
@@ -83,6 +82,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
       <body className={bodyClassName}>
         <NextIntlClientProvider>
           <ThemeSync />
+          <AccentTypography />
           {locale === "ja" && <JapaneseTypography />}
           <MotionProvider>
             <RoleProvider>
@@ -105,7 +105,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
                 </div>
               </div>
               <PillNav />
-              <Toaster />
+              <DeferredToaster />
               <SmoothScroll />
               <CommandPalette cvUrls={cvUrls} email={profile.email} />
               <Spotlight />
