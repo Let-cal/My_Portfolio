@@ -13,7 +13,7 @@ import { sceneStore, useSceneStore } from "./store";
 import { TextVeil } from "./TextVeil";
 import { detectTier, detectWebGL, MOBILE_QUERY, type Tier } from "./tier";
 import { useLoadGate } from "./use-load-gate";
-import { useAvoidTracking, useChapterTracking, useFeedClicks, usePointerTracking } from "./use-scene-input";
+import { useAvoidTracking, useChapterTracking, useCtaTracking, useFeedClicks, usePointerTracking } from "./use-scene-input";
 
 // three and @react-three/fiber live behind this import: the chunk is fetched only once the scene may load.
 const SceneRoot = dynamic(() => import("./SceneRoot"), { ssr: false });
@@ -57,6 +57,7 @@ export function KoiCanvas() {
   useChapterTracking();
   usePointerTracking(tier !== "off");
   useAvoidTracking(tier !== "off");
+  useCtaTracking(tier !== "off");
   useFeedClicks(tier !== "off");
   useEffect(() => {
     sceneStore.setState({ tier, theme, role });

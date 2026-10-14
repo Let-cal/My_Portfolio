@@ -110,6 +110,8 @@ export function WhyCard({ card, evidenceLabel }: { card: WhyCardView; evidenceLa
     <article
       ref={ref}
       data-why-card=""
+      // The whole card is protected, not just its lines of text: the creature stages its change on open water beside it.
+      data-scene-avoid="box"
       data-tilt={tiltOn ? "true" : undefined}
       className="why-card relative h-[500px] w-[78vw] max-w-[300px] cursor-default select-none text-black"
       onPointerEnter={handleEnter}

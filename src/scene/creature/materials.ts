@@ -11,6 +11,8 @@ export type BodyUniforms = CrossfadeUniforms & {
   uDragonMap: { value: Texture | null };
   uMorph: { value: number };
   uTime: { value: number };
+  /** 0 whole to 1 gone: the skin breaks up into blocks and burns away at the edge while the body turns into a point cloud. */
+  uDissolve: { value: number };
 };
 
 const CROSSFADE_MAP = /* glsl */ `
@@ -22,6 +24,21 @@ const CROSSFADE_MAP = /* glsl */ `
     sampledDiffuseColor.rgb *= 1.0 - 0.85 * texture2D( emissiveMap, vMapUv ).r;
   #endif
   diffuseColor *= sampledDiffuseColor;
+#endif
+`;
+
+/*
+ * Dissolve: the skin is cut into data blocks (a cell of the texture each) that drop out one by one, head first, as
+ * `uDissolve` rises; the blocks about to go glow hot at their edge. The point cloud takes over from them.
+ */
+const DISSOLVE_DISCARD = /* glsl */ `
+#include <clipping_planes_fragment>
+float dzEdge = 0.0;
+#ifdef USE_MAP
+  float dzCell = fract( sin( dot( floor( vMapUv * vec2( 90.0, 36.0 ) ), vec2( 12.9898, 78.233 ) ) ) * 43758.5453 );
+  float dzOrder = dzCell * 0.75 + vMapUv.x * 0.25;
+  if ( dzOrder < uDissolve ) discard;
+  dzEdge = ( 1.0 - smoothstep( 0.0, 0.08, dzOrder - uDissolve ) ) * step( 0.0001, uDissolve );
 #endif
 `;
 
@@ -42,6 +59,7 @@ const CIRCUIT_EMISSIVE = /* glsl */ `
   glow = mix( glow, 0.9 + 0.5 * sin( uTime * 3.0 + phase * 6.2832 ), pad );
   totalEmissiveRadiance *= trace * glow;
 #endif
+totalEmissiveRadiance += vec3( 1.0, 0.55, 0.2 ) * ( dzEdge * 5.0 );
 `;
 
 function patch(material: MeshStandardMaterial, uniforms: Record<string, { value: unknown }>, decl: string, dragon: boolean) {
@@ -50,6 +68,7 @@ function patch(material: MeshStandardMaterial, uniforms: Record<string, { value:
     Object.assign(shader.uniforms, uniforms);
     shader.fragmentShader = shader.fragmentShader
       .replace("#include <common>", `#include <common>\n${decl}`)
+      .replace("#include <clipping_planes_fragment>", dragon ? DISSOLVE_DISCARD : "#include <clipping_planes_fragment>")
       .replace("#include <map_fragment>", CROSSFADE_MAP)
       .replace("#include <emissivemap_fragment>", dragon ? CIRCUIT_EMISSIVE : "#include <emissivemap_fragment>");
   };
@@ -67,6 +86,7 @@ export function createBodyMaterial(maps: { koi: Texture; dragon: Texture; circui
     uDragonMap: { value: maps.dragon },
     uMorph: { value: 0 },
     uTime: { value: 0 },
+    uDissolve: { value: 0 },
   };
   const material = new MeshStandardMaterial({
     map: maps.koi,
@@ -82,7 +102,7 @@ export function createBodyMaterial(maps: { koi: Texture; dragon: Texture; circui
   patch(
     material,
     uniforms,
-    "uniform sampler2D uPrevMap; uniform float uFade; uniform sampler2D uDragonMap; uniform float uMorph; uniform float uTime;",
+    "uniform sampler2D uPrevMap; uniform float uFade; uniform sampler2D uDragonMap; uniform float uMorph; uniform float uTime; uniform float uDissolve;",
     true,
   );
   return { material, uniforms };

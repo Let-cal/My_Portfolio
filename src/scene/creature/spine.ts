@@ -164,6 +164,37 @@ export function idleTarget(t: number, morph: number, out: Vec3, opts: { aspect?:
   return out;
 }
 
+/** Angular speed of the guardian dragon's circuit (radians per second). */
+export const ORBIT_SPEED = 0.45;
+/** The orbit is an ellipse: its depth (z) is this share of its width (x), so the circuit reads as a ring from the high camera. */
+export const ORBIT_DEPTH = 0.6;
+
+/**
+ * A point on the guardian dragon's ellipse round `center`: `radius` wide along x, `radius * 0.6` deep along z, at the
+ * centre's height, going once round every `2pi / ORBIT_SPEED` seconds. The dragon's head chases it. Writes into `out`
+ * when given (no allocation).
+ */
+export function orbitTarget(center: Vec3, time: number, radius: number, out: Vec3 = { x: 0, y: 0, z: 0 }): Vec3 {
+  const a = time * ORBIT_SPEED;
+  out.x = center.x + Math.cos(a) * radius;
+  out.y = center.y;
+  out.z = center.z + Math.sin(a) * radius * ORBIT_DEPTH;
+  return out;
+}
+
+/** Tightest and widest ring (world units) the guardian dragon circles the call to action on. */
+const GUARDIAN_MIN = 1.45;
+const GUARDIAN_MAX = 3.2;
+
+/**
+ * Half-width of the guardian dragon's ring for a call to action whose own radius on the water is `ctaRadius`:
+ * clear of the button (twice its radius), at least as wide as the dragon can turn, and not so wide it leaves the pond.
+ */
+export function guardianRadius(ctaRadius: number): number {
+  const r = Number.isFinite(ctaRadius) ? ctaRadius : 0;
+  return clamp(r * 2 + 0.35, GUARDIAN_MIN, GUARDIAN_MAX);
+}
+
 const newFrame = (): Frame => ({ T: { x: 1, y: 0, z: 0 }, S: { x: 0, y: 0, z: 1 }, U: { x: 0, y: 1, z: 0 } });
 
 /**

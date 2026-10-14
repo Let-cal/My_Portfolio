@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getChapterProgress, transformState } from "@/scene/chapters";
+import { getChapterProgress, scatterAt, transformState } from "@/scene/chapters";
+import { cloudIndices } from "@/scene/creature/cloud";
+import { CAP_RINGS } from "@/scene/creature/geometry";
+import { orbitTarget, ORBIT_SPEED, guardianRadius } from "@/scene/creature/spine";
 import { shouldLoadScene } from "@/scene/loading";
 import { createSceneStore, sceneStore } from "@/scene/store";
 import { detectTier, shouldDowngrade } from "@/scene/tier";
@@ -70,12 +73,29 @@ describe("getChapterProgress", () => {
     expect(getChapterProgress(400, tops, 800).chapter).toBe(1);
     expect(getChapterProgress(1200, tops, 800).chapter).toBe(2);
   });
-  it("reports progress through the chapter", () => {
-    expect(getChapterProgress(200, tops, 800)).toEqual({ chapter: 0, t: 0.25 });
-    expect(getChapterProgress(1000, tops, 800)).toEqual({ chapter: 1, t: 0.25 });
+  it("measures t from the scroll position where the chapter began to where the next one begins", () => {
+    // Chapter 0 runs from scrollY 0 to 400 (the next top reaches the middle), chapter 1 from 400 to 1200.
+    expect(getChapterProgress(200, tops, 800)).toEqual({ chapter: 0, t: 0.5 });
+    expect(getChapterProgress(600, tops, 800)).toEqual({ chapter: 1, t: 0.25 });
+    expect(getChapterProgress(1000, tops, 800)).toEqual({ chapter: 1, t: 0.75 });
   });
-  it("clamps t to 0 when the chapter has just been entered ahead of its top", () => {
+  it("is 0 on entering a chapter and just under 1 on leaving it, so the story is continuous", () => {
     expect(getChapterProgress(400, tops, 800)).toEqual({ chapter: 1, t: 0 });
+    const end = getChapterProgress(1199, tops, 800);
+    expect(end.chapter).toBe(1);
+    expect(end.t).toBeGreaterThan(0.99);
+    expect(getChapterProgress(1200, tops, 800)).toEqual({ chapter: 2, t: 0 });
+  });
+  it("lets a section shorter than half a screen still run from 0 to 1 before the next one", () => {
+    // Chapter 5 is only 300 px tall: scrolling from 4600 - 400 to 4900 - 400 must cover all of t.
+    const short = [0, 1000, 2000, 3000, 4000, 4600, 4900];
+    const at = (y: number) => getChapterProgress(y, short, 800);
+    expect(at(4200)).toEqual({ chapter: 5, t: 0 });
+    expect(at(4350).t).toBeCloseTo(0.5, 6);
+    expect(at(4499).t).toBeGreaterThan(0.99);
+    // The old measure (scrollY - top) / span was 0 through this whole section: the morph (t >= 0.65) never came.
+    expect(transformState(5, at(4499).t)).toEqual({ morph: 1, scatter: 0 });
+    expect(transformState(5, at(4350).t).scatter).toBeGreaterThan(0.99);
   });
   it("clamps t to 1 and stays on the last chapter past the end", () => {
     expect(getChapterProgress(99999, tops, 800)).toEqual({ chapter: 2, t: 1 });
@@ -86,6 +106,10 @@ describe("getChapterProgress", () => {
   });
   it("stays on chapter 0 while every section is still below the middle line", () => {
     expect(getChapterProgress(0, [600, 1400], 800).chapter).toBe(0);
+  });
+  it("ignores a section that is missing from the page (infinite top) when sizing a chapter", () => {
+    expect(getChapterProgress(500, [0, 400, Number.POSITIVE_INFINITY], 800).chapter).toBe(1);
+    expect(getChapterProgress(99999, [0, 400, Number.POSITIVE_INFINITY], 800)).toEqual({ chapter: 1, t: 1 });
   });
 });
 
@@ -112,6 +136,97 @@ describe("transformState", () => {
   });
 });
 
+describe("scatterAt", () => {
+  it("is 0 for a koi or a dragon and peaks at 1 halfway through the change", () => {
+    expect(scatterAt(0)).toBe(0);
+    expect(scatterAt(1)).toBeCloseTo(0, 12);
+    expect(scatterAt(0.5)).toBe(1);
+  });
+  it("is symmetric, so the cloud gathers as it spread", () => {
+    for (const m of [0.1, 0.25, 0.4]) expect(scatterAt(m)).toBeCloseTo(scatterAt(1 - m), 12);
+  });
+  it("is what transformState reports for a morph", () => {
+    for (const t of [0.4, 0.5, 0.6]) {
+      const s = transformState(5, t);
+      expect(s.scatter).toBeCloseTo(scatterAt(s.morph), 12);
+    }
+  });
+});
+
+describe("orbitTarget", () => {
+  const c = { x: 2, y: 0, z: -1 };
+  it("starts on the x axis of the ellipse, radius away from the centre", () => {
+    const p = orbitTarget(c, 0, 1.5);
+    expect(p.x).toBeCloseTo(3.5, 12);
+    expect(p.z).toBeCloseTo(-1, 12);
+    expect(Math.hypot(p.x - c.x, p.z - c.z)).toBeCloseTo(1.5, 12);
+  });
+  it("is an ellipse: x spans radius, z spans radius * 0.6, on the centre's height", () => {
+    const quarter = Math.PI / 2 / ORBIT_SPEED;
+    const p = orbitTarget(c, quarter, 2);
+    expect(p.x).toBeCloseTo(2, 9);
+    expect(p.z - c.z).toBeCloseTo(1.2, 9);
+    for (let t = 0; t < 30; t += 0.7) {
+      const q = orbitTarget({ x: 1, y: 0.4, z: 3 }, t, 2);
+      expect(((q.x - 1) / 2) ** 2 + ((q.z - 3) / 1.2) ** 2).toBeCloseTo(1, 9);
+      expect(q.y).toBe(0.4);
+    }
+  });
+  it("is periodic and writes into `out` without allocating when given one", () => {
+    const period = (Math.PI * 2) / ORBIT_SPEED;
+    const a = orbitTarget(c, 1.3, 1);
+    const b = orbitTarget(c, 1.3 + period, 1);
+    expect(b.x).toBeCloseTo(a.x, 9);
+    expect(b.z).toBeCloseTo(a.z, 9);
+    const out = { x: 0, y: 0, z: 0 };
+    expect(orbitTarget(c, 1.3, 1, out)).toBe(out);
+    expect(out.x).toBeCloseTo(a.x, 12);
+  });
+});
+
+describe("guardianRadius", () => {
+  it("keeps the dragon's ring outside the button and no tighter than it can turn", () => {
+    expect(guardianRadius(0.1)).toBeGreaterThan(1.2);
+    expect(guardianRadius(0.1)).toBeGreaterThan(0.1 * 2);
+    expect(guardianRadius(0.9)).toBeGreaterThan(0.9 * 1.5);
+    expect(guardianRadius(50)).toBeLessThanOrEqual(3.2);
+    expect(guardianRadius(Number.NaN)).toBeGreaterThan(1.2);
+  });
+});
+
+describe("cloudIndices", () => {
+  const rings = 20;
+  const sides = 8;
+  const total = rings + 2 * CAP_RINGS;
+  const cols = sides + 1;
+  const all = cloudIndices(rings, sides, 1);
+  it("takes one point per vertex, minus the seam column and the repeated tips", () => {
+    expect(all).toHaveLength((total - 2) * sides + 2);
+    expect(new Set(all).size).toBe(all.length);
+    for (const i of all) {
+      expect(i).toBeGreaterThanOrEqual(0);
+      expect(i).toBeLessThan(total * cols);
+      expect(i % cols).not.toBe(sides);
+    }
+  });
+  it("keeps a single point at each tip", () => {
+    const first = [...all].filter((i) => Math.floor(i / cols) === 0);
+    const last = [...all].filter((i) => Math.floor(i / cols) === total - 1);
+    expect(first).toHaveLength(1);
+    expect(last).toHaveLength(1);
+  });
+  it("subsamples evenly with a stride, spread over the whole body", () => {
+    const half = cloudIndices(rings, sides, 2);
+    expect(half.length).toBeLessThan(all.length * 0.6);
+    expect(half.length).toBeGreaterThan(all.length * 0.4);
+    const ringsHit = new Set([...half].map((i) => Math.floor(i / cols)));
+    expect(ringsHit.size).toBeGreaterThan(total - 4);
+  });
+  it("treats a stride below 1 as 1", () => {
+    expect(cloudIndices(rings, sides, 0)).toHaveLength(all.length);
+  });
+});
+
 describe("scene store", () => {
   beforeEach(() => sceneStore.reset());
 
@@ -126,6 +241,7 @@ describe("scene store", () => {
       foods: [],
       avoid: [],
       drop: null,
+      cta: null,
     });
   });
   it("merges partial state and notifies subscribers", () => {

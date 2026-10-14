@@ -203,7 +203,8 @@ describe("KoiCanvas input tracking", () => {
       window.dispatchEvent(new Event("scroll"));
     });
     await waitFor(() => expect(sceneStore.getState().chapter).toBe(5));
-    expect(sceneStore.getState().t).toBeCloseTo(0.4, 6);
+    // Chapter 5 runs from scrollY 4600 (its top at the middle of the viewport) to 5600 (the next one's).
+    expect(sceneStore.getState().t).toBeCloseTo(0.8, 6);
     sections.forEach((s) => s.remove());
   });
 

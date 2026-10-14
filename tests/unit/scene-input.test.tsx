@@ -1,7 +1,7 @@
 import { act, cleanup, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { sceneStore } from "@/scene/store";
-import { measureAvoid, useAvoidTracking, useFeedClicks } from "@/scene/use-scene-input";
+import { measureAvoid, useAvoidTracking, useCtaTracking, useFeedClicks } from "@/scene/use-scene-input";
 
 function rect(x0: number, y0: number, x1: number, y1: number): DOMRect {
   return { left: x0, top: y0, right: x1, bottom: y1, x: x0, y: y0, width: x1 - x0, height: y1 - y0, toJSON: () => ({}) } as DOMRect;
@@ -181,5 +181,64 @@ describe("measureAvoid", () => {
     unmount();
     expect(sceneStore.getState().avoid).toEqual([]);
     vi.unstubAllGlobals();
+  });
+});
+
+describe("useCtaTracking", () => {
+  function CtaProbe() {
+    useCtaTracking(true);
+    return null;
+  }
+  function cta() {
+    const a = document.createElement("a");
+    a.id = "contact-core";
+    document.body.appendChild(a);
+    return a;
+  }
+
+  it("publishes the centre and radius of #contact-core, in viewport pixels", () => {
+    const a = cta();
+    box(a, rect(800, 300, 960, 460));
+    render(<CtaProbe />);
+    expect(sceneStore.getState().cta).toEqual({ x: 880, y: 380, r: 80 });
+  });
+
+  it("follows the button as the page scrolls and resizes, one read per frame", () => {
+    const a = cta();
+    const spy = vi.spyOn(a, "getBoundingClientRect").mockReturnValue(rect(800, 300, 960, 460));
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => window.setTimeout(() => cb(0), 0));
+    render(<CtaProbe />);
+    spy.mockReturnValue(rect(800, 100, 960, 260));
+    act(() => {
+      window.dispatchEvent(new Event("scroll"));
+      window.dispatchEvent(new Event("scroll"));
+    });
+    return new Promise<void>((resolve) =>
+      setTimeout(() => {
+        expect(sceneStore.getState().cta).toEqual({ x: 880, y: 180, r: 80 });
+        vi.unstubAllGlobals();
+        resolve();
+      }, 30),
+    );
+  });
+
+  it("is null when the page has no such button, and clears on unmount", () => {
+    const { unmount } = render(<CtaProbe />);
+    expect(sceneStore.getState().cta).toBeNull();
+    const a = cta();
+    box(a, rect(0, 0, 100, 100));
+    unmount();
+    expect(sceneStore.getState().cta).toBeNull();
+  });
+
+  it("does not write when nothing moved", () => {
+    const a = cta();
+    box(a, rect(800, 300, 960, 460));
+    render(<CtaProbe />);
+    const first = sceneStore.getState();
+    act(() => {
+      window.dispatchEvent(new Event("resize"));
+    });
+    expect(sceneStore.getState()).toBe(first);
   });
 });

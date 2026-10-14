@@ -125,3 +125,60 @@ export function veilOpacity(
   const need = Math.max(near, Math.min(1, Math.max(0, props)), dayShare * (large ? LARGE_DAY_SHARE : 1));
   return floor + (1 - floor) * need;
 }
+
+const SPOT_COLS = 16;
+const SPOT_ROWS = 9;
+const SPOT_MARGIN_X = 0.07;
+const SPOT_MARGIN_Y = 0.12;
+/** Feather (px) over which a block of text counts as near a candidate spot. */
+const SPOT_FEATHER = 60;
+/** A previous spot is kept while it costs no more than this much above the best one. */
+const SPOT_KEEP = 0.12;
+
+/** How crowded the screen is around (x, y): the text coverage averaged over the spot and its eight neighbours on the grid. */
+function crowd(rects: readonly Rect[], x: number, y: number, dx: number, dy: number): number {
+  let sum = 0;
+  for (let j = -1; j <= 1; j++) {
+    for (let i = -1; i <= 1; i++) sum += rectCoverage(rects, x + i * dx, y + j * dy, SPOT_FEATHER);
+  }
+  return sum / 9;
+}
+
+/**
+ * The emptiest place on the screen (viewport pixels): where no text is, with room around it, so the creature's big
+ * moment (the koi turning into the dragon) is staged on open water instead of behind a card. A coarse grid, scored by
+ * how much text is near each spot, with a mild pull towards the lower middle. Pass the spot found last time as `prev`
+ * and it is returned again (the same object) unless something clearly better has opened up. Writes into `out` when given.
+ */
+export function findOpenSpot(
+  rects: readonly Rect[],
+  width: number,
+  height: number,
+  prev: { x: number; y: number } | null = null,
+  out: { x: number; y: number } = { x: 0, y: 0 },
+): { x: number; y: number } {
+  const x0 = width * SPOT_MARGIN_X;
+  const y0 = height * SPOT_MARGIN_Y;
+  const dx = (width * (1 - 2 * SPOT_MARGIN_X)) / (SPOT_COLS - 1);
+  const dy = (height * (1 - 2 * SPOT_MARGIN_Y)) / (SPOT_ROWS - 1);
+  const cost = (x: number, y: number) => crowd(rects, x, y, dx, dy) + 0.06 * Math.hypot(x / width - 0.45, y / height - 0.6);
+  let best = Infinity;
+  let bx = width / 2;
+  let by = height / 2;
+  for (let j = 0; j < SPOT_ROWS; j++) {
+    for (let i = 0; i < SPOT_COLS; i++) {
+      const x = x0 + i * dx;
+      const y = y0 + j * dy;
+      const c = cost(x, y);
+      if (c < best) {
+        best = c;
+        bx = x;
+        by = y;
+      }
+    }
+  }
+  if (prev && cost(prev.x, prev.y) <= best + SPOT_KEEP) return prev;
+  out.x = bx;
+  out.y = by;
+  return out;
+}

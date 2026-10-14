@@ -28,3 +28,6 @@ export const VARIETY_SURFACE: Record<KoiVariety, { metalness: number; roughness:
   showa: { metalness: 0.12, roughness: 0.32, fin: "#86807a" },
   ogon: { metalness: 0.6, roughness: 0.24, fin: "#94692a" },
 };
+
+/** How far (world units) the farthest point of the cloud flies from the body at full scatter: `aRand * scatter * 1.6`. */
+export const SCATTER_SPREAD = 1.6;

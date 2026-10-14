@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { aspectPullback, cameraAt, chapterPosition, CHAPTER_CAMERA, type CameraPose } from "@/scene/chapters";
-import { creatureVisibility, LARGE_DAY_SHARE, MAX_AVOID, mergeRects, rectCoverage, rectsNear, selectRects, veilOpacity, type Rect } from "@/scene/environment/legibility";
+import { creatureVisibility, findOpenSpot, LARGE_DAY_SHARE, MAX_AVOID, mergeRects, rectCoverage, rectsNear, selectRects, veilOpacity, type Rect } from "@/scene/environment/legibility";
 import { dampValue, propWeight, stepDay } from "@/scene/environment/math";
 import { addRipple, createRipples, MAX_RIPPLES, RIPPLE_IDLE } from "@/scene/environment/ripples";
 
@@ -323,5 +323,59 @@ describe("propWeight", () => {
       expect(w).toBeLessThanOrEqual(1);
     }
     expect(propWeight(3.4, 4)).toBeCloseTo(propWeight(4.6, 4), 10);
+  });
+});
+
+describe("findOpenSpot", () => {
+  const W = 1200;
+  const H = 800;
+  const rect = (x0: number, y0: number, x1: number, y1: number): Rect => ({ x0, y0, x1, y1 });
+
+  it("picks somewhere near the middle of an empty screen, inside it", () => {
+    const p = findOpenSpot([], W, H);
+    expect(p.x).toBeGreaterThan(W * 0.1);
+    expect(p.x).toBeLessThan(W * 0.9);
+    expect(p.y).toBeGreaterThan(H * 0.1);
+    expect(p.y).toBeLessThan(H * 0.9);
+  });
+
+  it("goes to the open water: with the right two thirds covered it stays on the left", () => {
+    const p = findOpenSpot([rect(500, 0, W, H)], W, H);
+    expect(p.x).toBeLessThan(400);
+  });
+
+  it("finds a gap between two blocks of text, in the open band", () => {
+    const p = findOpenSpot([rect(0, 0, W, 250), rect(0, 560, W, H)], W, H);
+    expect(p.y).toBeGreaterThan(300);
+    expect(p.y).toBeLessThan(520);
+  });
+
+  it("prefers a roomy spot to a gap next to text", () => {
+    // A thin free strip beside the cards against a wide free area below them.
+    const cards = [rect(300, 0, W, 500)];
+    const p = findOpenSpot(cards, W, H);
+    expect(p.y).toBeGreaterThan(500);
+  });
+
+  it("still answers when everything is covered, with the least covered place", () => {
+    const p = findOpenSpot([rect(0, 0, W, H), rect(0, 0, 100, 100)], W, H);
+    expect(Number.isFinite(p.x) && Number.isFinite(p.y)).toBe(true);
+  });
+
+  it("keeps the previous spot while it is almost as good, so it does not flutter between two", () => {
+    const first = findOpenSpot([rect(500, 0, W, H)], W, H);
+    // A rectangle that barely moves does not move the spot.
+    const again = findOpenSpot([rect(520, 0, W, H)], W, H, first);
+    expect(again).toBe(first);
+    // A block that lands on it does.
+    const moved = findOpenSpot([rect(0, 0, 450, H)], W, H, first);
+    expect(moved).not.toBe(first);
+    expect(moved.x).toBeGreaterThan(450);
+  });
+
+  it("writes into the given object and allocates nothing for it", () => {
+    const out = { x: 0, y: 0 };
+    expect(findOpenSpot([rect(500, 0, W, H)], W, H, null, out)).toBe(out);
+    expect(out.x).toBeLessThan(400);
   });
 });

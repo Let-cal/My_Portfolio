@@ -8,6 +8,8 @@ export const BODY_SAMPLES = 6;
 export const creatureLive = {
   /** Smoothed koi (0) to dragon (1) blend actually shown. */
   morph: 0,
+  /** How much the body is scattered into a point cloud, 0 (whole) to 1. */
+  scatter: 0,
   head: { x: 0, y: 0, z: 0 },
   tail: { x: 0, y: 0, z: 0 },
   /** Head speed in pond units per second. */

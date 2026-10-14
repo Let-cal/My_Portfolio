@@ -21,12 +21,12 @@ import {
   type Texture,
 } from "three";
 import type { KoiVariety } from "@/content/schema";
-import { transformState } from "../chapters";
-import { creatureVisibility } from "../environment/legibility";
-import { dampValue } from "../environment/math";
+import { DRAGON_CHAPTER, scatterAt, transformState } from "../chapters";
+import { creatureVisibility, findOpenSpot } from "../environment/legibility";
+import { dampValue, smoothstep } from "../environment/math";
 import { nearestFood } from "../interactions/feed";
 import type { SceneState } from "../store";
-import { varietyForRole, VARIETY_SURFACE, type CreatureQuality } from "./config";
+import { SCATTER_SPREAD, varietyForRole, VARIETY_SURFACE, type CreatureQuality } from "./config";
 import {
   fanGeometry,
   flexFan,
@@ -52,7 +52,9 @@ import {
   buildFrames,
   followChain,
   idleModeForChapter,
+  guardianRadius,
   idleTarget,
+  orbitTarget,
   pondLimits,
   REF_ASPECT,
   steer,
@@ -92,6 +94,10 @@ export type CreatureRig = {
   bodyUniforms: BodyUniforms;
   /** Smoothed koi (0) to dragon (1) blend shown in the last frame. */
   readonly morph: number;
+  /** How scattered the body is in the last frame, 0 (whole) to 1 (a cloud); it peaks halfway through the change. While above 0 the point cloud shows. */
+  readonly scatter: number;
+  /** 1 in the clear, down to the dim floor while the creature is under text (also what the cloud is drawn with). */
+  readonly visibility: number;
   update(input: FrameInput): void;
   dispose(): void;
 };
@@ -103,8 +109,8 @@ const POINTER_IDLE_SECONDS = 2.5;
 const FOOD_TURN_SCALE = 0.4;
 /** Text protection: the creature fades to this share of its brightness while it swims under text. */
 const DIM_FLOOR = 0.2;
-/** The dragon, the climax of the page, is only dimmed this far (the veil behind the text still does its part). */
-const DIM_FLOOR_DRAGON = 0.4;
+/** The dragon, the climax of the page, is only dimmed this far: the veil behind the text still keeps the text readable, and the guardian circles a button that sits among blocks of text. */
+const DIM_FLOOR_DRAGON = 0.7;
 /** Speed of that fade, per second. */
 const DIM_RATE = 5;
 /** Feather (px) around a text block over which the creature fades. */
@@ -112,6 +118,23 @@ const DIM_FEATHER = 90;
 /** Spine positions (0 snout to 1 tail tip) whose screen position decides how much text hides the creature. */
 const DIM_SAMPLES = [0.04, 0.25, 0.5, 0.75, 0.96];
 const MORPH_RATE = 4;
+/** The change takes at least this long (seconds), however fast the page is scrolled: a jump to the end still plays out. */
+const MORPH_MIN_SECONDS = 1.8;
+/** From this far into chapter 5 the creature leaves the gate for the emptiest water on screen, where the change is staged. */
+const STAGE_FROM = 0.22;
+/** How often (seconds) the emptiest spot is looked for again, and how fast the head's goal glides to a new one (per second). */
+const STAGE_REFRESH = 0.3;
+const STAGE_FOLLOW = 1.6;
+/** The guardian dragon's chapter. */
+const GUARDIAN_CHAPTER = 6;
+/** Where the call to action may be on screen for the dragon to circle it (share of the viewport): near an edge it circles the nearest spot inside. */
+const GUARDIAN_MARGIN_X = 0.06;
+const GUARDIAN_MARGIN_Y = 0.12;
+/** The button counts as in sight while any of it lies between these shares of the screen's height. */
+const GUARDIAN_SEEN_TOP = 0.08;
+const GUARDIAN_SEEN_BOTTOM = 0.95;
+/** How far the pond reaches towards the camera for the guardian's circle (a button at the bottom of the screen is under the camera). */
+const GUARDIAN_Z_MAX = 3.2;
 const SPIKES = 26;
 /** Head rounding: rings before this u bulge to an ellipsoid of this depth (in u). */
 const NOSE_U = 0.05;
@@ -245,6 +268,7 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
   const head = new Vector3();
   let heading = 0;
   let morph = 0;
+  let scatter = 0;
   let fade = 1;
   let lastPointer: SceneState["pointer"] = null;
   let lastMove = -Infinity;
@@ -254,6 +278,12 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
   const target = new Vector3();
   const hit = new Vector3();
   const ndc = new Vector2();
+  const hit2 = new Vector3();
+  const stage = new Vector3();
+  const stageSpot = { x: 0, y: 0 };
+  let stageSpotAt = -Infinity;
+  let hasStage = false;
+  const center = new Vector3();
   const ray = new Raycaster();
   const water = new Plane(UP, 0);
   const tmp = new Vector3();
@@ -408,15 +438,84 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
     flames.instanceMatrix.needsUpdate = true;
   }
 
+  /**
+   * The dragon guards the call to action: the target is a point on an ellipse round the button, which is found on the
+   * water by sending a ray through the middle of its box on the screen (and through its rim, for the size of the ring).
+   * A button outside the screen counts as the nearest spot inside it. False when there is no button or no screen size.
+   */
+  function guardianTarget(
+    state: SceneState,
+    camera: Camera,
+    viewport: FrameInput["viewport"],
+    t: number,
+    out: Vector3,
+  ): boolean {
+    const cta = state.cta;
+    if (!cta || !viewport || !(viewport.width > 0) || !(viewport.height > 0)) return false;
+    const { width: w, height: h } = viewport;
+    // Scrolled out of sight (the section is taller than the screen): nothing to circle, so the dragon takes the open water.
+    if (cta.y + cta.r < h * GUARDIAN_SEEN_TOP || cta.y - cta.r > h * GUARDIAN_SEEN_BOTTOM) return false;
+    const cx = clamp(cta.x, w * GUARDIAN_MARGIN_X, w * (1 - GUARDIAN_MARGIN_X));
+    const cy = clamp(cta.y, h * GUARDIAN_MARGIN_Y, h * (1 - GUARDIAN_MARGIN_Y));
+    ndc.set((cx / w) * 2 - 1, -((cy / h) * 2 - 1));
+    ray.setFromCamera(ndc, camera);
+    if (!ray.ray.intersectPlane(water, center)) return false;
+    center.z = Math.min(center.z, GUARDIAN_Z_MAX);
+    ndc.set(((cx + cta.r) / w) * 2 - 1, -((cy / h) * 2 - 1));
+    ray.setFromCamera(ndc, camera);
+    const rim = ray.ray.intersectPlane(water, hit2) ? Math.hypot(hit2.x - center.x, hit2.z - center.z) : 0;
+    orbitTarget(center, t, guardianRadius(rim), out);
+    return true;
+  }
+
+  /**
+   * The change is staged on open water: the target is the emptiest place on the screen (see `findOpenSpot`: no text,
+   * no card), put onto the pond, with a slow wander round it. The spot is looked for a few times a second and the
+   * goal glides to it, so the creature takes a graceful turn when the page scrolls a card over it. False when the
+   * screen size is unknown.
+   */
+  function stageTarget(state: SceneState, camera: Camera, viewport: FrameInput["viewport"], t: number, dt: number, out: Vector3): boolean {
+    if (!viewport || !(viewport.width > 0) || !(viewport.height > 0)) return false;
+    if (t - stageSpotAt > STAGE_REFRESH || t < stageSpotAt) {
+      stageSpotAt = t;
+      findOpenSpot(state.avoid, viewport.width, viewport.height, hasStage ? stageSpot : null, stageSpot);
+    }
+    ndc.set((stageSpot.x / viewport.width) * 2 - 1, -((stageSpot.y / viewport.height) * 2 - 1));
+    ray.setFromCamera(ndc, camera);
+    if (!ray.ray.intersectPlane(water, hit2)) return false;
+    hit2.x = clamp(hit2.x, -limits.pointerX, limits.pointerX);
+    hit2.z = clamp(hit2.z, limits.zMin, limits.zMax);
+    if (hasStage) {
+      const k = 1 - Math.exp(-STAGE_FOLLOW * dt);
+      stage.x += (hit2.x - stage.x) * k;
+      stage.z += (hit2.z - stage.z) * k;
+    } else {
+      stage.set(hit2.x, 0, hit2.z);
+      hasStage = true;
+    }
+    out.set(stage.x + Math.sin(t * 0.45) * 0.5, 0, stage.z + Math.cos(t * 0.37) * 0.3);
+    return true;
+  }
+
   function update({ dt: rawDt, time: t, camera, state, day: dayInput, viewport }: FrameInput) {
     const dt = clamp(rawDt, 0, 0.1);
     const frameScale = dt * 60;
 
     // Koi to dragon, eased so a jump in scroll position never snaps the shape.
+    // It chases the scroll, but never faster than the change can be watched.
     const goal = transformState(state.chapter, state.t).morph;
-    morph += (goal - morph) * (1 - Math.exp(-dt * MORPH_RATE));
+    const chase = (goal - morph) * (1 - Math.exp(-dt * MORPH_RATE));
+    const reach = dt / MORPH_MIN_SECONDS;
+    morph += clamp(chase, -reach, reach);
     if (Math.abs(goal - morph) < 1e-4) morph = goal;
     const m = morph;
+    // The cloud is the middle of the change, so it scatters and gathers on the same clock as the blend (the body
+    // dissolves into it over the first part, and the dragon parts grow back out of it over the last).
+    scatter = scatterAt(m);
+    const dissolve = smoothstep(0.02, 0.32, scatter);
+    const solid = 1 - smoothstep(0, 0.3, scatter);
+    bodyMesh.visible = dissolve < 1;
+    body.uniforms.uDissolve.value = dissolve;
 
     // Role change: the new pattern fades in over the old one.
     const nextVariety = varietyForRole(state.role);
@@ -464,7 +563,12 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
           follow = true;
         }
       }
-      if (!follow) idleTarget(t, m, target, { aspect, mode: idleModeForChapter(state.chapter) });
+      if (!follow) {
+        const guarding = state.chapter >= GUARDIAN_CHAPTER && guardianTarget(state, camera, viewport, t, target);
+        const staged = state.chapter >= GUARDIAN_CHAPTER || (state.chapter === DRAGON_CHAPTER && state.t >= STAGE_FROM);
+        const staging = !guarding && staged && stageTarget(state, camera, viewport, t, dt, target);
+        if (!guarding && !staging) idleTarget(t, m, target, { aspect, mode: idleModeForChapter(state.chapter) });
+      }
     }
 
     prevHeadX = head.x;
@@ -498,7 +602,7 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
 
     // Fins shrink away as the dragon takes over.
     const koi = 1 - m;
-    const finScale = koi * koi * (3 - 2 * koi);
+    const finScale = koi * koi * (3 - 2 * koi) * solid;
     const beat = t * 5;
     const pi = Math.round(0.19 * (N - 1));
     placeFin(finR, pi, 0.8, -0.25, 0, finScale);
@@ -540,8 +644,8 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
     dorsal.visible = finScale > 0.01;
 
     // Dragon: spines, horns, head plates, legs, mane and tail flames. Hidden while it is a koi.
-    const dragonVisible = m > 0.01;
-    const grow = m * m * (3 - 2 * m);
+    const grow = m * m * (3 - 2 * m) * solid;
+    const dragonVisible = m > 0.01 && grow > 0.003;
     for (const mesh of dragonParts) mesh.visible = dragonVisible;
     if (dragonVisible) placeDragonParts(t, grow);
 
@@ -556,10 +660,11 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
         .addScaledVector(vU, RY[ei] * 0.38)
         .addScaledVector(vT, RX[ei] * 0.15 * m);
       dummy.quaternion.identity();
-      dummy.scale.setScalar(lerp(1, 1.8, m));
+      dummy.scale.setScalar(Math.max(1e-4, lerp(1, 1.8, m) * solid));
       dummy.updateMatrix();
       eyes.setMatrixAt(q, dummy.matrix);
     }
+    eyes.visible = solid > 0.003;
     eyes.instanceMatrix.needsUpdate = true;
 
     // Whiskers: from the muzzle, out to the side, then streaming back along the body with a slow wave.
@@ -567,7 +672,7 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
     const nose = RX[0] * lerp(0.6, 1.7, m);
     for (let q = 0; q < 2; q++) {
       const line = whiskers[q];
-      line.visible = m > 0.05;
+      line.visible = m > 0.05 && solid > 0.003;
       if (!line.visible) continue;
       const side = q === 0 ? 1 : -1;
       const arr = (line.geometry.getAttribute("position") as BufferAttribute).array as Float32Array;
@@ -611,6 +716,15 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
         if (py < y0) y0 = py;
         if (py > y1) y1 = py;
       }
+      // A cloud reaches far beyond the body: widen the box by how far it flies, in pixels at the body's distance.
+      if (scatter > 0) {
+        const dist = Math.max(0.5, camera.position.distanceTo(P[sampleIndex[2]]));
+        const fly = (scatter * SCATTER_SPREAD * 0.5 * viewport.height * camera.projectionMatrix.elements[5]) / dist;
+        x0 -= fly;
+        y0 -= fly;
+        x1 += fly;
+        y1 += fly;
+      }
       screen.x0 = x0;
       screen.y0 = y0;
       screen.x1 = x1;
@@ -632,6 +746,7 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
     eyeMat.emissiveIntensity = m * 3 * glowScale * visibility;
 
     creatureLive.morph = m;
+    creatureLive.scatter = scatter;
     creatureLive.head.x = P[0].x;
     creatureLive.head.y = P[0].y;
     creatureLive.head.z = P[0].z;
@@ -656,6 +771,12 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
     bodyUniforms: body.uniforms,
     get morph() {
       return morph;
+    },
+    get scatter() {
+      return scatter;
+    },
+    get visibility() {
+      return visibility;
     },
     update,
     dispose() {

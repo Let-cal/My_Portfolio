@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { SECTION_IDS } from "@/components/site/sections";
 import { getChapterProgress } from "./chapters";
 import { mergeRects, selectRects, type Rect } from "./environment/legibility";
-import { sceneStore } from "./store";
+import { sceneStore, type CtaCircle } from "./store";
 
 /** Document-space top of every section, in `SECTION_IDS` order. A missing section never becomes the chapter. */
 function measureTops(): number[] {
@@ -251,6 +251,55 @@ export function useAvoidTracking(enabled: boolean) {
       document.removeEventListener("animationend", onTransition, true);
       document.removeEventListener("click", afterClick, true);
       sceneStore.setState({ avoid: [] });
+    };
+  }, [enabled]);
+}
+
+const CTA_ID = "contact-core";
+
+function sameCta(a: CtaCircle | null, b: CtaCircle | null): boolean {
+  if (!a || !b) return a === b;
+  return a.x === b.x && a.y === b.y && a.r === b.r;
+}
+
+/**
+ * Keeps `cta` in the scene store up to date: where the round "Get in touch" button is on the screen, which the guardian
+ * dragon circles. One rectangle is read when the page scrolls or its layout changes (once per frame at most), never from
+ * the render loop; nothing is written when it did not move. No React state.
+ */
+export function useCtaTracking(enabled: boolean) {
+  useEffect(() => {
+    if (!enabled) return;
+    let frame = 0;
+    const read = () => {
+      const el = document.getElementById(CTA_ID);
+      let next: CtaCircle | null = null;
+      if (el) {
+        const b = el.getBoundingClientRect();
+        if (b.width > 0 && b.height > 0) next = { x: b.left + b.width / 2, y: b.top + b.height / 2, r: Math.min(b.width, b.height) / 2 };
+      }
+      if (!sameCta(next, sceneStore.getState().cta)) sceneStore.setState({ cta: next });
+    };
+    const flush = () => {
+      frame = 0;
+      read();
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(flush);
+    };
+    const resizeObserver = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(schedule);
+    resizeObserver?.observe(document.body);
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    window.addEventListener("load", schedule);
+    read();
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      resizeObserver?.disconnect();
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      window.removeEventListener("load", schedule);
+      sceneStore.setState({ cta: null });
     };
   }, [enabled]);
 }

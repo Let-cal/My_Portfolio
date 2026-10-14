@@ -10,6 +10,9 @@ export type { Food };
 /** A click on the water that has not been turned into food yet: the spot in normalised device coordinates. */
 export type DropRequest = { x: number; y: number; id: number };
 
+/** The round call to action (`#contact-core`) on screen: the centre of its box and its radius, viewport pixels. */
+export type CtaCircle = { x: number; y: number; r: number };
+
 export type SceneState = {
   /** Section index (0 hero ... 6 contact). */
   chapter: number;
@@ -28,6 +31,8 @@ export type SceneState = {
   avoid: Rect[];
   /** The latest click on a `[data-water-zone]`, waiting for the scene to raycast it onto the water. */
   drop: DropRequest | null;
+  /** Where `#contact-core` is, measured on scroll and resize; the dragon circles it in the last chapter. Null if the page has none. */
+  cta: CtaCircle | null;
 };
 
 const INITIAL: SceneState = {
@@ -40,6 +45,7 @@ const INITIAL: SceneState = {
   foods: [],
   avoid: [],
   drop: null,
+  cta: null,
 };
 
 type Patch = Partial<SceneState> | ((s: SceneState) => Partial<SceneState>);
