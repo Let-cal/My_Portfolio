@@ -1,4 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { Activity } from "react";
 import { NextIntlClientProvider } from "next-intl";
 import { describe, expect, it, vi } from "vitest";
 import { contentSchema, type Locale, type RoleKey } from "@/content/schema";
@@ -66,5 +69,32 @@ describe("QuickView", () => {
     expect(text).not.toContain("undefined");
     expect(text).not.toMatch(/\+?\d[\d\s().-]{8,}\d/);
     expect(within(container).getByRole("heading", { name: "スキル" })).toBeInTheDocument();
+  });
+
+  it("drops data-quick-view while React keeps the page as a hidden copy, and puts it back when it shows again", () => {
+    const tree = (mode: "visible" | "hidden") => (
+      <NextIntlClientProvider locale="en" messages={messages.en}>
+        <Activity mode={mode}>
+          <QuickView content={content} locale="en" role="fullstack" />
+        </Activity>
+      </NextIntlClientProvider>
+    );
+    const { container, rerender } = render(tree("visible"));
+    const main = container.querySelector("main")!;
+    expect(main).toHaveAttribute("data-quick-view");
+    rerender(tree("hidden"));
+    expect(main).not.toHaveAttribute("data-quick-view");
+    rerender(tree("visible"));
+    expect(main).toHaveAttribute("data-quick-view");
+  });
+});
+
+describe("quick-view chrome rule", () => {
+  it("does not depend on the style attribute (a :has() over [style] restyles the whole page on every inline style change)", () => {
+    const css = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
+    const hasArgs = [...css.matchAll(/:has\(([^{]*)\{/g)].map((m) => m[1]);
+    expect(hasArgs.length).toBeGreaterThan(0);
+    for (const arg of hasArgs) expect(arg).not.toMatch(/\[style/);
+    expect(css).toMatch(/body:has\(\[data-quick-view\]\)\s*\{/);
   });
 });

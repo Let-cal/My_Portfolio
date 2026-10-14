@@ -7,6 +7,7 @@ import type { Content, Locale, RoleKey } from "@/content/schema";
 import { DEFAULT_ROLE } from "@/lib/roles";
 import { buildQuickData } from "@/lib/quick";
 import { PrintButton } from "./PrintButton";
+import { QuickViewMarker } from "./QuickViewMarker";
 
 const SECTION_HEADING =
   "border-b border-border pb-1 font-heading text-xs font-semibold tracking-[0.14em] text-brand-text uppercase print:text-[8.5pt]";
@@ -20,7 +21,7 @@ const LINK =
  * in print the site chrome is gone (globals.css) and the sheet fills the page in dark-on-white.
  *
  * It is the page's only top-level element and carries `data-quick-view`, which globals.css uses to hide the
- * site chrome around it. Do not import anything from src/scene here.
+ * site chrome around it (QuickViewMarker drops it while the page is a hidden copy). Do not import anything from src/scene here.
  */
 export function QuickView({ content, locale, role }: { content: Content; locale: Locale; role: RoleKey }) {
   const t = useTranslations();
@@ -29,6 +30,7 @@ export function QuickView({ content, locale, role }: { content: Content; locale:
 
   return (
     <main id="main" data-quick-view="" className="mx-auto w-full max-w-4xl flex-1 px-4 py-6 sm:px-6 sm:py-10 print:max-w-none print:p-0">
+      <QuickViewMarker />
       <div role="toolbar" aria-label={t("quick.toolsLabel")} className="mb-5 flex flex-wrap items-center justify-between gap-3 print:hidden">
         {/* A plain link on purpose: a full page load brings the site chrome back (see globals.css). */}
         <Button asChild variant="ghost">
