@@ -9,6 +9,8 @@ type MarqueeProps = {
   speed?: number;
   reverse?: boolean;
   pauseOnHover?: boolean;
+  /** Repeated visual copy already represented elsewhere; never add it to keyboard navigation. */
+  decorative?: boolean;
   className?: string;
   children: ReactNode;
 };
@@ -18,7 +20,7 @@ type MarqueeProps = {
  * by one copy width; the duration is derived from the measured width so `speed` is real px/s.
  * Under reduced motion only one copy is shown and the row scrolls by hand.
  */
-export function Marquee({ speed = 40, reverse = false, pauseOnHover = true, className, children }: MarqueeProps) {
+export function Marquee({ speed = 40, reverse = false, pauseOnHover = true, decorative = false, className, children }: MarqueeProps) {
   const reduced = usePrefersReducedMotion();
   const trackRef = useRef<HTMLDivElement>(null);
   const copyRef = useRef<HTMLDivElement>(null);
@@ -40,7 +42,8 @@ export function Marquee({ speed = 40, reverse = false, pauseOnHover = true, clas
 
   return (
     <div
-      className={cn("fx-marquee flex w-full", reduced ? "overflow-x-auto" : "overflow-hidden", className)}
+      className={cn("fx-marquee flex w-full rounded-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50", reduced ? "overflow-x-auto" : "overflow-hidden", className)}
+      tabIndex={decorative ? -1 : reduced ? 0 : undefined}
       data-pause-on-hover={pauseOnHover ? "" : undefined}
     >
       <div

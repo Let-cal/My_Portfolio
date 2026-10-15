@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { usePrefersReducedMotion } from "./use-media-query";
 
 /** Dimmest a word gets before the scroll reaches it; kept well above invisible so the sentence stays readable. */
-export const SCROLL_REVEAL_MIN_OPACITY = 0.3;
+export const SCROLL_REVEAL_MIN_OPACITY = 0.65;
 
 type Token = { text: string; unit: number | null };
 
@@ -41,7 +41,7 @@ function Word({ word, range, progress, reduced }: { word: string; range: [number
 }
 
 /**
- * Each word (or Japanese word segment) fades from 0.3 to 1 as the paragraph scrolls through the viewport, so words
+ * Each word (or Japanese word segment) fades from 0.65 to 1 as the paragraph scrolls through the viewport, so words
  * light up in reading order. Reduced motion shows the whole text at full opacity. Screen readers get the sentence
  * once as sr-only text; the animated copy is aria-hidden.
  */

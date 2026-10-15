@@ -30,7 +30,7 @@ export function PillNav() {
   return (
     <nav
       aria-label={t("header.primaryNav")}
-      className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 mx-auto max-w-md rounded-full border border-border bg-background/60 p-1 shadow-lg backdrop-blur-xl lg:hidden"
+      className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 mx-auto max-w-md rounded-full border border-border bg-background p-1 shadow-lg lg:hidden"
     >
       <ul className="flex items-stretch">
         {SECTION_IDS.map((id) => {

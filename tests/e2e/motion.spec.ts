@@ -1,6 +1,18 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("motion preference and scene fallbacks", () => {
+  test("without JavaScript, OS reduced motion still disables decorative CSS animation", async ({ browser }) => {
+    const context = await browser.newContext({ javaScriptEnabled: false, reducedMotion: "reduce" });
+    try {
+      const page = await context.newPage();
+      await page.goto("http://localhost:3100/en");
+      expect(await page.locator("#hero-heading .fx-char").first().evaluate((el) => getComputedStyle(el).animationName)).toBe("none");
+      await expect(page.locator("#hero-heading")).toBeVisible();
+      await expect(page.locator("[data-hello]")).toBeHidden();
+    } finally {
+      await context.close();
+    }
+  });
   test("Japanese body-font CSS loads on interaction rather than initial mobile rendering", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     const styles: Promise<boolean>[] = [];
@@ -69,7 +81,7 @@ test.describe("motion preference and scene fallbacks", () => {
       }), { message: `${selector} must remain the hit target above the canvas` }).toBe(true);
     }
 
-    const japanese = page.getByRole("button", { name: "日本語 (JA)" });
+    const japanese = page.getByRole("button", { name: "JA · 日本語" });
     await expect(japanese).toBeVisible();
     await japanese.click();
     await expect(page.locator("html")).toHaveAttribute("lang", "ja");

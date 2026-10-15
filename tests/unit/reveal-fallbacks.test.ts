@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { REVEAL_SHOW_CSS } from "@/components/site/reveal-style";
+import { NO_SCRIPT_REDUCED_MOTION_CSS, REVEAL_SHOW_CSS } from "@/components/site/reveal-style";
 
 const root = process.cwd();
 const read = (path: string) => readFileSync(join(root, path), "utf8");
@@ -16,7 +16,9 @@ describe("<Reveal> fallbacks for visitors the animation cannot reach", () => {
   it("the locale layout puts that rule in a <noscript> inside <head>", () => {
     const layout = read("src/app/[locale]/layout.tsx");
     const head = layout.slice(layout.indexOf("<head>"), layout.indexOf("</head>"));
-    expect(head).toMatch(/<noscript>\s*<style dangerouslySetInnerHTML=\{\{ __html: REVEAL_SHOW_CSS \}\} \/>\s*<\/noscript>/);
+    expect(head).toMatch(/<noscript>\s*<style dangerouslySetInnerHTML=\{\{ __html: REVEAL_SHOW_CSS \+ NO_SCRIPT_REDUCED_MOTION_CSS \}\} \/>\s*<\/noscript>/);
+    expect(NO_SCRIPT_REDUCED_MOTION_CSS).toContain("@media (prefers-reduced-motion: reduce)");
+    expect(NO_SCRIPT_REDUCED_MOTION_CSS).toMatch(/animation:\s*none\s*!important/);
   });
 
   it("globals.css shows reveals in print", () => {

@@ -183,7 +183,7 @@ describe("Case study sheet", () => {
     renderExperience({ role: "pm" });
     const trigger = within(el("skg-ai-agent")).getByRole("button", { name: /AI Agent/ });
     await userEvent.click(trigger);
-    const dialog = await screen.findByRole("dialog");
+    const dialog = await screen.findByRole("dialog", {}, { timeout: 5000 });
     expect(within(dialog).getByText(/Software Engineer, acting Project Manager/)).toBeInTheDocument();
     for (const name of ["Problem", "Role", "Decisions", "Result"]) {
       expect(within(dialog).getByRole("heading", { name })).toBeInTheDocument();

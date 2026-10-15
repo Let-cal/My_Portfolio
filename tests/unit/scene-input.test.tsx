@@ -83,6 +83,16 @@ describe("useFeedClicks", () => {
     expect(sceneStore.getState().drop).toBeNull();
   });
 
+  it.each(["p", "h2", "span"])("does not feed the koi when clicking %s text over the water", (tag) => {
+    const { stage } = water();
+    const text = document.createElement(tag);
+    text.textContent = "Readable portfolio content";
+    stage.appendChild(text);
+    render(<FeedProbe />);
+    click(text, 400, 300);
+    expect(sceneStore.getState().drop).toBeNull();
+  });
+
   it("does nothing while the scene is off, and stops listening when unmounted", () => {
     const { stage } = water();
     const { rerender, unmount } = render(<FeedProbe on={false} />);

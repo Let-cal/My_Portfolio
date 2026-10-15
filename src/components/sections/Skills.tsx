@@ -111,11 +111,11 @@ export function Skills({ content, locale }: { content: Content; locale: Locale }
         className="-mx-4 mt-10 flex flex-col gap-3 [mask-image:linear-gradient(to_right,transparent,#000_10%,#000_90%,transparent)] sm:-mx-6"
       >
         {rows.map((row, i) => (
-          <Marquee key={i} speed={i === 0 ? 34 : 26} reverse={i === 1} pauseOnHover className="[scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <Marquee key={i} speed={i === 0 ? 34 : 26} reverse={i === 1} pauseOnHover decorative className="[scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {row.map((skill) => (
               <span
                 key={skill.id}
-                className="skill-mq inline-flex items-center gap-2.5 font-heading text-xl font-semibold whitespace-nowrap text-foreground/30 sm:text-3xl"
+                className="skill-mq inline-flex items-center gap-2.5 font-heading text-xl font-semibold whitespace-nowrap text-muted-foreground sm:text-3xl"
                 style={{ "--sk-hex": skill.icon?.hex, "--sk-hex-dark": skill.icon?.hexDark } as CSSProperties}
               >
                 {skill.icon ? <SkillGlyph skillId={skill.id} className="size-5 sm:size-7" /> : <SkillMonogram letters={skill.monogram} className="size-5 text-[9px] sm:size-7 sm:text-xs" />}

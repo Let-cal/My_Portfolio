@@ -53,7 +53,7 @@ function Panel({ roleKey, index }: { roleKey: RoleKey; index: number }) {
       onPointerLeave={(e) => e.pointerType !== "touch" && setHover(null)}
       onClick={() => select(roleKey)}
     >
-      <h3 className="m-0">
+      <h2 className="m-0">
         <button type="button" aria-pressed={role === roleKey} aria-controls={detailsId} className="hero-panel-button">
           <span className="hero-panel-tag">
             <i aria-hidden="true" />
@@ -61,7 +61,7 @@ function Panel({ roleKey, index }: { roleKey: RoleKey; index: number }) {
           </span>
           <span className="hero-panel-title">{t.rich("title", { accent: () => <em>{t("accent")}</em> })}</span>
         </button>
-      </h3>
+      </h2>
       <div id={detailsId} data-panel-details="" aria-hidden={!open} className="hero-panel-more">
         <div>
           <p className="hero-panel-body">{t("body")}</p>

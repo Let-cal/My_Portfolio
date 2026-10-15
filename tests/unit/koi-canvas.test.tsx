@@ -52,7 +52,7 @@ describe("KoiCanvas", () => {
     const el = img()!;
     expect(el).toHaveAttribute("src", "/fallback/koi-night.jpg");
     expect(el).toHaveAttribute("aria-hidden", "true");
-    expect(el.style).toMatchObject({ position: "fixed", objectFit: "cover", opacity: "0.6", pointerEvents: "none" });
+    expect(el.style).toMatchObject({ position: "fixed", objectFit: "cover", opacity: "0.15", pointerEvents: "none" });
     expect(el.style.zIndex).toBe("-1");
     expect(el.parentElement).toBe(document.body);
     expect(el).toHaveClass("print:hidden");
@@ -90,7 +90,7 @@ describe("KoiCanvas", () => {
       await settle(); // the load gate has opened by now; the scene must still not mount
       expect(screen.queryByTestId("scene")).toBeNull();
       expect(document.querySelector("canvas")).toBeNull();
-      expect(img()!.style.opacity).toBe("0.6");
+      expect(img()!.style.opacity).toBe("0.15");
       expect(sceneStore.getState().tier).toBe("off");
     });
 
@@ -121,7 +121,7 @@ describe("KoiCanvas", () => {
     await screen.findByTestId("scene");
     act(() => setMotionPreference("off"));
     await waitFor(() => expect(screen.queryByTestId("scene")).toBeNull());
-    await waitFor(() => expect(img()!.style.opacity).toBe("0.6"));
+    await waitFor(() => expect(img()!.style.opacity).toBe("0.15"));
     act(() => setMotionPreference("on"));
     expect(await screen.findByTestId("scene")).toBeInTheDocument();
   });
@@ -152,7 +152,7 @@ describe("KoiCanvas failure handling", () => {
     expect(screen.queryByTestId("scene")).toBeNull();
     expect(document.querySelector("canvas")).toBeNull();
     expect(img()).not.toBeNull();
-    expect(img()!.style.opacity).toBe("0.6");
+    expect(img()!.style.opacity).toBe("0.15");
     expect(sceneStore.getState().tier).toBe("off");
     expect(warn).toHaveBeenCalledTimes(1);
     warn.mockRestore();

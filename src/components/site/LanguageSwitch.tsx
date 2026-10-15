@@ -25,7 +25,7 @@ export function LanguageSwitch({ className }: { className?: string }) {
             key={locale}
             type="button"
             lang={locale}
-            aria-label={`${t(locale)} (${locale.toUpperCase()})`}
+            aria-label={`${locale.toUpperCase()} · ${t(locale)}`}
             aria-current={active ? "true" : undefined}
             onClick={() => {
               if (active) return;

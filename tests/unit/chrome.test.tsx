@@ -307,9 +307,9 @@ describe("ScrollProgressKoi", () => {
 describe("LanguageSwitch", () => {
   it("names each button with the language and its visible code", () => {
     render(withIntl(<LanguageSwitch />));
-    expect(screen.getByRole("button", { name: "English (EN)" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "日本語 (JA)" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Tiếng Việt (VI)" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "EN · English" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "JA · 日本語" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "VI · Tiếng Việt" })).toBeInTheDocument();
   });
 });
 

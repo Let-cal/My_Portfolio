@@ -122,7 +122,8 @@ export function KoiCanvas() {
           objectFit: "cover",
           zIndex: -1,
           pointerEvents: "none",
-          opacity: sceneVisible ? 0 : 0.6,
+          // The static route has no tracked text veil; keep even the brightest fallback pixels subdued.
+          opacity: sceneVisible ? 0 : activeTheme === "light" ? 0.3 : 0.15,
           transition: `opacity ${FADE_MS}ms ease`,
         }}
       />

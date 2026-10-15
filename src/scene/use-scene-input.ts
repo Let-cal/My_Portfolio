@@ -327,7 +327,7 @@ export function useCtaTracking(enabled: boolean) {
 }
 
 /** Things a click on the water must leave alone: they have a job of their own. */
-const NOT_WATER = 'a, button, input, select, textarea, label, summary, [role="radio"], [role="button"], [role="tab"], [data-role-wheel], [data-panel], [data-no-feed]';
+const NOT_WATER = 'a, button, input, select, textarea, label, summary, p, h1, h2, h3, h4, h5, h6, li, dt, dd, [contenteditable="true"], [role="radio"], [role="button"], [role="tab"], [data-role-wheel], [data-panel], [data-no-feed]';
 
 let dropCount = 0;
 
@@ -344,6 +344,8 @@ export function useFeedClicks(enabled: boolean) {
       if (e.defaultPrevented || e.button !== 0) return;
       const target = e.target instanceof Element ? e.target : null;
       if (target?.closest(NOT_WATER)) return;
+      // A plain span/div may hold text without belonging to a semantic paragraph.
+      if (target && [...target.childNodes].some((node) => node.nodeType === Node.TEXT_NODE && node.textContent?.trim())) return;
       const inZone = [...document.querySelectorAll("[data-water-zone]")].some((el) => {
         const r = el.getBoundingClientRect();
         return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;

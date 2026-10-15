@@ -116,11 +116,11 @@
 }
 
 .light {
-  --brand-text: #c2410c;
+  --brand-text: #9a3412;
 
   --bg: #fafaf9;
   --fg: #18181b;
-  --muted: #52525b;
+  --muted: #484850;
   --card: #ffffff;
   --border: rgb(0 0 0 / 10%);
 
@@ -236,6 +236,9 @@ body:lang(ja) {
 :root[data-motion="reduced"] [data-reveal] {
   opacity: 1 !important;
   transform: none !important;
+}
+:root[data-motion="reduced"] [data-reveal-unit] {
+  opacity: 1 !important;
 }
 
 @media print {
@@ -353,9 +356,8 @@ html[data-hello-seen] [data-hello] {
   --role-accent-contrast: #0b0908;
 }
 .light {
-  /* Darker accent for text on the light background: 60% of each accent with black is >= 5:1 on #fafaf9
-     (#0ea5e9 ~5.9, #38bdf8 ~5.2, #e0a84e ~5.1), so small text passes WCAG AA. */
-  --role-accent-text: color-mix(in srgb, var(--role-accent) 60%, #000);
+  /* Darker role hue for small text, with margin for bright scenery behind the page. */
+  --role-accent-text: color-mix(in srgb, var(--role-accent) 55%, #000);
 }
 
 @property --from {
@@ -606,7 +608,7 @@ html[data-hello-seen] [data-hello] {
   white-space: nowrap;
 }
 .light .hero-panel-title em {
-  color: color-mix(in srgb, var(--c) 60%, #000);
+  color: color-mix(in srgb, var(--c) 50%, #000);
 }
 /* Collapsed panels are dimmed with solid colours instead of opacity, so the text keeps AA contrast for large text. */
 .hero-panel-title,
@@ -614,13 +616,16 @@ html[data-hello-seen] [data-hello] {
   transition: color 0.35s;
 }
 .hero-panel[data-state="collapsed"] .hero-panel-title {
-  color: color-mix(in srgb, var(--fg) 50%, var(--bg));
+  color: color-mix(in srgb, var(--fg) 60%, var(--bg));
 }
 .hero-panel[data-state="collapsed"] .hero-panel-title em {
   color: color-mix(in srgb, var(--c) 55%, var(--muted));
 }
 .light .hero-panel[data-state="collapsed"] .hero-panel-title em {
-  color: color-mix(in srgb, var(--c) 45%, var(--muted));
+  color: color-mix(in srgb, var(--c) 50%, #000);
+}
+.light .hero-panel[data-state="collapsed"] .hero-panel-title {
+  color: color-mix(in srgb, var(--fg) 65%, var(--bg));
 }
 :lang(ja) .hero-panel-title em {
   font-family: inherit;
@@ -1207,7 +1212,7 @@ html[data-hello-seen] [data-hello] {
  */
 [data-koi-veil] {
   --veil: 4 7 10;
-  --veil-a: 0.88;
+  --veil-a: 0.94;
   position: absolute;
   inset: 0;
   overflow: hidden;

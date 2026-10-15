@@ -132,7 +132,7 @@ export function SkillTerminal({ label, identity, group, skills }: TerminalProps)
         <span className="size-2.5 rounded-full bg-[#ff5f57]/80" />
         <span className="size-2.5 rounded-full bg-[#febc2e]/80" />
         <span className="size-2.5 rounded-full bg-[#28c840]/80" />
-        <span className="ml-2 truncate text-[11px] text-slate-500">letcal ~ skills</span>
+        <span className="ml-2 truncate text-[11px] text-slate-400">letcal ~ skills</span>
       </div>
 
       <div data-terminal-screen="" aria-hidden="true" className="min-h-0 flex-1 overflow-y-auto px-3.5 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

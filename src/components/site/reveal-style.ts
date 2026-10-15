@@ -4,3 +4,11 @@
  * `<noscript>` in the locale layout's head (no JavaScript). globals.css has the same rule for printing.
  */
 export const REVEAL_SHOW_CSS = "[data-reveal]{opacity:1!important;transform:none!important}";
+
+/** Only used inside noscript: honor the OS when the pre-paint preference script cannot run. */
+export const NO_SCRIPT_REDUCED_MOTION_CSS = `
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  [data-hello] { display: none !important; }
+  .fx-char, [data-reveal], [data-reveal-unit], .footer-principle { opacity: 1 !important; transform: none !important; }
+}`;

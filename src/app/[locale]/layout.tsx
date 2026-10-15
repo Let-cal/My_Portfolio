@@ -13,7 +13,7 @@ import { JapaneseTypography } from "@/components/site/JapaneseTypography";
 import { AccentTypography } from "@/components/site/AccentTypography";
 import { HighlightProvider } from "@/components/site/HighlightProvider";
 import { HELLO_SEEN_SCRIPT } from "@/components/site/hello-script";
-import { REVEAL_SHOW_CSS } from "@/components/site/reveal-style";
+import { NO_SCRIPT_REDUCED_MOTION_CSS, REVEAL_SHOW_CSS } from "@/components/site/reveal-style";
 import { PillNav } from "@/components/site/PillNav";
 import { RoleProvider } from "@/components/site/RoleProvider";
 import { ScrollProgressKoi } from "@/components/site/ScrollProgressKoi";
@@ -76,7 +76,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
         <script dangerouslySetInnerHTML={{ __html: HELLO_SEEN_SCRIPT }} />
         {/* <Reveal> blocks are server-rendered hidden; without JavaScript nothing would ever show them. */}
         <noscript>
-          <style dangerouslySetInnerHTML={{ __html: REVEAL_SHOW_CSS }} />
+          <style dangerouslySetInnerHTML={{ __html: REVEAL_SHOW_CSS + NO_SCRIPT_REDUCED_MOTION_CSS }} />
         </noscript>
       </head>
       <body className={bodyClassName}>

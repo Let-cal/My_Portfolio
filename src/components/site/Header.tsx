@@ -29,7 +29,7 @@ export function Header({ cvUrls }: { cvUrls: Record<RoleKey, string> }) {
   const openCommand = () => window.dispatchEvent(new Event("open-command"));
 
   return (
-    <header className="fixed inset-x-0 top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md lg:inset-x-auto lg:top-4 lg:right-4 lg:rounded-full lg:border lg:bg-background/60 lg:shadow-sm lg:backdrop-blur-xl">
+    <header className="fixed inset-x-0 top-0 z-40 border-b border-border bg-background lg:inset-x-auto lg:top-4 lg:right-4 lg:rounded-full lg:border lg:shadow-sm">
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-4 sm:px-6 lg:h-11 lg:max-w-none lg:gap-1 lg:pr-2 lg:pl-3">
         <Link
           href={`/${query}#hero`}
