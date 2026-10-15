@@ -31,6 +31,18 @@ The broader Lighthouse and mobile performance release gates remain open until fr
 
 Final scene checkpoint: production build and lint pass, 778 unit cases, 46 production-browser cases and 17 artifact checks pass. Initial home JavaScript is199.9KB gzip; quick view176.2KB. Browser snapshots show no shader/page errors. On this desktop's D3D11 GPU at1440×900 with the low-tier4-core profile, 90 steady-state frames per theme measured59.9–60.0rendered frames/s,31draw calls and161,240triangles/frame. This is a desktop render-cadence observation, not proof of performance on a physical mobile GPU.
 
+### Deferred construction follow-up
+
+The waterfall module and geometry now load on approach, starting during Experience before the shared garden becomes visible. The same models, materials, camera and animations are retained; startup does not build hidden garden geometry. The module's construction code is verified to occupy a separate production chunk from the 3D entry. A failed chunk leaves the pond and portfolio usable, without per-frame retries.
+
+Scenery ownership now belongs to effect setup/cleanup. A Strict Mode regression was reproduced (the disposed lazy wrapper never loaded on the owner's dev server), then corrected: setup creates fresh props, cleanup detaches and disposes precisely those instances, and late promises cannot create geometry after unmount. The dev-server model-request probe changed from0to1. This follows React's effect replay lifecycle without disabling Strict Mode.
+
+Final follow-up verification:782unit tests,18artifact checks,15focused production motion/veil browser cases,lint and production build pass. The full46-case browser suite also passed before the final Strict Mode ownership adjustment; the15focused cases were rerun afterward. Home initial JS remains199.9KB gzip,quick176.3KB. Independent read-only review found no concrete remaining lifecycle flaw.
+
+Lighthouse mobile median across3runs on/en before this desktop-only deferral:Performance68,Accessibility100,BestPractices100,localSEO92,FCP2267ms,LCP5152ms,TBT382ms,CLS0. Performance gates remain unmet. Mobile already uses a static scene, so desktop garden deferral is not claimed to fix mobile Lighthouse. Raw runs remain in the ignored task18a workspace.
+
+The owner's next request is a palette-only brainstorming pass: align the garden's dark sky/water/fog with the surrounding black cyber scenes. Models and layout are accepted. Browser-only obsidian/indigo/jade studies are disposable; no new production palette is approved or applied yet.
+
 ## References
 
 - Japanese garden day/night composition: https://www.japan.travel/en/japans-local-treasures/yuushien-garden-illuminations/

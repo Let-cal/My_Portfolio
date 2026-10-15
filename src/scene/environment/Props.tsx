@@ -1,12 +1,14 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
+import { Group } from "three";
 import { sceneLive } from "./live";
 import { createGate } from "./props/gate";
 import { createLanterns } from "./props/lanterns";
 import { createLotus } from "./props/lotus";
-import { createWaterfall } from "./props/waterfall";
+import { createDeferredProp } from "./props/deferred-prop";
+import type { Prop } from "./props/types";
 
 /**
  * The scenery of the story: lily pads and lotus flowers (chapter 2), a waterfall (3), lanterns on both shores (4) and
@@ -14,24 +16,28 @@ import { createWaterfall } from "./props/waterfall";
  * one continuous scene. Built once; the props only move their own instances each frame.
  */
 export function Props() {
-  const props = useMemo(() => [createLotus(), createWaterfall(), createLanterns(), createGate()], []);
-  useEffect(
-    () => () => {
-      for (const p of props) p.dispose();
-    },
-    [props],
-  );
+  const root = useMemo(() => new Group(), []);
+  const live = useRef<Prop[]>([]);
+  useEffect(() => {
+    // Effect setup owns resources: Strict Mode may clean up and run setup again on the same component.
+    const props = [
+      createLotus(),
+      createDeferredProp("waterfall-garden", () => import("./props/waterfall").then((m) => m.createWaterfall), (pos) => pos >= 1 && pos < 4.2),
+      createLanterns(), createGate(),
+    ];
+    live.current = props;
+    for (const prop of props) root.add(prop.root);
+    return () => {
+      live.current = [];
+      for (const prop of props) { root.remove(prop.root); prop.dispose(); }
+    };
+  }, [root]);
 
   useFrame(({ clock }) => {
     const t = clock.elapsedTime;
+    const props = live.current;
     for (let i = 0; i < props.length; i++) props[i].update(t, sceneLive.pos, sceneLive.day);
   });
 
-  return (
-    <>
-      {props.map((p) => (
-        <primitive key={p.root.name} object={p.root} />
-      ))}
-    </>
-  );
+  return <primitive object={root} />;
 }
