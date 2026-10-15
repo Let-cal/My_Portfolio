@@ -124,6 +124,8 @@ export function SkillTerminal({ label, identity, group, skills }: TerminalProps)
     <div
       ref={rootRef}
       data-skill-terminal=""
+      data-scene-avoid="box"
+      data-scene-veil="off"
       role="group"
       aria-label={label}
       className="skill-terminal flex h-[17.9rem] flex-col overflow-hidden rounded-xl border border-white/10 bg-[#0a0f16] font-mono text-[12.5px] leading-relaxed text-slate-300 shadow-[0_20px_60px_-30px_var(--role-accent)]"

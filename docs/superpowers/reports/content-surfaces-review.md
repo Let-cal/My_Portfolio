@@ -47,6 +47,14 @@ Completely removing every card background was not implemented. These trials isol
 
 Reproduction scripts, measurements and before/after screenshots are local ignored QA artifacts under `.superpowers/sdd/2026-10-13-portfolio-koi-redesign/veil-debug/`.
 
+## 2026-10-15: Skills wheel-scroll follow-up
+
+The earlier step-scroll checks proved panel reassignment was gone, but did not cover asynchronous wheel scrolling. A new probe keeps the pointer over skill chips while Lenis scrolls down and up. Across 220 animation frames on localhost:3000, the fixed veil lagged the actual group by up to 115.703125px; 27 frames exceeded 8px. No panel reassignment was needed to produce the visible separation.
+
+Each Skills group now owns its opaque, inert background inside the same document element. Absolute positioning adds the existing reading margin without changing group layout or chip hover transforms. The terminal and evidence card also own their opaque surfaces. Those boxes still exclude the creature through data-scene-avoid, but data-scene-veil=off prevents duplicate fixed backdrops.
+
+The same wheel sequence after the correction measured zero relative drift across 220 frames. New browser cases check every group's surface during wheel scrolling in light and dark themes. Full checkpoint: 778 unit tests, 46 production browser tests, 17 artifact checks, lint and production build pass; home startup JS199.9KB gzip. Lighthouse release gates remain separate and open.
+
 ## References
 
 - [W3C contrast minimum](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html): normal text needs at least 4.5:1 and large text 3:1 against its background.

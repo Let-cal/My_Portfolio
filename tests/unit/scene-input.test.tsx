@@ -109,6 +109,15 @@ describe("useFeedClicks", () => {
 });
 
 describe("measureAvoid", () => {
+  it("uses the stable local card footprint while its hovered chips move inside it", () => {
+    document.body.innerHTML = '<main><div data-scene-avoid="box" data-scene-veil="off" id="group"><button id="chip" class="backdrop-blur-sm">TypeScript</button></div></main>';
+    const group = document.getElementById("group")!, chip = document.getElementById("chip")!;
+    box(group, rect(400, 200, 850, 420)); box(chip, rect(420, 240, 540, 280));
+    const before = measureAvoid();
+    vi.mocked(chip.getBoundingClientRect).mockReturnValue(rect(420, 238, 540, 278));
+    expect(measureAvoid()).toEqual(before);
+    expect(before).toEqual([{ x0: 400, y0: 200, x1: 850, y1: 420, large: false, veil: false }]);
+  });
   it("clips a translated carousel card to its overflow viewport before protecting it", () => {
     document.body.innerHTML = '<main><div id="viewport" style="overflow-x:clip"><article id="card" data-scene-avoid="box">card</article></div></main>';
     box(document.getElementById("viewport")!, rect(450, 150, 950, 650));

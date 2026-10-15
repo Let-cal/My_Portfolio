@@ -108,6 +108,16 @@ afterEach(() => {
 });
 
 describe("Skills section", () => {
+  it("owns a stable opaque surface for each group instead of a scroll-measured overlay", () => {
+    renderSkills();
+    for (const group of section().querySelectorAll("[data-skill-group]")) {
+      expect(group).toHaveAttribute("data-scene-avoid", "box");
+      expect(group).toHaveAttribute("data-scene-veil", "off");
+      expect(group.querySelector(":scope > [data-skill-surface]")).toHaveAttribute("aria-hidden", "true");
+    }
+    expect(section().querySelector("#skills-evidence")).toHaveAttribute("data-scene-veil", "off");
+    expect(section().querySelector("[data-skill-terminal]")).toHaveAttribute("data-scene-veil", "off");
+  });
   it("is a section labelled by its heading", () => {
     renderSkills();
     expect(within(section()).getByRole("heading", { level: 2, name: "Skills" })).toBeInTheDocument();

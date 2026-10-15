@@ -3,6 +3,43 @@ import { expect, test } from "@playwright/test";
 // Each case starts a live WebGL scene; avoid competing for the same test GPU.
 test.describe.configure({ mode: "serial" });
 
+for (const theme of ["light", "dark"]) {
+  test(`${theme}: Skills backgrounds follow their groups during wheel scrolling under the pointer`, async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.addInitScript((theme) => {
+      Object.defineProperty(navigator, "hardwareConcurrency", { value: 4 });
+      localStorage.setItem("motion", "on"); localStorage.setItem("theme", theme); sessionStorage.setItem("hello", "1");
+    }, theme);
+    await page.goto("/vi");
+    await expect(page.locator("[data-koi-veil]>i").first()).toBeAttached({ timeout: 20_000 });
+    const groups = page.locator("[data-skill-group]");
+    await expect(page.locator("[data-skill-surface]")).toHaveCount(await groups.count());
+    await groups.first().evaluate(el => window.scrollTo(0, window.scrollY + el.getBoundingClientRect().top - 260));
+    await page.mouse.move(615, 430);
+    const sampling = page.evaluate(async () => {
+      const groups = [...document.querySelectorAll<HTMLElement>("[data-skill-group]")];
+      let maximumDrift = 0, translucent = 0;
+      for (let frame = 0; frame < 100; frame++) {
+        await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+        for (const group of groups) {
+          const card = group.querySelector<HTMLElement>(":scope > [data-skill-surface]")!;
+          const g = group.getBoundingClientRect(), b = card.getBoundingClientRect();
+          maximumDrift = Math.max(maximumDrift, Math.abs(b.top - g.top + 12), Math.abs(b.left - g.left + 16));
+          const color = getComputedStyle(card).backgroundColor;
+          if (color === "transparent" || /rgba\([^)]*,\s*0(?:\.\d+)?\s*\)/.test(color)) translucent++;
+        }
+      }
+      return { maximumDrift, translucent };
+    });
+    for (let step = 0; step < 4; step++) { await page.mouse.wheel(0, 100); await page.waitForTimeout(55); }
+    for (let step = 0; step < 4; step++) { await page.mouse.wheel(0, -100); await page.waitForTimeout(55); }
+    const result = await sampling;
+    expect(result.maximumDrift).toBeLessThan(0.1);
+    expect(result.translucent).toBe(0);
+    await expect(groups.first().locator("[data-skill-chip]").first()).toBeEnabled();
+  });
+}
+
 test("chapter seals stay above the padded primary headings", async ({ page }) => {
   await page.goto("/vi");
   for (const id of ["experience", "projects", "skills", "certificates", "why", "contact"]) {

@@ -146,7 +146,9 @@ export function SkillMap({ data }: { data: SkillMapData }) {
             const active = g === group;
             const list = byGroup.get(g) ?? [];
             return (
-              <div key={g} data-skill-group={g} data-active={active ? "true" : undefined} className="relative">
+              <div key={g} data-skill-group={g} data-active={active ? "true" : undefined} data-scene-avoid="box" data-scene-veil="off" className="relative isolate">
+                {/* This background scrolls natively with its group, never a frame behind in the fixed scene overlay. */}
+                <div data-skill-surface="" aria-hidden="true" className="pointer-events-none absolute -inset-x-4 -inset-y-3 -z-10 rounded-2xl border border-border bg-card shadow-sm" />
                 <span
                   aria-hidden="true"
                   className={cn(
@@ -211,8 +213,10 @@ export function SkillMap({ data }: { data: SkillMapData }) {
           id="skills-evidence"
           aria-label={t("evidence")}
           data-selected={selected ? "true" : undefined}
+          data-scene-avoid="box"
+          data-scene-veil="off"
           className={cn(
-            "skill-evidence min-w-0 rounded-xl border border-border bg-card/80 p-4 backdrop-blur-md xl:sticky xl:top-[23.9rem] xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:mt-[18.9rem] xl:max-h-[calc(100vh-25rem)] xl:self-start xl:overflow-y-auto",
+            "skill-evidence min-w-0 rounded-xl border border-border bg-card p-4 xl:sticky xl:top-[23.9rem] xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:mt-[18.9rem] xl:max-h-[calc(100vh-25rem)] xl:self-start xl:overflow-y-auto",
             selected && "max-xl:sticky max-xl:bottom-[5.5rem] max-xl:z-20 max-xl:max-h-[48vh] max-xl:overflow-y-auto lg:max-xl:bottom-4",
             selected && "border-(--role-accent)/40",
           )}
