@@ -11,7 +11,8 @@ describe("waterfall landscape", () => {
       expect(prop.root.getObjectByName("waterfall-basin")).toBeDefined();
       let meshes = 0;
       prop.root.traverse((node) => { if ("isMesh" in node) meshes++; });
-      expect(meshes).toBeLessThanOrEqual(10);
+      // Shared 3D sky, shores and three stone lanterns add seven batches, never per-lamp lights.
+      expect(meshes).toBeLessThanOrEqual(17);
       const cascade=prop.root.getObjectByName("waterfall-cascade") as Mesh;
       const depth=cascade.geometry.getAttribute("position");
       const values=Array.from({length: depth.count},(_,i)=>depth.getZ(i));

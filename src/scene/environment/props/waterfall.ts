@@ -1,14 +1,17 @@
 import { BoxGeometry, Color, Float32BufferAttribute, Group, Mesh, MeshStandardMaterial, PlaneGeometry, ShaderMaterial } from "three";
 import { WATER_Y } from "../constants";
-import { propWeight } from "../math";
+import { gardenWeight } from "../garden";
+import { smoothstep } from "../math";
 import { createOwner, type Prop } from "./types";
 import { createWaterfallLandscape } from "./waterfall-landscape";
+import { createGardenBanks } from "./garden-banks";
+import { createGardenSky } from "./garden-sky";
+import { cascadeDepth } from "./cascade-profile";
 
-const CHAPTER = 3;
 /** The fall stands this far behind the koi's pond, so the koi seems to swim up to it. */
 export const FALL_Z = -5.2;
-const FALL_W = 15;
-const FALL_H = 9;
+const FALL_W = 12;
+const FALL_H = 6.4;
 
 const VERTEX = /* glsl */ `
 varying vec2 vUv;
@@ -40,14 +43,14 @@ void main() {
   float wob = (vnoise(vec2(y * 4.0, 3.0)) - 0.5) * 0.7;
   float fallWidth = mix(2.2, 0.85, smoothstep(0.0, 1.0, y));
   float mainFall = 1.0 - smoothstep(fallWidth, fallWidth + 0.3, abs(x + wob));
-  float sideA = 1.0 - smoothstep(0.35, 0.6, abs(x - 4.6 + wob * 0.6));
-  float sideB = 1.0 - smoothstep(0.25, 0.5, abs(x + 5.4 + wob * 0.6));
+  float sideA = 1.0 - smoothstep(0.25, 0.45, abs(x - 3.4 + wob * 0.6));
+  float sideB = 1.0 - smoothstep(0.2, 0.4, abs(x + 3.8 + wob * 0.6));
   float mask = max(mainFall, max(sideA * 0.8, sideB * 0.7));
   float n1 = vnoise(vec2(x * 5.0, y * 2.6 + uTime * 1.5));
   float n2 = vnoise(vec2(x * 13.0, y * 5.0 + uTime * 2.8));
   float streak = smoothstep(0.42, 0.85, n1 * 0.6 + n2 * 0.4);
-  vec3 deep = mix(vec3(0.03, 0.08, 0.11), vec3(0.35, 0.62, 0.72), uDay);
-  vec3 foamC = mix(vec3(0.34, 0.55, 0.64), vec3(1.0), uDay);
+  vec3 deep = mix(vec3(0.08, 0.16, 0.22), vec3(0.35, 0.62, 0.66), uDay);
+  vec3 foamC = mix(vec3(0.50, 0.68, 0.77), vec3(1.0, 0.97, 0.88), uDay);
   vec3 col = mix(deep, foamC, streak);
   float foam = (1.0 - smoothstep(0.0, 0.14, y)) * (0.55 + 0.45 * vnoise(vec2(x * 5.0 + uTime * 0.9, uTime * 2.0)));
   float splash = (1.0 - smoothstep(0.0, 0.3, y)) * (1.0 - smoothstep(1.2, 3.8, abs(x))) * vnoise(vec2(x * 2.0, y * 6.0 - uTime * 0.6)) * 0.55;
@@ -97,30 +100,33 @@ export function createWaterfall(): Prop {
 
   const cliffMat = own(new MeshStandardMaterial({ color: 0xc0c3b7, vertexColors: true, roughness: 0.92, transparent: true }));
   const fallMat = own(material(FALL_FRAGMENT));
-  const cliffGeometry = own(new BoxGeometry(28, 9, 2.6, 64, 24, 2));
+  const cliffGeometry = own(new BoxGeometry(20, 6.6, 2.6, 48, 24, 2));
   const cp = cliffGeometry.getAttribute("position");
   const cliffColors = new Float32Array(cp.count * 3), color = new Color();
   for (let i = 0; i < cp.count; i++) {
     const x = cp.getX(i), y = cp.getY(i), depth = cp.getZ(i);
     const grain = Math.sin(x * 3.2 + y * 0.4) * Math.cos(y * 4.7) * 0.15;
-    if (y > 4.4) cp.setY(i, y + Math.sin(x * 1.3) * 0.3 + Math.cos(x * 2.9) * 0.18);
-    if (depth > 0) cp.setZ(i, depth + (4.5 - y) * 0.12 + grain - Math.max(0, 1 - Math.abs(x) / 2) * 0.5);
+    // Lower irregular shoulders leave room for sky and trees instead of a rectangular wall.
+    const shoulder = 1 - 0.64 * smoothstep(0.28, 1, Math.abs(x) / 10);
+    cp.setY(i, (y + 3.3) * shoulder - 3.3 + (y > 3.2 ? Math.sin(x * 1.3) * 0.25 + Math.cos(x * 2.9) * 0.18 : 0));
+    // Use the same world-height profile as the water, leaving >=0.30 behind its surface even at peak grain.
+    const height = (cp.getY(i) + 3.0) / FALL_H;
+    if (depth > 0) cp.setZ(i, depth + cascadeDepth(height) - 0.35 + grain);
     color.setRGB(0.7 + grain, 0.76 + grain, 0.65 + grain);
     color.toArray(cliffColors, i * 3);
   }
   cliffGeometry.setAttribute("color", new Float32BufferAttribute(cliffColors, 3)); cliffGeometry.computeVertexNormals();
   const cliff = new Mesh(cliffGeometry, cliffMat);
   cliff.name = "waterfall-cliff";
-  cliff.position.set(0, WATER_Y + 4.2, FALL_Z - 1.4);
+  cliff.position.set(0, WATER_Y + 3.0, FALL_Z - 1.4);
   cliff.renderOrder = -6;
   const basinMat = own(material(BASIN_FRAGMENT));
   const mats = [fallMat, basinMat];
   const fallGeometry = own(new PlaneGeometry(FALL_W, FALL_H, 48, 64));
   const fp = fallGeometry.getAttribute("position");
-  const smooth = (a: number, b: number, value: number) => { const t = Math.max(0, Math.min(1, (value - a) / (b - a))); return t * t * (3 - 2 * t); };
   for (let i = 0; i < fp.count; i++) {
     const y = (fp.getY(i) + FALL_H / 2) / FALL_H;
-    fp.setZ(i, 0.6 + 0.75 * (1 - smooth(0.6, 0.7, y)) + (1 - smooth(0.25, 0.35, y)));
+    fp.setZ(i, cascadeDepth(y));
   }
   fallGeometry.computeVertexNormals();
   const fall = new Mesh(fallGeometry, fallMat);
@@ -134,14 +140,19 @@ export function createWaterfall(): Prop {
   basin.position.set(0, WATER_Y + 0.035, FALL_Z + 2.4);
   basin.renderOrder = -4;
   const landscape = createWaterfallLandscape(own, FALL_Z, cliffMat);
-  root.add(cliff, fall, basin, landscape.root);
+  const banks = createGardenBanks(own, cliffMat), sky = createGardenSky(own);
+  root.add(cliff, fall, basin, landscape.root, banks.root, sky.root);
+  const nightCliff = new Color(0x65818d), dayCliff = new Color(0xc0c3b7);
 
   function update(time: number, pos: number, day: number) {
-    const w = propWeight(pos, CHAPTER);
+    const w = gardenWeight(pos);
     root.visible = w > 0.01;
     if (!root.visible) return;
     landscape.update(w, day, time, pos);
+    banks.update(w, day);
+    sky.update(pos, day);
     cliffMat.opacity = w;
+    cliffMat.color.copy(nightCliff).lerp(dayCliff, day);
     for (let i = 0; i < mats.length; i++) {
       const u = mats[i].uniforms;
       u.uTime.value = time;

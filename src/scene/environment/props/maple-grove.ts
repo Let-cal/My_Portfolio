@@ -24,7 +24,7 @@ export function createMapleGrove(own: ReturnType<typeof createOwner>["own"], z: 
   const tips: Vector3[] = [];
   for (const side of [-1, 1]) {
     for (let tree = 0; tree < 2; tree++) {
-      const x = side * (5.8 + tree * 2.4), height = 6.8 + random() * 1.6, depth = z + 2.6 - tree * 0.6;
+      const x = side * (5.8 + tree * 2.4), height = 5.3 + random() * 1.6, depth = z + 2.6 - tree * 0.6;
       const base = new Vector3(x, WATER_Y, depth);
       const top = new Vector3(x - side * 1.2, height, depth - 0.4);
       segments.push(new TubeGeometry(new CatmullRomCurve3([base, new Vector3(x + side * 0.4, height * 0.45, depth), top]), 12, 0.13 - tree * 0.025, 7, false));
@@ -44,7 +44,7 @@ export function createMapleGrove(own: ReturnType<typeof createOwner>["own"], z: 
   const wood = new Mesh(merged, woodMat); wood.name = "waterfall-maple-branches";
   const leaves = own(new InstancedMesh(own(mapleLeafGeometry()), leafMat, tips.length * 36));
   leaves.name = "waterfall-foliage";
-  const dummy = new Object3D(), colors = [0xbc4827, 0xd99035, 0x7c3527, 0x65764c].map((hex) => new Color(hex));
+  const dummy = new Object3D(), colors = [0x7a904f, 0x9a9b50, 0xb67c40, 0x536a42].map((hex) => new Color(hex));
   for (let i = 0; i < leaves.count; i++) {
     const tip = tips[Math.floor(i / 36)];
     dummy.position.set(tip.x + (random() - 0.5) * 2, tip.y + (random() - 0.5) * 0.65, tip.z + (random() - 0.5) * 1.8);

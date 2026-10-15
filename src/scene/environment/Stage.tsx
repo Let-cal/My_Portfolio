@@ -9,6 +9,7 @@ import { creatureLive } from "../creature/live";
 import { lerp } from "../creature/profiles";
 import { sceneStore } from "../store";
 import { DAY_BG, NIGHT_BG, WATER_Y } from "./constants";
+import { gardenWeight } from "./garden";
 import { resetSceneLive, sceneLive } from "./live";
 import { dampValue, propWeight, smoothstep, stepDay } from "./math";
 import { addRipple } from "./ripples";
@@ -24,6 +25,8 @@ const TAIL_WATER_HEIGHT = 0.8;
 
 const NIGHT = new Color(NIGHT_BG);
 const DAY = new Color(DAY_BG);
+const GARDEN_NIGHT = new Color().setRGB(0.075, 0.13, 0.18);
+const GARDEN_DAY = new Color().setRGB(0.94, 0.78, 0.57);
 
 /** The air: a background and a haze in the pond's night colour; `update` tints them as the day comes. */
 function installBackdrop(scene: Scene): () => void {
@@ -62,6 +65,7 @@ function createDirector() {
   const water = new Plane(new Vector3(0, 1, 0), -WATER_Y);
   const hit = new Vector3();
   const ndc = new Vector2();
+  const gardenAir = new Color();
   const book = { tail: -1, pointer: -1, pointerX: NaN, pointerY: NaN };
 
   return {
@@ -78,6 +82,7 @@ function createDirector() {
       // The camera glides to where the story is. A phone pulls it back, since it sees little sideways.
       const target = chapterPosition(state.chapter, state.t);
       sceneLive.pos = dampValue(sceneLive.pos, target, FOLLOW_RATE, dt);
+      const garden = gardenWeight(sceneLive.pos);
       cameraAtPosition(sceneLive.pos, pose);
       const pull = aspectPullback(size.width / Math.max(1, size.height));
       pose.pos.sub(pose.look).multiplyScalar(pull).add(pose.look);
@@ -87,6 +92,7 @@ function createDirector() {
 
       // How much scenery is up (the text veil stays strong where something bright is behind the text).
       sceneLive.props = Math.max(
+        garden,
         propWeight(sceneLive.pos, 2),
         propWeight(sceneLive.pos, 3),
         propWeight(sceneLive.pos, 4),
@@ -98,8 +104,9 @@ function createDirector() {
       sceneLive.flow += dt * 0.35 * river;
 
       // The air takes the pond's colour: dark at night, a pale haze by day.
-      if (scene.background instanceof Color) scene.background.copy(NIGHT).lerp(DAY, day);
-      if (scene.fog) scene.fog.color.copy(NIGHT).lerp(DAY, day);
+      gardenAir.copy(GARDEN_NIGHT).lerp(GARDEN_DAY, day);
+      if (scene.background instanceof Color) scene.background.copy(NIGHT).lerp(DAY, day).lerp(gardenAir, garden);
+      if (scene.fog) scene.fog.color.copy(NIGHT).lerp(DAY, day).lerp(gardenAir, garden);
       scene.environmentIntensity = lerp(1, 1.25, day);
       gl.toneMappingExposure = lerp(1.05, 1, day);
 

@@ -5,6 +5,7 @@ import { useEffect, useMemo } from "react";
 import { Color, DoubleSide, ShaderMaterial, Vector3 } from "three";
 import { BODY_SAMPLES, creatureLive } from "../creature/live";
 import { DAY_BG, DAY_WATER, NIGHT_BG, NIGHT_WATER, WATER_Y } from "./constants";
+import { GARDEN_CELESTIAL, GARDEN_LAMPS, gardenWeight } from "./garden";
 import { sceneLive } from "./live";
 import { MAX_RIPPLES } from "./ripples";
 
@@ -18,7 +19,7 @@ void main() {
 `;
 
 /*
- * Night: a dark mirror with a faint warm grid that the ripples bend, an orange sheen where the creature is, and a
+ * Night: the cyber pond outside the garden, moonlit indigo water inside it; an orange sheen where the creature is, and a
  * hot spot from the light that follows its head. Day: clear shallow water with moving caustics and a pale sky in
  * the reflections. One shader, `uDay` crossfades the two, so the theme switch needs no second pond.
  * The creature floats a little above the surface, so its glow and shadow are drawn onto the water from six points
@@ -29,6 +30,7 @@ const FRAGMENT = /* glsl */ `
 #define BODY ${BODY_SAMPLES}
 uniform float uTime;
 uniform float uDay;
+uniform float uGarden;
 uniform float uFlow;
 uniform float uVisible;
 uniform float uMorph;
@@ -90,7 +92,11 @@ void main() {
   vec3 skyNight = mix(vec3(0.020, 0.030, 0.040), vec3(0.004, 0.007, 0.012), up);
   vec3 skyDay = mix(vec3(0.80, 0.90, 0.95), vec3(0.42, 0.66, 0.82), up);
   vec3 sky = mix(skyNight, skyDay, uDay);
+  vec3 gardenSky = mix(mix(vec3(0.075, 0.13, 0.18), vec3(0.009, 0.022, 0.055), up),
+                       mix(vec3(0.94, 0.78, 0.57), vec3(0.36, 0.63, 0.76), up), uDay);
+  sky = mix(sky, gardenSky, uGarden);
   vec3 base = mix(uNightWater, uDayWater, uDay);
+  base = mix(base, mix(vec3(0.025, 0.075, 0.105), vec3(0.20, 0.43, 0.42), uDay), uGarden);
   vec3 color = mix(base, sky, min(fresnel * (1.0 + 2.0 * uDay), 1.0));
 
   // --- day: sunlight through the water ---
@@ -101,8 +107,10 @@ void main() {
   // Sunlit haze: by day the shallows are pale and airy rather than deep teal.
   color = mix(color, vec3(0.93, 0.98, 1.0), 0.15 * uDay);
 
-  // --- night: warm grid, bent by the ripples ---
-  vec2 g = (xz + slope * 0.5 + vec2(uFlow * 1.3, 0.0)) / 0.5;
+  // Same world grid throughout the story. In the garden it reads as a submerged pattern,
+  // with approximate depth/parallax, wave distortion and attenuation under grazing reflections.
+  vec2 gridXZ = xz - V.xz / max(V.y, 0.2) * 0.18 * uGarden;
+  vec2 g = (gridXZ + slope * mix(0.5, 1.5, uGarden) + vec2(uFlow * 1.3, 0.0)) / 0.5;
   vec2 gw = fwidth(g) * 1.2;
   vec2 cell = abs(fract(g - 0.5) - 0.5) / max(gw, vec2(1e-4));
   float line = 1.0 - min(min(cell.x, cell.y), 1.0);
@@ -124,7 +132,11 @@ void main() {
   float lit = uVisible;
   vec3 warm = vec3(1.0, 0.43, 0.14);
   float gridBoost = 1.0 + 3.2 * sheen * lit;
-  color += vec3(0.23, 0.13, 0.063) * grid * gridBoost * 0.55 * (1.0 - uDay * 0.9);
+  vec2 basinOffset = xz - vec2(0.0, -2.8);
+  float underwaterGrid = 0.48 * (1.0 - fresnel) * (1.0 - exp(-dot(basinOffset, basinOffset) * 0.16) * 0.8);
+  vec3 gridColor = mix(vec3(0.23, 0.13, 0.063), vec3(0.18, 0.40, 0.46), uGarden);
+  color += gridColor * grid * gridBoost * 0.55 * (1.0 - uDay * 0.9)
+    * mix(1.0, underwaterGrid * (1.0 - uDay), uGarden);
   color += warm * sheen * 0.16 * lit * (1.0 - uDay * 0.7);
   color += warm * clamp(body, 0.0, 1.0) * 0.05 * lit * (1.0 - uDay * 0.8);
   // Under the body the water is a little darker: the creature hovers above it.
@@ -140,9 +152,25 @@ void main() {
   float spec = pow(max(dot(N, H), 0.0), 70.0) / (1.0 + ld * ld * 0.35);
   color += mix(vec3(1.0, 0.62, 0.32), vec3(1.0, 0.95, 0.85), uDay) * spec * 0.9 * lit * (1.0 - uDay * 0.5);
 
+  // Analytical glints from the physical celestial body and the three shore lanterns.
+  // This approximates rough reflection; it never renders the entire scene a second time.
+  vec3 celestial = vec3(${GARDEN_CELESTIAL.map((n) => n.toFixed(1)).join(", ")});
+  vec3 celestialRay = normalize(celestial - vWorld);
+  float reflection = pow(max(dot(R, celestialRay), 0.0), 220.0);
+  float broken = 0.55 + 0.45 * sin(xz.y * 30.0 + uTime * 1.4 + slope.x * 80.0);
+  color += mix(vec3(0.42, 0.63, 0.8), vec3(0.95, 0.64, 0.26), uDay) * reflection * broken * uGarden;
+  ${GARDEN_LAMPS.map(([x, z]) => `{
+    vec3 lamp = vec3(${x.toFixed(1)}, ${(WATER_Y + 1.59).toFixed(2)}, ${z.toFixed(1)});
+    float distanceToLamp = length(lamp - vWorld);
+    float glint = pow(max(dot(R, normalize(lamp - vWorld)), 0.0), 55.0);
+    float pool = exp(-dot(xz - lamp.xz, xz - lamp.xz) * 0.8) * 0.035;
+    color += vec3(1.0, 0.46, 0.12) * (pool + glint * 1.6 / (1.0 + distanceToLamp * 0.2)) * uGarden * (1.0 - uDay);
+  }`).join("\n")}
+
   // --- the far water melts into the air ---
   vec3 fogColor = mix(uNightFog, uDayFog, uDay);
-  float fogAmount = smoothstep(14.0, 44.0, camDist);
+  fogColor = mix(fogColor, mix(vec3(0.075, 0.13, 0.18), vec3(0.94, 0.78, 0.57), uDay), uGarden);
+  float fogAmount = smoothstep(mix(14.0, 22.0, uGarden), mix(44.0, 60.0, uGarden), camDist);
   color = mix(color, fogColor, fogAmount);
 
   gl_FragColor = vec4(color, 1.0);
@@ -156,6 +184,7 @@ function updateWater(material: ShaderMaterial, time: number) {
   const u = material.uniforms;
   u.uTime.value = time;
   u.uDay.value = sceneLive.day;
+  u.uGarden.value = gardenWeight(sceneLive.pos);
   u.uFlow.value = sceneLive.flow;
   u.uVisible.value = creatureLive.visibility;
   u.uMorph.value = creatureLive.morph;
@@ -177,6 +206,7 @@ export function Water() {
       uniforms: {
         uTime: { value: 0 },
         uDay: { value: 0 },
+        uGarden: { value: 0 },
         uFlow: { value: 0 },
         uVisible: { value: 1 },
         uMorph: { value: 0 },

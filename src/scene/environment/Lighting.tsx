@@ -6,6 +6,7 @@ import { Color, type DirectionalLight, type HemisphereLight, type PointLight } f
 import { creatureLive } from "../creature/live";
 import { lerp } from "../creature/profiles";
 import { sceneLive } from "./live";
+import { GARDEN_CELESTIAL, gardenWeight } from "./garden";
 
 /** Night and day settings; `sceneLive.day` blends between them (600 ms), so the theme switch never pops. */
 const NIGHT = {
@@ -36,17 +37,21 @@ export function Lighting() {
   const key = useRef<DirectionalLight>(null);
   const glow = useRef<PointLight>(null);
   const initial = useMemo(() => ({ sky: NIGHT.hemiSky.clone(), ground: NIGHT.hemiGround.clone() }), []);
+  const moonlight = useMemo(() => new Color(0x9ec8eb), []);
 
   useFrame(() => {
     const day = sceneLive.day;
+    const garden = gardenWeight(sceneLive.pos);
     if (hemi.current) {
       hemi.current.color.copy(NIGHT.hemiSky).lerp(DAY.hemiSky, day);
       hemi.current.groundColor.copy(NIGHT.hemiGround).lerp(DAY.hemiGround, day);
-      hemi.current.intensity = lerp(NIGHT.hemi, DAY.hemi, day);
+      hemi.current.intensity = lerp(NIGHT.hemi, DAY.hemi, day) + garden * (1 - day) * 0.12;
     }
     if (key.current) {
       key.current.color.copy(NIGHT.key).lerp(DAY.key, day);
+      key.current.color.lerp(moonlight, garden * (1 - day) * 0.65);
       key.current.intensity = lerp(NIGHT.keyIntensity, DAY.keyIntensity, day);
+      key.current.position.set(lerp(3, GARDEN_CELESTIAL[0], garden), lerp(6, GARDEN_CELESTIAL[1], garden), lerp(2, GARDEN_CELESTIAL[2], garden));
     }
     if (glow.current) {
       const h = creatureLive.head;

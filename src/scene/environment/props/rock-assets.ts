@@ -42,7 +42,7 @@ export function createRockAssets(own: ReturnType<typeof createOwner>["own"], z: 
       const batch = own(new InstancedMesh(geometry, mat, 8));
       for (let i = 0; i < 8; i++) {
         const side = i % 2 ? 1 : -1, tier = Math.floor(i / 2);
-        dummy.position.set(side * (2.3 + random() * 3.5), WATER_Y + 0.5 + tier * 1.9 + (random() - 0.5) * 0.45, z - 0.25 + random() * 0.35);
+        dummy.position.set(side * (2.3 + random() * 3.5), WATER_Y + 0.4 + tier * 1.4 + (random() - 0.5) * 0.45, z + 1.7 - tier * 0.35 + random() * 0.35);
         dummy.scale.set(1.2 + random() * 1.1, 0.9 + random(), 0.7 + random() * 0.7);
         dummy.rotation.set((random() - 0.5) * 0.3, random() * Math.PI * 2, (random() - 0.5) * 0.3);
         dummy.updateMatrix(); batch.setMatrixAt(i, dummy.matrix);

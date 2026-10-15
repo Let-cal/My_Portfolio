@@ -14,10 +14,10 @@ import {
 } from "three";
 import { mulberry32 } from "../../creature/random";
 import { WATER_Y } from "../constants";
+import { gardenWeight } from "../garden";
 import { propWeight } from "../math";
 import { createOwner, type Prop } from "./types";
 
-const CHAPTER = 2;
 const LEAVES = 10;
 const FLOWERS = 3;
 /** Petals per flower: an outer ring leaning out and an inner ring standing nearly upright. */
@@ -153,7 +153,7 @@ export function createLotus(): Prop {
   root.add(petals, hearts);
 
   function update(time: number, pos: number, day: number) {
-    const w = propWeight(pos, CHAPTER);
+    const w = Math.max(propWeight(pos, 2), gardenWeight(pos));
     root.visible = w > 0.01;
     if (!root.visible) return;
     leafMat.opacity = w;
@@ -171,7 +171,8 @@ export function createLotus(): Prop {
         l.z + Math.cos(time * 0.1 + l.seed * 5.1) * 0.22,
       );
       dummy.quaternion.setFromEuler(euler.set(Math.sin(time * 0.5 + l.seed * 7) * 0.015, l.rot + time * l.spin, 0));
-      dummy.scale.setScalar(l.r * (0.6 + 0.4 * w));
+      // The same leaves remain in the same pond when the camera rises towards Skills.
+      dummy.scale.setScalar(l.r);
       dummy.updateMatrix();
       leafMesh.setMatrixAt(i, dummy.matrix);
     }

@@ -13,7 +13,7 @@ export function createWaterfallLandscape(own: ReturnType<typeof createOwner>["ow
   const dummy = new Object3D();
   for (let i = 0; i < rocks.count; i++) {
     const side = i % 2 ? 1 : -1, tier = Math.floor(i / 4);
-    dummy.position.set(side * (2.8 + (i % 4) * 0.8), WATER_Y + 0.5 + tier * 2.4, z + 0.5);
+    dummy.position.set(side * (2.8 + (i % 4) * 0.8), WATER_Y + 0.5 + tier * 1.7, z + 1.8 - tier * 0.35);
     dummy.rotation.set(0.1, i * 0.7, 0.1); dummy.scale.set(1.4, 0.65, 0.8);
     dummy.updateMatrix(); rocks.setMatrixAt(i, dummy.matrix);
   }

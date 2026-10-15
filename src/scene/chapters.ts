@@ -71,7 +71,7 @@ export const CHAPTER_CAMERA: CameraPose[] = [
   { pos: [0, 3.8, 4.2], look: [0, -0.15, 0.1] },
   { pos: [-1.4, 2.5, 4.6], look: [0.6, -0.25, -0.4] },
   { pos: [0.4, 5.0, 2.8], look: [0, -0.3, -0.3] },
-  { pos: [3.2, 4.0, 12.8], look: [0, 2.6, -4.5] },
+  { pos: [2.6, 2.8, 12.0], look: [-0.4, 1.7, -4.5] },
   { pos: [0, 2.7, 5.6], look: [0, 0.1, -1.6] },
   { pos: [0, 3.6, 6.4], look: [0, 0.35, -1] },
   { pos: [0, 5.4, 7.8], look: [0, 0.9, -0.2] },
@@ -97,12 +97,14 @@ export function chapterPosition(chapter: number, t: number): number {
 
 type Vec3Like = { x: number; y: number; z: number };
 
-/** The camera at a chapter position (see `chapterPosition`): the table, interpolated linearly. Writes into `out`. */
+/** Garden transitions follow a bowed, eased path through the same pond. Other chapter paths stay linear. */
 export function cameraAtPosition(position: number, out: { pos: Vec3Like; look: Vec3Like }): void {
   const last = CHAPTER_CAMERA.length - 1;
   const p = Math.min(last, Math.max(0, position));
   const i = Math.min(last - 1, Math.floor(p));
-  const f = p - i;
+  const raw = p - i;
+  const garden = i === 2 || i === 3;
+  const f = garden ? raw * raw * (3 - 2 * raw) : raw;
   const a = CHAPTER_CAMERA[i];
   const b = CHAPTER_CAMERA[i + 1];
   out.pos.x = a.pos[0] * (1 - f) + b.pos[0] * f;
@@ -111,6 +113,13 @@ export function cameraAtPosition(position: number, out: { pos: Vec3Like; look: V
   out.look.x = a.look[0] * (1 - f) + b.look[0] * f;
   out.look.y = a.look[1] * (1 - f) + b.look[1] * f;
   out.look.z = a.look[2] * (1 - f) + b.look[2] * f;
+  if (garden) {
+    // Zero position and velocity contribution at either end, reversible from scroll alone.
+    const bow = 16 * raw * raw * (1 - raw) * (1 - raw);
+    out.pos.x -= 0.7 * bow;
+    out.pos.y += 0.25 * bow;
+    out.pos.z += 0.8 * bow;
+  }
 }
 
 /** The camera for a scroll state: `cameraAtPosition(chapterPosition(chapter, t))`. */
