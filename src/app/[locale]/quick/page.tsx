@@ -14,7 +14,11 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/quick">)
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) return {};
   const t = await getTranslations({ locale, namespace: "quick" });
-  return { title: t("metaTitle"), description: t("description") };
+  return {
+    title: t("metaTitle"), description: t("description"),
+    robots: { index: false, follow: true },
+    alternates: { canonical: `/${locale}`, languages: { en: "/en", ja: "/ja", vi: "/vi", "x-default": "/en" } },
+  };
 }
 
 /**

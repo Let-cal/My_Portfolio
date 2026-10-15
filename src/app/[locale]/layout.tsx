@@ -27,6 +27,7 @@ import { ROLE_KEYS } from "@/content/schema";
 import { routing } from "@/i18n/routing";
 import { getContent } from "@/lib/data/get-content";
 import { pickLocale } from "@/lib/i18n-text";
+import { buildPageMetadata, buildPersonJsonLd, serializeJsonLd } from "@/lib/metadata";
 import { DeferredToaster } from "@/components/site/DeferredToaster";
 import "../globals.css";
 
@@ -43,7 +44,7 @@ export async function generateMetadata({ params }: LayoutProps<"/[locale]">): Pr
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) return {};
   const t = await getTranslations({ locale, namespace: "meta" });
-  return { title: t("title"), description: t("description") };
+  return buildPageMetadata(locale, t("description"));
 }
 
 export default async function LocaleLayout({ children, params }: LayoutProps<"/[locale]">) {
@@ -80,6 +81,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
         </noscript>
       </head>
       <body className={bodyClassName}>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(buildPersonJsonLd(profile, pickLocale(roleOf("fullstack")?.title, locale))) }} />
         <NextIntlClientProvider>
           <ThemeSync />
           <AccentTypography />
