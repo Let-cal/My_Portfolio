@@ -3,6 +3,7 @@ import type { Content, Locale } from "@/content/schema";
 import { formatPeriod } from "@/lib/format";
 import { pickLocale } from "@/lib/i18n-text";
 import { ProjectsBento, type ProjectView } from "./projects/ProjectsBento";
+import { ProjectCardBody } from "./projects/ProjectCardBody";
 import { Reveal } from "@/components/site/Reveal";
 
 type Translate = ReturnType<typeof useTranslations<"projects">>;
@@ -80,7 +81,7 @@ export function Projects({ content, locale }: { content: Content; locale: Locale
         </h2>
       </Reveal>
       <div className="mt-10">
-        <ProjectsBento projects={projects} />
+        <ProjectsBento projects={projects} bodies={Object.fromEntries(projects.map((project, index) => [project.id, <ProjectCardBody key={project.id} project={project} index={index} featured={index === 0} />]))} />
       </div>
     </section>
   );

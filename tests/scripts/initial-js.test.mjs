@@ -17,6 +17,73 @@ test("initial translations omit the build-time ICU parser", { skip: !existsSync(
   }
 });
 
+test("imperative animation is loaded on interaction rather than in initial scripts", { skip: !existsSync(".next/server/app/en.html") }, () => {
+  const result = spawnSync(process.execPath, [script, "en", "--json"], { encoding: "utf8" });
+  const [{ chunks }] = JSON.parse(result.stdout);
+  for (const { src } of chunks) {
+    const code = readFileSync(join(".next", decodeURIComponent(src.replace(/^\/_next\//, ""))), "utf8");
+    assert.equal(code.includes("no-valid-elements"), false, `${src} loads the imperative animation dispatcher`);
+  }
+});
+
+test("below-fold scroll animation hooks are not startup dependencies", { skip: !existsSync(".next/server/app/en.html") }, () => {
+  const result = spawnSync(process.execPath, [script, "en", "--json"], { encoding: "utf8" });
+  const [{ chunks }] = JSON.parse(result.stdout);
+  for (const { src } of chunks) {
+    const code = readFileSync(join(".next", decodeURIComponent(src.replace(/^\/_next\//, ""))), "utf8");
+    assert.equal(code.includes("Target ref is defined but not hydrated"), false, `${src} loads scroll hooks before they are needed`);
+  }
+});
+
+test("optimized hero portraits do not ship the client image component", { skip: !existsSync(".next/server/app/en.html") }, () => {
+  const result = spawnSync(process.execPath, [script, "en", "--json"], { encoding: "utf8" });
+  const [{ chunks }] = JSON.parse(result.stdout);
+  for (const { src } of chunks) {
+    const code = readFileSync(join(".next", decodeURIComponent(src.replace(/^\/_next\//, ""))), "utf8");
+    assert.equal(code.includes("ImageConfigContext"), false, `${src} ships the client image runtime`);
+  }
+  const html = readFileSync(".next/server/app/en.html", "utf8");
+  assert.match(html, /srcSet="[^\"]*\/_next\/image\?/);
+});
+
+test("selection-only skill beams are deferred", { skip: !existsSync(".next/server/app/en.html") }, () => {
+  const result = spawnSync(process.execPath, [script, "en", "--json"], { encoding: "utf8" });
+  const [{ chunks }] = JSON.parse(result.stdout);
+  for (const { src } of chunks) {
+    const code = readFileSync(join(".next", decodeURIComponent(src.replace(/^\/_next\//, ""))), "utf8");
+    assert.equal(code.includes("--beam-delay"), false, `${src} loads beams before a skill is selected`);
+  }
+});
+
+test("Why artwork is rendered on the server rather than shipped as client JSX", { skip: !existsSync(".next/server/app/en.html") }, () => {
+  const result = spawnSync(process.execPath, [script, "en", "--json"], { encoding: "utf8" });
+  const [{ chunks }] = JSON.parse(result.stdout);
+  for (const { src } of chunks) {
+    const code = readFileSync(join(".next", decodeURIComponent(src.replace(/^\/_next\//, ""))), "utf8");
+    assert.equal(code.includes("why-wave-svg"), false, `${src} ships static wave markup`);
+  }
+  assert.match(readFileSync(".next/server/app/en.html", "utf8"), /why-wave-svg/);
+});
+
+test("project static presentation stays in server HTML", { skip: !existsSync(".next/server/app/en.html") }, () => {
+  const result = spawnSync(process.execPath, [script, "en", "--json"], { encoding: "utf8" });
+  const [{ chunks }] = JSON.parse(result.stdout);
+  for (const { src } of chunks) {
+    const code = readFileSync(join(".next", decodeURIComponent(src.replace(/^\/_next\//, ""))), "utf8");
+    assert.equal(code.includes("md:aspect-auto md:min-h-72"), false, `${src} ships static project presentation`);
+  }
+  assert.match(readFileSync(".next/server/app/en.html", "utf8"), /md:aspect-auto md:min-h-72/);
+});
+
+test("inline icons omit the generic icon builder", { skip: !existsSync(".next/server/app/en.html") }, () => {
+  const result = spawnSync(process.execPath, [script, "en", "--json"], { encoding: "utf8" });
+  const [{ chunks }] = JSON.parse(result.stdout);
+  for (const { src } of chunks) {
+    const code = readFileSync(join(".next", decodeURIComponent(src.replace(/^\/_next\//, ""))), "utf8");
+    assert.equal(code.includes("includeDefaultClasses"), false, `${src} ships the unused icon builder`);
+  }
+});
+
 test("critical typography does not schedule a late swap on slow connections", { skip: !existsSync(".next/server/app/en.html") }, () => {
   const html = readFileSync(".next/server/app/en.html", "utf8");
   for (const tag of html.matchAll(/<link\b[^>]*>/g)) {

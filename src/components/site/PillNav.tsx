@@ -1,6 +1,6 @@
 "use client";
 
-import { AwardIcon, BriefcaseIcon, FolderKanbanIcon, HeartIcon, HouseIcon, MailIcon, WrenchIcon, type LucideIcon } from "lucide-react";
+import { AwardIcon, BriefcaseIcon, FolderKanbanIcon, HeartIcon, HouseIcon, MailIcon, WrenchIcon, type LucideIcon } from "@/components/site/icons";
 import * as motion from "motion/react-m";
 import { useTranslations } from "next-intl";
 import { usePrefersReducedMotion } from "@/components/fx/use-media-query";

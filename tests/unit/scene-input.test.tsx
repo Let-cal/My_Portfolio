@@ -109,6 +109,26 @@ describe("useFeedClicks", () => {
 });
 
 describe("measureAvoid", () => {
+  it("clips a translated carousel card to its overflow viewport before protecting it", () => {
+    document.body.innerHTML = '<main><div id="viewport" style="overflow-x:clip"><article id="card" data-scene-avoid="box">card</article></div></main>';
+    box(document.getElementById("viewport")!, rect(450, 150, 950, 650));
+    box(document.getElementById("card")!, rect(100, 200, 500, 600));
+    expect(measureAvoid()).toMatchObject([{ x0: 450, y0: 200, x1: 500, y1: 600 }]);
+  });
+
+  it("keeps an opaque card as a creature exclusion without adding veils over it or its children", () => {
+    document.body.innerHTML = '<main><article id="card" data-scene-avoid="box" data-scene-veil="off"><p id="copy">text</p></article></main>';
+    box(document.getElementById("card")!, rect(500, 200, 800, 700));
+    box(document.getElementById("copy")!, rect(520, 600, 780, 680));
+    expect(measureAvoid()).toMatchObject([{ x0: 500, y0: 200, x1: 800, y1: 700, veil: false }]);
+    expect(measureAvoid()).toHaveLength(1);
+  });
+
+  it("ignores decorative hidden ticker copies even when they extend across the screen", () => {
+    document.body.innerHTML = '<main><div aria-hidden="true"><p id="copy">decorative name repeat</p></div></main>';
+    box(document.getElementById("copy")!, rect(-2000, 100, 3000, 200));
+    expect(measureAvoid()).toEqual([]);
+  });
   beforeEach(() => {
     // jsdom has no Range geometry: a range reports the box its element was given.
     vi.spyOn(Range.prototype, "selectNodeContents").mockImplementation(function (this: Range, node: Node) {

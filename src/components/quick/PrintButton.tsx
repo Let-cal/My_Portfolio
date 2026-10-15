@@ -1,6 +1,6 @@
 "use client";
 
-import { PrinterIcon } from "lucide-react";
+import { PrinterIcon } from "@/components/site/icons";
 import { Button } from "@/components/ui/button";
 
 /** Opens the browser print dialog. The only script the 60-second view adds besides the shared site chrome. */

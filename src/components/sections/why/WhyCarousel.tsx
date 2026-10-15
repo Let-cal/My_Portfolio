@@ -1,13 +1,14 @@
 "use client";
 
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon } from "@/components/site/icons";
 import * as motion from "motion/react-m";
-import { animate, useMotionValue } from "motion/react";
+import { useMotionValue } from "motion/react";
+import type { animate } from "motion";
+import { loadAnimate } from "@/lib/load-animate";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
 import { cn } from "@/lib/utils";
-import { WhyCard, type WhyCardView } from "./WhyCard";
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
@@ -24,7 +25,7 @@ const ROUND_BUTTON =
  * keys (while the carousel region has focus) all move the active card by animating the same motion value. The
  * current card is announced politely ("2 of 4"). Reduced motion keeps dragging but snaps without animation.
  */
-export function WhyCarousel({ cards }: { cards: WhyCardView[] }) {
+export function WhyCarousel({ cards }: { cards: { id: string; content: ReactNode }[] }) {
   const t = useTranslations("why");
   const reduced = usePrefersReducedMotion();
   const [active, setActive] = useState(0);
@@ -63,8 +64,13 @@ export function WhyCarousel({ cards }: { cards: WhyCardView[] }) {
   useEffect(() => {
     const target = metrics.stops[active];
     if (target === undefined || Math.abs(x.get() - target) < 0.5) return;
-    const controls = animate(x, target, reduced ? { duration: 0 } : { type: "spring", stiffness: 240, damping: 30, mass: 0.9 });
-    return () => controls.stop();
+    if (reduced) { x.set(target); return; }
+    let cancelled = false;
+    let controls: ReturnType<typeof animate> | undefined;
+    void loadAnimate().then((animate) => {
+      if (!cancelled) controls = animate(x, target, { type: "spring", stiffness: 240, damping: 30, mass: 0.9 });
+    }).catch(() => { if (!cancelled) x.set(target); });
+    return () => { cancelled = true; controls?.stop(); };
   }, [active, metrics, reduced, x]);
 
   /** Index of the card the track currently sits on; the ends win so a drag to either end selects the first/last card. */
@@ -170,7 +176,7 @@ export function WhyCarousel({ cards }: { cards: WhyCardView[] }) {
                   i === active ? "scale-100" : "scale-[0.96] saturate-[0.85]",
                 )}
               >
-                <WhyCard card={card} evidenceLabel={t("seeEvidence")} />
+                {card.content}
               </div>
             ))}
           </motion.div>

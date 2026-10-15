@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLinkIcon, RotateCwIcon } from "lucide-react";
+import { ExternalLinkIcon, RotateCwIcon } from "@/components/site/icons";
 import { useTranslations } from "next-intl";
 import { useId, useRef, useState, type KeyboardEvent } from "react";
 import { cn } from "@/lib/utils";

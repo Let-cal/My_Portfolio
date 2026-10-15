@@ -1,15 +1,9 @@
 "use client";
 
-import * as motion from "motion/react-m";
-import {
-  useMotionValueEvent,
-  useScroll,
-  useSpring,
-  useTransform,
-} from "motion/react";
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useId, useRef, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { usePrefersReducedMotion } from "./use-media-query";
+import { useScrollEnhancement } from "./use-scroll-enhancement";
 
 type TracingBeamProps = {
   children: ReactNode;
@@ -34,41 +28,13 @@ export function TracingBeam({
   const reduced = usePrefersReducedMotion();
   const gradient = useId();
   const rootRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: rootRef,
-    offset: ["start 70%", "end 50%"],
-  });
-  const progress = useSpring(scrollYProgress, {
-    stiffness: 120,
-    damping: 30,
-    restDelta: 0.001,
-  });
-  const headTop = useTransform(
-    progress,
-    (v) => `${Math.min(1, Math.max(0, v)) * 100}%`,
-  );
-
-  // The attribute is written straight to the DOM so scrolling never re-renders the list.
-  const write = (value: number) => {
-    rootRef.current?.setAttribute(
-      "data-progress",
-      Math.min(1, Math.max(0, value))
-        .toFixed(3)
-        .replace(/\.?0+$/, "") || "0",
-    );
-  };
-  useMotionValueEvent(progress, "change", (v) => {
-    if (!reduced) write(v);
-  });
-  useEffect(() => {
-    if (!reduced) write(progress.get());
-  }, [reduced, progress]);
+  useScrollEnhancement(rootRef, "beam", reduced);
 
   return (
     <div
       ref={rootRef}
       data-tracing-beam=""
-      data-progress={reduced ? "1" : undefined}
+      data-progress={reduced ? "1" : "0"}
       className={cn("relative", className)}
     >
       <div
@@ -105,18 +71,21 @@ export function TracingBeam({
             strokeWidth={2}
             className="text-border"
           />
-          <motion.path
+          <path
+            data-beam-path=""
             d="M24 0V1000"
             fill="none"
             stroke={`url(#${gradient})`}
             strokeWidth={3}
-            style={{ pathLength: reduced ? 1 : progress }}
+            pathLength={1}
+            strokeDasharray="1 1"
+            strokeDashoffset={reduced ? 0 : 1}
           />
         </svg>
-        <motion.span
+        <span
           data-beam-head=""
           className="absolute left-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--role-accent,#f97316)] shadow-[0_0_14px_3px_var(--role-accent,#f97316)]"
-          style={{ top: reduced ? "100%" : headTop }}
+          style={{ top: reduced ? "100%" : "0%" }}
         />
       </div>
       {children}

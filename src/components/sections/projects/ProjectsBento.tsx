@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { ProjectCard, type ProjectView } from "./ProjectCard";
 
@@ -12,7 +12,7 @@ export type { ProjectView };
  * Bento grid of projects: one column on phones, two from md up with the first card across both. A lone last card in
  * the two-column rows also spans both so the grid never ends on a hole. Owns the case study sheet.
  */
-export function ProjectsBento({ projects }: { projects: ProjectView[] }) {
+export function ProjectsBento({ projects, bodies }: { projects: ProjectView[]; bodies: Record<string, ReactNode> }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [shownId, setShownId] = useState<string | null>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
@@ -37,7 +37,7 @@ export function ProjectsBento({ projects }: { projects: ProjectView[] }) {
             featured={index === 0}
             wide={loneLast && index === projects.length - 1}
             onOpenCaseStudy={openCaseStudy}
-          />
+          >{bodies[project.id]}</ProjectCard>
         ))}
       </div>
 

@@ -1,4 +1,4 @@
-import { MapPinIcon } from "lucide-react";
+import { MapPinIcon } from "@/components/site/icons";
 import { LocalTime } from "@/components/fx/LocalTime";
 
 export type AvailabilityStatusProps = {

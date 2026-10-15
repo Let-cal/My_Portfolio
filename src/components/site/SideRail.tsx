@@ -1,6 +1,6 @@
 "use client";
 
-import { MailIcon } from "lucide-react";
+import { MailIcon } from "@/components/site/icons";
 import { useTranslations } from "next-intl";
 import { TextScramble } from "@/components/fx/TextScramble";
 import type { RoleKey } from "@/content/schema";

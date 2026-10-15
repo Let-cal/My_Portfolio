@@ -1,6 +1,7 @@
 import { KineticText } from "@/components/fx/KineticText";
 import { ROLE_KEYS, type Content, type Locale, type RoleKey } from "@/content/schema";
 import { pickLocale } from "@/lib/i18n-text";
+import { getRolePortraits } from "@/lib/role-portraits.server";
 import { HeroStats } from "./hero/HeroStats";
 import { NameMarquee } from "./hero/NameMarquee";
 import { ProfileStatusCard } from "./hero/ProfileStatusCard";
@@ -53,7 +54,7 @@ export function Hero({ content, locale }: { content: Content; locale: Locale }) 
       </header>
 
       <div className="hero-stage-wrap mt-4 sm:mt-6">
-        <RoleStage />
+        <RoleStage portraits={getRolePortraits()} />
       </div>
 
       <div data-scene-avoid="" className="mx-auto mt-14 max-w-3xl text-center">
@@ -72,7 +73,7 @@ export function Hero({ content, locale }: { content: Content; locale: Locale }) 
         <HeroStats />
       </div>
 
-      <div data-scene-avoid="" className="-mx-4 mt-14 sm:-mx-6">
+      <div data-scene-ignore="" className="-mx-4 mt-14 sm:-mx-6">
         <NameMarquee name={profile.name} />
       </div>
 

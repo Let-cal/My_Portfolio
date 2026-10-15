@@ -6,6 +6,8 @@ export type Rect = {
   y1: number;
   /** Large text (24px, or 19px bold, and up): readable at a lower contrast, so by day it needs no veil of its own. */
   large?: boolean;
+  /** An opaque card still excludes the creature, but needs no additional DOM backdrop. */
+  veil?: boolean;
 };
 
 /** The most blocks of text protected at once (one element each in the veil layer). */
@@ -55,8 +57,8 @@ export function creatureVisibility(
 }
 
 /**
- * Joins rectangles that touch or are closer than `gap` pixels into their bounding box, repeatedly, so a row of chips or
- * the lines of a list become one block instead of dozens of rectangles. A new array: the input is left alone.
+ * Joins nearby compact rectangles with the same backdrop policy. Rows of chips can share protection, while an
+ * offset pair must not fill an empty courtyard. A new array: the input is left alone.
  */
 export function mergeRects(rects: readonly Rect[], gap: number): Rect[] {
   const out: Rect[] = rects.map((r) => ({ ...r }));
@@ -67,7 +69,12 @@ export function mergeRects(rects: readonly Rect[], gap: number): Rect[] {
       for (let j = i + 1; j < out.length; j++) {
         const a = out[i];
         const b = out[j];
-        if (b.x0 - a.x1 <= gap && a.x0 - b.x1 <= gap && b.y0 - a.y1 <= gap && a.y0 - b.y1 <= gap) {
+        const unionArea = (Math.max(a.x1, b.x1) - Math.min(a.x0, b.x0)) * (Math.max(a.y1, b.y1) - Math.min(a.y0, b.y0));
+        const overlap = Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0)) * Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0));
+        const filledArea = (a.x1 - a.x0) * (a.y1 - a.y0) + (b.x1 - b.x0) * (b.y1 - b.y0) - overlap;
+        // A shared backdrop must not turn an L-shaped pair into a large empty panel.
+        const compact = filledArea >= unionArea * 0.75;
+        if ((a.veil !== false) === (b.veil !== false) && compact && b.x0 - a.x1 <= gap && a.x0 - b.x1 <= gap && b.y0 - a.y1 <= gap && a.y0 - b.y1 <= gap) {
           a.x0 = Math.min(a.x0, b.x0);
           a.y0 = Math.min(a.y0, b.y0);
           a.x1 = Math.max(a.x1, b.x1);
@@ -94,7 +101,7 @@ export function selectRects(rects: readonly Rect[], width: number, height: numbe
     const y0 = Math.max(0, r.y0);
     const x1 = Math.min(width, r.x1);
     const y1 = Math.min(height, r.y1);
-    if (x1 - x0 > 0 && y1 - y0 > 0) kept.push({ x0, y0, x1, y1, large: r.large });
+    if (x1 - x0 > 0 && y1 - y0 > 0) kept.push({ x0, y0, x1, y1, large: r.large, ...(r.veil === false ? { veil: false } : {}) });
   }
   kept.sort((a, b) => (b.x1 - b.x0) * (b.y1 - b.y0) - (a.x1 - a.x0) * (a.y1 - a.y0));
   return kept.length > max ? kept.slice(0, max) : kept;

@@ -13,14 +13,6 @@ vi.mock("@/i18n/navigation", () => ({
   useRouter: () => ({ replace }),
   usePathname: () => "/en",
 }));
-vi.mock("next/image", () => ({
-  default: ({ preload, fill, ...props }: Record<string, unknown>) => {
-    void preload;
-    void fill;
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img {...(props as object)} alt={String(props.alt)} />;
-  },
-}));
 
 import { HeroStats } from "@/components/sections/hero/HeroStats";
 import { NameMarquee } from "@/components/sections/hero/NameMarquee";
@@ -92,7 +84,7 @@ describe("RoleWheel", () => {
     expect(tl).toHaveAttribute("tabindex", "0");
     expect(dev).toHaveAttribute("aria-checked", "false");
     expect(tl).toHaveFocus();
-    expect(replace).toHaveBeenCalledWith("/en?role=techlead", { scroll: false });
+    expect(window.location.pathname + window.location.search).toBe("/en?role=techlead");
   });
 
   it("ArrowLeft from the first role wraps to the last", async () => {

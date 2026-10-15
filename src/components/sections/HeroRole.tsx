@@ -1,8 +1,7 @@
 "use client";
 
-import { DownloadIcon, MailIcon, TimerIcon } from "lucide-react";
-import * as motion from "motion/react-m";
-import { AnimatePresence } from "motion/react";
+import { DownloadIcon, MailIcon, TimerIcon } from "@/components/site/icons";
+import { useExitingValue } from "@/components/fx/use-exiting-value";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { MagneticButton } from "@/components/fx/MagneticButton";
@@ -33,22 +32,13 @@ export function HeroRoleBody({ roles, locale }: { roles: Record<RoleKey, HeroRol
   const { role } = useRole();
   const reduced = usePrefersReducedMotion();
   const current = roles[role];
+  const presence = useExitingValue(role, reduced, 200);
 
   return (
     <>
       <div aria-live="polite" className="mt-5 grid">
-        <AnimatePresence initial={false}>
-          <motion.p
-            key={role}
-            className="col-start-1 row-start-1 text-base leading-relaxed text-muted-foreground sm:text-lg"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: reduced ? 0 : 0.2 }}
-          >
-            {current.summary}
-          </motion.p>
-        </AnimatePresence>
+        {presence.leaving.map((frame) => <p key={frame.key} aria-hidden="true" className="hero-summary-exit col-start-1 row-start-1 text-base leading-relaxed text-muted-foreground sm:text-lg" onAnimationEnd={() => presence.finish(frame.key)}>{roles[frame.value].summary}</p>)}
+        <p key={presence.current.key} className={`col-start-1 row-start-1 text-base leading-relaxed text-muted-foreground sm:text-lg${!reduced && presence.current.key > 0 ? " hero-summary-enter" : ""}`}>{current.summary}</p>
       </div>
       <div className="mt-8 flex flex-wrap justify-center gap-3">
         {current.cvFileUrl && (

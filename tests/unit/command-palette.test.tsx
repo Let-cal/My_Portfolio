@@ -199,10 +199,13 @@ describe("CommandPalette", () => {
 
   it("switches the role through the role provider and closes", async () => {
     const user = userEvent.setup();
+    const history = vi.spyOn(window.history, "replaceState");
     render(palette());
     openPalette();
     await user.click(await screen.findByRole("option", { name: "Tech Lead" }));
-    expect(replace).toHaveBeenCalledWith(expect.stringContaining("role=techlead"), { scroll: false });
+    // This suite stubs location for full-navigation commands, so observe the actual history write.
+    expect(history).toHaveBeenCalledWith(null, "", expect.stringContaining("?role=techlead#skills"));
+    history.mockRestore();
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   });
 

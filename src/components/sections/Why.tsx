@@ -3,7 +3,7 @@ import { ScrollTextReveal } from "@/components/fx/ScrollTextReveal";
 import type { Content, Locale } from "@/content/schema";
 import { pickLocale } from "@/lib/i18n-text";
 import { WhyCarousel } from "./why/WhyCarousel";
-import type { WhyCardView } from "./why/WhyCard";
+import { WhyCard, type WhyCardView } from "./why/WhyCard";
 import { Reveal } from "@/components/site/Reveal";
 
 /**
@@ -46,7 +46,7 @@ export function Why({ content, locale }: { content: Content; locale: Locale }) {
           className="font-heading text-2xl leading-snug font-medium tracking-tight text-balance sm:text-3xl md:text-4xl"
         />
       </div>
-      <WhyCarousel cards={cards} />
+      <WhyCarousel cards={cards.map((card) => ({ id: card.id, content: <WhyCard card={card} evidenceLabel={t("seeEvidence")} /> }))} />
     </section>
   );
 }

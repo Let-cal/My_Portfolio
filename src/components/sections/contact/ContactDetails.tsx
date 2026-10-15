@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRightIcon, CalendarIcon, CheckIcon, CopyIcon, DownloadIcon, MailIcon } from "lucide-react";
+import { ArrowUpRightIcon, CalendarIcon, CheckIcon, CopyIcon, DownloadIcon, MailIcon } from "@/components/site/icons";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { useRole } from "@/components/site/RoleProvider";

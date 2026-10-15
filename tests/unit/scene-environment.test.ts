@@ -236,6 +236,10 @@ describe("veilOpacity for large text", () => {
 });
 
 describe("mergeRects", () => {
+  it("does not fill an empty courtyard between a sidebar and an offset content card", () => {
+    const blocks = [{ x0: 20, y0: 200, x1: 360, y1: 500 }, { x0: 350, y0: 490, x1: 1000, y1: 700 }];
+    expect(mergeRects(blocks, 28)).toHaveLength(2);
+  });
   it("joins rectangles that touch or sit closer than the gap, so a row of chips becomes one block", () => {
     const chips: Rect[] = [0, 1, 2, 3].map((i) => ({ x0: i * 60, y0: 0, x1: i * 60 + 50, y1: 24 }));
     const merged = mergeRects(chips, 20);

@@ -1,4 +1,5 @@
 import { renderToString } from "react-dom/server";
+import { Profiler } from "react";
 import { act, fireEvent, render, renderHook, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -58,6 +59,23 @@ describe("usePointerFine", () => {
 });
 
 describe("NumberTicker", () => {
+  it("counts without scheduling React renders on animation frames", () => {
+    stubMedia(() => false);
+    vi.useFakeTimers();
+    let trigger: IntersectionObserverCallback = () => {};
+    vi.stubGlobal("IntersectionObserver", class extends FakeObserver {
+      constructor(callback: IntersectionObserverCallback) { super(); trigger = callback; }
+    });
+    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => setTimeout(() => callback(performance.now()), 16));
+    vi.stubGlobal("cancelAnimationFrame", (id: number) => clearTimeout(id));
+    const commits = vi.fn();
+    render(<Profiler id="ticker" onRender={commits}><NumberTicker value={100} durationMs={1000} /></Profiler>);
+    commits.mockClear();
+    act(() => trigger([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver));
+    act(() => { vi.advanceTimersByTime(1100); });
+    expect(screen.getByLabelText("100").querySelector("[data-ticker-value]")).toHaveTextContent("100");
+    expect(commits).not.toHaveBeenCalled();
+  });
   it("shows the final value immediately under reduced motion", () => {
     stubMedia(reduced);
     render(<NumberTicker value={14} />);

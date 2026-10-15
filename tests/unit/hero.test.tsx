@@ -14,15 +14,6 @@ vi.mock("@/i18n/navigation", () => ({
   useRouter: () => ({ replace }),
   usePathname: () => "/en",
 }));
-// next/image would try to optimise the file; a plain <img> keeps the props visible to the test.
-vi.mock("next/image", () => ({
-  default: ({ preload, fill, fetchPriority, ...props }: Record<string, unknown>) => {
-    void preload;
-    void fill;
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img {...(props as object)} alt={String(props.alt)} data-fetch-priority={String(fetchPriority)} />;
-  },
-}));
 
 import { Hero } from "@/components/sections/Hero";
 import { RoleProvider } from "@/components/site/RoleProvider";
@@ -105,7 +96,7 @@ describe("Hero", () => {
     const { container } = renderHero();
     const img = container.querySelector("[data-layer='base'] img")!;
     expect(img).toHaveAttribute("sizes");
-    expect(img).toHaveAttribute("data-fetch-priority", "high");
+    expect(img).toHaveAttribute("fetchpriority", "high");
     expect(img.getAttribute("alt")).toBe(en.hero.wheel.alt.fullstack);
     const zone = container.querySelector("[data-water-zone]");
     expect(zone).not.toBeNull();
@@ -140,7 +131,7 @@ describe("Role wheel in the Hero", () => {
     await userEvent.click(screen.getByRole("radio", { name: "TECH LEAD" }));
     expect(title("Software Engineer · Tech Lead")).toBeInTheDocument();
     expect(await screen.findByText(content.profile.summaries.techlead.en)).toBeInTheDocument();
-    expect(replace).toHaveBeenCalledWith("/en?role=techlead", { scroll: false });
+    expect(window.location.pathname + window.location.search).toBe("/en?role=techlead");
   });
 
   it("arrow keys move between roles (roving tabindex)", async () => {

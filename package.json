@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "prebuild": "node scripts/generate-portrait-props.mjs && node scripts/generate-site-icons.mjs",
     "dev": "next dev",
     "build": "next build --webpack",
     "check:bundle": "node scripts/measure-initial-js.mjs",

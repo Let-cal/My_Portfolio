@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import Image from "next/image";
+import { ROLE_PORTRAIT_SIZES, type RolePortraits } from "@/lib/role-portraits";
 import { useId, useRef, type CSSProperties, type KeyboardEvent, type PointerEvent } from "react";
 import type { RoleKey } from "@/content/schema";
 import { ROLE_ACCENT, SECTOR_FROM, WHEEL_ORDER, angleFromPoint, sectorForAngle } from "@/lib/role-accent";
@@ -14,7 +14,6 @@ const C = WHEEL_VIEWBOX / 2;
 export const ARC_RADIUS = 208;
 const GAP = 7;
 const SWIPE_PX = 40;
-const SIZES = "(min-width: 1024px) 440px, min(360px, 80vw)";
 
 /** Point on a circle around the wheel centre at a CSS angle (0° = top, clockwise). */
 export function wheelPoint(deg: number, r = ARC_RADIUS): [number, number] {
@@ -36,17 +35,17 @@ const ARROWS: Record<string, number> = { ArrowRight: 1, ArrowDown: 1, ArrowLeft:
  * Circular portrait split into the three role slices, with an SVG ring of three arcs (the radiogroup).
  * Works on its own (it then creates its own stage) or inside RoleStage next to RolePanels.
  */
-export function RoleWheel({ className }: { className?: string }) {
+export function RoleWheel({ className, portraits }: { className?: string; portraits?: RolePortraits }) {
   return useOptionalStage() ? (
-    <WheelView className={className} />
+    <WheelView className={className} portraits={portraits} />
   ) : (
     <RoleStageProvider>
-      <WheelView className={className} />
+      <WheelView className={className} portraits={portraits} />
     </RoleStageProvider>
   );
 }
 
-function WheelView({ className }: { className?: string }) {
+function WheelView({ className, portraits }: { className?: string; portraits?: RolePortraits }) {
   const t = useTranslations("hero");
   const { role, base, active, peekRole, reduced, setHover, select, peekRef, baseImgRef } = useStage();
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
@@ -120,24 +119,26 @@ function WheelView({ className }: { className?: string }) {
         onClick={onDiscClick}
       >
         <div data-layer="base" className="hero-layer">
-          <Image
+          {/* eslint-disable-next-line @next/next/no-img-element -- responsive optimizer props are computed by getImageProps on the server */}
+          <img
+            {...portraits?.[base]}
             ref={baseImgRef}
-            src={ROLE_IMAGE[base]}
+            src={portraits?.[base].src ?? ROLE_IMAGE[base]}
             alt={t(`wheel.alt.${base}`)}
-            fill
-            sizes={SIZES}
+            sizes={ROLE_PORTRAIT_SIZES}
             fetchPriority="high"
             loading="eager"
             draggable={false}
           />
         </div>
         <div ref={peekRef} data-layer="peek" aria-hidden="true" className="hero-layer hero-peek">
-          <Image
+          {/* eslint-disable-next-line @next/next/no-img-element -- uses the same server-computed responsive URLs as the base */}
+          <img
+            {...portraits?.[peekRole]}
             key={peekRole}
-            src={ROLE_IMAGE[peekRole]}
+            src={portraits?.[peekRole].src ?? ROLE_IMAGE[peekRole]}
             alt=""
-            fill
-            sizes={SIZES}
+            sizes={ROLE_PORTRAIT_SIZES}
             draggable={false}
             data-on=""
           />

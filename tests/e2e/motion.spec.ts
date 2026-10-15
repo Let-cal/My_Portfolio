@@ -1,6 +1,43 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("motion preference and scene fallbacks", () => {
+  test("deferred scroll effects keep all cards visible and start with their original scroll ranges", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.addInitScript(() => { localStorage.setItem("motion", "on"); sessionStorage.setItem("hello", "1"); });
+    await page.goto("/en");
+    await expect(page.locator("[data-why-card]")).toHaveCount(4);
+    await expect(page.locator("#hero-heading")).toBeVisible();
+    const beam = page.locator("[data-tracing-beam]");
+    await beam.evaluate((element) => {
+      const box = element.getBoundingClientRect();
+      window.scrollTo(0, window.scrollY + box.top + box.height * 0.45 - window.innerHeight * 0.6);
+    });
+    await expect.poll(async () => Number(await beam.getAttribute("data-progress"))).toBeGreaterThan(0.1);
+    await expect.poll(async () => Number(await beam.getAttribute("data-progress"))).toBeLessThan(0.9);
+    const words = page.locator("[data-manifesto] p");
+    await words.evaluate((element) => {
+      const box = element.getBoundingClientRect();
+      window.scrollTo(0, window.scrollY + box.top - window.innerHeight * 0.9 + (box.height + window.innerHeight * 0.4) * 0.5);
+    });
+    await expect.poll(() => words.locator("[data-reveal-unit]").first().evaluate((element) => Number(getComputedStyle(element).opacity))).toBe(1);
+    await expect.poll(() => words.locator("[data-reveal-unit]").last().evaluate((element) => Number(getComputedStyle(element).opacity))).toBeCloseTo(0.65, 2);
+  });
+
+  test("hero CSS text swaps retain their approved timing and offsets", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.addInitScript(() => { localStorage.setItem("motion", "on"); sessionStorage.setItem("hello", "1"); });
+    await page.goto("/en");
+    const incoming = page.locator(".hero-word-enter");
+    await expect(incoming).toHaveCount(1, { timeout: 6000 });
+    const styles = await incoming.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return { duration: style.animationDuration, easing: style.animationTimingFunction };
+    });
+    expect(styles).toEqual({ duration: "0.35s", easing: "cubic-bezier(0.22, 1, 0.36, 1)" });
+    await expect(page.locator("[data-phrase-current]")).toHaveCount(1);
+  });
   test("without JavaScript, OS reduced motion still disables decorative CSS animation", async ({ browser }) => {
     const context = await browser.newContext({ javaScriptEnabled: false, reducedMotion: "reduce" });
     try {
@@ -66,7 +103,10 @@ test.describe("motion preference and scene fallbacks", () => {
   });
 
   test("Motion on overrides OS reduce and canvas never catches page controls", async ({ page }) => {
-    await page.addInitScript(() => localStorage.setItem("motion", "on"));
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "hardwareConcurrency", { value: 4 });
+      localStorage.setItem("motion", "on");
+    });
     await page.goto("/en");
     await expect(page.locator("html")).toHaveAttribute("data-motion", "full");
     await expect(page.locator("[data-koi-canvas] canvas")).toHaveCount(1, { timeout: 20_000 });

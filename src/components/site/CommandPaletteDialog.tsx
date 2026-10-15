@@ -12,7 +12,7 @@ import {
   SunIcon,
   TimerIcon,
   UserIcon,
-} from "lucide-react";
+} from "@/components/site/icons";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {

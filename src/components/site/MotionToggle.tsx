@@ -1,6 +1,6 @@
 "use client";
 
-import { PauseIcon, SparklesIcon } from "lucide-react";
+import { PauseIcon, SparklesIcon } from "@/components/site/icons";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useMotionPreference } from "./motion-preference";

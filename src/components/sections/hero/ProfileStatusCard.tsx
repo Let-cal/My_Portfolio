@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckIcon, CopyIcon, DownloadIcon } from "lucide-react";
+import { CheckIcon, CopyIcon, DownloadIcon } from "@/components/site/icons";
 import { useTranslations } from "next-intl";
 import { MagneticButton } from "@/components/fx/MagneticButton";
 import { AvailabilityStatus } from "@/components/site/AvailabilityStatus";

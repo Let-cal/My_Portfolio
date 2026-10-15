@@ -1,13 +1,14 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
 import { useHighlight } from "@/components/site/HighlightProvider";
 import { useRole } from "@/components/site/RoleProvider";
 import type { RoleKey, SkillGroup } from "@/content/schema";
 import { cn } from "@/lib/utils";
-import { SkillBeams } from "./SkillBeams";
+const SkillBeams = dynamic(() => import("./SkillBeams").then((module) => module.SkillBeams), { ssr: false });
 import { SkillGlyph, SkillMonogram } from "./SkillGlyph";
 import { SkillTerminal } from "./SkillTerminal";
 
@@ -124,7 +125,7 @@ export function SkillMap({ data }: { data: SkillMapData }) {
 
   return (
     <div ref={containerRef} className="relative mt-12">
-      <SkillBeams
+      {selected && evidence.length > 0 && <SkillBeams
         containerRef={containerRef}
         skillId={selected && evidence.length > 0 ? selected.id : null}
         getChip={getChip}
@@ -133,7 +134,7 @@ export function SkillMap({ data }: { data: SkillMapData }) {
         activeCardId={activeCard}
         layoutKey={layoutKey}
         reduced={reduced}
-      />
+      />}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem] xl:gap-12">
         <div className="xl:sticky xl:top-20 xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:self-start">

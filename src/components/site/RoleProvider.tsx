@@ -12,7 +12,6 @@ import {
   type ReactNode,
 } from "react";
 import { useSearchParams } from "next/navigation";
-import { useRouter, usePathname } from "@/i18n/navigation";
 import type { RoleKey } from "@/content/schema";
 import { ROLE_ACCENT } from "@/lib/role-accent";
 import { DEFAULT_ROLE, parseRole } from "@/lib/roles";
@@ -60,13 +59,11 @@ function RoleUrlSync({ onRole }: { onRole: (role: RoleKey) => void }) {
 /**
  * Current role, kept in sync with `?role=`. The static HTML is rendered with the default role;
  * the URL value is applied right after hydration. `setRole` updates immediately, then rewrites the URL
- * with `router.replace` (no scroll), keeping the other query params and the hash. The role's accent colour is
+ * with Next-integrated native history (no scroll or RSC refetch), keeping other query params and the hash. The role's accent colour is
  * written to `--role-accent` on <html>.
  */
 export function RoleProvider({ children }: { children: ReactNode }) {
   const [store] = useState(createRoleStore);
-  const router = useRouter();
-  const pathname = usePathname();
   const role = useSyncExternalStore(store.subscribe, store.get, () => DEFAULT_ROLE);
 
   const setRole = useCallback(
@@ -76,9 +73,9 @@ export function RoleProvider({ children }: { children: ReactNode }) {
       if (next === DEFAULT_ROLE) params.delete("role");
       else params.set("role", next);
       const query = params.toString();
-      router.replace(`${pathname}${query ? `?${query}` : ""}${window.location.hash}`, { scroll: false });
+      window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`);
     },
-    [store, router, pathname],
+    [store],
   );
 
   // The accent of the chosen role feeds every `var(--role-accent)` on the page (globals.css holds the default).

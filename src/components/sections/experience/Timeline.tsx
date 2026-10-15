@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRightIcon } from "lucide-react";
+import { ChevronRightIcon } from "@/components/site/icons";
 import * as motion from "motion/react-m";
 import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";

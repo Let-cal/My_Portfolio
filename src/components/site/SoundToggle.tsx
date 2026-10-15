@@ -1,6 +1,6 @@
 "use client";
 
-import { Volume2Icon, VolumeXIcon } from "lucide-react";
+import { Volume2Icon, VolumeXIcon } from "@/components/site/icons";
 import { useTranslations } from "next-intl";
 import { useSound } from "@/components/fx/sound";
 import { Button } from "@/components/ui/button";

@@ -41,7 +41,8 @@ export function TextVeil() {
     const snap: boolean[] = [];
     const last: { x: number; y: number; w: number; h: number }[] = [];
     const eased: HTMLElement[] = [];
-    let rects = sceneStore.getState().avoid;
+    let source = sceneStore.getState().avoid;
+    let rects = source.filter((rect) => rect.veil !== false);
 
     const place = () => {
       while (pool.length < rects.length) {
@@ -111,8 +112,9 @@ export function TextVeil() {
     fade();
     const unsubscribe = sceneStore.subscribe(() => {
       const next = sceneStore.getState().avoid;
-      if (next === rects) return;
-      rects = next;
+      if (next === source) return;
+      source = next;
+      rects = next.filter((rect) => rect.veil !== false);
       place();
     });
     let frame = requestAnimationFrame(function tick() {

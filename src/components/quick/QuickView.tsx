@@ -1,4 +1,4 @@
-import { ArrowLeftIcon, DownloadIcon } from "lucide-react";
+import { ArrowLeftIcon, DownloadIcon } from "@/components/site/icons";
 import { useTranslations } from "next-intl";
 import { LanguageSwitch } from "@/components/site/LanguageSwitch";
 import { ThemeToggle } from "@/components/site/ThemeToggle";

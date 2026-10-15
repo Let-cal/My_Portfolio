@@ -61,7 +61,8 @@ describe("RoleProvider", () => {
     );
     await userEvent.click(screen.getByText("tl"));
     expect(screen.getByTestId("role").textContent).toBe("techlead");
-    expect(replace).toHaveBeenCalledWith("/ja?utm=x&role=techlead#skills", { scroll: false });
+    expect(window.location.pathname + window.location.search + window.location.hash).toBe("/ja?utm=x&role=techlead#skills");
+    expect(replace).not.toHaveBeenCalled();
   });
 
   it("setRole(default) drops the role param", async () => {
@@ -72,6 +73,6 @@ describe("RoleProvider", () => {
       </RoleProvider>,
     );
     await userEvent.click(screen.getByText("fs"));
-    expect(replace).toHaveBeenCalledWith("/ja", { scroll: false });
+    expect(window.location.pathname + window.location.search).toBe("/ja");
   });
 });

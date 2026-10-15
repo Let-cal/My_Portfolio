@@ -1,8 +1,9 @@
 "use client";
 
-import { animate } from "motion/react";
-import { Slot } from "radix-ui";
-import { useRef, type ComponentProps, type PointerEvent } from "react";
+import type { animate } from "motion";
+import * as Slot from "@radix-ui/react-slot";
+import { useEffect, useRef, type ComponentProps, type PointerEvent } from "react";
+import { loadAnimate } from "@/lib/load-animate";
 import { usePrefersReducedMotion } from "./use-media-query";
 import { usePointerFine } from "./use-pointer-fine";
 
@@ -25,6 +26,25 @@ export function MagneticButton({ strength = 0.35, asChild = false, onPointerMove
   const reduced = usePrefersReducedMotion();
   const active = fine && !reduced;
   const innerRef = useRef<HTMLButtonElement | null>(null);
+  const revision = useRef(0);
+  const controls = useRef<ReturnType<typeof animate> | null>(null);
+
+  useEffect(() => {
+    const generation = revision;
+    if (!active && innerRef.current) innerRef.current.style.transform = "";
+    return () => { generation.current++; controls.current?.stop(); };
+  }, [active]);
+
+  function move(el: HTMLButtonElement, x: number, y: number) {
+    const request = ++revision.current;
+    void loadAnimate().then((animate) => {
+      if (request !== revision.current || innerRef.current !== el) return;
+      controls.current?.stop();
+      controls.current = animate(el, { x, y }, SPRING);
+    }).catch(() => {
+      if (request === revision.current) el.style.transform = `translate(${x}px, ${y}px)`;
+    });
+  }
 
   function setRef(node: HTMLButtonElement | null) {
     innerRef.current = node;
@@ -41,14 +61,14 @@ export function MagneticButton({ strength = 0.35, asChild = false, onPointerMove
     const dy = (e.clientY - (rect.top + rect.height / 2)) * strength;
     const dist = Math.hypot(dx, dy);
     const k = dist > MAX_OFFSET_PX ? MAX_OFFSET_PX / dist : 1;
-    animate(el, { x: dx * k, y: dy * k }, SPRING);
+    move(el, dx * k, dy * k);
   }
 
   function handleLeave(e: PointerEvent<HTMLButtonElement>) {
     onPointerLeave?.(e);
     const el = innerRef.current;
     if (!active || !el) return;
-    animate(el, { x: 0, y: 0 }, SPRING);
+    move(el, 0, 0);
   }
 
   const Comp = asChild ? Slot.Root : "button";

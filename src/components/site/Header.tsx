@@ -1,11 +1,11 @@
 "use client";
 
-import { DownloadIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { DownloadIcon } from "@/components/site/icons";
+import { useLocale, useTranslations } from "next-intl";
 import { MagneticButton } from "@/components/fx/MagneticButton";
 import { Button } from "@/components/ui/button";
 import type { RoleKey } from "@/content/schema";
-import { Link } from "@/i18n/navigation";
+import Link from "next/link";
 import { DEFAULT_ROLE } from "@/lib/roles";
 import { LanguageSwitch } from "./LanguageSwitch";
 import { useRole } from "./RoleProvider";
@@ -21,6 +21,7 @@ import { useShortcutHint } from "./use-shortcut-hint";
  */
 export function Header({ cvUrls }: { cvUrls: Record<RoleKey, string> }) {
   const t = useTranslations();
+  const locale = useLocale();
   const { role } = useRole();
   const shortcut = useShortcutHint();
 
@@ -32,7 +33,7 @@ export function Header({ cvUrls }: { cvUrls: Record<RoleKey, string> }) {
     <header className="fixed inset-x-0 top-0 z-40 border-b border-border bg-background lg:inset-x-auto lg:top-4 lg:right-4 lg:rounded-full lg:border lg:shadow-sm">
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-4 sm:px-6 lg:h-11 lg:max-w-none lg:gap-1 lg:pr-2 lg:pl-3">
         <Link
-          href={`/${query}#hero`}
+          href={`/${locale}${query}#hero`}
           aria-label={t("header.home")}
           className="font-heading text-lg font-bold tracking-[0.18em] outline-none focus-visible:ring-3 focus-visible:ring-ring/50 lg:hidden"
         >

@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { getPathname, usePathname } from "@/i18n/navigation";
+import { localizedPath } from "@/lib/localized-path";
 import { routing } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +14,6 @@ import { cn } from "@/lib/utils";
 export function LanguageSwitch({ className }: { className?: string }) {
   const t = useTranslations("language");
   const current = useLocale();
-  const pathname = usePathname();
 
   return (
     <div role="group" aria-label={t("label")} className={cn("flex items-center gap-0.5", className)}>
@@ -31,7 +30,7 @@ export function LanguageSwitch({ className }: { className?: string }) {
               if (active) return;
               // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- deliberate full page load, see above
               window.location.assign(
-                `${getPathname({ href: pathname, locale })}${window.location.search}${window.location.hash}`,
+                `${localizedPath(window.location.pathname, locale)}${window.location.search}${window.location.hash}`,
               );
             }}
             className={cn(

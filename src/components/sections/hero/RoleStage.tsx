@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import type { RoleKey } from "@/content/schema";
+import type { RolePortraits } from "@/lib/role-portraits";
 import { ROLE_ACCENT, SECTOR_FROM, WHEEL_ORDER } from "@/lib/role-accent";
 import { PANEL_SIDE, RolePanels } from "./RolePanels";
 import { ARC_RADIUS, RoleWheel, WHEEL_VIEWBOX, wheelPoint } from "./RoleWheel";
@@ -50,15 +51,15 @@ function measure(stage: HTMLElement): Geometry | null {
  * connect the lit arc to its panel. Below the wide layout the panels stack under the wheel as an accordion and the
  * lines are hidden (CSS). The empty `data-water-zone` behind the wheel is where the 3D koi swim.
  */
-export function RoleStage() {
+export function RoleStage({ portraits }: { portraits?: RolePortraits }) {
   return (
     <RoleStageProvider>
-      <StageView />
+      <StageView portraits={portraits} />
     </RoleStageProvider>
   );
 }
 
-function StageView() {
+function StageView({ portraits }: { portraits?: RolePortraits }) {
   const t = useTranslations("hero.wheel");
   const { active, reduced } = useStage();
   const stageRef = useRef<HTMLDivElement | null>(null);
@@ -112,7 +113,7 @@ function StageView() {
           })}
         </svg>
       )}
-      <RoleWheel />
+      <RoleWheel portraits={portraits} />
       <RolePanels />
       <p className="hero-hint">
         <span className="hero-hint-fine">{t("hint")}</span>

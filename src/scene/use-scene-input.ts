@@ -100,7 +100,7 @@ const MERGE_GAP = 28;
 function sameRects(a: Rect[], b: Rect[]): boolean {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) {
-    if (a[i].x0 !== b[i].x0 || a[i].y0 !== b[i].y0 || a[i].x1 !== b[i].x1 || a[i].y1 !== b[i].y1) return false;
+    if (a[i].x0 !== b[i].x0 || a[i].y0 !== b[i].y0 || a[i].x1 !== b[i].x1 || a[i].y1 !== b[i].y1 || a[i].large !== b[i].large || a[i].veil !== b[i].veil) return false;
   }
   return true;
 }
@@ -144,23 +144,45 @@ const IGNORE_SELECTOR = "[data-scene-ignore]";
 /** Elements pinned to the screen (fixed or sticky) do not move with the page: their position is never stale. */
 const PINNED_SELECTOR = '[class*="fixed"], [class*="sticky"]';
 
+type Clip = { element: Element; x: boolean; y: boolean };
+/** Cache clipping ancestry during refresh, not computed styles on every scroll frame. */
+function clippingAncestors(element: Element, cache: Map<Element, Clip>): Clip[] {
+  const clips: Clip[] = [];
+  for (let parent = element.parentElement; parent && parent !== document.documentElement; parent = parent.parentElement) {
+    let clip = cache.get(parent);
+    if (!clip) {
+      const style = getComputedStyle(parent);
+      const x = /^(hidden|clip|auto|scroll)$/.test(style.overflowX || style.overflow);
+      const y = /^(hidden|clip|auto|scroll)$/.test(style.overflowY || style.overflow);
+      clip = { element: parent, x, y };
+      cache.set(parent, clip);
+    }
+    if (clip.x || clip.y) clips.push(clip);
+  }
+  return clips;
+}
+
 /**
  * Finds the elements worth protecting and measures the ones near the screen. `refresh` is the full pass (every
  * candidate, where it sits on the page and whether its text is large: about a millisecond for a page this size); `measure` is the cheap one for
  * each scroll frame: it only reads the rectangles of the candidates near the viewport, plus the pinned ones.
  */
 export function createAvoidMeter() {
-  let items: { el: Element; top: number; bottom: number; pinned: boolean; large: boolean }[] = [];
+  let items: { el: Element; top: number; bottom: number; pinned: boolean; large: boolean; veil: boolean; clips: Clip[] }[] = [];
   return {
     refresh() {
       const sy = window.scrollY;
+      const clips = new Map<Element, Clip>();
       items = [];
       for (const el of document.querySelectorAll(AVOID_SELECTOR)) {
         // Something that sits on a solid surface of its own (the round call to action) needs no protection from the scene.
         if (el.closest(IGNORE_SELECTOR)) continue;
+        if (el.closest('[aria-hidden="true"], [hidden], [inert]')) continue;
+        const opaque = el.closest('[data-scene-veil="off"]');
+        if (opaque && opaque !== el) continue;
         const b = el.getBoundingClientRect();
         if (b.width <= 0 || b.height <= 0) continue;
-        items.push({ el, top: b.top + sy, bottom: b.bottom + sy, pinned: !!el.closest(PINNED_SELECTOR), large: isLargeText(el) });
+        items.push({ el, top: b.top + sy, bottom: b.bottom + sy, pinned: !!el.closest(PINNED_SELECTOR), large: isLargeText(el), veil: !opaque, clips: clippingAncestors(el, clips) });
       }
     },
     /** The screen-space rectangles near the viewport (see `selectRects`, `mergeRects`). */
@@ -169,6 +191,7 @@ export function createAvoidMeter() {
       const h = window.innerHeight;
       const sy = window.scrollY;
       const found: Rect[] = [];
+      const clipBounds = new Map<Element, DOMRect>();
       for (const it of items) {
         if (!it.pinned && (it.bottom - sy < -AVOID_MARGIN || it.top - sy > h + AVOID_MARGIN)) continue;
         const box = it.el.getBoundingClientRect();
@@ -177,7 +200,18 @@ export function createAvoidMeter() {
         const r = protectedRect(it.el, box);
         // Visually hidden text (screen-reader-only labels) is a pixel or two wide: nothing to protect.
         if (r.width < 6 || r.height < 6) continue;
-        found.push({ x0: r.left, y0: r.top, x1: r.right, y1: r.bottom, large: it.large });
+        let x0 = Math.max(box.left, r.left);
+        let y0 = Math.max(box.top, r.top);
+        let x1 = Math.min(box.right, r.right);
+        let y1 = Math.min(box.bottom, r.bottom);
+        for (const clip of it.clips) {
+          let bounds = clipBounds.get(clip.element);
+          if (!bounds) { bounds = clip.element.getBoundingClientRect(); clipBounds.set(clip.element, bounds); }
+          if (clip.x) { x0 = Math.max(x0, bounds.left); x1 = Math.min(x1, bounds.right); }
+          if (clip.y) { y0 = Math.max(y0, bounds.top); y1 = Math.min(y1, bounds.bottom); }
+        }
+        if (x1 <= x0 || y1 <= y0) continue;
+        found.push({ x0, y0, x1, y1, large: it.large, ...(it.veil ? {} : { veil: false }) });
       }
       return selectRects(mergeRects(found, MERGE_GAP), w, h);
     },

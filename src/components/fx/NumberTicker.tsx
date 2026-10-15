@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { usePrefersReducedMotion } from "./use-media-query";
 
 type NumberTickerProps = {
@@ -28,28 +28,30 @@ function decimalsOf(n: number) {
  */
 export function NumberTicker({ value, prefix = "", suffix = "", durationMs = 1200, className }: NumberTickerProps) {
   const reduced = usePrefersReducedMotion();
-  const [shown, setShown] = useState(value);
-  const [node, setNode] = useState<HTMLSpanElement | null>(null);
+  const nodeRef = useRef<HTMLSpanElement>(null);
   const decimals = decimalsOf(value);
   const format = (n: number) =>
     `${prefix}${n.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}${suffix}`;
   const finalText = format(value);
 
   useEffect(() => {
-    if (reduced || !node || typeof IntersectionObserver === "undefined") return;
+    const node = nodeRef.current;
+    if (!node) return;
+    const format = (n: number) => `${prefix}${n.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}${suffix}`;
+    node.textContent = finalText;
+    if (reduced || typeof IntersectionObserver === "undefined") return;
     let frame = 0;
     // Hydration rendered the final value (no mismatch); rewind it so the count has somewhere to start.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setShown(0);
+    node.textContent = format(0);
     const observer = new IntersectionObserver((entries) => {
       if (!entries.some((e) => e.isIntersecting)) return;
       observer.disconnect();
       const start = performance.now();
       const tick = (now: number) => {
         const t = Math.min(1, (now - start) / durationMs);
-        setShown(value * easeOutCubic(t));
+        node.textContent = format(value * easeOutCubic(t));
         if (t < 1) frame = requestAnimationFrame(tick);
-        else setShown(value);
+        else node.textContent = finalText;
       };
       frame = requestAnimationFrame(tick);
     });
@@ -58,15 +60,15 @@ export function NumberTicker({ value, prefix = "", suffix = "", durationMs = 120
       observer.disconnect();
       if (frame) cancelAnimationFrame(frame);
     };
-  }, [node, reduced, value, durationMs]);
+  }, [reduced, value, durationMs, decimals, prefix, suffix, finalText]);
 
   return (
     <span role="img" aria-label={finalText} className={`inline-grid tabular-nums${className ? ` ${className}` : ""}`}>
       <span aria-hidden="true" data-ticker-reserve="" className="invisible col-start-1 row-start-1">
         {finalText}
       </span>
-      <span ref={setNode} aria-hidden="true" data-ticker-value="" className="col-start-1 row-start-1">
-        {format(shown)}
+      <span ref={nodeRef} aria-hidden="true" data-ticker-value="" className="col-start-1 row-start-1">
+        {finalText}
       </span>
     </span>
   );

@@ -1,10 +1,9 @@
 "use client";
 
-import * as motion from "motion/react-m";
-import { useScroll, useTransform, type MotionValue } from "motion/react";
 import { useMemo, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { usePrefersReducedMotion } from "./use-media-query";
+import { useScrollEnhancement } from "./use-scroll-enhancement";
 
 /** Dimmest a word gets before the scroll reaches it; kept well above invisible so the sentence stays readable. */
 export const SCROLL_REVEAL_MIN_OPACITY = 0.65;
@@ -29,14 +28,13 @@ function numbered(parts: string[]): Token[] {
   return parts.map((part) => ({ text: part, unit: /\S/.test(part) ? n++ : null }));
 }
 
-function Word({ word, range, progress, reduced }: { word: string; range: [number, number]; progress: MotionValue<number>; reduced: boolean }) {
-  const opacity = useTransform(progress, range, [SCROLL_REVEAL_MIN_OPACITY, 1]);
+function Word({ word, reduced }: { word: string; reduced: boolean }) {
   return (
     // Reduced motion pins the opacity to 1 explicitly: dropping the style would leave the last scroll-driven value
     // that motion already wrote (the server HTML hydrates before the media query is known).
-    <motion.span data-reveal-unit="" style={{ opacity: reduced ? 1 : opacity }}>
+    <span data-reveal-unit="" style={{ opacity: reduced ? 1 : SCROLL_REVEAL_MIN_OPACITY }}>
       {word}
-    </motion.span>
+    </span>
   );
 }
 
@@ -48,9 +46,8 @@ function Word({ word, range, progress, reduced }: { word: string; range: [number
 export function ScrollTextReveal({ text, locale, className }: { text: string; locale?: string; className?: string }) {
   const reduced = usePrefersReducedMotion();
   const ref = useRef<HTMLParagraphElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 0.9", "end 0.5"] });
+  useScrollEnhancement(ref, "words", reduced, text);
   const tokens = useMemo(() => tokenize(text, locale), [text, locale]);
-  const total = tokens.filter((t) => t.unit !== null).length;
 
   return (
     <p ref={ref} lang={locale} className={cn(className)}>
@@ -58,9 +55,7 @@ export function ScrollTextReveal({ text, locale, className }: { text: string; lo
       <span aria-hidden="true">
         {tokens.map((token, i) => {
           if (token.unit === null) return token.text;
-          const start = token.unit / total;
-          const end = Math.min(1, start + 1 / total);
-          return <Word key={`${token.text}-${i}`} word={token.text} range={[start, end]} progress={scrollYProgress} reduced={reduced} />;
+          return <Word key={`${token.text}-${i}`} word={token.text} reduced={reduced} />;
         })}
       </span>
     </p>

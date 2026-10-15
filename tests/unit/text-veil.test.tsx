@@ -24,6 +24,11 @@ afterEach(() => {
 });
 
 describe("TextVeil", () => {
+  it("does not draw a panel behind a card with its own opaque background", () => {
+    render(<TextVeil />);
+    act(() => sceneStore.setState({ avoid: [{ x0: 400, y0: 200, x1: 700, y1: 700, veil: false }] }));
+    expect(panels().filter((panel) => panel.style.display === "block")).toHaveLength(0);
+  });
   it("is an inert decoration", () => {
     const { container } = render(<TextVeil />);
     const host = container.querySelector("[data-koi-veil]")!;

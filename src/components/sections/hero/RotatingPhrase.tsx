@@ -1,29 +1,11 @@
 "use client";
 
-import * as motion from "motion/react-m";
-import { AnimatePresence, useIsPresent } from "motion/react";
+import { useExitingValue } from "@/components/fx/use-exiting-value";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
 
 const INTERVAL_MS = 2200;
-
-/** One rotating word. Only the word that is present (not leaving) carries `data-phrase-current`. */
-function Word({ text }: { text: string }) {
-  const present = useIsPresent();
-  return (
-    <motion.span
-      data-phrase-current={present ? "" : undefined}
-      className="inline-block whitespace-nowrap"
-      initial={{ y: "70%", opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      exit={{ y: "-70%", opacity: 0 }}
-      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-    >
-      {text}
-    </motion.span>
-  );
-}
 
 /**
  * "I build {web apps | AI agents | IoT locker systems} for Japanese clients": the middle words take turns every
@@ -35,6 +17,7 @@ export function RotatingPhrase({ className }: { className?: string }) {
   const reduced = usePrefersReducedMotion();
   const items = [0, 1, 2].map((index) => t(`phraseItems.${index}`));
   const [index, setIndex] = useState(0);
+  const { current, leaving, finish } = useExitingValue(index, reduced);
 
   useEffect(() => {
     if (reduced || items.length < 2) return;
@@ -52,9 +35,8 @@ export function RotatingPhrase({ className }: { className?: string }) {
             </span>
           ) : (
             <span className="hero-phrase-word relative inline-flex overflow-hidden pb-[0.12em] align-bottom">
-              <AnimatePresence mode="popLayout" initial={false}>
-                <Word key={index} text={items[index]} />
-              </AnimatePresence>
+              {leaving.map((frame) => <span key={frame.key} aria-hidden="true" className="hero-word-exit absolute top-0 left-0 inline-block whitespace-nowrap" onAnimationEnd={() => finish(frame.key)}>{items[frame.value]}</span>)}
+              <span key={current.key} data-phrase-current="" className={`inline-block whitespace-nowrap${current.key > 0 ? " hero-word-enter" : ""}`}>{items[index]}</span>
             </span>
           ),
       })}
