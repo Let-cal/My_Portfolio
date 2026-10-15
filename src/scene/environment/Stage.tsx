@@ -10,6 +10,7 @@ import { lerp } from "../creature/profiles";
 import { sceneStore } from "../store";
 import { DAY_BG, NIGHT_BG, WATER_Y } from "./constants";
 import { gardenWeight } from "./garden";
+import { GARDEN_NIGHT as gardenNight } from "./garden-palette";
 import { resetSceneLive, sceneLive } from "./live";
 import { dampValue, propWeight, smoothstep, stepDay } from "./math";
 import { addRipple } from "./ripples";
@@ -25,7 +26,7 @@ const TAIL_WATER_HEIGHT = 0.8;
 
 const NIGHT = new Color(NIGHT_BG);
 const DAY = new Color(DAY_BG);
-const GARDEN_NIGHT = new Color().setRGB(0.075, 0.13, 0.18);
+const GARDEN_NIGHT = gardenNight.horizon;
 const GARDEN_DAY = new Color().setRGB(0.94, 0.78, 0.57);
 
 /** The air: a background and a haze in the pond's night colour; `update` tints them as the day comes. */
@@ -107,7 +108,7 @@ function createDirector() {
       gardenAir.copy(GARDEN_NIGHT).lerp(GARDEN_DAY, day);
       if (scene.background instanceof Color) scene.background.copy(NIGHT).lerp(DAY, day).lerp(gardenAir, garden);
       if (scene.fog) scene.fog.color.copy(NIGHT).lerp(DAY, day).lerp(gardenAir, garden);
-      scene.environmentIntensity = lerp(1, 1.25, day);
+      scene.environmentIntensity = lerp(1, 1.25, day) * lerp(1, 0.65, garden * (1 - day));
       gl.toneMappingExposure = lerp(1.05, 1, day);
 
       // Ripples: the tail's wake while the creature swims, and the pointer on the water.

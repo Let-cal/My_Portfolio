@@ -6,6 +6,7 @@ import { Color, DoubleSide, ShaderMaterial, Vector3 } from "three";
 import { BODY_SAMPLES, creatureLive } from "../creature/live";
 import { DAY_BG, DAY_WATER, NIGHT_BG, NIGHT_WATER, WATER_Y } from "./constants";
 import { GARDEN_CELESTIAL, GARDEN_LAMPS, gardenWeight } from "./garden";
+import { GARDEN_NIGHT_GLSL as night } from "./garden-palette";
 import { sceneLive } from "./live";
 import { MAX_RIPPLES } from "./ripples";
 
@@ -19,7 +20,7 @@ void main() {
 `;
 
 /*
- * Night: the cyber pond outside the garden, moonlit indigo water inside it; an orange sheen where the creature is, and a
+ * Night: the cyber pond outside the garden, moonlit obsidian water inside it; an orange sheen where the creature is, and a
  * hot spot from the light that follows its head. Day: clear shallow water with moving caustics and a pale sky in
  * the reflections. One shader, `uDay` crossfades the two, so the theme switch needs no second pond.
  * The creature floats a little above the surface, so its glow and shadow are drawn onto the water from six points
@@ -92,11 +93,11 @@ void main() {
   vec3 skyNight = mix(vec3(0.020, 0.030, 0.040), vec3(0.004, 0.007, 0.012), up);
   vec3 skyDay = mix(vec3(0.80, 0.90, 0.95), vec3(0.42, 0.66, 0.82), up);
   vec3 sky = mix(skyNight, skyDay, uDay);
-  vec3 gardenSky = mix(mix(vec3(0.075, 0.13, 0.18), vec3(0.009, 0.022, 0.055), up),
+  vec3 gardenSky = mix(mix(${night.horizon}, ${night.sky}, up),
                        mix(vec3(0.94, 0.78, 0.57), vec3(0.36, 0.63, 0.76), up), uDay);
   sky = mix(sky, gardenSky, uGarden);
   vec3 base = mix(uNightWater, uDayWater, uDay);
-  base = mix(base, mix(vec3(0.025, 0.075, 0.105), vec3(0.20, 0.43, 0.42), uDay), uGarden);
+  base = mix(base, mix(${night.water}, vec3(0.20, 0.43, 0.42), uDay), uGarden);
   vec3 color = mix(base, sky, min(fresnel * (1.0 + 2.0 * uDay), 1.0));
 
   // --- day: sunlight through the water ---
@@ -134,7 +135,7 @@ void main() {
   float gridBoost = 1.0 + 3.2 * sheen * lit;
   vec2 basinOffset = xz - vec2(0.0, -2.8);
   float underwaterGrid = 0.48 * (1.0 - fresnel) * (1.0 - exp(-dot(basinOffset, basinOffset) * 0.16) * 0.8);
-  vec3 gridColor = mix(vec3(0.23, 0.13, 0.063), vec3(0.18, 0.40, 0.46), uGarden);
+  vec3 gridColor = mix(vec3(0.23, 0.13, 0.063), ${night.grid}, uGarden);
   color += gridColor * grid * gridBoost * 0.55 * (1.0 - uDay * 0.9)
     * mix(1.0, underwaterGrid * (1.0 - uDay), uGarden);
   color += warm * sheen * 0.16 * lit * (1.0 - uDay * 0.7);
@@ -158,18 +159,18 @@ void main() {
   vec3 celestialRay = normalize(celestial - vWorld);
   float reflection = pow(max(dot(R, celestialRay), 0.0), 220.0);
   float broken = 0.55 + 0.45 * sin(xz.y * 30.0 + uTime * 1.4 + slope.x * 80.0);
-  color += mix(vec3(0.42, 0.63, 0.8), vec3(0.95, 0.64, 0.26), uDay) * reflection * broken * uGarden;
+  color += mix(vec3(0.42, 0.63, 0.8), vec3(0.95, 0.64, 0.26), uDay) * mix(0.25, 1.0, uDay) * reflection * broken * uGarden;
   ${GARDEN_LAMPS.map(([x, z]) => `{
     vec3 lamp = vec3(${x.toFixed(1)}, ${(WATER_Y + 1.59).toFixed(2)}, ${z.toFixed(1)});
     float distanceToLamp = length(lamp - vWorld);
-    float glint = pow(max(dot(R, normalize(lamp - vWorld)), 0.0), 55.0);
-    float pool = exp(-dot(xz - lamp.xz, xz - lamp.xz) * 0.8) * 0.035;
-    color += vec3(1.0, 0.46, 0.12) * (pool + glint * 1.6 / (1.0 + distanceToLamp * 0.2)) * uGarden * (1.0 - uDay);
+    float glint = pow(max(dot(R, normalize(lamp - vWorld)), 0.0), 180.0);
+    float pool = exp(-dot(xz - lamp.xz, xz - lamp.xz) * 0.8) * 0.012;
+    color += vec3(1.0, 0.46, 0.12) * (pool + glint * 0.55 / (1.0 + distanceToLamp * 0.2)) * uGarden * (1.0 - uDay);
   }`).join("\n")}
 
   // --- the far water melts into the air ---
   vec3 fogColor = mix(uNightFog, uDayFog, uDay);
-  fogColor = mix(fogColor, mix(vec3(0.075, 0.13, 0.18), vec3(0.94, 0.78, 0.57), uDay), uGarden);
+  fogColor = mix(fogColor, mix(${night.horizon}, vec3(0.94, 0.78, 0.57), uDay), uGarden);
   float fogAmount = smoothstep(mix(14.0, 22.0, uGarden), mix(44.0, 60.0, uGarden), camDist);
   color = mix(color, fogColor, fogAmount);
 

@@ -1,5 +1,6 @@
 import { BackSide, Color, Group, Mesh, MeshBasicMaterial, ShaderMaterial, SphereGeometry } from "three";
 import { GARDEN_CELESTIAL, gardenSkyWeight } from "../garden";
+import { GARDEN_NIGHT_GLSL as night } from "../garden-palette";
 import { createOwner } from "./types";
 
 /** Procedural 3D sky dome, plus a physical sun/moon sphere. No panorama, billboard or reflection render target. */
@@ -14,11 +15,11 @@ export function createGardenSky(own: ReturnType<typeof createOwner>["own"]) {
       void main() {
         vec3 direction = normalize(vDirection);
         float altitude = smoothstep(-0.08, 0.5, direction.y);
-        vec3 night = mix(vec3(0.075, 0.13, 0.18), vec3(0.009, 0.022, 0.055), altitude);
+        vec3 night = mix(${night.horizon}, ${night.sky}, altitude);
         vec3 dawn = mix(vec3(0.94, 0.78, 0.57), vec3(0.36, 0.63, 0.76), altitude);
         vec3 lightDirection = normalize(vec3(${GARDEN_CELESTIAL.map((n) => n.toFixed(1)).join(", ")}));
         float halo = pow(max(dot(direction, lightDirection), 0.0), mix(200.0, 32.0, uDay));
-        vec3 color = mix(night, dawn, uDay) + mix(vec3(0.12, 0.18, 0.25), vec3(0.32, 0.19, 0.05), uDay) * halo;
+        vec3 color = mix(night, dawn, uDay) + mix(${night.halo}, vec3(0.32, 0.19, 0.05), uDay) * halo;
         gl_FragColor = vec4(color, uOpacity);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>

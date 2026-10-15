@@ -41,7 +41,7 @@ Final follow-up verification:782unit tests,18artifact checks,15focused productio
 
 Lighthouse mobile median across3runs on/en before this desktop-only deferral:Performance68,Accessibility100,BestPractices100,localSEO92,FCP2267ms,LCP5152ms,TBT382ms,CLS0. Performance gates remain unmet. Mobile already uses a static scene, so desktop garden deferral is not claimed to fix mobile Lighthouse. Raw runs remain in the ignored task18a workspace.
 
-The owner's next request is a palette-only brainstorming pass: align the garden's dark sky/water/fog with the surrounding black cyber scenes. Models and layout are accepted. Browser-only obsidian/indigo/jade studies are disposable; no new production palette is approved or applied yet.
+The palette follow-up was approved on 2026-10-15: option A (obsidian, moon silver and amber) aligns the garden's dark sky/water/fog with the surrounding black cyber scenes. Models and layout remain accepted. The browser-only studies are disposable; the production implementation and its verification are documented in [garden night palette](garden-night-palette.md).
 
 ## References
 

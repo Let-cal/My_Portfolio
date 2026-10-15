@@ -1,6 +1,7 @@
 import { BoxGeometry, Color, Float32BufferAttribute, Group, Mesh, MeshStandardMaterial, PlaneGeometry, ShaderMaterial } from "three";
 import { WATER_Y } from "../constants";
 import { gardenWeight } from "../garden";
+import { GARDEN_NIGHT_GLSL as night } from "../garden-palette";
 import { smoothstep } from "../math";
 import { createOwner, type Prop } from "./types";
 import { createWaterfallLandscape } from "./waterfall-landscape";
@@ -49,8 +50,8 @@ void main() {
   float n1 = vnoise(vec2(x * 5.0, y * 2.6 + uTime * 1.5));
   float n2 = vnoise(vec2(x * 13.0, y * 5.0 + uTime * 2.8));
   float streak = smoothstep(0.42, 0.85, n1 * 0.6 + n2 * 0.4);
-  vec3 deep = mix(vec3(0.08, 0.16, 0.22), vec3(0.35, 0.62, 0.66), uDay);
-  vec3 foamC = mix(vec3(0.50, 0.68, 0.77), vec3(1.0, 0.97, 0.88), uDay);
+  vec3 deep = mix(${night.deep}, vec3(0.35, 0.62, 0.66), uDay);
+  vec3 foamC = mix(${night.foam}, vec3(1.0, 0.97, 0.88), uDay);
   vec3 col = mix(deep, foamC, streak);
   float foam = (1.0 - smoothstep(0.0, 0.14, y)) * (0.55 + 0.45 * vnoise(vec2(x * 5.0 + uTime * 0.9, uTime * 2.0)));
   float splash = (1.0 - smoothstep(0.0, 0.3, y)) * (1.0 - smoothstep(1.2, 3.8, abs(x))) * vnoise(vec2(x * 2.0, y * 6.0 - uTime * 0.6)) * 0.55;
@@ -75,7 +76,7 @@ void main() {
   float edge = 1.0 - smoothstep(0.2, 0.95, d);
   float rings = pow(0.5 + 0.5 * sin(d * 48.0 - uTime * 5.0 + vnoise(p * 8.0)), 5.0);
   float foam = vnoise(p * 24.0 + vec2(uTime * 0.7, -uTime)) * (1.0 - smoothstep(0.05, 0.4, d));
-  vec3 col = mix(vec3(0.18, 0.4, 0.43), vec3(0.83, 0.94, 0.91), uDay);
+  vec3 col = mix(${night.foam}, vec3(0.83, 0.94, 0.91), uDay);
   gl_FragColor = vec4(col, edge * (rings * 0.22 + foam * 0.5) * uOpacity);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>

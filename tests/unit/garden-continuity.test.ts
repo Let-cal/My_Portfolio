@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { InstancedMesh, Matrix4, Mesh, MeshStandardMaterial, ShaderMaterial, Vector3 } from "three";
+import { Color, InstancedMesh, Matrix4, Mesh, MeshStandardMaterial, ShaderMaterial, Vector3 } from "three";
 import { cameraAtPosition, CHAPTER_CAMERA } from "@/scene/chapters";
 import { createLotus } from "@/scene/environment/props/lotus";
 import { createWaterfall, FALL_Z } from "@/scene/environment/props/waterfall";
@@ -9,6 +9,30 @@ import { smoothstep } from "@/scene/environment/math";
 const pose = () => ({ pos: new Vector3(), look: new Vector3() });
 
 describe("one Japanese garden from Projects to Skills", () => {
+  it("uses the approved sRGB obsidian horizon and sky, decoded once for the sky shader", () => {
+    const waterfall = createWaterfall();
+    const glslColor = (hex: string) => `vec3(${new Color(hex).toArray().map((n) => n.toFixed(7)).join(", ")})`;
+    try {
+      const sky = waterfall.root.getObjectByName("garden-sky") as Mesh;
+      const shader = (sky.material as ShaderMaterial).fragmentShader;
+      expect(shader).toContain(glslColor("#0b1318"));
+      expect(shader).toContain(glslColor("#04070b"));
+      expect(shader).toContain("vec3(0.94, 0.78, 0.57)");
+    } finally { waterfall.dispose(); }
+  });
+
+  it("uses silver foam and deep obsidian water at night without changing daylight foam", () => {
+    const waterfall = createWaterfall();
+    const glslColor = (hex: string) => `vec3(${new Color(hex).toArray().map((n) => n.toFixed(7)).join(", ")})`;
+    try {
+      const fall = waterfall.root.getObjectByName("waterfall-cascade") as Mesh;
+      const shader = (fall.material as ShaderMaterial).fragmentShader;
+      expect(shader).toContain(glslColor("#6b828a"));
+      expect(shader).toContain(glslColor("#101e26"));
+      expect(shader).toContain("vec3(1.0, 0.97, 0.88)");
+    } finally { waterfall.dispose(); }
+  });
+
   it("keeps the same lotus instances, opacity and size throughout the transition, in both themes", () => {
     const lotus = createLotus();
     try {
