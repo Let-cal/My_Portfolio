@@ -10,6 +10,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: "list",
   use: {
+    launchOptions: { args: process.platform === "win32" ? ["--use-angle=d3d11"] : ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"] },
     baseURL: `http://localhost:${PORT}`,
     trace: "on-first-retry",
     // Motion off: the hello greeting never covers the page, and nothing is mid-animation when a test clicks.

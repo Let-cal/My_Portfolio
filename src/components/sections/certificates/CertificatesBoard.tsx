@@ -2,12 +2,11 @@
 
 import * as motion from "motion/react-m";
 import { useTranslations } from "next-intl";
-import { useId, useMemo, useState, type KeyboardEvent } from "react";
+import { useId, useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
 import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
 import { CERT_TOPICS } from "@/content/constants";
 import type { CertTopic } from "@/content/schema";
 import { cn } from "@/lib/utils";
-import { ActivityCard, type ActivityView } from "./ActivityCard";
 import { LanternCard, type CertificateView } from "./LanternCard";
 
 type Pane = "certificates" | "activities";
@@ -33,7 +32,7 @@ const GRID = "grid grid-cols-1 justify-items-center gap-x-6 gap-y-10 sm:grid-col
  * layout animation (position only, so the lanterns never stretch). Both panels stay mounted so a flipped card keeps
  * its state.
  */
-export function CertificatesBoard({ certificates, activities }: { certificates: CertificateView[]; activities: ActivityView[] }) {
+export function CertificatesBoard({ certificates, activities, faces }: { certificates: CertificateView[]; activities: { id: string; content: ReactNode }[]; faces: Record<string, { front: ReactNode; back: ReactNode }> }) {
   const t = useTranslations("certificates");
   const reduced = usePrefersReducedMotion();
   const uid = useId();
@@ -155,7 +154,7 @@ export function CertificatesBoard({ certificates, activities }: { certificates: 
               transition={transition}
               className="w-full max-w-[19rem] list-none"
             >
-              <LanternCard cert={cert} index={i} topicLabel={t(`topics.${cert.topic as CertTopic}`)} />
+              <LanternCard cert={cert} index={i} front={faces[cert.id].front} back={faces[cert.id].back} />
             </motion.li>
           ))}
         </motion.ul>
@@ -169,9 +168,9 @@ export function CertificatesBoard({ certificates, activities }: { certificates: 
         className="mt-8"
       >
         <ul className={GRID}>
-          {activities.map((activity, i) => (
+          {activities.map((activity) => (
             <li key={activity.id} className="w-full max-w-[19rem] list-none">
-              <ActivityCard activity={activity} index={i} />
+              {activity.content}
             </li>
           ))}
         </ul>

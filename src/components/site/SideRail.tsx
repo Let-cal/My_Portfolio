@@ -7,7 +7,7 @@ import type { RoleKey } from "@/content/schema";
 import { cn } from "@/lib/utils";
 import { useRole } from "./RoleProvider";
 import { SECTION_IDS } from "./sections";
-import { GithubIcon, LinkedinIcon } from "./social-icons";
+import type { ReactNode } from "react";
 import { useActiveSection } from "./use-active-section";
 
 export type SideRailProps = {
@@ -15,6 +15,7 @@ export type SideRailProps = {
   /** Localized job title of each role; the one of the chosen role is shown. */
   titles: Record<RoleKey, string>;
   links: { github: string; linkedin: string; email: string };
+  icons: { github: ReactNode; linkedin: ReactNode };
 };
 
 const ACCENT = "var(--role-accent, #f97316)";
@@ -24,15 +25,15 @@ const ACCENT = "var(--role-accent, #f97316)";
  * and the contact icons. Each link has a 32px line; the section crossing the reading line gets a 64px line
  * in the role accent colour and `aria-current`.
  */
-export function SideRail({ name, titles, links }: SideRailProps) {
+export function SideRail({ name, titles, links, icons }: SideRailProps) {
   const t = useTranslations();
   const { role } = useRole();
   const active = useActiveSection();
 
   const socials = [
-    { label: t("footer.github"), href: links.github, Icon: GithubIcon },
-    { label: t("footer.linkedin"), href: links.linkedin, Icon: LinkedinIcon },
-    { label: t("footer.email"), href: `mailto:${links.email}`, Icon: MailIcon },
+    { label: t("footer.github"), href: links.github, icon: icons.github },
+    { label: t("footer.linkedin"), href: links.linkedin, icon: icons.linkedin },
+    { label: t("footer.email"), href: `mailto:${links.email}`, icon: <MailIcon className="size-5" /> },
   ];
 
   return (
@@ -82,7 +83,7 @@ export function SideRail({ name, titles, links }: SideRailProps) {
         </div>
 
         <ul aria-label={t("footer.links")} data-scene-avoid="box" className="flex items-center gap-5">
-          {socials.map(({ label, href, Icon }) => (
+          {socials.map(({ label, href, icon }) => (
             <li key={label}>
               <a
                 href={href}
@@ -90,7 +91,7 @@ export function SideRail({ name, titles, links }: SideRailProps) {
                 {...(href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                 className="block rounded-sm text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
               >
-                <Icon className="size-5" />
+                {icon}
               </a>
             </li>
           ))}

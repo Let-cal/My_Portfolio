@@ -53,6 +53,37 @@ export function TextVeil() {
         snap.push(true);
         last.push({ x: 0, y: 0, w: 0, h: 0 });
       }
+      // Area ranking changes as a block crosses the viewport. Match geometry before assigning
+      // pooled nodes so an unchanged card never inherits another card's position/opacity.
+      const candidates: { next: number; old: number; cost: number }[] = [];
+      for (let next = 0; next < rects.length; next++) {
+        const r = rects[next];
+        for (let old = 0; old < pool.length; old++) {
+          if (pool[old].style.display !== "block") continue;
+          const p = last[old];
+          const cost = Math.abs(r.x0 - PAD - p.x) + Math.abs(r.y0 - PAD - p.y)
+            + Math.abs(r.x1 - r.x0 + PAD * 2 - p.w) + Math.abs(r.y1 - r.y0 + PAD * 2 - p.h);
+          if (cost < JUMP) candidates.push({ next, old, cost });
+        }
+      }
+      candidates.sort((a, b) => a.cost - b.cost);
+      const order = new Array<number>(pool.length).fill(-1);
+      const used = new Set<number>();
+      for (const c of candidates) {
+        if (order[c.next] === -1 && !used.has(c.old)) { order[c.next] = c.old; used.add(c.old); }
+      }
+      let spare = 0;
+      for (let i = 0; i < order.length; i++) {
+        if (order[i] !== -1) continue;
+        while (used.has(spare)) spare++;
+        order[i] = spare;
+        used.add(spare);
+      }
+      const reorder = <T,>(values: T[]) => {
+        const copy = values.slice();
+        for (let i = 0; i < order.length; i++) values[i] = copy[order[i]];
+      };
+      reorder(pool); reorder(shown); reorder(snap); reorder(last);
       for (let i = 0; i < pool.length; i++) {
         const panel = pool[i];
         const r = rects[i];

@@ -1,5 +1,55 @@
 import { expect, test } from "@playwright/test";
 
+// Each case starts a live WebGL scene; avoid competing for the same test GPU.
+test.describe.configure({ mode: "serial" });
+
+test("chapter seals stay above the padded primary headings", async ({ page }) => {
+  await page.goto("/vi");
+  for (const id of ["experience", "projects", "skills", "certificates", "why", "contact"]) {
+    const gap = await page.locator(`#${id}`).evaluate((section) => {
+      const heading = section.querySelector("h2")!.getBoundingClientRect();
+      const seal = section.parentElement!.querySelector("[data-chapter-seal]")!.getBoundingClientRect();
+      return heading.top - seal.bottom;
+    });
+    expect(gap, id).toBeGreaterThanOrEqual(24);
+  }
+});
+
+test("scrolling Skills does not reassign existing backdrop nodes across the screen", async ({ page }) => {
+  const textures: number[] = [];
+  const shaderErrors: string[] = [];
+  page.on("response", (response) => { if (response.url().endsWith("/scene/waterfall/rocks/rocks.gltf")) textures.push(response.status()); });
+  page.on("console", (message) => { if (message.type() === "error" && /WebGLProgram|VALIDATE_STATUS|shader error/i.test(message.text())) shaderErrors.push(message.text()); });
+  await page.setViewportSize({ width: 1280, height: 768 });
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "hardwareConcurrency", { value: 4 });
+    localStorage.setItem("motion", "on"); sessionStorage.setItem("hello", "1");
+  });
+  await page.goto("/vi");
+  await expect(page.locator("[data-koi-veil]>i").first()).toBeAttached({ timeout: 20_000 });
+  expect(textures).toEqual([]);
+  await page.locator("#skills").evaluate((el) => window.scrollTo(0, window.scrollY + el.getBoundingClientRect().top));
+  await page.waitForTimeout(1000);
+  await expect.poll(() => textures).toEqual([200]);
+  const teleports = await page.evaluate(async () => {
+    const previous = new Map<Element, { x: number; y: number }>();
+    let jumps = 0;
+    for (let i = 0; i < 55; i++) {
+      window.scrollBy(0, 12);
+      await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+      for (const el of document.querySelectorAll<HTMLElement>("[data-koi-veil]>i")) {
+        if (el.style.display === "none") { previous.delete(el); continue; }
+        const box = el.getBoundingClientRect(), old = previous.get(el);
+        if (old && Math.abs(box.x - old.x) + Math.abs(box.y - old.y + 12) > 160) jumps++;
+        previous.set(el, { x: box.x, y: box.y });
+      }
+    }
+    return jumps;
+  });
+  expect(teleports).toBe(0);
+  expect(shaderErrors).toEqual([]);
+});
+
 for (const theme of ["light", "dark"]) {
   test(`${theme}: moving Why cards and hero marquee never stretch the text backdrop across the sidebar`, async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 768 });

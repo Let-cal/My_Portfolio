@@ -4,7 +4,6 @@ import { ArrowUpRightIcon, CalendarIcon, CheckIcon, CopyIcon, DownloadIcon, Mail
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { useRole } from "@/components/site/RoleProvider";
-import { GithubIcon, LinkedinIcon } from "@/components/site/social-icons";
 import { useCopyEmail } from "@/components/site/use-copy-email";
 import type { RoleKey } from "@/content/schema";
 
@@ -15,6 +14,7 @@ export type ContactDetailsProps = {
   /** Rendered only when not null. */
   bookingUrl: string | null;
   cvUrls: Record<RoleKey, string>;
+  icons: { github: ReactNode; linkedin: ReactNode };
 };
 
 const ROW =
@@ -44,7 +44,7 @@ const ARROW = (
  * LinkedIn, GitHub, the CV of the chosen role and, only when the profile has a booking URL, a Book a call link.
  * Never a phone number.
  */
-export function ContactDetails({ email, linkedin, github, bookingUrl, cvUrls }: ContactDetailsProps) {
+export function ContactDetails({ email, linkedin, github, bookingUrl, cvUrls, icons }: ContactDetailsProps) {
   const t = useTranslations("contact");
   const { role } = useRole();
   const { copied, copy } = useCopyEmail(email, t("copied"));
@@ -71,14 +71,14 @@ export function ContactDetails({ email, linkedin, github, bookingUrl, cvUrls }: 
       </li>
       <li>
         <a href={linkedin} target="_blank" rel="noopener noreferrer" className={ROW}>
-          <Row icon={<LinkedinIcon className="size-5" />} trailing={ARROW}>
+          <Row icon={icons.linkedin} trailing={ARROW}>
             {t("linkedin")}
           </Row>
         </a>
       </li>
       <li>
         <a href={github} target="_blank" rel="noopener noreferrer" className={ROW}>
-          <Row icon={<GithubIcon className="size-5" />} trailing={ARROW}>
+          <Row icon={icons.github} trailing={ARROW}>
             {t("github")}
           </Row>
         </a>

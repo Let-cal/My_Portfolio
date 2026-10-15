@@ -81,6 +81,7 @@ function mountSections() {
 
 const titles = Object.fromEntries(ROLE_KEYS.map((k) => [k, `Title ${k}`])) as Record<(typeof ROLE_KEYS)[number], string>;
 const railProps = {
+  icons: { github: <svg aria-hidden="true" />, linkedin: <svg aria-hidden="true" /> },
   name: "Le Tran Cat Lam",
   titles,
   links: { github: "https://github.com/Let-cal", linkedin: "https://www.linkedin.com/in/letcal", email: "letcal2003@gmail.com" },

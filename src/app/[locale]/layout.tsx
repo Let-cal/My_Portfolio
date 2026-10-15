@@ -18,6 +18,7 @@ import { PillNav } from "@/components/site/PillNav";
 import { RoleProvider } from "@/components/site/RoleProvider";
 import { ScrollProgressKoi } from "@/components/site/ScrollProgressKoi";
 import { SideRail } from "@/components/site/SideRail";
+import { GithubIcon, LinkedinIcon } from "@/components/site/social-icons";
 import { SmoothScroll } from "@/components/site/SmoothScroll";
 import { MotionProvider } from "@/components/site/MotionProvider";
 import { MOTION_INIT_SCRIPT } from "@/components/site/motion-script";
@@ -98,7 +99,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
               {/* z-10 keeps the content above the pointer spotlight (z-0) and the 3D canvas (z-index -1).
                   From 1024px: rail (30%) | content (70%). Below that the rail is hidden and the pill nav shows. */}
               <div data-site-shell="" className="relative z-10 flex flex-1 flex-col pt-14 pb-24 lg:grid lg:grid-cols-[minmax(17rem,30%)_minmax(0,1fr)] lg:pt-0 lg:pb-0">
-                <SideRail name={profile.name} titles={titles} links={{ github: profile.github, linkedin: profile.linkedin, email: profile.email }} />
+                <SideRail name={profile.name} titles={titles} links={{ github: profile.github, linkedin: profile.linkedin, email: profile.email }} icons={{ github: <GithubIcon className="size-5" />, linkedin: <LinkedinIcon className="size-5" /> }} />
                 <div className="flex min-w-0 flex-1 flex-col">
                   <div className="flex flex-1 flex-col">
                     <HighlightProvider>{children}</HighlightProvider>

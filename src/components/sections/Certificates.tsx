@@ -2,10 +2,12 @@ import { useTranslations } from "next-intl";
 import type { Content, Locale } from "@/content/schema";
 import { formatMonth } from "@/lib/format";
 import { pickLocale } from "@/lib/i18n-text";
-import type { ActivityView } from "./certificates/ActivityCard";
+import { ActivityCard, type ActivityView } from "./certificates/ActivityCard";
 import { CertificatesBoard } from "./certificates/CertificatesBoard";
 import type { CertificateView } from "./certificates/LanternCard";
 import { Reveal } from "@/components/site/Reveal";
+import { LanternFront, LanternBack } from "./certificates/LanternFaces";
+import type { CertTopic } from "@/content/schema";
 
 /**
  * Certificates section ("lanterns"). Builds localized view-models (published certificates and all activities, in
@@ -56,7 +58,10 @@ export function Certificates({ content, locale }: { content: Content; locale: Lo
         </h2>
         <p data-scene-avoid="" className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">{t("intro")}</p>
       </Reveal>
-      <CertificatesBoard certificates={certificates} activities={activities} />
+      <CertificatesBoard certificates={certificates} activities={activities.map((activity, index) => ({ id: activity.id, content: <ActivityCard key={activity.id} activity={activity} index={index} /> }))} faces={Object.fromEntries(certificates.map((cert) => [cert.id, {
+        front: <LanternFront key={cert.id} cert={cert} topicLabel={t(`topics.${cert.topic as CertTopic}`)} />,
+        back: <LanternBack key={cert.id} cert={cert} />,
+      }]))} />
     </section>
   );
 }

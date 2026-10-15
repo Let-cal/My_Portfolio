@@ -3,7 +3,6 @@
 import { DownloadIcon, MailIcon, TimerIcon } from "@/components/site/icons";
 import { useExitingValue } from "@/components/fx/use-exiting-value";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
 import { MagneticButton } from "@/components/fx/MagneticButton";
 import { TextScramble } from "@/components/fx/TextScramble";
 import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
@@ -60,10 +59,10 @@ export function HeroRoleBody({ roles, locale }: { roles: Record<RoleKey, HeroRol
           </Button>
         </MagneticButton>
         <Button asChild variant="ghost" size="lg" className="h-11 px-5 text-base">
-          <Link href={`/${locale}/quick?role=${role}`}>
+          <a href={`/${locale}/quick?role=${role}`}>
             <TimerIcon aria-hidden="true" />
             {t("quickView")}
-          </Link>
+          </a>
         </Button>
       </div>
     </>

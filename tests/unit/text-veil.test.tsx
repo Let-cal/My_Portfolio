@@ -24,6 +24,16 @@ afterEach(() => {
 });
 
 describe("TextVeil", () => {
+  it("keeps the same physical panels when area ranking changes during scrolling", () => {
+    render(<TextVeil />);
+    const a = { x0: 100, y0: 100, x1: 300, y1: 200 };
+    const b = { x0: 600, y0: 300, x1: 900, y1: 400 };
+    act(() => sceneStore.setState({ avoid: [a, b] }));
+    const [left, right] = panels();
+    act(() => sceneStore.setState({ avoid: [{ ...b, y0: 290, y1: 390 }, { ...a, y0: 90, y1: 190 }] }));
+    expect(left.style.transform).toBe("translate3d(76px, 66px, 0)");
+    expect(right.style.transform).toBe("translate3d(576px, 266px, 0)");
+  });
   it("does not draw a panel behind a card with its own opaque background", () => {
     render(<TextVeil />);
     act(() => sceneStore.setState({ avoid: [{ x0: 400, y0: 200, x1: 700, y1: 700, veil: false }] }));

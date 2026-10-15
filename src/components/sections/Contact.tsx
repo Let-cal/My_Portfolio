@@ -6,6 +6,7 @@ import { ROLE_KEYS, type Content, type Locale, type RoleKey } from "@/content/sc
 import { pickLocale } from "@/lib/i18n-text";
 import { ContactDetails } from "./contact/ContactDetails";
 import { ContactHeadline } from "./contact/ContactHeadline";
+import { GithubIcon, LinkedinIcon } from "@/components/site/social-icons";
 
 /**
  * Closing section. A giant headline, a hairline with the 160px round "Get in touch" button sitting on it (a
@@ -71,6 +72,7 @@ export function Contact({ content, locale }: { content: Content; locale: Locale 
               github={profile.github}
               bookingUrl={profile.bookingUrl}
               cvUrls={cvUrls}
+              icons={{ github: <GithubIcon className="size-5" />, linkedin: <LinkedinIcon className="size-5" /> }}
             />
           </div>
         </div>
