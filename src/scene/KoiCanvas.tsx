@@ -10,13 +10,13 @@ import { DRAGON_CHAPTER } from "./chapters";
 import { shouldLoadScene } from "./loading";
 import { SceneErrorBoundary } from "./SceneErrorBoundary";
 import { sceneStore, useSceneStore } from "./store";
-import { TextVeil } from "./TextVeil";
 import { detectTier, detectWebGL, MOBILE_QUERY, type Tier } from "./tier";
 import { useLoadGate } from "./use-load-gate";
-import { useAvoidTracking, useChapterTracking, useCtaTracking, useFeedClicks, usePointerTracking } from "./use-scene-input";
+import { useStaticChapterTracking } from "./use-static-chapter";
 
 // three and @react-three/fiber live behind this import: the chunk is fetched only once the scene may load.
 const SceneRoot = dynamic(() => import("./SceneRoot"), { ssr: false });
+const LiveSceneInput = dynamic(() => import("./LiveSceneInput"), { ssr: false });
 
 const noSubscription = () => () => {};
 const FADE_MS = 700;
@@ -74,11 +74,7 @@ export function KoiCanvas() {
   const tier: Tier = detected === "high" && downgraded ? "low" : detected;
   const load = capture ? captureConfigured : shouldLoadScene({ tier, isMobile, ...gate });
 
-  useChapterTracking(capture === null);
-  usePointerTracking(tier !== "off" && capture === null);
-  useAvoidTracking(tier !== "off" && capture === null);
-  useCtaTracking(tier !== "off" && capture === null);
-  useFeedClicks(tier !== "off" && capture === null);
+  useStaticChapterTracking(capture === null && (!load || tier === "off"));
   useEffect(() => {
     sceneStore.setState({ tier, theme: capture?.theme ?? theme, role, ...(capture ? { chapter: capture.creature === "dragon" ? 6 : 0, t: 0, pointer: null } : {}) });
     if (!capture) return;
@@ -142,6 +138,7 @@ export function KoiCanvas() {
           }}
         >
           <SceneErrorBoundary onError={onSceneError}>
+            <LiveSceneInput enabled={capture === null} />
             <SceneRoot
               tier={tier}
               onReadyChange={setReady}
@@ -150,7 +147,6 @@ export function KoiCanvas() {
               captureSettled={captureSettled}
             />
           </SceneErrorBoundary>
-          <TextVeil />
         </div>
       )}
     </>,

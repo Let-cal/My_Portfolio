@@ -35,6 +35,18 @@ export function SmoothScroll() {
   const isMobile = useMediaQuery(MOBILE_QUERY);
 
   useEffect(() => {
+    // Resolve all intrinsic placeholders before the browser computes a native hash jump.
+    // Capture runs before section-link handlers; it never cancels the native navigation.
+    const prepare = (event: MouseEvent) => {
+      if (window.matchMedia?.(MOBILE_QUERY).matches && anchorTarget(event)) {
+        document.documentElement.setAttribute("data-chapters-expanded", "");
+      }
+    };
+    document.addEventListener("click", prepare, true);
+    return () => document.removeEventListener("click", prepare, true);
+  }, []);
+
+  useEffect(() => {
     // Hydration first uses the SSR media snapshot; read the browser before starting any imports.
     const mobileNow = typeof window.matchMedia === "function" && window.matchMedia(MOBILE_QUERY).matches;
     if (reduced || isMobile || mobileNow || getMotionReduced()) return;

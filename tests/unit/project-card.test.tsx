@@ -156,8 +156,11 @@ describe("Projects bento", () => {
       let options: IntersectionObserverInit | undefined;
       class FakeObserver {
         constructor(cb: IntersectionObserverCallback, opts?: IntersectionObserverInit) {
-          callback = cb;
-          options = opts;
+          // Marquees also observe approach; select the video observer rather than the last observer created.
+          if (opts?.threshold === 0.6) {
+            callback = cb;
+            options = opts;
+          }
         }
         observe() {}
         unobserve() {}

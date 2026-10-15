@@ -13,9 +13,9 @@
       "bottom": 0,
       "color": "transparent"
     },
-    "sizes": "(min-width: 1024px) 440px, min(360px, 80vw)",
-    "srcSet": "/_next/image?url=%2Fimages%2Froles%2Frole-developer.webp&w=640&q=75 640w, /_next/image?url=%2Fimages%2Froles%2Frole-developer.webp&w=750&q=75 750w, /_next/image?url=%2Fimages%2Froles%2Frole-developer.webp&w=828&q=75 828w, /_next/image?url=%2Fimages%2Froles%2Frole-developer.webp&w=1080&q=75 1080w, /_next/image?url=%2Fimages%2Froles%2Frole-developer.webp&w=1200&q=75 1200w, /_next/image?url=%2Fimages%2Froles%2Frole-developer.webp&w=1920&q=75 1920w, /_next/image?url=%2Fimages%2Froles%2Frole-developer.webp&w=2048&q=75 2048w, /_next/image?url=%2Fimages%2Froles%2Frole-developer.webp&w=3840&q=75 3840w",
-    "src": "/_next/image?url=%2Fimages%2Froles%2Frole-developer.webp&w=3840&q=75"
+    "src": "/images/roles/optimized/role-developer-772.avif",
+    "sizes": "(min-width: 1024px) 376px, (min-width: 450px) 308px, 68.36vw",
+    "srcSet": "/images/roles/optimized/role-developer-384.avif 384w, /images/roles/optimized/role-developer-512.avif 512w, /images/roles/optimized/role-developer-772.avif 772w"
   },
   "techlead": {
     "alt": "",
@@ -31,9 +31,9 @@
       "bottom": 0,
       "color": "transparent"
     },
-    "sizes": "(min-width: 1024px) 440px, min(360px, 80vw)",
-    "srcSet": "/_next/image?url=%2Fimages%2Froles%2Frole-techlead.webp&w=640&q=75 640w, /_next/image?url=%2Fimages%2Froles%2Frole-techlead.webp&w=750&q=75 750w, /_next/image?url=%2Fimages%2Froles%2Frole-techlead.webp&w=828&q=75 828w, /_next/image?url=%2Fimages%2Froles%2Frole-techlead.webp&w=1080&q=75 1080w, /_next/image?url=%2Fimages%2Froles%2Frole-techlead.webp&w=1200&q=75 1200w, /_next/image?url=%2Fimages%2Froles%2Frole-techlead.webp&w=1920&q=75 1920w, /_next/image?url=%2Fimages%2Froles%2Frole-techlead.webp&w=2048&q=75 2048w, /_next/image?url=%2Fimages%2Froles%2Frole-techlead.webp&w=3840&q=75 3840w",
-    "src": "/_next/image?url=%2Fimages%2Froles%2Frole-techlead.webp&w=3840&q=75"
+    "src": "/images/roles/optimized/role-techlead-772.avif",
+    "sizes": "(min-width: 1024px) 376px, (min-width: 450px) 308px, 68.36vw",
+    "srcSet": "/images/roles/optimized/role-techlead-384.avif 384w, /images/roles/optimized/role-techlead-512.avif 512w, /images/roles/optimized/role-techlead-772.avif 772w"
   },
   "pm": {
     "alt": "",
@@ -49,8 +49,8 @@
       "bottom": 0,
       "color": "transparent"
     },
-    "sizes": "(min-width: 1024px) 440px, min(360px, 80vw)",
-    "srcSet": "/_next/image?url=%2Fimages%2Froles%2Frole-pm.webp&w=640&q=75 640w, /_next/image?url=%2Fimages%2Froles%2Frole-pm.webp&w=750&q=75 750w, /_next/image?url=%2Fimages%2Froles%2Frole-pm.webp&w=828&q=75 828w, /_next/image?url=%2Fimages%2Froles%2Frole-pm.webp&w=1080&q=75 1080w, /_next/image?url=%2Fimages%2Froles%2Frole-pm.webp&w=1200&q=75 1200w, /_next/image?url=%2Fimages%2Froles%2Frole-pm.webp&w=1920&q=75 1920w, /_next/image?url=%2Fimages%2Froles%2Frole-pm.webp&w=2048&q=75 2048w, /_next/image?url=%2Fimages%2Froles%2Frole-pm.webp&w=3840&q=75 3840w",
-    "src": "/_next/image?url=%2Fimages%2Froles%2Frole-pm.webp&w=3840&q=75"
+    "src": "/images/roles/optimized/role-pm-772.avif",
+    "sizes": "(min-width: 1024px) 376px, (min-width: 450px) 308px, 68.36vw",
+    "srcSet": "/images/roles/optimized/role-pm-384.avif 384w, /images/roles/optimized/role-pm-512.avif 512w, /images/roles/optimized/role-pm-772.avif 772w"
   }
 }

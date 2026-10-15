@@ -105,6 +105,8 @@ const ICONS: Record<string, SkillIcon> = Object.fromEntries(
   ]),
 );
 
+export const SKILL_ICON_IDS = Object.keys(ICONS);
+
 /** Brand glyph of a skill, or null when simple-icons has none (AWS services, Oracle, SQL Server and some others are not in the set). */
 export function skillIconFor(skillId: string): SkillIcon | null {
   return ICONS[skillId] ?? null;

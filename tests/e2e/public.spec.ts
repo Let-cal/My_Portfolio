@@ -21,7 +21,7 @@ test.describe("home page", () => {
   test("only fetches the active role portrait before interaction", async ({ page }) => {
     const portraits: string[] = [];
     page.on("request", (request) => {
-      if (request.url().includes("role-techlead.webp") || request.url().includes("role-pm.webp")) portraits.push(request.url());
+      if (/role-(techlead|pm)(?:-|\.webp)/.test(request.url())) portraits.push(request.url());
     });
     await page.goto("/en");
     await page.waitForTimeout(1000);

@@ -26,6 +26,14 @@ import { RoleProvider, useRole } from "@/components/site/RoleProvider";
 const base: Content = contentSchema.parse(seed);
 const messages = { en, ja, vi: vi_ } as const;
 
+it("references a shared external brand sprite instead of repeating path data in the page", () => {
+  const { container } = renderSkills();
+  const glyphs = [...container.querySelectorAll("[data-skill-icon] use")];
+  expect(glyphs.length).toBeGreaterThan(20);
+  expect(glyphs.every(node => node.getAttribute("href")?.startsWith("/images/skill-sprite.svg#skill-icon-"))).toBe(true);
+  expect(container.querySelector("symbol")).toBeNull();
+});
+
 function RolePicker() {
   const { setRole } = useRole();
   return (

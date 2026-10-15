@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useMemo, type CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 import { usePrefersReducedMotion } from "./use-media-query";
 
@@ -12,10 +12,13 @@ type KineticTextProps = {
   className?: string;
 };
 
-/** User-perceived characters: a base letter keeps its combining marks, an emoji sequence stays whole. */
+let segmenter: Intl.Segmenter | undefined;
+
+/** One lazy segmenter per environment; a base letter keeps its marks and emoji sequences stay whole. */
 function graphemes(s: string): string[] {
-  if (typeof Intl !== "undefined" && "Segmenter" in Intl) {
-    return Array.from(new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(s), (seg) => seg.segment);
+  if (typeof Intl !== "undefined" && typeof Intl.Segmenter === "function") {
+    segmenter ??= new Intl.Segmenter(undefined, { granularity: "grapheme" });
+    return Array.from(segmenter.segment(s), (seg) => seg.segment);
   }
   return Array.from(s);
 }
@@ -30,6 +33,7 @@ function graphemes(s: string): string[] {
  */
 export function KineticText({ as: Tag = "span", text, staggerMs = 35, className }: KineticTextProps) {
   const reduced = usePrefersReducedMotion();
+  const words = useMemo(() => text.split(" ").map(graphemes), [text]);
   let index = 0;
 
   const charStyle = (i: number): CSSProperties | undefined =>
@@ -53,13 +57,13 @@ export function KineticText({ as: Tag = "span", text, staggerMs = 35, className 
     <Tag className={className}>
       <span className="sr-only">{text}</span>
       {hasSpaces
-        ? text.split(" ").map((word, w, words) => (
+        ? words.map((word, w) => (
             <span key={w} aria-hidden="true" className="inline-block whitespace-nowrap">
-              {graphemes(word).map((ch) => renderChar(ch))}
+              {word.map((ch) => renderChar(ch))}
               {w < words.length - 1 && renderChar(" ", "whitespace-pre")}
             </span>
           ))
-        : graphemes(text).map((ch) => renderChar(ch))}
+        : words[0].map((ch) => renderChar(ch))}
     </Tag>
   );
 }

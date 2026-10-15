@@ -128,6 +128,7 @@ function WheelView({ className, portraits }: { className?: string; portraits?: R
             sizes={ROLE_PORTRAIT_SIZES}
             fetchPriority="high"
             loading="eager"
+            decoding="sync"
             draggable={false}
           />
         </div>

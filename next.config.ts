@@ -15,6 +15,8 @@ const withNextIntl = createNextIntlPlugin({
 });
 
 const nextConfig: NextConfig = {
+  // Tailwind styles arrive with the first HTML rather than blocking it on another round trip.
+  experimental: { inlineCss: true },
   cacheComponents: true,
   partialPrefetching: true,
   images: {

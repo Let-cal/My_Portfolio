@@ -221,6 +221,8 @@ describe("KoiCanvas input tracking", () => {
     document.body.append(zone, other);
     render(<KoiCanvas />);
     await waitFor(() => expect(sceneStore.getState().tier).toBe("high"));
+    // Tier selection precedes loading the desktop input chunk. Interact only after it mounts.
+    await waitFor(() => expect(document.querySelector("[data-koi-veil]")).not.toBeNull());
     const move = (el: Element, clientX: number, clientY: number) =>
       act(() => {
         el.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, clientX, clientY }));

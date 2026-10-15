@@ -10,7 +10,7 @@ export const glyphId = (skillId: string) => `skill-icon-${skillId}`;
 export function SkillGlyph({ skillId, className }: { skillId: string; className?: string }) {
   return (
     <svg data-skill-icon="" aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="currentColor" className={cn("size-4 shrink-0", className)}>
-      <use href={`#${glyphId(skillId)}`} />
+      <use href={`/images/skill-sprite.svg#${glyphId(skillId)}`} />
     </svg>
   );
 }

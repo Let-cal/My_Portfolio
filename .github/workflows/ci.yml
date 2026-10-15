@@ -1,0 +1,148 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: 'true'
+  NEXT_TELEMETRY_DISABLED: '1'
+
+jobs:
+  performance:
+    name: Mobile Lighthouse release budgets
+    needs: quality
+    if: github.event.repository.private == false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node.js 22
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+          package-manager-cache: false
+      - name: Install locked dependencies and Chromium
+        run: |
+          npm ci
+          npx --no-install playwright install --with-deps chromium
+      - name: Build production
+        run: npm run build
+      - name: Measure all three locales with the locked Lighthouse version
+        run: |
+          set -euo pipefail
+          node node_modules/next/dist/bin/next start -p 3100 > "$RUNNER_TEMP/performance-server.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://localhost:3100/en > /dev/null; then ready=1; break; fi
+            sleep 1
+          done
+          test "$ready" -eq 1
+          export CHROME_PATH="$(node --input-type=module -e 'import { chromium } from "@playwright/test"; console.log(chromium.executablePath())')"
+          npm run check:performance
+      - name: Upload measurements on failure
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: lighthouse-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            .lighthouseci/
+            ${{ runner.temp }}/performance-server.log
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 3
+
+  quality:
+    name: Lint, types, unit tests and budgets
+    # Standard Linux runners are free for this public repository. Do not opt into larger runners.
+    if: github.event.repository.private == false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node.js 22
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+          package-manager-cache: false
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Unit tests
+        run: npm test -- --reporter=default --reporter=junit --outputFile=reports/unit.xml
+      - name: Production build and generated Next.js types
+        run: npm run build
+      - name: Type check including generated route types
+        run: npx --no-install tsc --noEmit
+      - name: Initial JavaScript budget
+        run: npm run check:bundle
+      - name: Artifact and script budgets
+        run: npm run test:budgets
+      - name: Upload failure reports
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: quality-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/
+          if-no-files-found: ignore
+          retention-days: 3
+
+  browser:
+    name: Playwright Chromium on Linux
+    needs: quality
+    if: github.event.repository.private == false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node.js 22
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+          package-manager-cache: false
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Install locked Playwright Chromium and Linux libraries
+        run: npx --no-install playwright install --with-deps chromium
+      - name: Full browser suite against the production server
+        # The existing config builds and starts port 3100; CI disables server reuse.
+        run: npx --no-install playwright test --project=chromium --workers=2 --reporter=list,html
+        env:
+          PLAYWRIGHT_HTML_OPEN: never
+      - name: Upload browser failure reports and traces
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 3

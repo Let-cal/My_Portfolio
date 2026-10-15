@@ -1,12 +1,21 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@import "./vendor/shadcn.css";
 @import "lenis/dist/lenis.css";
 
 @custom-variant dark (&:is(.dark *));
 /* Motion follows <html data-motion> (set before paint from the Motion toggle, else the OS setting), not the raw OS media query. */
 @custom-variant motion-reduce (&:where([data-motion=reduced], [data-motion=reduced] *));
 @custom-variant motion-safe (&:where([data-motion=full], [data-motion=full] *));
+
+/* Native rendering containment on phones: keep all content in HTML and the accessibility
+   tree, but lay out distant chapters on approach. The browser remembers measured heights. */
+@media screen and (max-width: 767px) {
+  :root:not([data-chapters-expanded]) .portfolio-chapter {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 1600px;
+  }
+}
 
 @theme inline {
   --color-background: var(--background);

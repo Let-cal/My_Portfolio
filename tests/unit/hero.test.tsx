@@ -97,6 +97,7 @@ describe("Hero", () => {
     const img = container.querySelector("[data-layer='base'] img")!;
     expect(img).toHaveAttribute("sizes");
     expect(img).toHaveAttribute("fetchpriority", "high");
+    expect(img).toHaveAttribute("decoding", "sync");
     expect(img.getAttribute("alt")).toBe(en.hero.wheel.alt.fullstack);
     const zone = container.querySelector("[data-water-zone]");
     expect(zone).not.toBeNull();

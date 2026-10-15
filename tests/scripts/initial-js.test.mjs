@@ -8,6 +8,22 @@ import { fileURLToPath } from "node:url";
 
 const script = fileURLToPath(new URL("../../scripts/measure-initial-js.mjs", import.meta.url));
 
+test("first-paint styles arrive in the HTML without an external stylesheet waterfall", { skip: !existsSync(".next/server/app/en.html") }, () => {
+  const head = readFileSync(".next/server/app/en.html", "utf8").split("</head>")[0];
+  assert.match(head, /<style\b[\s\S]*\.hero-disc/);
+  const stylesheets = [...head.matchAll(/<link\b[^>]*>/g)].filter(([tag]) => /rel="stylesheet"/.test(tag) && tag.includes("/_next/static/css/"));
+  assert.equal(stylesheets.length, 0);
+});
+
+test("desktop scene input and text-veil code stay out of initial scripts", { skip: !existsSync(".next/server/app/en.html") }, () => {
+  const result = spawnSync(process.execPath, [script, "en", "--json"], { encoding: "utf8" });
+  const [{ chunks }] = JSON.parse(result.stdout);
+  for (const { src } of chunks) {
+    const code = readFileSync(join(".next", decodeURIComponent(src.replace(/^\/_next\//, ""))), "utf8");
+    assert.equal(code.includes('"data-koi-veil"'), false, `${src} loads desktop scene protection eagerly`);
+  }
+});
+
 test("initial translations omit the build-time ICU parser", { skip: !existsSync(".next/server/app/en.html") }, () => {
   const result = spawnSync(process.execPath, [script, "en", "--json"], { encoding: "utf8" });
   const [{ chunks }] = JSON.parse(result.stdout);
@@ -43,7 +59,7 @@ test("optimized hero portraits do not ship the client image component", { skip: 
     assert.equal(code.includes("ImageConfigContext"), false, `${src} ships the client image runtime`);
   }
   const html = readFileSync(".next/server/app/en.html", "utf8");
-  assert.match(html, /srcSet="[^\"]*\/_next\/image\?/);
+  assert.match(html, /srcSet="[^\"]*\/images\/roles\/optimized\/role-developer-384\.avif 384w/);
 });
 
 test("selection-only skill beams are deferred", { skip: !existsSync(".next/server/app/en.html") }, () => {
@@ -143,12 +159,16 @@ test("the built initial route omits deferred validation, dialogs, gestures and t
 
 test("English initial CSS excludes noncritical Japanese font faces", { skip: !existsSync(".next/server/app/en.html") }, () => {
   const html = readFileSync(".next/server/app/en.html", "utf8");
+  const styles = [...html.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/g)].map((match) => match[1]);
   for (const tag of html.matchAll(/<link\b[^>]*>/g)) {
     if (!tag[0].includes('rel="stylesheet"')) continue;
     const href = tag[0].match(/href="([^"]+)"/)?.[1];
     if (!href?.startsWith("/_next/static/")) continue;
-    const css = readFileSync(join(".next", decodeURIComponent(href.replace(/^\/_next\//, ""))), "utf8");
-    assert.equal(css.includes("font-family:Noto Sans JP;"), false, href);
-    assert.equal(css.includes("font-family:Shippori Mincho;"), false, href);
+    styles.push(readFileSync(join(".next", decodeURIComponent(href.replace(/^\/_next\//, ""))), "utf8"));
+  }
+  assert.ok(styles.length, "must inspect initial styles, including inlineCss output");
+  for (const css of styles) {
+    assert.equal(css.includes("font-family:Noto Sans JP;"), false);
+    assert.equal(css.includes("font-family:Shippori Mincho;"), false);
   }
 });

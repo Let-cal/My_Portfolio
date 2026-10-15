@@ -68,11 +68,32 @@ function StageView({ portraits }: { portraits?: RolePortraits }) {
   useEffect(() => {
     const stage = stageRef.current;
     if (!stage || typeof ResizeObserver === "undefined") return;
-    const update = () => setGeometry(measure(stage));
-    const observer = new ResizeObserver(update);
+    const panels = [...stage.querySelectorAll("[data-panel]")];
+    let wide = false;
+    let disposed = false;
+    const observer = new ResizeObserver((entries) => {
+      if (disposed) return;
+      // The stage fills .hero-stage-wrap's content box, with no inline padding/border.
+      // Match its 52rem container query using delivered sizes, never mobile rect reads.
+      const stageEntry = entries.find((entry) => entry.target === stage);
+      if (stageEntry) {
+        const sizes = stageEntry.borderBoxSize as ResizeObserverSize | readonly ResizeObserverSize[] | undefined;
+        const width = (sizes && ("inlineSize" in sizes ? sizes.inlineSize : sizes[0]?.inlineSize)) ?? stageEntry.contentRect.width;
+        const rem = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+        const nextWide = width >= 52 * rem;
+        if (wide !== nextWide) {
+          wide = nextWide;
+          panels.forEach((panel) => wide ? observer.observe(panel) : observer.unobserve(panel));
+          if (!wide) setGeometry(null);
+        }
+      }
+      if (wide) setGeometry(measure(stage));
+    });
     observer.observe(stage);
-    stage.querySelectorAll("[data-panel]").forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
+    return () => {
+      disposed = true;
+      observer.disconnect();
+    };
   }, []);
 
   return (

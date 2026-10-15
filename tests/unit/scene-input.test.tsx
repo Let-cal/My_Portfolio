@@ -2,6 +2,7 @@ import { act, cleanup, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { sceneStore } from "@/scene/store";
 import { measureAvoid, useAvoidTracking, useCtaTracking, useFeedClicks } from "@/scene/use-scene-input";
+import { useStaticChapterTracking } from "@/scene/use-static-chapter";
 
 function rect(x0: number, y0: number, x1: number, y1: number): DOMRect {
   return { left: x0, top: y0, right: x1, bottom: y1, x: x0, y: y0, width: x1 - x0, height: y1 - y0, toJSON: () => ({}) } as DOMRect;
@@ -24,6 +25,36 @@ function AvoidProbe() {
   useAvoidTracking(true);
   return null;
 }
+
+it("static scenery observes the dragon chapter without synchronously measuring hidden sections", () => {
+  document.body.innerHTML = '<section id="hero"></section><section id="skills"></section><section id="why"></section>';
+  const bounds = vi.spyOn(Element.prototype, "getBoundingClientRect");
+  let notify: IntersectionObserverCallback = () => {};
+  const margins: string[] = [];
+  const observe = vi.fn(), disconnect = vi.fn();
+  vi.stubGlobal("IntersectionObserver", class {
+    constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) { notify = callback; margins.push(options?.rootMargin ?? ""); }
+    observe = observe;
+    disconnect = disconnect;
+  });
+  function StaticProbe() { useStaticChapterTracking(true); return null; }
+  try {
+    const { unmount } = render(<StaticProbe />);
+    expect(bounds).not.toHaveBeenCalled();
+    expect(observe).toHaveBeenCalledWith(document.getElementById("why"));
+    expect(margins).toEqual(["0px 0px -400px 0px"]);
+    define("innerHeight", 1000);
+    act(() => window.dispatchEvent(new Event("resize")));
+    expect(margins.at(-1)).toBe("0px 0px -500px 0px");
+    act(() => notify([{ isIntersecting: true, boundingClientRect: { top: 200 } } as IntersectionObserverEntry], {} as IntersectionObserver));
+    expect(sceneStore.getState().chapter).toBe(5);
+    act(() => notify([{ isIntersecting: false, boundingClientRect: { top: 2000 } } as IntersectionObserverEntry], {} as IntersectionObserver));
+    expect(sceneStore.getState().chapter).toBe(0);
+    act(() => notify([{ isIntersecting: false, boundingClientRect: { top: -2000 } } as IntersectionObserverEntry], {} as IntersectionObserver));
+    expect(sceneStore.getState().chapter).toBe(5);
+    unmount(); expect(disconnect).toHaveBeenCalled();
+  } finally { vi.unstubAllGlobals(); }
+});
 
 beforeEach(() => {
   sceneStore.reset();

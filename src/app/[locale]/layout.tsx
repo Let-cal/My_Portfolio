@@ -76,6 +76,8 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: MOTION_INIT_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: HELLO_SEEN_SCRIPT }} />
+        {/* A deep link needs exact chapter heights before the browser's initial anchor jump. */}
+        <script dangerouslySetInnerHTML={{ __html: 'if(location.hash)document.documentElement.setAttribute("data-chapters-expanded","")' }} />
         {/* <Reveal> blocks are server-rendered hidden; without JavaScript nothing would ever show them. */}
         <noscript>
           <style dangerouslySetInnerHTML={{ __html: REVEAL_SHOW_CSS + NO_SCRIPT_REDUCED_MOTION_CSS }} />

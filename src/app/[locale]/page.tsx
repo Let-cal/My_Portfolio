@@ -54,7 +54,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
           );
         const chapter = SECTION_CHAPTERS[id];
         return (
-          <div key={id} className="relative">
+          <div key={id} className={id === "hero" ? "relative" : "portfolio-chapter relative"}>
             {id !== "hero" && <WaveEdge className="text-foreground/[0.05] [mask-image:linear-gradient(to_bottom,#000_15%,transparent)]" />}
             <SectionLabel index={chapter.index} title={tn(id)} kanji={chapter.kanji} />
             {section}

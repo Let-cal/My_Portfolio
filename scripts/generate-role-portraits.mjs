@@ -1,5 +1,5 @@
 // Usage: node scripts/generate-role-portraits.mjs <path-to-source-photo.png> public/images/roles
-// Then: convert PNGs to WebP (quality 82). The source photo is never committed.
+// Then: convert PNGs to WebP (quality 82). Keep the source photo outside public/ and version control.
 // Spike: generate 3 stylised role portraits from the source photo (offline, procedural).
 import { createRequire } from 'node:module';
 import Delaunator from 'delaunator';

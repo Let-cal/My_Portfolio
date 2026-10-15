@@ -8,6 +8,7 @@ import { loadAnimate } from "@/lib/load-animate";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
+import { useNearViewportEffect } from "@/components/fx/use-near-viewport-effect";
 import { cn } from "@/lib/utils";
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
@@ -30,6 +31,7 @@ export function WhyCarousel({ cards }: { cards: { id: string; content: ReactNode
   const reduced = usePrefersReducedMotion();
   const [active, setActive] = useState(0);
   const [metrics, setMetrics] = useState<Metrics>(EMPTY);
+  const rootRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const x = useMotionValue(0);
@@ -37,11 +39,13 @@ export function WhyCarousel({ cards }: { cards: { id: string; content: ReactNode
   const total = cards.length;
 
   // Measure where each card sits. Re-measured when the viewport or the track changes size (resize, locale, fonts).
-  useEffect(() => {
+  const setupMeasurements = useCallback(() => {
     const viewport = viewportRef.current;
     const track = trackRef.current;
     if (!viewport || !track) return;
+    let disposed = false;
     const measure = () => {
+      if (disposed) return;
       const width = viewport.clientWidth;
       const min = -Math.max(0, track.scrollWidth - width);
       const stops = Array.from(track.children, (child) => {
@@ -53,12 +57,21 @@ export function WhyCarousel({ cards }: { cards: { id: string; content: ReactNode
       );
     };
     measure();
-    if (typeof ResizeObserver === "undefined") return;
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", measure);
+      document.fonts?.addEventListener("loadingdone", measure);
+      return () => {
+        disposed = true;
+        window.removeEventListener("resize", measure);
+        document.fonts?.removeEventListener("loadingdone", measure);
+      };
+    }
     const observer = new ResizeObserver(measure);
     observer.observe(viewport);
     observer.observe(track);
-    return () => observer.disconnect();
-  }, [total]);
+    return () => { disposed = true; observer.disconnect(); };
+  }, []);
+  useNearViewportEffect(rootRef, setupMeasurements, total);
 
   // Move the track to the active card (buttons, keys, dots, focus). A drag that already ended there needs no move.
   useEffect(() => {
@@ -112,7 +125,7 @@ export function WhyCarousel({ cards }: { cards: { id: string; content: ReactNode
   const status = t("slideStatus", { current: active + 1, total });
 
   return (
-    <div className="relative mt-12 -mx-4 sm:-mx-6 lg:mx-0 lg:px-[60px]">
+    <div ref={rootRef} className="relative mt-12 -mx-4 sm:-mx-6 lg:mx-0 lg:px-[60px]">
       <div
         role="region"
         aria-roledescription="carousel"

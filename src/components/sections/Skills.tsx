@@ -6,7 +6,7 @@ import { formatPeriod } from "@/lib/format";
 import { pickLocale } from "@/lib/i18n-text";
 import { orderSkillGroups } from "@/lib/roles";
 import { evidenceFor } from "@/lib/skills";
-import { glyphId, SkillGlyph, SkillMonogram } from "./skills/SkillGlyph";
+import { SkillGlyph, SkillMonogram } from "./skills/SkillGlyph";
 import { monogramOf, skillIconFor } from "./skills/skill-icons";
 import { SkillMap, type EvidenceView, type SkillMapData, type SkillView } from "./skills/SkillMap";
 import { Reveal } from "@/components/site/Reveal";
@@ -78,8 +78,6 @@ export function Skills({ content, locale }: { content: Content; locale: Locale }
   const flat = [...views].sort((a, b) => (rank.get(a.group) ?? 99) - (rank.get(b.group) ?? 99));
   const half = Math.ceil(flat.length / 2);
   const rows = [flat.slice(0, half), flat.slice(half)];
-  const iconIds = views.filter((v) => v.icon).map((v) => v.id);
-  const pathOf = (id: string) => skillIconFor(id)?.path ?? "";
 
   return (
     <section
@@ -87,17 +85,6 @@ export function Skills({ content, locale }: { content: Content; locale: Locale }
       aria-labelledby="skills-heading"
       className="relative mx-auto max-w-6xl scroll-mt-14 px-4 py-24 sm:px-6"
     >
-      {/* Brand glyph sprite: chips and marquee items point at these with <use>. */}
-      <svg aria-hidden="true" focusable="false" className="absolute size-0 overflow-hidden">
-        <defs>
-          {iconIds.map((id) => (
-            <symbol key={id} id={glyphId(id)} viewBox="0 0 24 24">
-              <path d={pathOf(id)} />
-            </symbol>
-          ))}
-        </defs>
-      </svg>
-
       <Reveal>
         <h2 id="skills-heading" data-scene-avoid="" className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
           {ts("skills")}

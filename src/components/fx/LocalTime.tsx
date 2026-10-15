@@ -9,20 +9,17 @@ function subscribe(onChange: () => void) {
   return () => clearInterval(timer);
 }
 
-function parts(timeZone: string, date: Date) {
-  const list = new Intl.DateTimeFormat("en-GB", {
-    timeZone,
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-    timeZoneName: "shortOffset",
-  }).formatToParts(date);
+const MAX_TIME_ZONES = 16;
+const zones = new Map<string, { formatter: Intl.DateTimeFormat; placeholder: string }>();
+
+function parts(formatter: Intl.DateTimeFormat, date: Date) {
+  const list = formatter.formatToParts(date);
   const get = (type: string) => list.find((p) => p.type === type)?.value ?? "";
   return { time: `${get("hour")}:${get("minute")}`, offset: get("timeZoneName") };
 }
 
 const formatTime = (timeZone: string) => {
-  const { time, offset } = parts(timeZone, new Date());
+  const { time, offset } = parts(zoneData(timeZone).formatter, new Date());
   return `${time} (${offset})`;
 };
 /**
@@ -30,8 +27,19 @@ const formatTime = (timeZone: string) => {
  * current time (Next.js cacheComponents rejects `new Date()` there). The live label replaces it after hydration.
  */
 const PLACEHOLDER_DATE = new Date(Date.UTC(2026, 0, 1));
+function zoneData(timeZone: string) {
+  const cached = zones.get(timeZone);
+  if (cached) return cached;
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone, hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZoneName: "shortOffset",
+  });
+  const entry = { formatter, placeholder: `--:-- (${parts(formatter, PLACEHOLDER_DATE).offset})` };
+  if (zones.size >= MAX_TIME_ZONES) zones.delete(zones.keys().next().value!);
+  zones.set(timeZone, entry);
+  return entry;
+}
 /** Same shape and length as the real label (`HH:mm (GMT+7)`), so hydration does not change the width. */
-const formatPlaceholder = (timeZone: string) => `--:-- (${parts(timeZone, PLACEHOLDER_DATE).offset})`;
+const formatPlaceholder = (timeZone: string) => zoneData(timeZone).placeholder;
 
 /**
  * Local time of the portfolio owner as `HH:mm (GMT+7)`, refreshed every 30 s.
