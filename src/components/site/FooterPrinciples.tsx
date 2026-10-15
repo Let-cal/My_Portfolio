@@ -11,7 +11,7 @@ import { useRevealOnView } from "@/components/fx/use-reveal-on-view";
  */
 export function FooterPrinciples() {
   const t = useTranslations("footer");
-  const principles = t.raw("principles") as string[];
+  const principles = [0, 1, 2, 3].map((index) => t(`principles.${index}`));
   const { ref, armed, shown } = useRevealOnView<HTMLOListElement>(0.35);
 
   return (

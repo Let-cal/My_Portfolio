@@ -33,7 +33,7 @@ function Word({ text }: { text: string }) {
 export function RotatingPhrase({ className }: { className?: string }) {
   const t = useTranslations("hero");
   const reduced = usePrefersReducedMotion();
-  const items = t.raw("phraseItems") as string[];
+  const items = [0, 1, 2].map((index) => t(`phraseItems.${index}`));
   const [index, setIndex] = useState(0);
 
   useEffect(() => {

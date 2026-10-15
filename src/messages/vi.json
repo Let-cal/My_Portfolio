@@ -98,11 +98,11 @@
     "nameJa": "レ・チャン・カット・ラム",
     "nameVi": "Lê Trần Cát Lâm",
     "phrase": "Tôi xây dựng <item></item> cho khách hàng Nhật",
-    "phraseItems": [
-      "web app",
-      "AI agent",
-      "hệ thống locker IoT"
-    ],
+    "phraseItems": {
+      "0": "web app",
+      "1": "AI agent",
+      "2": "hệ thống locker IoT"
+    },
     "wheel": {
       "label": "Chọn vai trò",
       "hint": "Rê chuột vào lát cắt hoặc cung · bấm để chọn · phím ← →",
@@ -120,12 +120,12 @@
         "title": "'<builds/>' <accent></accent>",
         "accent": "từ đầu đến cuối",
         "body": "Front-end Next.js và React, API serverless trên AWS, tích hợp thanh toán và locker IoT cho khách hàng Nhật.",
-        "chips": [
-          "Next.js",
-          "TypeScript",
-          "AWS Lambda",
-          ".NET 8"
-        ]
+        "chips": {
+          "0": "Next.js",
+          "1": "TypeScript",
+          "2": "AWS Lambda",
+          "3": ".NET 8"
+        }
       },
       "techlead": {
         "eyebrow": "Tech Lead",
@@ -133,12 +133,12 @@
         "title": "Thiết kế, <accent></accent>, kèm cặp",
         "accent": "review",
         "body": "Viết tài liệu thiết kế cơ bản và chi tiết, review code theo checklist cố định, và kèm cặp intern trong dự án khách hàng.",
-        "chips": [
-          "Kiến trúc",
-          "Code review",
-          "Thiết kế DB",
-          "Mentoring"
-        ]
+        "chips": {
+          "0": "Kiến trúc",
+          "1": "Code review",
+          "2": "Thiết kế DB",
+          "3": "Mentoring"
+        }
       },
       "pm": {
         "eyebrow": "Technical PM",
@@ -146,12 +146,12 @@
         "title": "Lên kế hoạch, <accent></accent>, release",
         "accent": "thống nhất",
         "body": "Estimate, lập lịch và định nghĩa yêu cầu bằng tiếng Nhật, lên kế hoạch release, và điều phối 2 dự án song song.",
-        "chips": [
-          "Estimate",
-          "Lập lịch",
-          "JLPT N3",
-          "Release"
-        ]
+        "chips": {
+          "0": "Estimate",
+          "1": "Lập lịch",
+          "2": "JLPT N3",
+          "3": "Release"
+        }
       }
     },
     "stats": {
@@ -194,12 +194,12 @@
     "linkedin": "LinkedIn",
     "email": "Email",
     "principlesLabel": "Cách tôi làm việc",
-    "principles": [
-      "Làm rõ yêu cầu trước khi viết code.",
-      "Estimate thành thật, và báo sớm khi có thay đổi.",
-      "Quyết định nào cũng ghi lại, để người sau không phải đoán.",
-      "Review trước khi release, rút kinh nghiệm sau khi release."
-    ]
+    "principles": {
+      "0": "Làm rõ yêu cầu trước khi viết code.",
+      "1": "Estimate thành thật, và báo sớm khi có thay đổi.",
+      "2": "Quyết định nào cũng ghi lại, để người sau không phải đoán.",
+      "3": "Review trước khi release, rút kinh nghiệm sau khi release."
+    }
   },
   "experience": {
     "education": "Học vấn",

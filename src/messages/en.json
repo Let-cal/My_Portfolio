@@ -98,11 +98,11 @@
     "nameJa": "レ・チャン・カット・ラム",
     "nameVi": "Lê Trần Cát Lâm",
     "phrase": "I build <item></item> for Japanese clients",
-    "phraseItems": [
-      "web apps",
-      "AI agents",
-      "IoT locker systems"
-    ],
+    "phraseItems": {
+      "0": "web apps",
+      "1": "AI agents",
+      "2": "IoT locker systems"
+    },
     "wheel": {
       "label": "Choose a role",
       "hint": "Hover a slice or an arc · click to choose · ← → keys",
@@ -120,12 +120,12 @@
         "title": "'<builds/>' <accent></accent>",
         "accent": "end to end",
         "body": "Next.js and React front ends, serverless APIs on AWS, payments and IoT locker integration for Japanese clients.",
-        "chips": [
-          "Next.js",
-          "TypeScript",
-          "AWS Lambda",
-          ".NET 8"
-        ]
+        "chips": {
+          "0": "Next.js",
+          "1": "TypeScript",
+          "2": "AWS Lambda",
+          "3": ".NET 8"
+        }
       },
       "techlead": {
         "eyebrow": "Tech Lead",
@@ -133,12 +133,12 @@
         "title": "Designs, <accent></accent>, mentors",
         "accent": "reviews",
         "body": "Basic and detailed design documents, code review against a fixed checklist, and mentoring interns on client projects.",
-        "chips": [
-          "Architecture",
-          "Code review",
-          "DB design",
-          "Mentoring"
-        ]
+        "chips": {
+          "0": "Architecture",
+          "1": "Code review",
+          "2": "DB design",
+          "3": "Mentoring"
+        }
       },
       "pm": {
         "eyebrow": "Technical PM",
@@ -146,12 +146,12 @@
         "title": "Plans, <accent></accent>, ships",
         "accent": "aligns",
         "body": "Estimates, schedules and requirements definition in Japanese, release planning, and two projects run in parallel.",
-        "chips": [
-          "Estimation",
-          "Scheduling",
-          "JLPT N3",
-          "Release"
-        ]
+        "chips": {
+          "0": "Estimation",
+          "1": "Scheduling",
+          "2": "JLPT N3",
+          "3": "Release"
+        }
       }
     },
     "stats": {
@@ -194,12 +194,12 @@
     "linkedin": "LinkedIn",
     "email": "Email",
     "principlesLabel": "How I work",
-    "principles": [
-      "Get the requirements clear before writing code.",
-      "Give honest estimates, and say early when they change.",
-      "Write decisions down, so the next person does not have to guess.",
-      "Review before the release, and look back after it."
-    ]
+    "principles": {
+      "0": "Get the requirements clear before writing code.",
+      "1": "Give honest estimates, and say early when they change.",
+      "2": "Write decisions down, so the next person does not have to guess.",
+      "3": "Review before the release, and look back after it."
+    }
   },
   "experience": {
     "education": "Education",

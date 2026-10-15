@@ -237,7 +237,7 @@ describe("Footer principles", () => {
 
   it("always has the lines in the DOM (static state when there is no IntersectionObserver)", () => {
     renderPrinciples("ja");
-    expect(screen.getAllByRole("listitem")).toHaveLength(ja.footer.principles.length);
+    expect(screen.getAllByRole("listitem")).toHaveLength(Object.keys(ja.footer.principles).length);
     expect(screen.getByText(ja.footer.principles[0])).toBeVisible();
   });
 });
@@ -264,7 +264,7 @@ describe("footer.principles messages", () => {
   ];
 
   it.each(Object.entries(messages))("%s has 3 to 5 non-empty principles with no banned word and no digits", (_locale, bundle) => {
-    const list = bundle.footer.principles as string[];
+    const list = Object.values(bundle.footer.principles);
     expect(list.length).toBeGreaterThanOrEqual(3);
     expect(list.length).toBeLessThanOrEqual(5);
     for (const line of list) {
@@ -276,7 +276,7 @@ describe("footer.principles messages", () => {
   });
 
   it("the three locales have the same number of principles", () => {
-    expect(ja.footer.principles).toHaveLength(en.footer.principles.length);
-    expect(vi_.footer.principles).toHaveLength(en.footer.principles.length);
+    expect(Object.values(ja.footer.principles)).toHaveLength(Object.keys(en.footer.principles).length);
+    expect(Object.values(vi_.footer.principles)).toHaveLength(Object.keys(en.footer.principles).length);
   });
 });

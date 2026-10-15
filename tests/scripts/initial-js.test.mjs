@@ -8,6 +8,15 @@ import { fileURLToPath } from "node:url";
 
 const script = fileURLToPath(new URL("../../scripts/measure-initial-js.mjs", import.meta.url));
 
+test("initial translations omit the build-time ICU parser", { skip: !existsSync(".next/server/app/en.html") }, () => {
+  const result = spawnSync(process.execPath, [script, "en", "--json"], { encoding: "utf8" });
+  const [{ chunks }] = JSON.parse(result.stdout);
+  for (const { src } of chunks) {
+    const code = readFileSync(join(".next", decodeURIComponent(src.replace(/^\/_next\//, ""))), "utf8");
+    assert.equal(code.includes("EXPECT_ARGUMENT_CLOSING_BRACE"), false, `${src} includes the ICU parser`);
+  }
+});
+
 test("critical typography does not schedule a late swap on slow connections", { skip: !existsSync(".next/server/app/en.html") }, () => {
   const html = readFileSync(".next/server/app/en.html", "utf8");
   for (const tag of html.matchAll(/<link\b[^>]*>/g)) {

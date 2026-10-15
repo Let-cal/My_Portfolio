@@ -148,7 +148,7 @@ describe("RolePanels", () => {
     fireEvent.click(screen.getByRole("radio", { name: "TECH LEAD" }));
     const active = container.querySelector<HTMLElement>("[data-panel='techlead']")!;
     expect(active).toHaveAttribute("data-state", "active");
-    for (const chip of en.hero.roles.techlead.chips) expect(within(active).getByText(chip)).toBeInTheDocument();
+    for (const chip of Object.values(en.hero.roles.techlead.chips)) expect(within(active).getByText(chip)).toBeInTheDocument();
     for (const key of ["fullstack", "pm"]) {
       const panel = container.querySelector<HTMLElement>(`[data-panel='${key}']`)!;
       expect(panel).toHaveAttribute("data-state", "collapsed");

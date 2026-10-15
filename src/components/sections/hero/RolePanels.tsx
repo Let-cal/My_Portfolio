@@ -39,7 +39,7 @@ function Panel({ roleKey, index }: { roleKey: RoleKey; index: number }) {
   const { role, active, setHover, select } = useStage();
   const detailsId = useId();
   const open = active === roleKey;
-  const chips = t.raw("chips") as string[];
+  const chips = [0, 1, 2, 3].map((index) => t(`chips.${index}`));
 
   return (
     <div
