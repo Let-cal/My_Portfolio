@@ -1,4 +1,5 @@
 import { KineticText } from "@/components/fx/KineticText";
+import { segmentKineticWords } from "@/components/fx/kinetic-words";
 import { ROLE_KEYS, type Content, type Locale, type RoleKey } from "@/content/schema";
 import { pickLocale } from "@/lib/i18n-text";
 import { getRolePortraits } from "@/lib/role-portraits.server";
@@ -48,7 +49,7 @@ export function Hero({ content, locale }: { content: Content; locale: Locale }) 
           id="hero-heading"
           className="font-heading text-[clamp(2.4rem,6vw,4.25rem)] leading-[1.02] font-extrabold tracking-[-0.025em] text-balance"
         >
-          <KineticText text={profile.name} />
+          <KineticText text={profile.name} preparedWords={segmentKineticWords(profile.name)} />
         </h1>
         <HeroRoleTitle roles={roleData} />
       </header>

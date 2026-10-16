@@ -1,0 +1,84 @@
+[
+  {
+    "family": "Inter",
+    "file": "inter-fccca918.woff2",
+    "original": "ba9851c3c22cd980-s.woff2",
+    "bytes": 25844,
+    "sha256": "fccca918fea40089dacadc7045861314d1a6bc91f1f323cc1eeb22ebcdb321b5",
+    "unicodeRange": "u+0460-052f,u+1c80-1c8a,u+20b4,u+2de0-2dff,u+a640-a69f,u+fe2e-fe2f"
+  },
+  {
+    "family": "Inter",
+    "file": "inter-aebf2ab4.woff2",
+    "original": "21350d82a1f187e9-s.woff2",
+    "bytes": 18744,
+    "sha256": "aebf2ab4a4ce6810d73c1ac7be7cafb4e5ec4cee2d6db5fb3e09691747ec4bd6",
+    "unicodeRange": "u+0301,u+0400-045f,u+0490-0491,u+04b0-04b1,u+2116"
+  },
+  {
+    "family": "Inter",
+    "file": "inter-a2e2c783.woff2",
+    "original": "c5fe6dc8356a8c31-s.woff2",
+    "bytes": 11272,
+    "sha256": "a2e2c783ca6f9c20486e81e72a279203e86730bbf8f01ff6a5ee9dbd09e1c271",
+    "unicodeRange": "u+1f??"
+  },
+  {
+    "family": "Inter",
+    "file": "inter-46dd4cdc.woff2",
+    "original": "19cfc7226ec3afaa-s.woff2",
+    "bytes": 19044,
+    "sha256": "46dd4cdca58c26ae87cc6927657bf83b2e8abfc39ffd0ab176e301a8d28d22bf",
+    "unicodeRange": "u+0370-0377,u+037a-037f,u+0384-038a,u+038c,u+038e-03a1,u+03a3-03ff"
+  },
+  {
+    "family": "Inter",
+    "file": "inter-a28eb6d3.woff2",
+    "original": "8e9860b6e62d6359-s.woff2",
+    "bytes": 85272,
+    "sha256": "a28eb6d3ccb534ae0c94ca999371df024aab60b08c3c8a5720ee9e32fa0faaa2",
+    "unicodeRange": "u+0100-02ba,u+02bd-02c5,u+02c7-02cc,u+02ce-02d7,u+02dd-02ff,u+0304,u+0308,u+0329,u+1d00-1dbf,u+1e00-1e9f,u+1ef2-1eff,u+2020,u+20a0-20ab,u+20ad-20c4,u+2113,u+2c60-2c7f,u+a720-a7ff",
+    "effectiveUnicodeRange": "u+100-101,u+104-10f,u+112-127,u+12a-167,u+16a-19f,u+1a2-1ae,u+1b1-2ba,u+2bd-2c5,u+2c7-2cc,u+2ce-2d7,u+2dd-2ff,u+1d00-1dbf,u+1e00-1e9f,u+1efa-1eff,u+2020,u+20a0-20aa,u+20ad-20c4,u+2113,u+2c60-2c7f,u+a720-a7ff"
+  },
+  {
+    "family": "Inter",
+    "file": "inter-c9407645.woff2",
+    "original": "e4af272ccee01ff0-s.woff2",
+    "bytes": 48432,
+    "sha256": "c940764593d0fe5d596be327ca7558855e018039fb78509aa21921fd3644c3e4",
+    "unicodeRange": "u+00??,u+0131,u+0152-0153,u+02bb-02bc,u+02c6,u+02da,u+02dc,u+0304,u+0308,u+0329,u+2000-206f,u+20ac,u+2122,u+2191,u+2193,u+2212,u+2215,u+feff,u+fffd"
+  },
+  {
+    "family": "Inter",
+    "file": "inter-8db00ff4.woff2",
+    "original": "df0a9ae256c0569c-s.woff2",
+    "bytes": 10280,
+    "sha256": "8db00ff46c67b22cda8bed865acf7077651cac8d2841d5b40980556b48961931",
+    "unicodeRange": "u+0102-0103,u+0110-0111,u+0128-0129,u+0168-0169,u+01a0-01a1,u+01af-01b0,u+0300-0301,u+0303-0304,u+0308-0309,u+0323,u+0329,u+1ea0-1ef9,u+20ab"
+  },
+  {
+    "family": "Space Grotesk",
+    "file": "space-grotesk-054c266f.woff2",
+    "original": "b7387a63dd068245-s.woff2",
+    "bytes": 18924,
+    "sha256": "054c266fbb441ee059365dba0885d206f67ca05b375de869b88e02ebfccc9b9d",
+    "unicodeRange": "u+0100-02ba,u+02bd-02c5,u+02c7-02cc,u+02ce-02d7,u+02dd-02ff,u+0304,u+0308,u+0329,u+1d00-1dbf,u+1e00-1e9f,u+1ef2-1eff,u+2020,u+20a0-20ab,u+20ad-20c4,u+2113,u+2c60-2c7f,u+a720-a7ff",
+    "effectiveUnicodeRange": "u+100-101,u+104-10f,u+112-127,u+12a-167,u+16a-19f,u+1a2-1ae,u+1b1-2ba,u+2bd-2c5,u+2c7-2cc,u+2ce-2d7,u+2dd-2ff,u+1d00-1dbf,u+1e00-1e9f,u+1efa-1eff,u+2020,u+20a0-20aa,u+20ad-20c4,u+2113,u+2c60-2c7f,u+a720-a7ff"
+  },
+  {
+    "family": "Space Grotesk",
+    "file": "space-grotesk-a0d054c4.woff2",
+    "original": "36966cca54120369-s.woff2",
+    "bytes": 22320,
+    "sha256": "a0d054c4af557de20afd6ca59f47ab353bcaec49c63ff04b6c9d39d0f8910557",
+    "unicodeRange": "u+00??,u+0131,u+0152-0153,u+02bb-02bc,u+02c6,u+02da,u+02dc,u+0304,u+0308,u+0329,u+2000-206f,u+20ac,u+2122,u+2191,u+2193,u+2212,u+2215,u+feff,u+fffd"
+  },
+  {
+    "family": "Space Grotesk",
+    "file": "space-grotesk-d699664b.woff2",
+    "original": "e1aab0933260df4d-s.woff2",
+    "bytes": 6772,
+    "sha256": "d699664b145bfeeccc66a4cce7fa55e14eb63efd7ec6b0b2ec52e25dd98f3917",
+    "unicodeRange": "u+0102-0103,u+0110-0111,u+0128-0129,u+0168-0169,u+01a0-01a1,u+01af-01b0,u+0300-0301,u+0303-0304,u+0308-0309,u+0323,u+0329,u+1ea0-1ef9,u+20ab"
+  }
+]

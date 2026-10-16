@@ -1,6 +1,7 @@
 import { ArrowUpRightIcon } from "@/components/site/icons";
 import { useTranslations } from "next-intl";
 import { MagneticButton } from "@/components/fx/MagneticButton";
+import { segmentKineticWords } from "@/components/fx/kinetic-words";
 import { AvailabilityStatus } from "@/components/site/AvailabilityStatus";
 import { ROLE_KEYS, type Content, type Locale, type RoleKey } from "@/content/schema";
 import { pickLocale } from "@/lib/i18n-text";
@@ -17,6 +18,7 @@ import { GithubIcon, LinkedinIcon } from "@/components/site/social-icons";
 export function Contact({ content, locale }: { content: Content; locale: Locale }) {
   const t = useTranslations("contact");
   const { profile, roles } = content;
+  const headline = t("headline");
 
   const cvUrls = Object.fromEntries(ROLE_KEYS.map((key) => [key, roles.find((r) => r.key === key)?.cvFileUrl ?? ""])) as Record<
     RoleKey,
@@ -31,7 +33,8 @@ export function Contact({ content, locale }: { content: Content; locale: Locale 
     >
       <ContactHeadline
         id="contact-heading"
-        text={t("headline")}
+        text={headline}
+        preparedWords={segmentKineticWords(headline)}
         className="font-heading text-[clamp(3rem,10vw,9rem)] leading-[0.95] font-extrabold tracking-[-0.035em] text-balance"
       />
 

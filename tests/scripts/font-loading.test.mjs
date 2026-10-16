@@ -5,7 +5,7 @@ import ts from "typescript";
 
 test("optional web fonts do not compete with the Hero image through eager preloads", () => {
   const source = ts.createSourceFile("layout.tsx", readFileSync("src/app/[locale]/layout.tsx", "utf8"), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
-  const faces = new Set(["Inter", "Space_Grotesk", "Instrument_Serif"]);
+  const faces = new Set(["Instrument_Serif"]);
   let count = 0;
   function visit(node) {
     if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && faces.has(node.expression.text)) {
@@ -18,5 +18,5 @@ test("optional web fonts do not compete with the Hero image through eager preloa
     ts.forEachChild(node, visit);
   }
   visit(source);
-  assert.equal(count, 3);
+  assert.equal(count, 1);
 });

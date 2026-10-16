@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Instrument_Serif, Space_Grotesk } from "next/font/google";
+import { Instrument_Serif } from "next/font/google";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -32,9 +32,7 @@ import { buildPageMetadata, buildPersonJsonLd, serializeJsonLd } from "@/lib/met
 import { DeferredToaster } from "@/components/site/DeferredToaster";
 import "../globals.css";
 
-// Optional faces use normal CSS discovery, leaving early connections for the portrait and application.
-const inter = Inter({ variable: "--font-inter", subsets: ["latin", "vietnamese"], display: "optional", preload: false });
-const spaceGrotesk = Space_Grotesk({ variable: "--font-space-grotesk", subsets: ["latin", "vietnamese"], display: "optional", preload: false });
+// Inter and Space Grotesk are vendored unchanged with explicit subset ordering (fonts/vietnamese.css).
 // Accent faces: the italic serif (role title in the side rail, later headings) and the Mincho used by the vertical chapter labels.
 const instrumentSerif = Instrument_Serif({ variable: "--font-serif", subsets: ["latin"], weight: "400", style: "italic", display: "optional", preload: false });
 
@@ -63,8 +61,6 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
   // there and React only rewrites `className` when the prop changes. A locale switch still creates a
   // fresh <html> (new root layout), which <ThemeSync> fixes. Font variables live on <body>.
   const bodyClassName = [
-    inter.variable,
-    spaceGrotesk.variable,
     instrumentSerif.variable,
     "flex min-h-full flex-col",
   ]

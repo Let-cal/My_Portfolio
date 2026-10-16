@@ -5,6 +5,8 @@ test.describe.configure({ mode: "serial" });
 
 for (const theme of ["light", "dark"]) {
   test(`${theme}: Skills backgrounds follow their groups during wheel scrolling under the pointer`, async ({ page }) => {
+    // CI software-GPU rendering needs a longer deadline to sample all 100 animation frames.
+    test.setTimeout(process.env.CI ? 300_000 : 30_000);
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.addInitScript((theme) => {
       Object.defineProperty(navigator, "hardwareConcurrency", { value: 4 });

@@ -10,11 +10,11 @@ import { useRevealOnView } from "@/components/fx/use-reveal-on-view";
  * off-screen, `data-held` pauses the animation (see globals.css) and the letters are re-created so they start
  * from their hidden pose; entering the viewport lets them run.
  */
-export function ContactHeadline({ id, text, className }: { id: string; text: string; className?: string }) {
+export function ContactHeadline({ id, text, preparedWords, className }: { id: string; text: string; preparedWords?: readonly (readonly string[])[]; className?: string }) {
   const { ref, armed, shown } = useRevealOnView<HTMLHeadingElement>(0.3);
   return (
     <h2 id={id} ref={ref} className={className} data-scene-avoid="" data-contact-headline="" data-held={armed && !shown ? "" : undefined}>
-      <KineticText key={armed ? "armed" : "initial"} text={text} staggerMs={30} />
+      <KineticText key={armed ? "armed" : "initial"} text={text} preparedWords={preparedWords} staggerMs={30} />
     </h2>
   );
 }

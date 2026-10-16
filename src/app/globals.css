@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "./vendor/shadcn.css";
 @import "lenis/dist/lenis.css";
+@import "./fonts/vietnamese.css";
 
 @custom-variant dark (&:is(.dark *));
 /* Motion follows <html data-motion> (set before paint from the Motion toggle, else the OS setting), not the raw OS media query. */
@@ -602,7 +603,7 @@ html[data-hello-seen] [data-hello] {
 .hero-panel-title {
   display: block;
   margin-top: 6px;
-  font-family: var(--font-space-grotesk), var(--font-stack-sans), sans-serif;
+  font-family: var(--font-heading), sans-serif;
   font-size: clamp(22px, 6vw, 28px);
   font-weight: 800;
   line-height: 1.08;
