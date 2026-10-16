@@ -1,10 +1,13 @@
 "use client";
 
+import { decimalsOf, formatterFor, formatTickerValue } from "@/lib/ticker-format";
 import { useEffect, useRef } from "react";
 import { usePrefersReducedMotion } from "./use-media-query";
 
 type NumberTickerProps = {
   value: number;
+  /** Exact final text prepared by the server; preserves SSR and accessible labels. */
+  formattedValue?: string;
   prefix?: string;
   suffix?: string;
   durationMs?: number;
@@ -12,22 +15,6 @@ type NumberTickerProps = {
 };
 
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
-const numberFormats = new Map<number, Intl.NumberFormat>();
-function formatterFor(decimals: number) {
-  let formatter = numberFormats.get(decimals);
-  if (!formatter) {
-    formatter = new Intl.NumberFormat("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
-    numberFormats.set(decimals, formatter);
-  }
-  return formatter;
-}
-
-function decimalsOf(n: number) {
-  const s = String(n);
-  const dot = s.indexOf(".");
-  return dot === -1 ? 0 : s.length - dot - 1;
-}
-
 /**
  * Counts from 0 to `value` when scrolled into view. Server HTML and reduced motion show the final value;
  * the accessible label always carries the final text, so a screen reader never hears a half-counted number.
@@ -35,27 +22,25 @@ function decimalsOf(n: number) {
  * No layout shift: the final text is rendered invisibly in the same grid cell as the counting text, so the
  * element is always as wide as the final value (digit and comma count never change its width).
  */
-export function NumberTicker({ value, prefix = "", suffix = "", durationMs = 1200, className }: NumberTickerProps) {
+export function NumberTicker({ value, formattedValue, prefix = "", suffix = "", durationMs = 1200, className }: NumberTickerProps) {
   const reduced = usePrefersReducedMotion();
   const nodeRef = useRef<HTMLSpanElement>(null);
   const decimals = decimalsOf(value);
-  const formatter = formatterFor(decimals);
-  const format = (n: number) =>
-    `${prefix}${formatter.format(n)}${suffix}`;
-  const finalText = format(value);
+  const finalText = formattedValue ?? formatTickerValue(value, prefix, suffix);
 
   useEffect(() => {
     const node = nodeRef.current;
     if (!node) return;
-    const format = (n: number) => `${prefix}${formatter.format(n)}${suffix}`;
     node.textContent = finalText;
     if (reduced || typeof IntersectionObserver === "undefined") return;
     let frame = 0;
     // Hydration rendered the final value (no mismatch); rewind it so the count has somewhere to start.
-    node.textContent = format(0);
+    node.textContent = `${prefix}${(0).toFixed(decimals)}${suffix}`;
     const observer = new IntersectionObserver((entries) => {
       if (!entries.some((e) => e.isIntersecting)) return;
       observer.disconnect();
+      const formatter = formatterFor(decimals);
+      const format = (n: number) => `${prefix}${formatter.format(n)}${suffix}`;
       const start = performance.now();
       const tick = (now: number) => {
         const t = Math.min(1, (now - start) / durationMs);
@@ -70,7 +55,7 @@ export function NumberTicker({ value, prefix = "", suffix = "", durationMs = 120
       observer.disconnect();
       if (frame) cancelAnimationFrame(frame);
     };
-  }, [reduced, value, durationMs, formatter, prefix, suffix, finalText]);
+  }, [reduced, value, durationMs, decimals, prefix, suffix, finalText]);
 
   return (
     <span role="img" aria-label={finalText} className={`inline-grid tabular-nums${className ? ` ${className}` : ""}`}>

@@ -59,6 +59,23 @@ describe("usePointerFine", () => {
 });
 
 describe("NumberTicker", () => {
+  it("defers the prepared ticker formatter until its first visible animation frame", () => {
+    stubMedia(() => false);
+    let trigger: IntersectionObserverCallback = () => {};
+    vi.stubGlobal("IntersectionObserver", class extends FakeObserver {
+      constructor(callback: IntersectionObserverCallback) { super(); trigger = callback; }
+    });
+    vi.stubGlobal("requestAnimationFrame", vi.fn(() => 1));
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
+    const constructor = vi.spyOn(Intl, "NumberFormat");
+    try {
+      render(<NumberTicker value={1.234567} formattedValue="1.234567" />);
+      expect(constructor).not.toHaveBeenCalled();
+      expect(screen.getByLabelText("1.234567").querySelector("[data-ticker-value]")).toHaveTextContent("0.000000");
+      act(() => trigger([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver));
+      expect(constructor).toHaveBeenCalledTimes(1);
+    } finally { constructor.mockRestore(); }
+  });
   it("counts without scheduling React renders on animation frames", () => {
     stubMedia(() => false);
     vi.useFakeTimers();

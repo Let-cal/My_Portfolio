@@ -47,3 +47,10 @@ it("formats ticker values without repeated native toLocaleString formatter setup
   expect(html).toContain('aria-label="14"');
   expect(locale).not.toHaveBeenCalled();
 });
+
+it("uses server-prepared ticker text without constructing a formatter during hydration", () => {
+  const constructor = vi.spyOn(Intl, "NumberFormat");
+  render(<NumberTicker value={1.23456} formattedValue="~1.23456+" prefix="~" suffix="+" />);
+  expect(screen.getByRole("img", { name: "~1.23456+" })).toBeInTheDocument();
+  expect(constructor).not.toHaveBeenCalled();
+});

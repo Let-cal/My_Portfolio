@@ -1,4 +1,4 @@
-"use client";
+import { formatTickerValue } from "@/lib/ticker-format";
 
 import { useTranslations } from "next-intl";
 import { NumberTicker } from "@/components/fx/NumberTicker";
@@ -23,7 +23,7 @@ export function HeroStats() {
         <div key={s.label} className={CELL}>
           <dt className={LABEL}>{t(s.label)}</dt>
           <dd className={NUMBER}>
-            <NumberTicker value={s.value} />
+            <NumberTicker value={s.value} formattedValue={formatTickerValue(s.value)} />
           </dd>
         </div>
       ))}

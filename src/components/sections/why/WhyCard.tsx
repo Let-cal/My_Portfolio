@@ -1,3 +1,4 @@
+import { formatTickerValue } from "@/lib/ticker-format";
 import { ArrowRightIcon } from "@/components/site/icons";
 import { NumberTicker } from "@/components/fx/NumberTicker";
 import { WaveBackground } from "./WaveBackground";
@@ -49,6 +50,7 @@ export function WhyCard({ card, evidenceLabel }: { card: WhyCardView; evidenceLa
           <div className="mt-5">
             <NumberTicker
               value={stat.value}
+              formattedValue={formatTickerValue(stat.value, stat.prefix, stat.suffix)}
               prefix={stat.prefix}
               suffix={stat.suffix}
               className="font-heading text-6xl leading-none font-extrabold tracking-tight"
