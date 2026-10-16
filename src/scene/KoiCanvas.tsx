@@ -102,27 +102,30 @@ export function KoiCanvas() {
   const sceneVisible = load && ready && tier !== "off";
   return createPortal(
     <>
-      {/* eslint-disable-next-line @next/next/no-img-element -- decorative full-bleed backdrop; next/image would add an optimiser round-trip for no gain */}
-      <img
-        src={src}
-        alt=""
-        aria-hidden="true"
-        decoding="async"
-        data-koi-fallback=""
-        className="print:hidden"
-        style={{
-          position: "fixed",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          zIndex: -1,
-          pointerEvents: "none",
-          // The static route has no tracked text veil; keep even the brightest fallback pixels subdued.
-          opacity: sceneVisible ? 0 : activeTheme === "light" ? 0.3 : 0.15,
-          transition: `opacity ${FADE_MS}ms ease`,
-        }}
-      />
+      <picture>
+        <source type="image/avif" srcSet={src.replace(/\.jpg$/, ".avif")} />
+        {/* Native picture chooses a pre-encoded asset without an optimizer round trip. */}
+        <img
+          src={src}
+          alt=""
+          aria-hidden="true"
+          decoding="async"
+          data-koi-fallback=""
+          className="print:hidden"
+          style={{
+            position: "fixed",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            zIndex: -1,
+            pointerEvents: "none",
+            // The static route has no tracked text veil; keep even the brightest fallback pixels subdued.
+            opacity: sceneVisible ? 0 : activeTheme === "light" ? 0.3 : 0.15,
+            transition: `opacity ${FADE_MS}ms ease`,
+          }}
+        />
+      </picture>
       {load && tier !== "off" && (
         <div
           data-koi-canvas=""

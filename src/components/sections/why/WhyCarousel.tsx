@@ -2,11 +2,12 @@
 
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/site/icons";
 import * as motion from "motion/react-m";
-import { useMotionValue } from "motion/react";
+import { useDragControls, useMotionValue } from "motion/react";
+import { flushSync } from "react-dom";
 import type { animate } from "motion";
 import { loadAnimate } from "@/lib/load-animate";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent, type ReactNode } from "react";
 import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
 import { useNearViewportEffect } from "@/components/fx/use-near-viewport-effect";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,8 @@ export function WhyCarousel({ cards }: { cards: { id: string; content: ReactNode
   const reduced = usePrefersReducedMotion();
   const [active, setActive] = useState(0);
   const [metrics, setMetrics] = useState<Metrics>(EMPTY);
+  const [dragReady, setDragReady] = useState(false);
+  const dragControls = useDragControls();
   const rootRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -43,6 +46,7 @@ export function WhyCarousel({ cards }: { cards: { id: string; content: ReactNode
     const viewport = viewportRef.current;
     const track = trackRef.current;
     if (!viewport || !track) return;
+    setDragReady(true);
     let disposed = false;
     const measure = () => {
       if (disposed) return;
@@ -124,6 +128,13 @@ export function WhyCarousel({ cards }: { cards: { id: string; content: ReactNode
   const atEnd = active === total - 1;
   const status = t("slideStatus", { current: active + 1, total });
 
+  function startDrag(event: PointerEvent<HTMLDivElement>) {
+    if (event.button !== 0) return;
+    // A first gesture can precede IO. Subscribe controls before handing them the same event.
+    if (!dragReady) flushSync(() => setDragReady(true));
+    dragControls.start(event);
+  }
+
   return (
     <div ref={rootRef} className="relative mt-12 -mx-4 sm:-mx-6 lg:mx-0 lg:px-[60px]">
       <div
@@ -143,8 +154,13 @@ export function WhyCarousel({ cards }: { cards: { id: string; content: ReactNode
             ref={trackRef}
             data-carousel-track=""
             className="relative flex w-max cursor-grab gap-6 px-4 active:cursor-grabbing sm:px-6 lg:px-3"
-            style={{ x }}
-            drag="x"
+            style={{ x, touchAction: "pan-y", userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none" }}
+            drag={dragReady ? "x" : false}
+            layout="position"
+            layoutDependency={metrics}
+            dragControls={dragReady ? dragControls : undefined}
+            dragListener={false}
+            onPointerDown={startDrag}
             dragConstraints={{ left: metrics.min, right: 0 }}
             dragElastic={0.14}
             dragMomentum={!reduced}

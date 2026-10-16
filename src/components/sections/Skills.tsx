@@ -31,6 +31,17 @@ export function Skills({ content, locale }: { content: Content; locale: Locale }
     ROLE_KEYS.map((key) => [key, pickLocale(roles.find((r) => r.key === key)?.title, locale)]),
   ) as Record<RoleKey, string>;
 
+  // Shared records keep one identity in the client props and are localized/formatted only once per render.
+  const evidenceByAnchor = new Map<string, EvidenceView>();
+  const sharedEvidence = (anchor: string, create: () => EvidenceView): EvidenceView => {
+    let evidence = evidenceByAnchor.get(anchor);
+    if (!evidence) {
+      evidence = create();
+      evidenceByAnchor.set(anchor, evidence);
+    }
+    return evidence;
+  };
+
   const views: SkillView[] = SKILL_GROUPS.flatMap((group) =>
     skills
       .filter((s) => s.group === group)
@@ -40,24 +51,24 @@ export function Skills({ content, locale }: { content: Content; locale: Locale }
         const { experiences, projects } = evidenceFor(s.id, content);
         const evidence: EvidenceView[] = [
           ...experiences.map(
-            (e): EvidenceView => ({
+            (e): EvidenceView => sharedEvidence(`exp-${e.id}`, () => ({
               kind: "exp",
               id: e.id,
               anchor: `exp-${e.id}`,
               title: e.company,
               role: pickLocale(e.position, locale),
               period: formatPeriod(e.start, e.end, locale),
-            }),
+            })),
           ),
           ...projects.map(
-            (p): EvidenceView => ({
+            (p): EvidenceView => sharedEvidence(`proj-${p.id}`, () => ({
               kind: "proj",
               id: p.id,
               anchor: `proj-${p.id}`,
               title: p.title,
               role: pickLocale(p.role, locale),
               period: formatPeriod(p.start, p.end, locale),
-            }),
+            })),
           ),
         ];
         return {

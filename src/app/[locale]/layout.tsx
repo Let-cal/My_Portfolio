@@ -32,10 +32,11 @@ import { buildPageMetadata, buildPersonJsonLd, serializeJsonLd } from "@/lib/met
 import { DeferredToaster } from "@/components/site/DeferredToaster";
 import "../globals.css";
 
-const inter = Inter({ variable: "--font-inter", subsets: ["latin", "vietnamese"], display: "optional" });
-const spaceGrotesk = Space_Grotesk({ variable: "--font-space-grotesk", subsets: ["latin", "vietnamese"], display: "optional" });
+// Optional faces use normal CSS discovery, leaving early connections for the portrait and application.
+const inter = Inter({ variable: "--font-inter", subsets: ["latin", "vietnamese"], display: "optional", preload: false });
+const spaceGrotesk = Space_Grotesk({ variable: "--font-space-grotesk", subsets: ["latin", "vietnamese"], display: "optional", preload: false });
 // Accent faces: the italic serif (role title in the side rail, later headings) and the Mincho used by the vertical chapter labels.
-const instrumentSerif = Instrument_Serif({ variable: "--font-serif", subsets: ["latin"], weight: "400", style: "italic", display: "optional" });
+const instrumentSerif = Instrument_Serif({ variable: "--font-serif", subsets: ["latin"], weight: "400", style: "italic", display: "optional", preload: false });
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));

@@ -6,6 +6,10 @@ const PORT = 3100;
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
+  // SwiftShader shares the runner CPU with the scene; concurrent browsers starve frame-driven checks.
+  workers: process.env.CI ? 1 : undefined,
+  timeout: process.env.CI ? 120_000 : 30_000,
+  expect: { timeout: process.env.CI ? 30_000 : 5_000 },
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   reporter: "list",

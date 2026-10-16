@@ -54,7 +54,9 @@ describe("KoiCanvas", () => {
     expect(el).toHaveAttribute("aria-hidden", "true");
     expect(el.style).toMatchObject({ position: "fixed", objectFit: "cover", opacity: "0.15", pointerEvents: "none" });
     expect(el.style.zIndex).toBe("-1");
-    expect(el.parentElement).toBe(document.body);
+    expect(el.parentElement?.tagName).toBe("PICTURE");
+    expect(el.parentElement?.parentElement).toBe(document.body);
+    expect(el.parentElement?.querySelector("source")).toHaveAttribute("srcset", "/fallback/koi-night.avif");
     expect(el).toHaveClass("print:hidden");
   });
 

@@ -17,6 +17,7 @@ for (const locale of routes.length ? routes : ["en", "ja", "vi"]) {
       "node_modules/lighthouse/cli/index.js", `${origin}/${locale}`,
       "--form-factor=mobile", "--only-categories=performance,accessibility,best-practices,seo",
       "--output=json", `--output-path=${file}`,
+      ...(process.env.PERF_TRACE === "1" && run === 1 ? ["--save-assets"] : []),
       "--chrome-flags=--headless=new --no-sandbox --disable-dev-shm-usage", "--quiet",
     ], { encoding: "utf8", timeout: 120_000 });
     if (result.status !== 0) throw new Error(`Lighthouse failed for ${locale} run ${run}: ${result.error?.message ?? result.stderr}`);
