@@ -226,7 +226,8 @@ describe("Intl work is reused without changing output", () => {
     });
     expect(renderToString(<LocalTime />)).toContain("min-width:13ch");
     const placeholderCalls = dates.filter((date) => date === Date.UTC(2026, 0, 1));
-    expect(placeholderCalls).toHaveLength(1);
+    expect(placeholderCalls).toHaveLength(0);
+    expect(constructor).not.toHaveBeenCalled();
     render(<><LocalTime /><LocalTime /></>);
     expect(constructor).toHaveBeenCalledTimes(1);
     expect(screen.getAllByText("14:32 (GMT+7)")).toHaveLength(2);

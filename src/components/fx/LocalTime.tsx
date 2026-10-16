@@ -1,8 +1,9 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 const REFRESH_MS = 30_000;
+const dormantSubscribe = () => () => {};
 
 function subscribe(onChange: () => void) {
   const timer = setInterval(onChange, REFRESH_MS);
@@ -39,7 +40,7 @@ function zoneData(timeZone: string) {
   return entry;
 }
 /** Same shape and length as the real label (`HH:mm (GMT+7)`), so hydration does not change the width. */
-const formatPlaceholder = (timeZone: string) => zoneData(timeZone).placeholder;
+const formatPlaceholder = (timeZone: string) => timeZone === "Asia/Ho_Chi_Minh" ? "--:-- (GMT+7)" : zoneData(timeZone).placeholder;
 
 /**
  * Local time of the portfolio owner as `HH:mm (GMT+7)`, refreshed every 30 s.
@@ -47,13 +48,28 @@ const formatPlaceholder = (timeZone: string) => zoneData(timeZone).placeholder;
  * keeps the label's width (tabular digits + a min-width in ch) so the swap does not shift the layout.
  */
 export function LocalTime({ timeZone = "Asia/Ho_Chi_Minh", className }: { timeZone?: string; className?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [active, setActive] = useState(() => typeof IntersectionObserver === "undefined");
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") {
+      return;
+    }
+    const observer = new IntersectionObserver(entries => {
+      if (!entries.some(entry => entry.isIntersecting)) return;
+      setActive(true);
+      observer.disconnect();
+    }, { rootMargin: "100px" });
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
   const label = useSyncExternalStore(
-    subscribe,
-    () => formatTime(timeZone),
+    active ? subscribe : dormantSubscribe,
+    () => active ? formatTime(timeZone) : formatPlaceholder(timeZone),
     () => formatPlaceholder(timeZone),
   );
   return (
     <span
+      ref={ref}
       className={`inline-block tabular-nums${className ? ` ${className}` : ""}`}
       style={{ minWidth: `${formatPlaceholder(timeZone).length}ch` }}
     >

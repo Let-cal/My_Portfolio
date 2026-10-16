@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
 
-// Each case starts a live WebGL scene; avoid competing for the same test GPU.
-test.describe.configure({ mode: "serial" });
+// Each case starts a live WebGL scene. Run this file sequentially, but retry only
+// the failed independent case rather than replaying every earlier GPU check.
+test.describe.configure({ mode: "default" });
 
 for (const theme of ["light", "dark"]) {
   test(`${theme}: Skills backgrounds follow their groups during wheel scrolling under the pointer`, async ({ page }) => {
@@ -55,6 +56,8 @@ test("chapter seals stay above the padded primary headings", async ({ page }) =>
 });
 
 test("scrolling Skills does not reassign existing backdrop nodes across the screen", async ({ page }) => {
+  // This samples 55 pairs of actual frames; software GPU rendering exceeds 120s on Linux CI.
+  test.setTimeout(process.env.CI ? 300_000 : 30_000);
   const textures: number[] = [];
   const shaderErrors: string[] = [];
   page.on("response", (response) => { if (response.url().endsWith("/scene/waterfall/rocks/rocks.gltf")) textures.push(response.status()); });

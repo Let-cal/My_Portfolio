@@ -1,5 +1,6 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { chromium } from "@playwright/test";
+import { basename } from "node:path";
 
 // Diagnostic only: never use this profiled run to evaluate release budgets.
 const origin = process.env.PERF_ORIGIN ?? "http://localhost:3100";
@@ -17,6 +18,19 @@ try {
   await page.waitForTimeout(2000);
   const { profile } = await client.send("Profiler.stop");
   writeFileSync(".lighthouseci/en-startup.cpuprofile", JSON.stringify(profile));
+  // Keep the exact public chunks with the samples: Linux/Windows build hashes can differ.
+  // Fetch only this deployment's public scripts, after profiling and scored measurements finish.
+  mkdirSync(".lighthouseci/startup-scripts", { recursive: true });
+  const scripts = [...new Set(profile.nodes.map(node => node.callFrame.url))].filter(value => {
+    if (!URL.canParse(value)) return false;
+    const url = new URL(value);
+    return url.origin === new URL(origin).origin && /^\/_next\/static\/chunks\/.*\.js$/.test(url.pathname);
+  });
+  await Promise.all(scripts.map(async value => {
+    const response = await fetch(value, { signal: AbortSignal.timeout(10_000) });
+    if (!response.ok) throw new Error(`Diagnostic script fetch failed: ${response.status}`);
+    writeFileSync(`.lighthouseci/startup-scripts/${basename(new URL(value).pathname)}`, await response.text());
+  }));
   console.log(`Diagnostic CPU profile: ${profile.nodes.length} nodes, ${profile.samples?.length ?? 0} samples`);
 } finally {
   await browser.close();

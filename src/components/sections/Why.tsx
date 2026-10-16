@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 import { ScrollTextReveal } from "@/components/fx/ScrollTextReveal";
+import { tokenizeScrollText } from "@/components/fx/scroll-tokens";
 import type { Content, Locale } from "@/content/schema";
 import { pickLocale } from "@/lib/i18n-text";
 import { WhyCarousel } from "./why/WhyCarousel";
@@ -14,6 +15,7 @@ import { Reveal } from "@/components/site/Reveal";
 export function Why({ content, locale }: { content: Content; locale: Locale }) {
   const t = useTranslations("why");
   const ts = useTranslations("sections");
+  const manifesto = t("manifesto");
 
   const cards = [...content.whyCards]
     .sort((a, b) => a.sortIndex - b.sortIndex)
@@ -41,7 +43,8 @@ export function Why({ content, locale }: { content: Content; locale: Locale }) {
       </Reveal>
       <div data-manifesto="" data-scene-avoid="" className="mt-10 max-w-4xl">
         <ScrollTextReveal
-          text={t("manifesto")}
+          text={manifesto}
+          preparedTokens={tokenizeScrollText(manifesto, locale)}
           locale={locale}
           className="font-heading text-2xl leading-snug font-medium tracking-tight text-balance sm:text-3xl md:text-4xl"
         />

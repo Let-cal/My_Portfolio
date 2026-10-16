@@ -14,6 +14,7 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Internal task briefs and local measurement probes are not application source.
     ".superpowers/**",
+    ".lighthouseci/**",
   ]),
 ]);
 

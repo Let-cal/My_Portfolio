@@ -4,29 +4,10 @@ import { useMemo, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { usePrefersReducedMotion } from "./use-media-query";
 import { useScrollEnhancement } from "./use-scroll-enhancement";
+import { tokenizeScrollText, type ScrollToken } from "./scroll-tokens";
 
 /** Dimmest a word gets before the scroll reaches it; kept well above invisible so the sentence stays readable. */
 export const SCROLL_REVEAL_MIN_OPACITY = 0.65;
-
-type Token = { text: string; unit: number | null };
-
-/**
- * Splits `text` into reveal units and the whitespace between them. Uses word-granularity Intl.Segmenter so
- * unspaced scripts (Japanese) still progress word by word; falls back to whitespace splitting without it.
- */
-function tokenize(text: string, locale?: string): Token[] {
-  if (typeof Intl !== "undefined" && typeof Intl.Segmenter === "function") {
-    const segmenter = new Intl.Segmenter(locale, { granularity: "word" });
-    return numbered(Array.from(segmenter.segment(text), (s) => s.segment));
-  }
-  return numbered(text.split(/(\s+)/).filter(Boolean));
-}
-
-/** Gives every non-whitespace part its position among the reveal units (whitespace gets null). */
-function numbered(parts: string[]): Token[] {
-  let n = 0;
-  return parts.map((part) => ({ text: part, unit: /\S/.test(part) ? n++ : null }));
-}
 
 function Word({ word, reduced }: { word: string; reduced: boolean }) {
   return (
@@ -43,11 +24,11 @@ function Word({ word, reduced }: { word: string; reduced: boolean }) {
  * light up in reading order. Reduced motion shows the whole text at full opacity. Screen readers get the sentence
  * once as sr-only text; the animated copy is aria-hidden.
  */
-export function ScrollTextReveal({ text, locale, className }: { text: string; locale?: string; className?: string }) {
+export function ScrollTextReveal({ text, locale, className, preparedTokens }: { text: string; locale?: string; className?: string; preparedTokens?: readonly ScrollToken[] }) {
   const reduced = usePrefersReducedMotion();
   const ref = useRef<HTMLParagraphElement>(null);
   useScrollEnhancement(ref, "words", reduced, text);
-  const tokens = useMemo(() => tokenize(text, locale), [text, locale]);
+  const tokens = useMemo(() => preparedTokens ?? tokenizeScrollText(text, locale), [text, locale, preparedTokens]);
 
   return (
     <p ref={ref} lang={locale} className={cn(className)}>

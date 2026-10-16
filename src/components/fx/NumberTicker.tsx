@@ -12,6 +12,15 @@ type NumberTickerProps = {
 };
 
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+const numberFormats = new Map<number, Intl.NumberFormat>();
+function formatterFor(decimals: number) {
+  let formatter = numberFormats.get(decimals);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    numberFormats.set(decimals, formatter);
+  }
+  return formatter;
+}
 
 function decimalsOf(n: number) {
   const s = String(n);
@@ -30,14 +39,15 @@ export function NumberTicker({ value, prefix = "", suffix = "", durationMs = 120
   const reduced = usePrefersReducedMotion();
   const nodeRef = useRef<HTMLSpanElement>(null);
   const decimals = decimalsOf(value);
+  const formatter = formatterFor(decimals);
   const format = (n: number) =>
-    `${prefix}${n.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}${suffix}`;
+    `${prefix}${formatter.format(n)}${suffix}`;
   const finalText = format(value);
 
   useEffect(() => {
     const node = nodeRef.current;
     if (!node) return;
-    const format = (n: number) => `${prefix}${n.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}${suffix}`;
+    const format = (n: number) => `${prefix}${formatter.format(n)}${suffix}`;
     node.textContent = finalText;
     if (reduced || typeof IntersectionObserver === "undefined") return;
     let frame = 0;
@@ -60,7 +70,7 @@ export function NumberTicker({ value, prefix = "", suffix = "", durationMs = 120
       observer.disconnect();
       if (frame) cancelAnimationFrame(frame);
     };
-  }, [reduced, value, durationMs, decimals, prefix, suffix, finalText]);
+  }, [reduced, value, durationMs, formatter, prefix, suffix, finalText]);
 
   return (
     <span role="img" aria-label={finalText} className={`inline-grid tabular-nums${className ? ` ${className}` : ""}`}>
