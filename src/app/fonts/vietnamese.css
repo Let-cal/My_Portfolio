@@ -9,7 +9,9 @@
 
 @font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:optional;src:url(/fonts/inter-a28eb6d3.woff2) format("woff2");unicode-range:u+100-101,u+104-10f,u+112-127,u+12a-167,u+16a-19f,u+1a2-1ae,u+1b1-2ba,u+2bd-2c5,u+2c7-2cc,u+2ce-2d7,u+2dd-2ff,u+1d00-1dbf,u+1e00-1e9f,u+1efa-1eff,u+2020,u+20a0-20aa,u+20ad-20c4,u+2113,u+2c60-2c7f,u+a720-a7ff}
 
-@font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:optional;src:url(/fonts/inter-c9407645.woff2) format("woff2");unicode-range:u+00??,u+0131,u+0152-0153,u+02bb-02bc,u+02c6,u+02da,u+02dc,u+0304,u+0308,u+0329,u+2000-206f,u+20ac,u+2122,u+2191,u+2193,u+2212,u+2215,u+feff,u+fffd}
+@font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:optional;src:url(/fonts/inter-c9407645.woff2) format("woff2");unicode-range:u+0000-001f,u+007f-009f,u+00a1-00a8,u+00aa-00af,u+00b1-00b6,u+00b8-00bf,u+00c4-00c7,u+00cb,u+00ce-00d1,u+00d6,u+00d8,u+00db-00dc,u+00de-00df,u+00e4-00e7,u+00eb,u+00ee-00f1,u+00f6-00f8,u+00fb-00fc,u+00fe-00ff,u+0131,u+0152-0153,u+02bb-02bc,u+02c6,u+02da,u+02dc,u+0308,u+0329,u+2000-2001,u+2003-2008,u+200a,u+200c-2012,u+2015-2017,u+201b,u+201f-2021,u+2023-2025,u+2027-2031,u+2034-2038,u+203b-2043,u+2045-206f,u+20ac,u+2122,u+2191,u+2193,u+2212,u+2215,u+feff,u+fffd}
+
+@font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:optional;src:url(/fonts/inter-site-latin-316a055a.woff2) format("woff2");unicode-range:u+0020-007e,u+00a0,u+00a9,u+00b0,u+00b7,u+00c0-00c3,u+00c8-00ca,u+00cc-00cd,u+00d2-00d5,u+00d7,u+00d9-00da,u+00dd,u+00e0-00e3,u+00e8-00ea,u+00ec-00ed,u+00f2-00f5,u+00f9-00fa,u+00fd,u+0300-0301,u+0303-0304,u+0309,u+0323,u+2002,u+2009,u+200b,u+2013-2014,u+2018-201a,u+201c-201e,u+2022,u+2026,u+2032-2033,u+2039-203a,u+2044}
 
 @font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:optional;src:url(/fonts/inter-8db00ff4.woff2) format("woff2");unicode-range:u+0102-0103,u+0110-0111,u+0128-0129,u+0168-0169,u+01a0-01a1,u+01af-01b0,u+0300-0301,u+0303-0304,u+0308-0309,u+0323,u+0329,u+1ea0-1ef9,u+20ab}
 
@@ -17,7 +19,9 @@
 
 @font-face{font-family:Space Grotesk;font-style:normal;font-weight:300 700;font-display:optional;src:url(/fonts/space-grotesk-054c266f.woff2) format("woff2");unicode-range:u+100-101,u+104-10f,u+112-127,u+12a-167,u+16a-19f,u+1a2-1ae,u+1b1-2ba,u+2bd-2c5,u+2c7-2cc,u+2ce-2d7,u+2dd-2ff,u+1d00-1dbf,u+1e00-1e9f,u+1efa-1eff,u+2020,u+20a0-20aa,u+20ad-20c4,u+2113,u+2c60-2c7f,u+a720-a7ff}
 
-@font-face{font-family:Space Grotesk;font-style:normal;font-weight:300 700;font-display:optional;src:url(/fonts/space-grotesk-a0d054c4.woff2) format("woff2");unicode-range:u+00??,u+0131,u+0152-0153,u+02bb-02bc,u+02c6,u+02da,u+02dc,u+0304,u+0308,u+0329,u+2000-206f,u+20ac,u+2122,u+2191,u+2193,u+2212,u+2215,u+feff,u+fffd}
+@font-face{font-family:Space Grotesk;font-style:normal;font-weight:300 700;font-display:optional;src:url(/fonts/space-grotesk-a0d054c4.woff2) format("woff2");unicode-range:u+0000-001f,u+007f-009f,u+00a1-00a8,u+00aa-00af,u+00b1-00b6,u+00b8-00bf,u+00c4-00c7,u+00cb,u+00ce-00d1,u+00d6,u+00d8,u+00db-00dc,u+00de-00df,u+00e4-00e7,u+00eb,u+00ee-00f1,u+00f6-00f8,u+00fb-00fc,u+00fe-00ff,u+0131,u+0152-0153,u+02bb-02bc,u+02c6,u+02da,u+02dc,u+0308,u+0329,u+2000-2008,u+200a,u+200c-2012,u+2015-2017,u+201b,u+201f-2021,u+2023-2025,u+2027-2031,u+2034-2038,u+203b-2043,u+2045-206f,u+20ac,u+2122,u+2191,u+2193,u+2212,u+2215,u+feff,u+fffd}
+
+@font-face{font-family:Space Grotesk;font-style:normal;font-weight:300 700;font-display:optional;src:url(/fonts/space-grotesk-site-latin-56cd92b2.woff2) format("woff2");unicode-range:u+0020-007e,u+00a0,u+00a9,u+00b0,u+00b7,u+00c0-00c3,u+00c8-00ca,u+00cc-00cd,u+00d2-00d5,u+00d7,u+00d9-00da,u+00dd,u+00e0-00e3,u+00e8-00ea,u+00ec-00ed,u+00f2-00f5,u+00f9-00fa,u+00fd,u+0300-0301,u+0303-0304,u+0309,u+0323,u+2009,u+200b,u+2013-2014,u+2018-201a,u+201c-201e,u+2022,u+2026,u+2032-2033,u+2039-203a,u+2044}
 
 @font-face{font-family:Space Grotesk;font-style:normal;font-weight:300 700;font-display:optional;src:url(/fonts/space-grotesk-d699664b.woff2) format("woff2");unicode-range:u+0102-0103,u+0110-0111,u+0128-0129,u+0168-0169,u+01a0-01a1,u+01af-01b0,u+0300-0301,u+0303-0304,u+0308-0309,u+0323,u+0329,u+1ea0-1ef9,u+20ab}
 

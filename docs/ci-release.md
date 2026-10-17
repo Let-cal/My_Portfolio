@@ -2,6 +2,10 @@
 
 ## Checks
 
+The 200 KB JavaScript check measures scripts referenced by the prerendered HTML, including script preloads. It does not measure every subsequent network request: Motion's feature chunks can load on mount, while scene and dialog chunks have separate loading gates. Lighthouse exercises the real page and includes that subsequent work. Treat the static-script result as a bundle scope, not as total startup transfer size.
+
+Font artifact tests regenerate priority subsets in memory and compare hashes, cmap, outlines, metrics and variation data against the unchanged source fonts. The quality job installs uv 0.13.1 using `astral-sh/setup-uv` v10.3.0 pinned to commit `1c37ad07a6a961277cf70c0d37d6f313000f5884`; caching is disabled. The generator pins FontTools/Brotli in its script metadata. Browser tests separately compare rendered glyph pixels and widths and check initial locale font requests.
+
 PRs targeting `main` and pushes to `main` run:
 
 - **CI:** Node.js 22, `npm ci`, ESLint, unit tests, production build, `tsc --noEmit` after Next.js generates route types, the existing 200 KB initial-JavaScript gate, and artifact/script budgets. A second job runs the complete Chromium suite with one worker. The existing Playwright config builds and starts the production server on port 3100; CI never reuses an existing server. The build occurs in each job so browser tests exercise their own clean install.
@@ -18,7 +22,7 @@ Security and CodeQL also run weekly. Failure artifacts expire after three days. 
 - Workflow concurrency cancels superseded runs. npm caches contain downloaded packages only; no `.next`, browser binaries, `node_modules`, or PR artifacts are promoted into trusted jobs. Artifact retention is short to limit storage.
 - Keep the account's Actions spending budget at $0 with over-budget usage blocked. Public runner compute is free, but cache/artifact storage still consumes GitHub quotas. This change does not modify billing settings; check the existing budget before enabling the workflows.
 - Workflow permissions default to `contents: read`. Checkout does not retain credentials. PR code runs only under `pull_request`, never `pull_request_target` or a privileged `workflow_run`. No repository secret, PAT, Supabase credential, or Vercel token is required. The app uses its seed content in this environment.
-- All external actions use full commit SHAs resolved through GitHub's official API on 2026-10-15. CodeQL's annotated `v4` tag was resolved to its commit. Gitleaks 8.30.1 uses the Linux x64 archive SHA-256 published in its release checksums. Review upstream changes and updated hashes together.
+- All external actions use full commit SHAs resolved through GitHub's official API on 2026-10-15; setup-uv was added and resolved on 2026-10-17. CodeQL's annotated `v4` tag was resolved to its commit. Gitleaks 8.30.1 uses the Linux x64 archive SHA-256 published in its release checksums. Review upstream changes and updated hashes together.
 
 | Action | Verified ref | Commit |
 | --- | --- | --- |
@@ -26,6 +30,7 @@ Security and CodeQL also run weekly. Failure artifacts expire after three days. 
 | `actions/setup-node` | `v7.1.0` | `949feb2413d6458794dcd2491c4babbbce0c15c1` |
 | `actions/upload-artifact` | `v7.0.2` | `cf430e030ddbb5b0abf93d22962f4752f3646cd9` |
 | `github/codeql-action` | `v4` | `6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee` |
+| `astral-sh/setup-uv` | `v10.3.0` | `1c37ad07a6a961277cf70c0d37d6f313000f5884` |
 
 Resolve updates with `gh api repos/OWNER/REPO/commits/TAG --jq .sha`; inspect action inputs at that commit. Official verification endpoints: [checkout](https://api.github.com/repos/actions/checkout/commits/v7.0.1), [setup-node](https://api.github.com/repos/actions/setup-node/commits/v7.1.0), [upload-artifact](https://api.github.com/repos/actions/upload-artifact/commits/v7.0.2), [CodeQL](https://api.github.com/repos/github/codeql-action/commits/v4), and [Gitleaks release](https://api.github.com/repos/gitleaks/gitleaks/releases/tags/v8.30.1).
 

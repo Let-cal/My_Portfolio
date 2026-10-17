@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { unicodePoints } from "../../scripts/font-ranges.mjs";
+import { unicodePoints, subtractUnicodeRange } from "../../scripts/font-ranges.mjs";
 
 test("vendored fonts preserve every original binary and Unicode range", () => {
   const css = readFileSync("src/app/fonts/vietnamese.css", "utf8");
@@ -20,14 +20,36 @@ test("vendored fonts preserve every original binary and Unicode range", () => {
 
 test("Vietnamese no longer overlaps Latin Extended and total Unicode coverage is unchanged", () => {
   const rows = JSON.parse(readFileSync("src/app/fonts/manifest.json", "utf8"));
+  const sites = JSON.parse(readFileSync("src/app/fonts/site-subsets.json", "utf8"));
   for (const family of ["Inter", "Space Grotesk"]) {
     const own = rows.filter(row => row.family === family);
     const original = new Set(own.flatMap(row => [...unicodePoints(row.unicodeRange)]));
     const effective = new Set(own.flatMap(row => [...unicodePoints(row.effectiveUnicodeRange ?? row.unicodeRange)]));
+    for (const site of sites.filter(row => row.family === family)) {
+      for (const point of site.codepoints) effective.add(point);
+    }
     assert.deepEqual(effective, original);
     const vietnamese = unicodePoints(own.find(row => row.unicodeRange.includes("1ea0-1ef9")).unicodeRange);
-    const extended = unicodePoints(own.find(row => row.effectiveUnicodeRange).effectiveUnicodeRange);
+    const extended = unicodePoints(own.find(row => row.unicodeRange.startsWith("u+0100-02ba")).effectiveUnicodeRange);
     assert.equal([...extended].some(point => vietnamese.has(point)), false);
+  }
+});
+
+test("original Latin CSS ranges exclude exactly the site points and retain every other original point", () => {
+  const rows = JSON.parse(readFileSync("src/app/fonts/manifest.json", "utf8"));
+  const sites = JSON.parse(readFileSync("src/app/fonts/site-subsets.json", "utf8"));
+  const css = readFileSync("src/app/fonts/vietnamese.css", "utf8");
+  const faces = [...css.matchAll(/@font-face\s*\{([^}]+)\}/g)].map(match => match[1]);
+  for (const site of sites) {
+    const original = rows.find(row => row.file === site.sourceFile);
+    assert.ok(original.effectiveUnicodeRange, `${site.family}: missing effective Latin range`);
+    const expected = unicodePoints(subtractUnicodeRange(original.unicodeRange, site.unicodeRange));
+    const effective = unicodePoints(original.effectiveUnicodeRange);
+    assert.deepEqual(effective, expected);
+    assert.equal(site.codepoints.some(point => effective.has(point)), false);
+    const face = faces.find(face => face.includes(`/fonts/${original.file})`));
+    assert.ok(face.includes(`unicode-range:${original.effectiveUnicodeRange}`));
+    assert.ok(faces.find(face => face.includes(`/fonts/${site.file})`)).includes(`unicode-range:${site.unicodeRange}`));
   }
 });
 

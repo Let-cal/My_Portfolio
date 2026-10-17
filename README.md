@@ -55,6 +55,8 @@ The `@swc/core` override preserves an existing Windows tooling workaround. Revie
 
 ## Verification
 
+The font artifact checks also require [uv](https://docs.astral.sh/uv/getting-started/installation/) and Python 3.11 or newer. The font script declares pinned, isolated FontTools/Brotli dependencies; normal development and production builds require only Node.js/npm. CI provisions uv explicitly.
+
 Run from the repository root. Type and artifact checks follow the build because they consume generated output.
 
 ```sh

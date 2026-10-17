@@ -1,0 +1,4 @@
+# Generated font manifests are byte-checked on Windows and Linux.
+src/app/fonts/manifest.json text eol=lf
+src/app/fonts/site-subsets.json text eol=lf
+*.woff2 -text

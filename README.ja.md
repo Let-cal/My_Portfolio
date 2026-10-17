@@ -55,6 +55,8 @@ npm run start
 
 ## 検証手順
 
+フォント成果物の検証には、[uv](https://docs.astral.sh/uv/getting-started/installation/)とPython 3.11以降も必要です。FontToolsとBrotliのバージョンはスクリプト内で固定し、分離した環境で実行します。通常の開発・本番ビルドはNode.jsとnpmのみで実行できます。CIではuvを明示的に準備します。
+
 リポジトリのルートで実行します。型チェックと成果物の検査には、ビルドで生成したファイルを使用します。
 
 ```sh
