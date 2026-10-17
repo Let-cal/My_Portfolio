@@ -1,4 +1,5 @@
-@import "tailwindcss";
+/* Only application files define shipped utilities; docs and test fixtures are not UI sources. */
+@import "tailwindcss" source("../");
 @import "tw-animate-css";
 @import "./vendor/shadcn.css";
 @import "lenis/dist/lenis.css";

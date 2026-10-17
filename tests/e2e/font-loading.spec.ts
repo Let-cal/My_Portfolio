@@ -1,5 +1,12 @@
 import { expect, test } from "@playwright/test";
 
+test("hero role panel titles retain the approved heading font stack", async ({ page }) => {
+  await page.goto("/en");
+  const families = await page.locator(".hero-panel-title").evaluateAll(nodes => nodes.map(node => getComputedStyle(node).fontFamily));
+  expect(families).toHaveLength(3);
+  for (const family of families) expect(family).toContain("Space Grotesk");
+});
+
 test("Vietnamese text uses the original small subsets instead of overlapping Latin Extended files", async ({ page }) => {
   await page.setViewportSize({ width: 412, height: 823 });
   const fonts = new Set<string>();

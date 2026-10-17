@@ -4,7 +4,7 @@ import { AwardIcon, BriefcaseIcon, FolderKanbanIcon, HeartIcon, HouseIcon, MailI
 import * as motion from "motion/react-m";
 import { useTranslations } from "next-intl";
 import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
-import { cn } from "@/lib/utils";
+import { clsx } from "clsx";
 import { SECTION_IDS, type SectionId } from "./sections";
 import { useActiveSection } from "./use-active-section";
 
@@ -41,7 +41,7 @@ export function PillNav() {
               <a
                 href={`#${id}`}
                 aria-current={current ? "true" : undefined}
-                className={cn(
+                className={clsx(
                   "relative flex h-12 flex-col items-center justify-center gap-0.5 rounded-full px-0.5 text-[10px] leading-none font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
                   current ? "text-foreground" : "text-muted-foreground",
                 )}

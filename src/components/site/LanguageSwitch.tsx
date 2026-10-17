@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from "next-intl";
 import { localizedPath } from "@/lib/localized-path";
 import { routing } from "@/i18n/routing";
+import { clsx } from "clsx";
 import { cn } from "@/lib/utils";
 
 /**
@@ -33,7 +34,7 @@ export function LanguageSwitch({ className }: { className?: string }) {
                 `${localizedPath(window.location.pathname, locale)}${window.location.search}${window.location.hash}`,
               );
             }}
-            className={cn(
+            className={clsx(
               "rounded-md px-1.5 py-1 text-xs font-medium uppercase tracking-wide transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
               active ? "bg-muted text-brand-text" : "text-muted-foreground hover:text-foreground",
             )}

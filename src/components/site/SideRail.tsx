@@ -4,7 +4,7 @@ import { MailIcon } from "@/components/site/icons";
 import { useTranslations } from "next-intl";
 import { TextScramble } from "@/components/fx/TextScramble";
 import type { RoleKey } from "@/content/schema";
-import { cn } from "@/lib/utils";
+import { clsx } from "clsx";
 import { useRole } from "./RoleProvider";
 import { SECTION_IDS } from "./sections";
 import type { ReactNode } from "react";
@@ -60,14 +60,14 @@ export function SideRail({ name, titles, links, icons }: SideRailProps) {
                     <a
                       href={`#${id}`}
                       aria-current={current ? "true" : undefined}
-                      className={cn(
+                      className={clsx(
                         "group flex items-center gap-4 rounded-sm py-2 text-xs font-semibold tracking-[0.18em] uppercase outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
                         current ? "text-foreground" : "text-muted-foreground hover:text-foreground focus-visible:text-foreground",
                       )}
                     >
                       <span
                         aria-hidden="true"
-                        className={cn(
+                        className={clsx(
                           "h-px shrink-0 bg-current transition-[width] duration-300 ease-out group-hover:w-16 group-focus-visible:w-16 motion-reduce:transition-none",
                           current ? "w-16" : "w-8",
                         )}

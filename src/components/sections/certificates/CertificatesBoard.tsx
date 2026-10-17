@@ -6,7 +6,7 @@ import { useId, useMemo, useState, type KeyboardEvent, type ReactNode } from "re
 import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
 import { CERT_TOPICS } from "@/content/constants";
 import type { CertTopic } from "@/content/schema";
-import { cn } from "@/lib/utils";
+import { clsx } from "clsx";
 import { LanternCard, type CertificateView } from "./LanternCard";
 
 type Pane = "certificates" | "activities";
@@ -90,7 +90,7 @@ export function CertificatesBoard({ certificates, activities, faces }: { certifi
               aria-controls={panelId(p)}
               tabIndex={selected ? 0 : -1}
               onClick={() => setPane(p)}
-              className={cn(
+              className={clsx(
                 "relative rounded-full px-4 py-1.5 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                 selected ? "text-(--role-accent-contrast)" : "text-muted-foreground hover:text-foreground",
               )}
@@ -129,7 +129,7 @@ export function CertificatesBoard({ certificates, activities, faces }: { certifi
                 aria-checked={checked}
                 tabIndex={checked ? 0 : -1}
                 onClick={() => setFilter(topic)}
-                className={cn(
+                className={clsx(
                   "inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                   checked
                     ? "border-(--role-accent) bg-(--role-accent)/15 text-foreground"
@@ -137,7 +137,7 @@ export function CertificatesBoard({ certificates, activities, faces }: { certifi
                 )}
               >
                 {t(`topics.${topic}`)}
-                <span className={cn("text-xs tabular-nums", checked ? "text-(--role-accent-text)" : "text-muted-foreground")}>{count}</span>
+                <span className={clsx("text-xs tabular-nums", checked ? "text-(--role-accent-text)" : "text-muted-foreground")}>{count}</span>
               </button>
             );
           })}
@@ -146,7 +146,7 @@ export function CertificatesBoard({ certificates, activities, faces }: { certifi
           {t("showing", { count: shown.length, total: certificates.length })}
         </p>
 
-        <motion.ul layout={!reduced} transition={transition} className={cn(GRID, "mt-8")}>
+        <motion.ul layout={!reduced} transition={transition} className={clsx(GRID, "mt-8")}>
           {shown.map((cert, i) => (
             <motion.li
               key={cert.id}

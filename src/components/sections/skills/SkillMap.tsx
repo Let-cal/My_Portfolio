@@ -7,6 +7,7 @@ import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
 import { useHighlight } from "@/components/site/HighlightProvider";
 import { useRole } from "@/components/site/RoleProvider";
 import type { RoleKey, SkillGroup } from "@/content/schema";
+import { clsx } from "clsx";
 import { cn } from "@/lib/utils";
 const SkillBeams = dynamic(() => import("./SkillBeams").then((module) => module.SkillBeams), { ssr: false });
 import { SkillGlyph, SkillMonogram } from "./SkillGlyph";
@@ -161,12 +162,12 @@ export function SkillMap({ data }: { data: SkillMapData }) {
                     type="button"
                     aria-current={active ? "true" : undefined}
                     onClick={() => setPick({ role, group: g })}
-                    className={cn(
+                    className={clsx(
                       "group/head inline-flex cursor-pointer items-baseline gap-3 rounded-md py-0.5 text-left font-heading text-lg font-semibold tracking-tight transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                       active ? "text-foreground" : "text-foreground/60 hover:text-foreground",
                     )}
                   >
-                    <span aria-hidden="true" className={cn("font-mono text-xs font-medium tabular-nums", active ? "text-(--role-accent-text)" : "text-muted-foreground")}>
+                    <span aria-hidden="true" className={clsx("font-mono text-xs font-medium tabular-nums", active ? "text-(--role-accent-text)" : "text-muted-foreground")}>
                       {String(index + 1).padStart(2, "0")}
                     </span>
                     {t(`groups.${g}`)}
