@@ -18,17 +18,34 @@ test("site font subsets render the original glyphs, spacing and variable weights
           const canvas = document.createElement("canvas"); canvas.width = 8192; canvas.height = 96;
           const context = canvas.getContext("2d")!; context.font = weight + ' 32px "' + family + '"';
           context.fillText(text, 8, 60);
-          return { width: context.measureText(text).width, pixels: context.getImageData(0, 0, canvas.width, canvas.height).data };
+          return { width: context.measureText(text).width, pixels: context.getImageData(0, 0, canvas.width, canvas.height).data, canvas };
         };
         return [row.weights[0], 400, 500, 700, row.weights[1]].map(weight => {
           const a = draw("OriginalCheck", weight), b = draw("SubsetCheck", weight);
-          return { weight, equalWidth: a.width === b.width, equalPixels: a.pixels.every((value, i) => value === b.pixels[i]) };
+          let changed = 0, maxDelta = 0, firstX = -1, lastX = -1;
+          for (let i = 3; i < a.pixels.length; i += 4) {
+            const delta = Math.abs(a.pixels[i] - b.pixels[i]);
+            if (!delta) continue;
+            changed++; maxDelta = Math.max(maxDelta, delta);
+            const x = ((i - 3) / 4) % a.canvas.width;
+            firstX = firstX < 0 ? x : Math.min(firstX, x); lastX = Math.max(lastX, x);
+          }
+          const equalPixels = a.pixels.every((value, i) => value === b.pixels[i]);
+          return { weight, equalWidth: a.width === b.width, equalPixels,
+            changed, maxDelta, firstX, lastX,
+            originalPng: !equalPixels ? a.canvas.toDataURL() : null,
+            subsetPng: !equalPixels ? b.canvas.toDataURL() : null };
         });
       } finally { document.fonts.delete(original); document.fonts.delete(subset); }
     }, row);
     for (const item of result) {
+      if (!item.equalPixels) {
+        for (const [kind, data] of [["original", item.originalPng], ["subset", item.subsetPng]] as const) {
+          await test.info().attach(`${row.family}-${item.weight}-${kind}.png`, { body: Buffer.from(data!.split(",")[1], "base64"), contentType: "image/png" });
+        }
+      }
       expect(item.equalWidth, row.family + " width at " + item.weight).toBe(true);
-      expect(item.equalPixels, row.family + " glyphs at " + item.weight).toBe(true);
+      expect(item.equalPixels, `${row.family} glyphs at ${item.weight}: ${JSON.stringify({ changed: item.changed, maxDelta: item.maxDelta, firstX: item.firstX, lastX: item.lastX })}`).toBe(true);
     }
   }
 });
