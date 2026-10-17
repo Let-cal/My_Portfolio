@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Private security report / 脆弱性の非公開報告
+    url: https://github.com/Let-cal/My_Portfolio/security/advisories/new
+    about: Read SECURITY.md and report privately. Do not disclose vulnerability details in public issues.

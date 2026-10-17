@@ -1,0 +1,56 @@
+{
+  "fullstack": {
+    "alt": "",
+    "loading": "lazy",
+    "decoding": "async",
+    "style": {
+      "position": "absolute",
+      "height": "100%",
+      "width": "100%",
+      "left": 0,
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "color": "transparent"
+    },
+    "src": "/images/roles/optimized/role-developer-772.avif",
+    "sizes": "(min-width: 1024px) 376px, (min-width: 450px) 308px, 68.36vw",
+    "srcSet": "/images/roles/optimized/role-developer-384.avif 384w, /images/roles/optimized/role-developer-512.avif 512w, /images/roles/optimized/role-developer-772.avif 772w"
+  },
+  "techlead": {
+    "alt": "",
+    "loading": "lazy",
+    "decoding": "async",
+    "style": {
+      "position": "absolute",
+      "height": "100%",
+      "width": "100%",
+      "left": 0,
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "color": "transparent"
+    },
+    "src": "/images/roles/optimized/role-techlead-772.avif",
+    "sizes": "(min-width: 1024px) 376px, (min-width: 450px) 308px, 68.36vw",
+    "srcSet": "/images/roles/optimized/role-techlead-384.avif 384w, /images/roles/optimized/role-techlead-512.avif 512w, /images/roles/optimized/role-techlead-772.avif 772w"
+  },
+  "pm": {
+    "alt": "",
+    "loading": "lazy",
+    "decoding": "async",
+    "style": {
+      "position": "absolute",
+      "height": "100%",
+      "width": "100%",
+      "left": 0,
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "color": "transparent"
+    },
+    "src": "/images/roles/optimized/role-pm-772.avif",
+    "sizes": "(min-width: 1024px) 376px, (min-width: 450px) 308px, 68.36vw",
+    "srcSet": "/images/roles/optimized/role-pm-384.avif 384w, /images/roles/optimized/role-pm-512.avif 512w, /images/roles/optimized/role-pm-772.avif 772w"
+  }
+}

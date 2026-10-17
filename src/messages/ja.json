@@ -1,0 +1,318 @@
+{
+  "meta": {
+    "title": "レ・チャン・カット・ラム · ソフトウェアエンジニア ポートフォリオ",
+    "description": "ホーチミン市在住のソフトウェアエンジニア、Le Tran Cat Lamのポートフォリオです。日本のお客様向けプロジェクトに携わってきました。"
+  },
+  "nav": {
+    "hero": "ホーム",
+    "experience": "職務経歴",
+    "projects": "プロジェクト",
+    "skills": "スキル",
+    "certificates": "資格",
+    "why": "強み",
+    "contact": "連絡先"
+  },
+  "pill": {
+    "hero": "ホーム",
+    "experience": "経歴",
+    "projects": "制作",
+    "skills": "技術",
+    "certificates": "資格",
+    "why": "強み",
+    "contact": "連絡"
+  },
+  "sections": {
+    "hero": "Le Tran Cat Lam",
+    "experience": "職務経歴",
+    "projects": "プロジェクト",
+    "skills": "スキル",
+    "certificates": "資格",
+    "why": "一緒に働く理由",
+    "contact": "連絡先"
+  },
+  "header": {
+    "home": "LETCAL ホーム",
+    "primaryNav": "メインナビゲーション",
+    "openMenu": "メニューを開く",
+    "closeMenu": "メニューを閉じる",
+    "openCommand": "コマンドパレットを開く",
+    "skipToContent": "本文へスキップ"
+  },
+  "language": {
+    "label": "言語",
+    "en": "English",
+    "ja": "日本語",
+    "vi": "Tiếng Việt"
+  },
+  "theme": {
+    "toLight": "ライトテーマに切り替える",
+    "toDark": "ダークテーマに切り替える"
+  },
+  "motion": {
+    "label": "モーション効果"
+  },
+  "sound": {
+    "label": "効果音"
+  },
+  "command": {
+    "title": "コマンドパレット",
+    "description": "コマンドを検索し、Enterキーで実行します。",
+    "inputLabel": "コマンドを検索",
+    "placeholder": "コマンドまたはセクション名を入力",
+    "empty": "該当するコマンドがありません。",
+    "hint": "上下キーで移動、Enterで実行、Escで閉じる。",
+    "groups": {
+      "goTo": "移動",
+      "role": "役割",
+      "language": "言語",
+      "theme": "テーマ",
+      "motion": "モーション",
+      "actions": "操作"
+    },
+    "theme": {
+      "dark": "テーマ: ダーク",
+      "light": "テーマ: ライト"
+    },
+    "motion": {
+      "system": "モーション: システム設定",
+      "on": "モーション: オン",
+      "off": "モーション: オフ"
+    },
+    "actions": {
+      "downloadCv": "CVをダウンロード",
+      "copyEmail": "メールをコピー",
+      "quickView": "60秒で見る"
+    }
+  },
+  "roles": {
+    "label": "役割",
+    "fullstack": "フルスタック",
+    "techlead": "テックリード",
+    "pm": "プロジェクトマネージャー"
+  },
+  "hero": {
+    "openToWork": "求職中",
+    "downloadCv": "CVをダウンロード",
+    "contact": "お問い合わせ",
+    "quickView": "60秒で見る",
+    "nameJa": "レ・チャン・カット・ラム",
+    "nameVi": "Lê Trần Cát Lâm",
+    "phrase": "日本のお客様向けに<item></item>を作っています",
+    "phraseItems": {
+      "0": "Webアプリ",
+      "1": "AIエージェント",
+      "2": "IoTロッカーシステム"
+    },
+    "wheel": {
+      "label": "役割を選ぶ",
+      "hint": "スライスや円弧にカーソルを合わせる · クリックで選択 · ← → キー",
+      "touchHint": "写真をタップ、または左右にスワイプして役割を切り替え",
+      "alt": {
+        "fullstack": "コードで描いた肖像(ターミナル風の青)",
+        "techlead": "設計図グリッド上のローポリ肖像とアーキテクチャのノード",
+        "pm": "スプリントカレンダーのマスで作った肖像(黄金色)"
+      }
+    },
+    "roles": {
+      "fullstack": {
+        "eyebrow": "デベロッパー",
+        "arc": "デベロッパー",
+        "title": "'<builds/>' <accent></accent>",
+        "accent": "一気通貫",
+        "body": "日本のお客様向けに、Next.js と React のフロントエンド、AWS のサーバーレス API、決済と IoT ロッカーの連携を開発しました。",
+        "chips": {
+          "0": "Next.js",
+          "1": "TypeScript",
+          "2": "AWS Lambda",
+          "3": ".NET 8"
+        }
+      },
+      "techlead": {
+        "eyebrow": "テックリード",
+        "arc": "テックリード",
+        "title": "設計し、<accent></accent>し、育てる",
+        "accent": "レビュー",
+        "body": "基本設計書・詳細設計書の作成、決まったチェックリストに沿ったコードレビュー、お客様プロジェクトでのインターン指導を担当しました。",
+        "chips": {
+          "0": "アーキテクチャ",
+          "1": "コードレビュー",
+          "2": "DB設計",
+          "3": "メンタリング"
+        }
+      },
+      "pm": {
+        "eyebrow": "テクニカルPM",
+        "arc": "テクニカルPM",
+        "title": "計画し、<accent></accent>、届ける",
+        "accent": "すり合わせ",
+        "body": "日本語での見積もり・スケジュール作成と要件定義、リリース計画、2つのプロジェクトの並行推進を担当しました。",
+        "chips": {
+          "0": "見積もり",
+          "1": "スケジュール",
+          "2": "JLPT N3",
+          "3": "リリース"
+        }
+      }
+    },
+    "stats": {
+      "label": "主な数字",
+      "monthsAtSkg": "SKGでの在籍月数",
+      "jpProjects": "日本のお客様向けプロジェクト",
+      "parallel": "並行プロジェクト",
+      "jlpt": "日本語(JLPT)"
+    },
+    "status": {
+      "label": "プロフィールの状況",
+      "localTime": "現地時間",
+      "copyEmail": "メールをコピー",
+      "copied": "コピーしました"
+    },
+    "facts": {
+      "label": "クイックファクト",
+      "location": {
+        "label": "所在地",
+        "value": "ホーチミン市",
+        "detail": "10.82° N, 106.63° E · GMT+7"
+      },
+      "languages": {
+        "label": "言語",
+        "value": "ベトナム語 · 英語 · 日本語",
+        "detail": "ベトナム語 ネイティブ · 英語 ビジネスレベル · 日本語 JLPT N3"
+      },
+      "education": {
+        "label": "学歴"
+      },
+      "now": {
+        "label": "現在"
+      }
+    }
+  },
+  "footer": {
+    "rights": "無断転載を禁じます。",
+    "links": "リンク",
+    "github": "GitHub",
+    "linkedin": "LinkedIn",
+    "email": "メール",
+    "principlesLabel": "仕事の進め方",
+    "principles": {
+      "0": "コードを書く前に、要件をはっきりさせます。",
+      "1": "見積もりは正直に出し、変わるときは早めに伝えます。",
+      "2": "決めたことは文書に残し、次の人が迷わないようにします。",
+      "3": "リリース前にレビューし、リリース後に振り返ります。"
+    }
+  },
+  "experience": {
+    "education": "学歴",
+    "teamSize": "チーム規模: {size}",
+    "viewCaseStudy": "事例を見る",
+    "techLabel": "技術スタック",
+    "moreTech": "ほか{count}件",
+    "skgIntern": "ソフトウェアエンジニアインターン",
+    "skgEngineer": "ソフトウェアエンジニア(プロジェクトマネージャー/テックリード代行)",
+    "gpa": "GPA {gpa}"
+  },
+  "skills": {
+    "intro": "スキルを選ぶと、どの経験・プロジェクトで使ったかが分かります。",
+    "groupsLabel": "スキルグループ",
+    "groups": {
+      "languages": "言語",
+      "frameworks": "フレームワーク",
+      "cloud": "クラウド・DevOps",
+      "ai": "AI / LLM",
+      "databases": "データベース",
+      "delivery": "デリバリー",
+      "testing": "テスト",
+      "design": "設計・デザイン"
+    },
+    "evidence": "実績",
+    "evidenceTitle": "{skill} を使った場所",
+    "evidenceHint": "スキルを選ぶと、その根拠となる経験とプロジェクトが表示されます。",
+    "noEvidence": "関連づけられた経験・プロジェクトはまだありません。",
+    "linked": "関連実績 {count} 件",
+    "kindExperience": "経歴",
+    "kindProject": "プロジェクト",
+    "terminal": "スキルターミナル"
+  },
+  "caseStudy": {
+    "problem": "課題",
+    "role": "役割",
+    "decisions": "判断",
+    "result": "結果",
+    "tech": "技術スタック",
+    "team": "チーム規模: {size}"
+  },
+  "projects": {
+    "viewCaseStudy": "事例を見る",
+    "techLabel": "技術スタック",
+    "moreTech": "ほか{count}件",
+    "demo": "デモ",
+    "code": "コード",
+    "codeWeb": "コード(Web)",
+    "codeMobile": "コード(モバイル)",
+    "codeN": "コード{n}",
+    "newTab": "(新しいタブで開きます)"
+  },
+  "certificates": {
+    "intro": "講座、資格、学校での活動です。提灯を選ぶと認定情報が見られます。",
+    "tabsLabel": "資格と活動",
+    "tabCertificates": "資格",
+    "tabActivities": "活動",
+    "filterLabel": "分野で絞り込む",
+    "topics": {
+      "all": "すべて",
+      "language": "言語",
+      "pm": "PM",
+      "design": "UX/デザイン",
+      "engineering": "エンジニアリング",
+      "other": "その他"
+    },
+    "showing": "{total}件中{count}件を表示",
+    "flipHint": "押すと認定情報を表示します",
+    "showDetails": "認定情報",
+    "showFront": "戻る",
+    "credentialId": "認定ID",
+    "verify": "認定を確認",
+    "viewFile": "ファイルを見る"
+  },
+  "why": {
+    "manifesto": "日本のお客様の要望を、要件定義から設計、実装まで形にして、リリースされたプロダクトに変えます。",
+    "carouselLabel": "私と働く理由",
+    "slideStatus": "{current} / {total}",
+    "prev": "前のカード",
+    "next": "次のカード",
+    "goTo": "{n}枚目のカードへ",
+    "seeEvidence": "根拠を見る",
+    "hint": "ドラッグ、スワイプ、または矢印キーで切り替えられます。"
+  },
+  "contact": {
+    "headline": "一緒に作りましょう",
+    "intro": "ポジション、プロジェクト、私の仕事についてのご質問など、メールが一番早くつながります。",
+    "cta": "連絡する",
+    "detailsLabel": "連絡先",
+    "email": "メール",
+    "copyEmail": "メールをコピー",
+    "copied": "コピーしました",
+    "linkedin": "LinkedIn",
+    "github": "GitHub",
+    "downloadCv": "CVをダウンロード",
+    "booking": "通話を予約",
+    "statusLabel": "現在の状況",
+    "openToWork": "求職中",
+    "localTime": "現地時間"
+  },
+  "quick": {
+    "title": "60秒で見る",
+    "metaTitle": "60秒で見る | Le Tran Cat Lam",
+    "description": "採用ご担当者向けに、Le Tran Cat Lamの役割、最近の経歴、スキル、資格、連絡先を1ページにまとめました。A4で1ページに印刷できます。",
+    "back": "サイト全体に戻る",
+    "print": "印刷",
+    "toolsLabel": "ページの操作",
+    "loading": "60秒ビューを読み込み中",
+    "keyExperience": "最近の経歴",
+    "contactLabel": "連絡先"
+  },
+  "common": {
+    "present": "現在",
+    "close": "閉じる"
+  }
+}
