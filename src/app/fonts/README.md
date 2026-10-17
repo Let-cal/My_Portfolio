@@ -40,6 +40,15 @@ NFC/NFD forms and all subsets of each character's combining marks are then
 included before intersecting each source Latin font's cmap. This includes
 non-prefix intermediate compositions such as `Â` from `Ậ`. The sorted
 `codepoints` and compact `unicodeRange` describe exactly the resulting cmap.
+After shaping closure, every source cmap alias of each retained glyph is also
+preserved, without adding outlines. This protects FreeType autohint
+classification: Inter U+02BC and U+2019 share `quoteright`; dropping U+02BC
+otherwise shifts U+2019 vertically by one pixel at weight 500 and 32px in the
+local FreeType 2.13.2 reproduction. Added aliases are U+00D1, U+00F1, U+0131,
+U+02BC for Inter and U+0131 for Space Grotesk. All lie inside the original
+family's advertised coverage. Generation rejects aliases outside that coverage
+instead of silently expanding it, and recomputes the remaining original Latin
+range from immutable metadata.
 This covers source text and common runtime/entity spacing; it is not an HTML
 entity or JavaScript escape evaluator. Unanticipated runtime characters remain
 available through the original faces and may request the larger original asset.
@@ -55,11 +64,11 @@ or copyright notices are rewritten. `.notdef` outlines and hinting are retained.
 
 | Family | Source bytes | Site bytes | Cmap points |
 | --- | ---: | ---: | ---: |
-| Inter | 48,432 | 38,188 | 156 |
-| Space Grotesk | 22,320 | 17,072 | 155 |
+| Inter | 48,432 | 38,380 | 160 |
+| Space Grotesk | 22,320 | 17,096 | 156 |
 
-These save 15,492 bytes (21.9%) together versus the original Latin files.
-The repertoire includes runtime punctuation, spacing, case variants and canonical shaping
+These save 15,276 bytes (21.6%) together versus the original Latin files.
+The repertoire includes runtime punctuation, spacing, case variants, cmap aliases and canonical shaping
 intermediates beyond the earlier 118-point prototype.
 Size is measured on the files, not a browser transfer or performance benchmark.
 
@@ -70,7 +79,9 @@ MVAR, line metrics and names against the source fonts. Output GSUB/GPOS feature
 tags must be a subset of the source tags. A separate Node-driven Python check
 compares glyph order and applicable feature tags against standard fontTools
 subsetting with every feature/script selected, catching unnecessary support
-glyphs while verifying the standard shaping closure.
+glyphs while verifying the standard shaping closure and independently deriving
+the exact expected alias cmap from the source. The core generator also asserts
+that all source aliases for retained glyph names survive.
 OS/2 first/last character indices and hhea metric counts may describe the
 smaller font; glyph indices and layout lookup indices are remapped by fontTools.
 Source timestamps are retained (`recalcTimestamp=False`), making regeneration
@@ -86,6 +97,13 @@ browser pixel/network equivalence. Main's separate browser proof covers default
 rendering, variable weights and all advertised codepoints, alongside locale
 rendering, runtime spacing and unexpected full-Latin requests. No performance
 gates are changed by this generator.
+
+An optional ignored local FreeType 2.13.2 proof compares every retained glyph's
+bitmap, placement and advance at 32px across the original variable weight
+minimum, 400, 500, 700 and maximum (deduplicated), in default, unhinted and
+forced-autohint modes. Both updated assets match in every case. This is not
+a Linux Chromium result; strict browser pixel checks remain required. FreeType
+and HarfBuzz are not generator or CI dependencies.
 
 ## Original sources and notices
 

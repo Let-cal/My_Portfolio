@@ -8,15 +8,15 @@ import { unicodePoints } from '../../scripts/font-ranges.mjs';
 const manifestPath = 'src/app/fonts/site-subsets.json';
 const hash = data => createHash('sha256').update(data).digest('hex');
 
-test('bounded Latin assets have exact ranges, hashes and priority without replacing originals', () => {
-  assert.ok(existsSync(manifestPath), 'generated site subset manifest must exist');
-  const rows = JSON.parse(readFileSync(manifestPath, 'utf8'));
+function requestedPoints() {
   const requested = new Set([...Array.from({ length: 95 }, (_, i) => i + 32), 0xa0,
     ...Array.from({ length: 112 }, (_, i) => i + 0x2000)]);
   for (const path of readdirSync('src', { recursive: true }).sort()) {
     const file = `src/${path.replaceAll('\\', '/')}`;
     if (/\.(ts|tsx|json)$/.test(file) && file !== manifestPath) {
-      for (const char of readFileSync(file, 'utf8')) requested.add(char.codePointAt(0));
+      // Match Python's universal-newline decoding so CRLF does not select the
+      // Space Grotesk CR glyph on Windows only.
+      for (const char of readFileSync(file, 'utf8').replace(/\r\n?/g, '\n')) requested.add(char.codePointAt(0));
     }
   }
   for (const point of [...requested]) {
@@ -40,6 +40,12 @@ test('bounded Latin assets have exact ranges, hashes and priority without replac
       }
     }
   }
+  return requested;
+}
+
+test('bounded Latin assets have exact ranges, hashes and priority without replacing originals', () => {
+  assert.ok(existsSync(manifestPath), 'generated site subset manifest must exist');
+  const rows = JSON.parse(readFileSync(manifestPath, 'utf8'));
   const originals = JSON.parse(readFileSync('src/app/fonts/manifest.json', 'utf8'));
   const css = readFileSync('src/app/fonts/vietnamese.css', 'utf8');
   const faces = [...css.matchAll(/@font-face\s*\{([^}]+)\}/g)].map(m => m[1]);
@@ -68,7 +74,6 @@ test('bounded Latin assets have exact ranges, hashes and priority without replac
     for (const point of [0xC0, 0xC2, 0xC8, 0xCA, 0xCC, 0xD2, 0xD4, 0xD9]) {
       assert.ok(row.codepoints.includes(point), `${row.family}: CSS uppercase Vietnamese Latin U+${point.toString(16)} must be covered`);
     }
-    assert.ok(row.codepoints.every(point => requested.has(point)), 'no unrelated cmap points');
     assert.deepEqual(row.weights, row.family === 'Inter' ? [100, 900] : [300, 700]);
     const own = faces.filter(face => face.includes(`font-family:${row.family};`));
     assert.ok(own.at(-3).includes(`/fonts/${row.sourceFile})`));
@@ -79,13 +84,14 @@ test('bounded Latin assets have exact ranges, hashes and priority without replac
   }
 });
 
-test('assets contain only standard all-feature shaping closure, without inactive feature support', () => {
+test('assets retain exactly standard shaping closure and every source cmap alias of those glyphs', () => {
   const result = spawnSync('uv', ['run', '--with', 'fonttools==4.67.0', '--with', 'brotli==1.2.0', 'python', '-c', `
-import json
+import json, sys
 from fontTools import subset
 from fontTools.ttLib import TTFont
 for row in json.load(open('src/app/fonts/site-subsets.json')):
     source = TTFont('public/fonts/' + row['sourceFile'], recalcTimestamp=False)
+    source_cmap = dict(source.getBestCmap())
     actual = TTFont('public/fonts/' + row['file'], recalcTimestamp=False)
     options = subset.Options()
     options.layout_features = ['*']
@@ -93,15 +99,19 @@ for row in json.load(open('src/app/fonts/site-subsets.json')):
     options.glyph_names = True
     options.notdef_outline = True
     tool = subset.Subsetter(options=options)
-    tool.populate(unicodes=row['codepoints'])
+    tool.populate(unicodes=set(json.loads(sys.argv[1])) & set(source_cmap))
     tool.subset(source)
+    retained = set(source.getGlyphOrder())
+    expected_cmap = {point: glyph for point, glyph in source_cmap.items() if glyph in retained}
+    assert actual.getBestCmap() == expected_cmap, row['family'] + ': missing source cmap aliases or unrelated points: ' + repr((sorted(set(expected_cmap) - set(actual.getBestCmap())), sorted(set(actual.getBestCmap()) - set(expected_cmap))))
+    assert row['codepoints'] == sorted(expected_cmap), row['family'] + ': alias manifest differs'
     assert actual.getGlyphOrder() == source.getGlyphOrder(), row['family'] + ': unnecessary glyphs beyond standard shaping closure'
     for tag in ('GSUB', 'GPOS'):
         def tags(font):
             return {r.FeatureTag for r in font[tag].table.FeatureList.FeatureRecord} if tag in font and font[tag].table.FeatureList else set()
         assert tags(actual) == tags(source), row['family'] + ': applicable feature tags differ'
 print('Standard shaping closure verified for both assets')
-`], { encoding: 'utf8' });
+`, JSON.stringify([...requestedPoints()])], { encoding: 'utf8' });
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
 });
 
@@ -111,6 +121,7 @@ import json
 from pathlib import Path
 import runpy
 from tempfile import TemporaryDirectory
+from fontTools import subset
 from fontTools.ttLib import TTFont
 
 module = runpy.run_path('scripts/generate-site-fonts.py')
@@ -138,8 +149,16 @@ with TemporaryDirectory(prefix='site-font-line-endings-') as directory:
         sets.append(repertoire())
     assert sets[0] == sets[1], 'line endings changed source repertoire'
     for row in rows:
-        cmap = set(TTFont('public/fonts/' + row['sourceFile']).getBestCmap())
-        points = sets[0] & cmap
+        font = TTFont('public/fonts/' + row['sourceFile'])
+        cmap = dict(font.getBestCmap())
+        options = subset.Options()
+        options.layout_features = options.layout_scripts = ['*']
+        options.glyph_names = True
+        tool = subset.Subsetter(options=options)
+        tool.populate(unicodes=sets[0] & set(cmap))
+        tool.subset(font)
+        retained = set(font.getGlyphOrder())
+        points = {point for point, glyph in cmap.items() if glyph in retained}
         assert sorted(points) == row['codepoints'], row['family'] + ': cmap repertoire changed'
         assert not points.intersection(range(32)), 'line-ending/control codepoints advertised'
 print('LF/CRLF repertoire matches both manifests; controls excluded by source cmap')

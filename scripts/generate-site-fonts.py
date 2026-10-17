@@ -123,6 +123,9 @@ def verify_local(source, result, points):
     is structural proof, not a shaping-engine or browser pixel comparison.
     """
     assert set(result.getBestCmap()) == points, "subset cmap differs from repertoire"
+    retained = set(result.getGlyphOrder())
+    expected_aliases = {point: glyph for point, glyph in source.getBestCmap().items() if glyph in retained}
+    assert result.getBestCmap() == expected_aliases, "source cmap aliases lost for retained glyphs (autohint classification)"
     for point, glyph in result.getBestCmap().items():
         assert source.getBestCmap()[point] == glyph, f"cmap changed: {point}"
     for tag in ("fvar", "avar", "STAT", "MVAR", "cvt ", "fpgm", "prep", "gasp"):
@@ -191,6 +194,20 @@ def generate():
         tool = subset.Subsetter(options=options)
         tool.populate(unicodes=points)
         tool.subset(font)
+        # FreeType classifies glyphs through every Unicode cmap alias. Dropping
+        # U+02BC while retaining its shared U+2019/quoteright outline changes
+        # AF_NONBASE classification and shifts the hinted glyph at weight 500.
+        # Restore aliases after shaping closure, without adding any outlines.
+        retained = set(font.getGlyphOrder())
+        for table in font["cmap"].tables:
+            if table.isUnicode():
+                original_table = next(t for t in source["cmap"].tables
+                                      if (t.platformID, t.platEncID, t.format, t.language) ==
+                                      (table.platformID, table.platEncID, table.format, table.language))
+                table.cmap = {point: glyph for point, glyph in original_table.cmap.items() if glyph in retained}
+        points = set(font.getBestCmap())
+        advertised = set().union(*(unicode_points(r["unicodeRange"]) for r in originals if r["family"] == family))
+        assert not points - advertised, f"cmap aliases outside original advertised coverage: {sorted(points - advertised)}"
         out = BytesIO()
         font.save(out)
         data = out.getvalue()
