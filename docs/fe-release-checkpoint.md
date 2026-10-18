@@ -1,50 +1,50 @@
-# Frontend release checkpoint — 2026-10-17
+# Frontend release checkpoint — 2026-10-18
 
-Status: **performance gate open; not released**. Candidate commit `39b628a` is on [PR #1](https://github.com/Let-cal/My_Portfolio/pull/1). A ready preview is not a production release.
+Status: **existing mobile performance gate open; not merged or released**. Candidate `9317fc973a6df54c78d291c0c4871cb8a066b976` is on [PR #1](https://github.com/Let-cal/My_Portfolio/pull/1). A ready preview is not production.
 
-## Verified
+## Current verification
 
-- Production build and TypeScript pass on Node 22.23.2 / Windows.
-- 844 unit tests, 58 Chromium browser tests, and 43 asset/script tests pass locally. ESLint passes.
-- Browser regressions cover Skills hover/wheel stability, bounded moving card backdrops, chapter seals, mobile hash navigation, external SVG glyphs and printing.
-- Initial home JavaScript: 196.8 KB gzip on EN/JA/VI; limit 200 KB. The quick view is 176.3 KB.
-- Production dependency audit: zero vulnerabilities. Development tooling still has upstream braces advisories; the production audit is not suppressed.
-- CI configuration passes actionlint 1.7.12. Linux quality, production audit, full-history secret scan and read-only CodeQL checks pass on this candidate; its browser job finished with 57 passed and one failed: exact Inter pixel comparison at weight 500 differs on Linux, although Windows passes. The preceding candidate passed the full Linux browser suite; Vercel preview is ready. Independent review of the recent font/Intl changes reported one font concern; an actual-browser regression disproved it because Tailwind expands the inline theme token to the correct font stack. A subsequent independent whole-branch source review through 39b628a found no new actionable issue; it does not resolve the runtime font or performance failures.
+- [CI run 38999198200](https://github.com/Let-cal/My_Portfolio/actions/runs/38999198200) passes quality (lint, unit tests, production build, types, initial JavaScript and artifact budgets) and the full Linux Chromium suite. The Linux weight-500 font raster regression is resolved by retaining cmap aliases needed by FreeType autohinting; exact pixel assertions remain in place.
+- The same revision passes Gitleaks, production dependency audit, read-only CodeQL and Vercel preview. Mobile Lighthouse is the only failing required check.
+- Local verification recorded 844 unit tests, 58 browser tests and 43 artifact/script tests, plus build, lint and TypeScript. Browser coverage includes Skills hover/wheel stability, bounded moving backdrops, mobile anchor navigation, font fallback, printing and metadata.
+- HTML-referenced home JavaScript is 196.8 KB gzip on EN/JA/VI (budget 200 KB); quick view is 176.3 KB. This scope excludes later dynamic chunks; Lighthouse includes actual startup work.
+- Production dependency audit reports zero vulnerabilities. Development tooling has separately documented upstream braces advisories; the production check is not suppressed.
+- An independent whole-branch source review through `39b628a` found no new actionable issues. That review predates the subsequently verified font alias fix and does not constitute a performance waiver.
 
-## Mobile performance
+## Mobile CI measurements
 
-Lighthouse 13.5.0, production server on localhost:3100, Linux Chromium in the isolated GitHub Actions performance job, default mobile simulation, three runs per locale. Values below are independent medians from [run 38997466726](https://github.com/Let-cal/My_Portfolio/actions/runs/38997466726), commit `39b628a`.
+Lighthouse 13.5.0; Linux Chromium; production localhost server; default simulated mobile profile; three runs per locale. Each cell is the independent median from run 38999198200.
 
 | Locale | Performance | Accessibility | LCP | TBT | CLS |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| EN | 83 | 100 | 3617 ms | 287 ms | 0.00138 |
-| JA | 88 | 100 | 3668 ms | 216 ms | 0.00138 |
-| VI | 84 | 100 | 3622 ms | 240 ms | 0.00138 |
-| Required | ≥85 | ≥95 | ≤2500 ms | ≤200 ms | ≤0.1 |
+| EN | 85 | 100 | 3318 ms | 239 ms | 0.00138 |
+| JA | 91 | 100 | 3165 ms | 144 ms | 0.00138 |
+| VI | 89 | 100 | 3317 ms | 116 ms | 0.00138 |
+| Existing release requirement | ≥85 | ≥95 | ≤2500 ms | ≤200 ms | ≤0.1 |
 
-All locales still fail LCP and TBT; EN and VI also fail Performance. The preceding 40f4813 run passed TBT and Performance for all locales (P88, TBT124–150 ms), but that improvement was not stable across the next runner sample. Do not merge or declare the FE complete from these results. These lab measurements do not establish field INP or physical mobile GPU performance. Windows results and earlier Lighthouse 12 measurements are not directly equivalent to this runner.
+All locales pass Performance, Accessibility and CLS. All fail LCP; English also fails TBT. These are loading-performance shortfalls under this lab profile, not evidence that navigation or content is broken. They do not establish real-user INP, abandonment rates or physical-phone performance. Earlier CI samples varied; a single good sample is not a permanent guarantee.
 
-## Changes covered
+## Deployed candidate cross-check
 
-Responsive AVIF portraits preserve the approved artwork. A shared external SVG sprite preserves skill glyphs. Desktop scene inputs load with the live canvas; static backgrounds use a small chapter observer. Offscreen mobile rendering is contained, with exact native anchor navigation and print behavior retained. Geometry starts near visibility, and hidden mobile Hero leader lines no longer trigger geometry reads. Reused internationalization formatters avoid repeated setup. Inline CSS removes blocking stylesheet requests, with the documented tradeoff of duplicated HTML/RSC CSS and no independent stylesheet cache.
+Vercel CLI confirms preview `dpl_J49qFNicwQ6TfQJ2HkE5CAvwXmyS` Ready; the GitHub Vercel status for `9317fc9` links to that deployment. Next.js/Node 22 and the plan-default build machine remain configured. Production is still the previous main revision.
 
-The original input portrait is outside the served public directory and preserved locally. This does not erase it from existing Git history.
+On 2026-10-18, isolated Windows headless Chrome measured the English preview over HTTP/2. Three cold Lighthouse 13.5.0 runs used the default profile for each form factor, normal page behavior and independent medians:
 
-## Next release gates
+| Profile | Performance | Accessibility | LCP | TBT | CLS |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Desktop | 99 | 100 | 694 ms | 20 ms | 0.00015 |
+| Mobile | 91 | 100 | 3224 ms | 114 ms | 0 |
 
-1. Resolve the remaining LCP, Performance and blocking-time failures while preserving the approved design.
-2. Repeat the full verification on the final revision and review the diff.
-3. Run all required GitHub checks on the final PR revision. The branch is pushed, PR #1 is open, and strict protection on `main` includes the mobile performance gate.
-4. Merge only after required checks pass, then verify Vercel's revision, free hosting arrangement and public domains.
+These are additional lab observations, not substitutes for CI or field Core Web Vitals. An origin-scoped development OIDC header enabled preview access; protection was not disabled. Only whitelisted metrics were retained, never credentials or authenticated raw reports. The scoped connector 403 was handled through the authenticated CLI.
 
-See [CI and release procedure](ci-release.md). Backend/admin work follows the frontend release.
+Separately, desktop RAF cadence at five live-scene chapters was approximately 60 callbacks/second on an RTX 3050 laptop, including the forced low scene tier. That measures callback cadence on this hardware, not GPU frame completion or performance on a physical low-end phone.
 
-## Current optimization under verification
+A normal-motion Chromium phone-touch smoke on the same protected preview passed for EN/JA/VI: no page/header horizontal overflow at 320/360/390 px; touch PM selection; selected-role PDF retrieval with a real PDF signature; Skills navigation; locale switching preserving role and anchor; case-study open/close; reachable contact and mailto link; quick view and browser-back restoration; no live mobile canvas; no uncaught page errors. This is browser emulation, not physical Android or iPhone Safari verification. It does not verify external mail delivery or clipboard permission denial.
 
-Server-prepared final ticker text removes initial Intl.NumberFormat construction from the page hydration path. Count-up still initializes on visibility with the original easing, duration, grouping and accessibility labels. Local build, lint and TypeScript pass; 828 unit tests and a further visibility regression pass, 52 Chromium tests pass, and 36 script/asset checks pass. Initial home JavaScript is 196.7 KB gzip. Windows mobile EN medians remain below the release requirement (Performance 73, LCP 4557 ms, TBT 378 ms, Accessibility 100, CLS 0); this is not evidence that the performance gate is resolved.
+## Release decision under review
 
-Controlled internal class branches now use clsx where exact-output parity tests prove conflict resolution is unnecessary; caller overrides and conflicting utilities retain twMerge. This reduces repeated work without claiming that the shared merger initialization has been removed. Tailwind source discovery is explicitly scoped to src; this is a deterministic build safeguard and saved only 65 raw CSS bytes in the measured build.
+The owner clarified that recruiter desktop review is the primary audience and requested reassessment of the prolonged mobile optimization delay. The evidence supports considering a bounded first-release performance exception. **No exception has been approved or applied.** Existing thresholds, required checks and branch protection remain unchanged.
 
-## Deployment cross-check
+See the [release assessment](fe-release-assessment.md) for the proposal and research. Until a revised release policy is approved or existing budgets pass, the PR remains blocked. Do not describe this candidate as meeting the original mobile budgets or passing field Core Web Vitals.
 
-Vercel CLI authenticated access verified preview deployment dpl_385dkRQDsojqqyo94A8danshGXxN as Ready, using Next.js/Node 22. Origin-scoped development OIDC requests return the real portfolio with HTTP 200, Brotli encoding and a CDN cache hit; Deployment Protection was not changed. The connector itself returns a scoped 403, so CLI results are the current evidence. An isolated three-run EN preview diagnostic observed HTTP/2 and independent medians P91/A100/LCP3122 ms/TBT172 ms/CLS0. It also fails LCP and does not replace the localhost CI gate. Only whitelisted metrics were saved; authenticated headers and tokens were not persisted.
+See [CI and release procedure](ci-release.md). Backend/admin work follows the verified frontend release.

@@ -8,6 +8,15 @@ A personal portfolio for **Lê Trần Cát Lâm**, presenting project evidence t
 
 > **Release status:** this redesign is a frontend release candidate. Required CI and mobile performance gates have not all passed. The public website may serve a different revision; this README does not certify a production release. Supabase provisioning, admin authentication, and content management remain planned work.
 
+## Preview
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/portfolio-dark.webp">
+  <img src="docs/images/portfolio-light.webp" alt="Desktop portfolio preview with the circular role selector and Japanese-inspired koi background">
+</picture>
+
+Captured from the frontend candidate with Motion off. [Dark](docs/images/portfolio-dark.webp) · [Light](docs/images/portfolio-light.webp). The deployed website may serve a different revision.
+
 ## Experience
 
 - **Three roles, one evidence base.** A circular selector changes the introduction, accents, CV selection, and ordering of relevant experience and skills.

@@ -8,6 +8,15 @@
 
 > **開発状況：** このリニューアル版はフロントエンドのリリース候補です。必須のCIチェックとモバイル性能基準は、すべての合格を確認できていません。公開サイトと本ブランチの内容が異なる場合があります。Supabaseの環境構築、管理者認証、コンテンツ管理機能は今後の実装予定です。
 
+## プレビュー
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/portfolio-dark.webp">
+  <img src="docs/images/portfolio-light.webp" alt="円形の役割セレクターと鯉の背景を表示したポートフォリオのデスクトップ画面">
+</picture>
+
+リリース候補の画面をMotionオフで撮影しました。[ダーク](docs/images/portfolio-dark.webp) · [ライト](docs/images/portfolio-light.webp)。本番サイトと同じリビジョンとは限りません。
+
 ## 主な機能
 
 - **役割別の表示：** 円形のセレクターで役割を切り替えると、紹介文、配色、ダウンロード対象のCV、職務経歴やスキルの表示順が変わります。
