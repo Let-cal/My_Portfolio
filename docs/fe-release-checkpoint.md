@@ -2,6 +2,8 @@
 
 **FE v1 verification record and approved release policy.** Reviewed application revision: `9317fc973a6df54c78d291c0c4871cb8a066b976`. [PR #1](https://github.com/Let-cal/My_Portfolio/pull/1) records the final checks and merge; [GitHub Releases](https://github.com/Let-cal/My_Portfolio/releases) records the verified production revision and deployment. A ready preview alone does not establish release.
 
+Final security review subsequently corrected CodeQL extension-rule severity parsing and removed exists/read races in two asset generators (`abb34d3`). Their generated outputs are byte-identical in isolated regression tests. The bounded exception is rebound to this reviewed build-input revision; the website design and runtime source remain unchanged. New CI must verify the corrected scanner and final release revision.
+
 ## Current verification
 
 - [CI run 38999198200](https://github.com/Let-cal/My_Portfolio/actions/runs/38999198200) passes quality (lint, unit tests, production build, types, initial JavaScript and artifact budgets) and the full Linux Chromium suite. The Linux weight-500 font raster regression is resolved by retaining cmap aliases needed by FreeType autohinting; exact pixel assertions remain in place.
