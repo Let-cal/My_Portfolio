@@ -33,3 +33,7 @@
 - [ ] Recheck protection, PR state, security results and rollback revision; merge through GitHub preserving history.
 - [ ] Verify Vercel production Ready, exact merged revision, canonical domain, all three locale routes, quick view, PDF assets and representative browser interactions.
 - [ ] Update release status/README truthfully and record final evidence without claiming original mobile targets passed.
+
+### 2026-10-19: production transport fidelity
+Ruling: measure the unchanged application through loopback HTTP/2 with streaming Brotli, matching verified Vercel transport, rather than direct Next HTTP/1.1 gzip. All locales use the same topology, default mobile emulation and approved thresholds. Decoded payload equality, real H2, streaming, error propagation and loopback isolation are checked. Preserve direct H1 results as non-gating diagnostics. This does not reproduce CDN geography/cache or guarantee a passing score; clean Windows streaming pilot remained P83. Buffered prototype results are excluded. Cost if wrong: CI-to-production transfer timing may differ; retain both raw measurements and verify public production after merge.
+Validation: focused real TLS/H2 transport regression passed; actionlint and git diff --check passed; final reviewer found no remaining integration blocker. App source/fingerprint unchanged.
