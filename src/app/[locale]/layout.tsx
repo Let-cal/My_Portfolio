@@ -29,6 +29,7 @@ import { routing } from "@/i18n/routing";
 import { getContent } from "@/lib/data/get-content";
 import { pickLocale } from "@/lib/i18n-text";
 import { buildPageMetadata, buildPersonJsonLd, serializeJsonLd } from "@/lib/metadata";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { DeferredToaster } from "@/components/site/DeferredToaster";
 import "../globals.css";
 
@@ -117,6 +118,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
             </RoleProvider>
           </MotionProvider>
         </NextIntlClientProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
