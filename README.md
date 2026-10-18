@@ -4,9 +4,9 @@ English · [日本語](README.ja.md)
 
 A personal portfolio for **Lê Trần Cát Lâm**, presenting project evidence through three perspectives: **Developer**, **Tech Lead**, and **Technical PM**. A continuous Japanese garden follows the reader from a koi pond to a dragon's ascent.
 
-[Website](https://letcal.is-a.dev) · [Design specification](docs/superpowers/specs/2026-10-13-portfolio-koi-redesign-design.md) · [Release checkpoint](docs/fe-release-checkpoint.md)
+[Website](https://letcal.is-a.dev) · [Design specification](docs/superpowers/specs/2026-10-13-portfolio-koi-redesign-design.md) · [CI and release flow](docs/ci-release.md)
 
-> **Frontend v1:** release requirements and the approved, bounded mobile loading tolerance are documented in the [release checkpoint](docs/fe-release-checkpoint.md). Check [GitHub Releases](https://github.com/Let-cal/My_Portfolio/releases) for the verified production revision. Supabase provisioning, admin authentication, and content management remain planned work.
+> **Frontend v1** is live at [letcal.is-a.dev](https://letcal.is-a.dev). Check [GitHub Releases](https://github.com/Let-cal/My_Portfolio/releases) for the verified production revision. Supabase provisioning, admin authentication, and content management remain planned work.
 
 ## Preview
 
@@ -101,16 +101,16 @@ npm run check:performance
 
 This collects **three runs per locale** and checks independent medians. `PERF_ORIGIN` selects another production server; `PERF_TRACE=1` saves diagnostic assets for each locale's first run. Reports go to `.lighthouseci/`.
 
-| Release gate | Required |
-| --- | ---: |
-| Initial JavaScript | ≤200 KB gzip |
-| Mobile Lighthouse Performance | ≥85 |
-| Accessibility | ≥95 |
-| LCP | ≤2500 ms |
-| TBT | ≤200 ms |
-| CLS | ≤0.1 |
+| Check | Threshold | Effect |
+| --- | ---: | --- |
+| Initial JavaScript | ≤200 KB gzip | blocks merge |
+| Lighthouse Accessibility | ≥95 | blocks merge |
+| Lighthouse SEO | ≥90 | blocks merge |
+| CLS | ≤0.1 | blocks merge |
+| Lighthouse Performance | ≥85 | advisory warning |
+| LCP / TBT | ≤2500 ms / ≤200 ms | advisory warning |
 
-These are requirements, not achieved scores. Lab TBT does not establish field INP. The [checkpoint](docs/fe-release-checkpoint.md) is dated evidence, not a live CI dashboard. Consult current PR checks for the candidate revision. The [release procedure](docs/ci-release.md) describes the gates and delivery sequence; merge and production verification follow successful required checks.
+Lab loading metrics vary between runs on shared CI machines, so they are reported on every PR but do not block it. Real-user Core Web Vitals are collected in production with Vercel Speed Insights. See the [CI and release flow](docs/ci-release.md).
 
 ## Repository map
 

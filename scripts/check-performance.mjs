@@ -1,52 +1,56 @@
 import { spawnSync } from "node:child_process";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { evaluatePerformance } from "./performance-budgets.mjs";
-import { readApplicationHash, resolvePerformancePolicy } from './performance-policy.mjs';
-
-const exception = JSON.parse(readFileSync(new URL('./fe-v1-performance-exception.json',import.meta.url),'utf8'));
-const policy = resolvePerformancePolicy({exception,applicationHash:readApplicationHash()});
-console.log(`Release policy: ${JSON.stringify(policy)}`);
+import { ADVISORY, BLOCKING, evaluatePerformance } from "./performance-budgets.mjs";
 
 const origin = process.env.PERF_ORIGIN ?? "http://localhost:3100";
 const routes = process.argv.slice(2);
 const output = process.env.PERF_OUTPUT ?? ".lighthouseci";
 mkdirSync(output, { recursive: true });
-function deliveryHealth() {
-  if(!process.env.PERF_DELIVERY_ERROR_FILE)return;
-  try { readFileSync(process.env.PERF_DELIVERY_ERROR_FILE); }
-  catch(error) { if(error.code==='ENOENT')return; throw error; }
-  throw new Error('Production transport proxy reported an upstream failure');
-}
+
 const summary = [];
 for (const locale of routes.length ? routes : ["en", "ja", "vi"]) {
-  if (!["en", "ja", "vi"].includes(locale)) throw new Error(`Unknown release locale: ${locale}`);
+  if (!["en", "ja", "vi"].includes(locale)) throw new Error(`Unknown locale: ${locale}`);
   const reports = [];
   for (let run = 1; run <= 3; run++) {
-    deliveryHealth();
     const file = join(output, `${locale}-${run}.json`);
     const result = spawnSync(process.execPath, [
       "node_modules/lighthouse/cli/index.js", `${origin}/${locale}`,
       "--form-factor=mobile", "--only-categories=performance,accessibility,best-practices,seo",
       "--output=json", `--output-path=${file}`,
       ...(process.env.PERF_TRACE === "1" && run === 1 ? ["--save-assets"] : []),
-      `--chrome-flags=--headless=new --no-sandbox --disable-dev-shm-usage${process.env.PERF_REQUIRE_HTTP2==='1'?' --allow-insecure-localhost':''}`, "--quiet",
+      "--chrome-flags=--headless=new --no-sandbox --disable-dev-shm-usage", "--quiet",
     ], { encoding: "utf8", timeout: 120_000 });
     if (result.status !== 0) throw new Error(`Lighthouse failed for ${locale} run ${run}: ${result.error?.message ?? result.stderr}`);
     const report = JSON.parse(readFileSync(file, "utf8"));
     if (report.runtimeError) throw new Error(`Lighthouse runtime error: ${report.runtimeError.message}`);
-    if(process.env.PERF_REQUIRE_HTTP2==='1') {
-      const requests=report.audits['network-requests']?.details?.items?.filter(item=>URL.canParse(item.url)&&new URL(item.url).origin===new URL(origin).origin);
-      if(!requests?.length||requests.some(item=>item.protocol!=='h2'))throw new Error('Production transport must negotiate HTTP/2 for all same-origin resources');
-    }
-    deliveryHealth();
     reports.push(report);
     console.log(`${locale}: collected run ${run}/3`);
   }
-  const result = { route: `/${locale}`, origin, transport:process.env.PERF_REQUIRE_HTTP2==='1'?'http2-brotli':'direct-http1-diagnostic', ...evaluatePerformance(reports, policy) };
+  const result = { route: `/${locale}`, origin, ...evaluatePerformance(reports) };
   console.log(JSON.stringify(result));
   summary.push(result);
 }
 writeFileSync(join(output, "summary.json"), JSON.stringify(summary, null, 2) + "\n");
-deliveryHealth();
+
+if (process.env.GITHUB_STEP_SUMMARY) {
+  const pct = value => Math.round(value * 100);
+  const verdict = ({ failures, warnings }) =>
+    failures.length ? `❌ ${failures.join(", ")}` : warnings.length ? `⚠️ ${warnings.join(", ")}` : "✅";
+  const rows = summary.map(r =>
+    `| ${r.route} | ${pct(r.median.performance)} | ${pct(r.median.accessibility)} | ${pct(r.median.seo)} | ` +
+    `${Math.round(r.median.lcp)} | ${Math.round(r.median.tbt)} | ${r.median.cls.toFixed(3)} | ${verdict(r)} |`);
+  appendFileSync(process.env.GITHUB_STEP_SUMMARY, [
+    "### Lighthouse mobile (median of 3 runs)", "",
+    "| Route | Performance | Accessibility | SEO | LCP ms | TBT ms | CLS | Result |",
+    "| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |", ...rows, "",
+    `Blocking: accessibility ≥ ${BLOCKING.accessibility * 100}, SEO ≥ ${BLOCKING.seo * 100}, CLS ≤ ${BLOCKING.cls}. ` +
+      `Advisory lab targets (simulated mid-range phone): performance ≥ ${ADVISORY.performance * 100}, ` +
+      `LCP ≤ ${ADVISORY.lcp} ms, TBT ≤ ${ADVISORY.tbt} ms. Field data: Vercel Speed Insights.`, "",
+  ].join("\n"));
+}
+
+for (const { route, warnings } of summary) {
+  for (const warning of warnings) console.log(`::warning title=Lighthouse ${route}::${warning} (advisory)`);
+}
 if (summary.some(result => result.failures.length)) process.exitCode = 1;

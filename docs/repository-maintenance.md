@@ -47,7 +47,7 @@ Use [private reporting](https://github.com/Let-cal/My_Portfolio/security/advisor
 
 ## Release and cost boundaries
 
-The [CI procedure](ci-release.md) defines budgets, permissions and deployment verification. The [frontend checkpoint](fe-release-checkpoint.md) records current evidence and unresolved gates. A ready Vercel preview does not establish that `main` or production contains that revision.
+The [CI procedure](ci-release.md) defines budgets, permissions and deployment verification. A ready Vercel preview does not establish that `main` or production contains that revision.
 
 Standard public-repository GitHub runners and the existing Vercel Hobby project are used. No paid integration was provisioned. Keep retention short and reassess quotas and billing before changing repository visibility or runner type.
 

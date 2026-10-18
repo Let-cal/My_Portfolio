@@ -4,9 +4,9 @@
 
 **Lê Trần Cát Lâm** の経験と制作実績を紹介する個人ポートフォリオです。**Developer・Tech Lead・Technical PM** の3つの視点から、担当業務と関連する実績を確認できます。鯉の泳ぐ池から龍の昇る場面まで、ひとつながりの日本庭園を背景に構成しています。
 
-[Webサイト](https://letcal.is-a.dev) · [設計仕様](docs/superpowers/specs/2026-10-13-portfolio-koi-redesign-design.md) · [リリース確認記録](docs/fe-release-checkpoint.md)
+[Webサイト](https://letcal.is-a.dev) · [設計仕様](docs/superpowers/specs/2026-10-13-portfolio-koi-redesign-design.md) · [CIとリリース手順](docs/ci-release.md)
 
-> **フロントエンド v1：** リリース条件と、承認済みの期限付きモバイル読み込み基準は[確認記録](docs/fe-release-checkpoint.md)に記載しています。本番で確認したリビジョンは[GitHub Releases](https://github.com/Let-cal/My_Portfolio/releases)をご覧ください。Supabaseの環境構築、管理者認証、コンテンツ管理機能は今後の実装予定です。
+> **フロントエンド v1** は [letcal.is-a.dev](https://letcal.is-a.dev) で公開中です。本番で確認したリビジョンは[GitHub Releases](https://github.com/Let-cal/My_Portfolio/releases)をご覧ください。Supabaseの環境構築、管理者認証、コンテンツ管理機能は今後の実装予定です。
 
 ## プレビュー
 
@@ -101,16 +101,16 @@ npm run check:performance
 
 各言語で**3回**測定し、指標ごとの中央値を判定します。測定先は `PERF_ORIGIN` で変更できます。`PERF_TRACE=1` を指定すると、各言語の初回測定で診断用ファイルも保存します。出力先は `.lighthouseci/` です。
 
-| リリース基準 | 必須値 |
-| --- | ---: |
-| 初期JavaScript | gzip圧縮後200 KB以下 |
-| モバイルLighthouse Performance | 85以上 |
-| Accessibility | 95以上 |
-| LCP | 2500 ms以下 |
-| TBT | 200 ms以下 |
-| CLS | 0.1以下 |
+| チェック | 基準 | 扱い |
+| --- | ---: | --- |
+| 初期JavaScript | gzip圧縮後200 KB以下 | マージをブロック |
+| Lighthouse Accessibility | 95以上 | マージをブロック |
+| Lighthouse SEO | 90以上 | マージをブロック |
+| CLS | 0.1以下 | マージをブロック |
+| Lighthouse Performance | 85以上 | 警告のみ |
+| LCP / TBT | 2500 ms / 200 ms以下 | 警告のみ |
 
-上記は目標値であり、達成済みのスコアではありません。ラボ測定のTBTだけでは、実環境のINPは評価できません。[確認記録](docs/fe-release-checkpoint.md) は記録日時点の結果です。候補リビジョンの最新状況はPRのチェック結果で確認してください。[リリース手順](docs/ci-release.md) に従い、必須チェックの合格後にマージと本番確認を行います。
+共有CIマシンでのラボ測定値は実行ごとにばらつくため、読み込み指標はPRごとに報告しますがマージはブロックしません。実ユーザーのCore Web VitalsはVercel Speed Insightsで本番計測します。詳細は[CIとリリース手順](docs/ci-release.md)をご覧ください。
 
 ## ディレクトリ構成
 
