@@ -1,3 +1,5 @@
+import { STRICT_LIMITS } from './performance-policy.mjs';
+
 const fields = {
   performance: report => report.categories?.performance?.score,
   accessibility: report => report.categories?.accessibility?.score,
@@ -6,7 +8,7 @@ const fields = {
   cls: report => report.audits?.["cumulative-layout-shift"]?.numericValue,
 };
 
-export function evaluatePerformance(reports) {
+export function evaluatePerformance(reports, policy = {id:'strict',limits:STRICT_LIMITS}) {
   if (reports.length !== 3) throw new Error("Release measurements require exactly three runs per route");
   const median = {};
   for (const [key, read] of Object.entries(fields)) {
@@ -16,11 +18,12 @@ export function evaluatePerformance(reports) {
     }
     median[key] = values.sort((a, b) => a - b)[1];
   }
-  const failures = [];
-  if (median.performance < 0.85) failures.push(`Performance ${median.performance * 100} < 85`);
-  if (median.accessibility < 0.95) failures.push(`Accessibility ${median.accessibility * 100} < 95`);
-  for (const [key, limit] of [["lcp", 2500], ["tbt", 200], ["cls", 0.1]]) {
-    if (median[key] > limit) failures.push(`${key} ${median[key]} > ${limit}`);
-  }
-  return { median, failures };
+  const failuresFor = limits => {
+    const failures = [];
+    if (median.performance < limits.performance) failures.push(`Performance ${median.performance * 100} < ${limits.performance * 100}`);
+    if (median.accessibility < limits.accessibility) failures.push(`Accessibility ${median.accessibility * 100} < ${limits.accessibility * 100}`);
+    for (const key of ['lcp','tbt','cls']) if (median[key] > limits[key]) failures.push(`${key} ${median[key]} > ${limits[key]}`);
+    return failures;
+  };
+  return { median, failures:failuresFor(policy.limits), targetFailures:failuresFor(STRICT_LIMITS), policy };
 }

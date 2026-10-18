@@ -1,6 +1,6 @@
 # FE v1 release assessment — 2026-10-18
 
-**Decision status: proposal, awaiting owner approval.** This document does not change CI, branch protection or product behavior.
+**Decision status: approved by the owner on 2026-10-18.** The owner answered “OK” to the explicit FE v1 LCP≤4-second/TBT≤300-ms proposal. Implementation retains the existing required check names and branch protection.
 
 ## Product objective
 
@@ -24,7 +24,7 @@ Research examined Adham Dannaway's design portfolio, Brittany Chiang's engineeri
 | Explicit bounded FE v1 exception | Release after functional, security and broader performance safeguards pass; retain original targets as documented debt | **Recommended**, subject to owner approval and final verification |
 | Replace the mobile entry with quick view | Redesign mobile routing/presentation, then verify the new entry | More product change and regression risk; not the fastest way to preserve the approved experience |
 
-## Proposed exception, not yet enacted
+## Approved bounded exception
 
 - Preserve all required lint/type/unit/browser/build/bundle/security and Vercel checks.
 - Retain three runs per locale and measurement failure reporting. Keep P≥85, Accessibility≥95 and CLS≤0.1. For **FE v1 only**, accept mobile median LCP≤4000 ms and TBT≤300 ms. These are proposed release tolerances, **not new definitions of good Core Web Vitals**.
@@ -36,7 +36,7 @@ Research examined Adham Dannaway's design portfolio, Brittany Chiang's engineeri
 
 ## Recommendation
 
-This makes the product trade-off reviewable, preserves the approved UI/UX, and avoids a speculative framework or mobile-layout rewrite. Evidence supports proposing this choice; the owner must accept the revised first-release tolerance before it is applied.
+This makes the product trade-off reviewable, preserves the approved UI/UX, and avoids a speculative framework or mobile-layout rewrite. The approved policy is recorded in `scripts/fe-v1-performance-exception.json`, scoped to application content of `9317fc9`, and expires at 2026-10-25 23:59:59 Asia/Ho_Chi_Minh. Changed application/build inputs restore strict budgets. [Issue #2](https://github.com/Let-cal/My_Portfolio/issues/2) tracks the original targets. Approval does not itself establish that the new CI run passes or that production is released.
 
 ## Primary references
 

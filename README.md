@@ -6,7 +6,7 @@ A personal portfolio for **Lê Trần Cát Lâm**, presenting project evidence t
 
 [Website](https://letcal.is-a.dev) · [Design specification](docs/superpowers/specs/2026-10-13-portfolio-koi-redesign-design.md) · [Release checkpoint](docs/fe-release-checkpoint.md)
 
-> **Release status:** this redesign is a frontend release candidate. Required CI and mobile performance gates have not all passed. The public website may serve a different revision; this README does not certify a production release. Supabase provisioning, admin authentication, and content management remain planned work.
+> **Frontend v1:** release requirements and the approved, bounded mobile loading tolerance are documented in the [release checkpoint](docs/fe-release-checkpoint.md). Check [GitHub Releases](https://github.com/Let-cal/My_Portfolio/releases) for the verified production revision. Supabase provisioning, admin authentication, and content management remain planned work.
 
 ## Preview
 
@@ -15,7 +15,7 @@ A personal portfolio for **Lê Trần Cát Lâm**, presenting project evidence t
   <img src="docs/images/portfolio-light.webp" alt="Desktop portfolio preview with the circular role selector and Japanese-inspired koi background">
 </picture>
 
-Captured from the frontend candidate with Motion off. [Dark](docs/images/portfolio-dark.webp) · [Light](docs/images/portfolio-light.webp). The deployed website may serve a different revision.
+Desktop preview with Motion off. [Dark](docs/images/portfolio-dark.webp) · [Light](docs/images/portfolio-light.webp).
 
 ## Experience
 

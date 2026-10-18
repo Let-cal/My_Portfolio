@@ -6,7 +6,7 @@
 
 [Webサイト](https://letcal.is-a.dev) · [設計仕様](docs/superpowers/specs/2026-10-13-portfolio-koi-redesign-design.md) · [リリース確認記録](docs/fe-release-checkpoint.md)
 
-> **開発状況：** このリニューアル版はフロントエンドのリリース候補です。必須のCIチェックとモバイル性能基準は、すべての合格を確認できていません。公開サイトと本ブランチの内容が異なる場合があります。Supabaseの環境構築、管理者認証、コンテンツ管理機能は今後の実装予定です。
+> **フロントエンド v1：** リリース条件と、承認済みの期限付きモバイル読み込み基準は[確認記録](docs/fe-release-checkpoint.md)に記載しています。本番で確認したリビジョンは[GitHub Releases](https://github.com/Let-cal/My_Portfolio/releases)をご覧ください。Supabaseの環境構築、管理者認証、コンテンツ管理機能は今後の実装予定です。
 
 ## プレビュー
 
@@ -15,7 +15,7 @@
   <img src="docs/images/portfolio-light.webp" alt="円形の役割セレクターと鯉の背景を表示したポートフォリオのデスクトップ画面">
 </picture>
 
-リリース候補の画面をMotionオフで撮影しました。[ダーク](docs/images/portfolio-dark.webp) · [ライト](docs/images/portfolio-light.webp)。本番サイトと同じリビジョンとは限りません。
+Motionオフで撮影したデスクトップ画面です。[ダーク](docs/images/portfolio-dark.webp) · [ライト](docs/images/portfolio-light.webp)。
 
 ## 主な機能
 

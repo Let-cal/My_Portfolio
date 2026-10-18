@@ -1,6 +1,6 @@
 # Frontend release checkpoint — 2026-10-18
 
-Status: **existing mobile performance gate open; not merged or released**. Candidate `9317fc973a6df54c78d291c0c4871cb8a066b976` is on [PR #1](https://github.com/Let-cal/My_Portfolio/pull/1). A ready preview is not production.
+**FE v1 verification record and approved release policy.** Reviewed application revision: `9317fc973a6df54c78d291c0c4871cb8a066b976`. [PR #1](https://github.com/Let-cal/My_Portfolio/pull/1) records the final checks and merge; [GitHub Releases](https://github.com/Let-cal/My_Portfolio/releases) records the verified production revision and deployment. A ready preview alone does not establish release.
 
 ## Current verification
 
@@ -26,7 +26,7 @@ All locales pass Performance, Accessibility and CLS. All fail LCP; English also 
 
 ## Deployed candidate cross-check
 
-Vercel CLI confirms preview `dpl_J49qFNicwQ6TfQJ2HkE5CAvwXmyS` Ready; the GitHub Vercel status for `9317fc9` links to that deployment. Next.js/Node 22 and the plan-default build machine remain configured. Production is still the previous main revision.
+At the assessment, Vercel CLI confirmed preview `dpl_J49qFNicwQ6TfQJ2HkE5CAvwXmyS` Ready; the GitHub Vercel status for `9317fc9` linked to that deployment. Next.js/Node 22 and the plan-default build machine were configured. Production verification is recorded separately in GitHub Releases.
 
 On 2026-10-18, isolated Windows headless Chrome measured the English preview over HTTP/2. Three cold Lighthouse 13.5.0 runs used the default profile for each form factor, normal page behavior and independent medians:
 
@@ -43,8 +43,8 @@ A normal-motion Chromium phone-touch smoke on the same protected preview passed 
 
 ## Release decision under review
 
-The owner clarified that recruiter desktop review is the primary audience and requested reassessment of the prolonged mobile optimization delay. The evidence supports considering a bounded first-release performance exception. **No exception has been approved or applied.** Existing thresholds, required checks and branch protection remain unchanged.
+The owner clarified that recruiter desktop review is the primary audience and approved the proposed FE v1 exception on 2026-10-18: LCP≤4000 ms and TBT≤300 ms for the reviewed application content, expiring on 2026-10-25 23:59:59 Asia/Ho_Chi_Minh. P≥85, A≥95, CLS≤0.1 and the seven required check names/protection remain in force. The original LCP2500/TBT200 goals remain visible in reports and [issue #2](https://github.com/Let-cal/My_Portfolio/issues/2).
 
-See the [release assessment](fe-release-assessment.md) for the proposal and research. Until a revised release policy is approved or existing budgets pass, the PR remains blocked. Do not describe this candidate as meeting the original mobile budgets or passing field Core Web Vitals.
+See the [release assessment](fe-release-assessment.md) for the approved decision and research. Fresh checks under this scoped policy are required before merge. Do not describe this candidate as meeting the original mobile budgets or passing field Core Web Vitals.
 
 See [CI and release procedure](ci-release.md). Backend/admin work follows the verified frontend release.

@@ -2,6 +2,11 @@ import { spawnSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { evaluatePerformance } from "./performance-budgets.mjs";
+import { readApplicationHash, resolvePerformancePolicy } from './performance-policy.mjs';
+
+const exception = JSON.parse(readFileSync(new URL('./fe-v1-performance-exception.json',import.meta.url),'utf8'));
+const policy = resolvePerformancePolicy({exception,applicationHash:readApplicationHash()});
+console.log(`Release policy: ${JSON.stringify(policy)}`);
 
 const origin = process.env.PERF_ORIGIN ?? "http://localhost:3100";
 const routes = process.argv.slice(2);
@@ -26,7 +31,7 @@ for (const locale of routes.length ? routes : ["en", "ja", "vi"]) {
     reports.push(report);
     console.log(`${locale}: collected run ${run}/3`);
   }
-  const result = { route: `/${locale}`, ...evaluatePerformance(reports) };
+  const result = { route: `/${locale}`, ...evaluatePerformance(reports, policy) };
   console.log(JSON.stringify(result));
   summary.push(result);
 }

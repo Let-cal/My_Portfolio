@@ -1,0 +1,9 @@
+{
+  "id": "fe-v1-2026-10-18",
+  "sourceCommit": "9317fc973a6df54c78d291c0c4871cb8a066b976",
+  "applicationHash": "7092dd1c4fe6ed79e3aa8c4c0fb14e3ccc59fb3eda798041a629f63e02fb56c0",
+  "approvedOn": "2026-10-18",
+  "expiresAt": "2026-10-25T16:59:59Z",
+  "limits": { "lcp": 4000, "tbt": 300 },
+  "followUp": "https://github.com/Let-cal/My_Portfolio/issues/2"
+}

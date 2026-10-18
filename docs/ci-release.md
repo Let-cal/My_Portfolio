@@ -42,3 +42,11 @@ Resolve updates with `gh api repos/OWNER/REPO/commits/TAG --jq .sha`; inspect ac
 4. After the required checks and performance gates pass, merge the reviewed PR when authorized. Then verify the intended Vercel project is on its free/Hobby arrangement and that only the intended `main` revision reaches production. These workflows do not invoke Vercel or change existing Git integration; an already-connected Vercel project may deploy automatically on merge. Verify the production revision, domain, routes, and mobile results before declaring release complete.
 
 These workflows do not deploy the application. Production release follows the reviewed merge and Vercel verification steps above.
+
+## Approved FE v1 exception (2026-10-18)
+
+The owner approved a first-release mobile tolerance of LCP <=4000 ms and TBT <=300 ms. Performance >=85, Accessibility >=95, CLS <=0.1, the three-run-per-locale method and all seven required checks remain mandatory. Original LCP <=2500 ms / TBT <=200 ms failures remain visible as `targetFailures` in logs and uploaded measurements; `failures` determines the release check result under the selected policy.
+
+`scripts/fe-v1-performance-exception.json` records the approval, reviewed source revision, application fingerprint, expiry and [follow-up issue #2](https://github.com/Let-cal/My_Portfolio/issues/2). The policy hashes committed application/build inputs, including public assets, dependencies, configuration and prebuild scripts. It excludes documentation, tests, GitHub metadata and the explicitly named performance policy/report files. Changed application inputs, dirty tracked application files or expiry cannot silently inherit relaxed limits. Invalid exception metadata fails closed. The deadline is 2026-10-25 23:59:59 Asia/Ho_Chi_Minh; it is a policy reassessment deadline, not an automation.
+
+This explicit owner-approved amendment supersedes the original hard loading budgets only for the bounded FE v1 scope. It does not authorize administrative status-check bypasses, claim that original targets passed, or establish field Core Web Vitals compliance. Measurements are uploaded on both successful and failed jobs, with three-day retention.
