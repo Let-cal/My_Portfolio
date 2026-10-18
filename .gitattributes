@@ -2,3 +2,7 @@
 src/app/fonts/manifest.json text eol=lf
 src/app/fonts/site-subsets.json text eol=lf
 *.woff2 -text
+# Build verification compares these generated text artifacts byte-for-byte.
+src/content/role-portraits.json text eol=lf
+src/components/site/icons.tsx text eol=lf
+public/images/skill-sprite.svg text eol=lf

@@ -16,7 +16,8 @@ export function fingerprintApplication(files) {
 export function readApplicationHash(ref='HEAD',{cwd=process.cwd()}={}) {
   const options={cwd,encoding:'utf8',stdio:['ignore','pipe','pipe']};
   const dirty = execFileSync('git',['diff','--name-only','HEAD','-z'],options).split('\0').filter(Boolean);
-  if(dirty.some(isApplicationInput)) throw new Error('Application inputs differ from committed revision; commit them before checking release policy');
+  const changedInputs=dirty.filter(isApplicationInput);
+  if(changedInputs.length) throw new Error(`Application inputs differ from committed revision: ${changedInputs.join(', ')}; commit them before checking release policy`);
   const untracked=execFileSync('git',['ls-files','--others','--exclude-standard','-z'],options).split('\0').filter(Boolean);
   if(untracked.some(isApplicationInput)) throw new Error('Untracked application inputs must be reviewed and committed before checking release policy');
   const entries=execFileSync('git',['ls-tree','-rz',ref],options).split('\0').filter(Boolean).map(entry=>{

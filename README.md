@@ -40,7 +40,7 @@ Desktop preview with Motion off. [Dark](docs/images/portfolio-dark.webp) · [Lig
 
 Server Components read content through `src/lib/data/get-content.ts`. Without a configured Supabase URL, the site validates and uses `src/content/seed.json`. Failed or invalid Supabase responses also fall back to the seed, with a shorter cache lifetime. The adapter does **not** establish that database policies or admin features are implemented.
 
-The scene loads separately from the page content. Mobile uses static imagery; capable desktop devices load live scenery after the page load gate. Prebuild generates responsive portraits, fallback formats, site icons, and the skill sprite. Exact dependency versions are in `package-lock.json`.
+The scene loads separately from the page content. Mobile uses static imagery; capable desktop devices load live scenery after the page load gate. Production builds verify and use committed portraits, fallbacks, icons and the skill sprite without re-encoding them for the build machine. After editing their sources, run `npm run generate:assets`, review the generated diff and commit it. Exact dependency versions are in `package-lock.json`.
 
 ## Local setup
 
