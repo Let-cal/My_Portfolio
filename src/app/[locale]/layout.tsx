@@ -118,7 +118,8 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
             </RoleProvider>
           </MotionProvider>
         </NextIntlClientProvider>
-        <SpeedInsights />
+        {/* The analytics script is served only by Vercel; other hosts would answer 404. */}
+        {process.env.VERCEL ? <SpeedInsights /> : null}
       </body>
     </html>
   );
