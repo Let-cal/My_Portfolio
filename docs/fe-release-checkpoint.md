@@ -6,6 +6,8 @@ Final security review subsequently corrected CodeQL extension-rule severity pars
 
 Cross-platform build verification then found that Linux AVIF re-encoding changes committed asset bytes. Build revision `56d9889` now verifies and uses the committed images, icons and sprite; `npm run generate:assets` performs deliberate regeneration separately. No artwork was changed. The final exception fingerprint is bound to this reviewed build revision. The production build, 55 artifact/script tests, lint and TypeScript pass locally; fresh Linux checks remain mandatory.
 
+Run 39146196982 subsequently passed Linux quality/browser/security but still failed the approved performance policy: EN P81/LCP3625/TBT339, JA P89/LCP3023/TBT236, VI P82/LCP3622/TBT262. These failures were retained, not waived. Actual CPU profiling identified eager static-scene viewport style work and eager Sonner initialization. Revision `a3edc87` removes those startup costs while retaining first-toast delivery, midpoint chapter tracking and all existing interactions. Local verification passes 855 unit tests, 59 browser tests and 55 script/artifact tests, build/lint/TypeScript; HTML-referenced home JS is 196.9 KB gzip and quick is 176.4 KB. The bounded exception is rebound to this reviewed revision; fresh Linux verification remains required.
+
 ## Current verification
 
 - [CI run 38999198200](https://github.com/Let-cal/My_Portfolio/actions/runs/38999198200) passes quality (lint, unit tests, production build, types, initial JavaScript and artifact budgets) and the full Linux Chromium suite. The Linux weight-500 font raster regression is resolved by retaining cmap aliases needed by FreeType autohinting; exact pixel assertions remain in place.
