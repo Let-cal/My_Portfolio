@@ -1,0 +1,38 @@
+{
+  "asset": "Rock Moss Set 01",
+  "author": "Kless Gyzen",
+  "license": "CC0-1.0",
+  "source": "https://polyhaven.com/a/rock_moss_set_01",
+  "metadata": "https://api.polyhaven.com/files/rock_moss_set_01",
+  "supportingMaterials": [
+    {
+      "asset": "Cliff Side",
+      "source": "https://polyhaven.com/a/cliff_side",
+      "license": "CC0-1.0",
+      "resolution": 512
+    }
+  ],
+  "stats": [
+    {
+      "sourceIndex": 0,
+      "beforeTriangles": 11000,
+      "afterTriangles": 800,
+      "vertices": 580,
+      "error": 0.010755612514913082
+    },
+    {
+      "sourceIndex": 2,
+      "beforeTriangles": 5000,
+      "afterTriangles": 800,
+      "vertices": 542,
+      "error": 0.00932906474918127
+    },
+    {
+      "sourceIndex": 5,
+      "beforeTriangles": 8994,
+      "afterTriangles": 800,
+      "vertices": 513,
+      "error": 0.008007441647350788
+    }
+  ]
+}

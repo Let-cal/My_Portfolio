@@ -1,0 +1,1262 @@
+/* Only application files define shipped utilities; docs and test fixtures are not UI sources. */
+@import "tailwindcss" source("../");
+@import "tw-animate-css";
+@import "./vendor/shadcn.css";
+@import "lenis/dist/lenis.css";
+@import "./fonts/vietnamese.css";
+
+@custom-variant dark (&:is(.dark *));
+/* Motion follows <html data-motion> (set before paint from the Motion toggle, else the OS setting), not the raw OS media query. */
+@custom-variant motion-reduce (&:where([data-motion=reduced], [data-motion=reduced] *));
+@custom-variant motion-safe (&:where([data-motion=full], [data-motion=full] *));
+
+/* Native rendering containment on phones: keep all content in HTML and the accessibility
+   tree, but lay out distant chapters on approach. The browser remembers measured heights. */
+@media screen and (max-width: 767px) {
+  :root:not([data-chapters-expanded]) .portfolio-chapter {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 1600px;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-stack-sans);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-heading: var(--font-space-grotesk), var(--font-stack-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted);
+  --color-muted: var(--muted-surface);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-brand-400: var(--brand-400);
+  --color-brand-500: var(--brand-500);
+  --color-brand-text: var(--brand-text);
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --font-mincho: "Yu Mincho", "Hiragino Mincho ProN", serif;
+}
+
+/*
+ * Design tokens. Dark is the default (<html class="dark">); a ".light" class
+ * on <html> switches to the light variant.
+ * --muted is the muted TEXT colour; shadcn "bg-muted" surfaces are remapped to
+ * --muted-surface in the @theme block above so shadcn components keep working.
+ */
+:root,
+.dark {
+  --brand-400: #fb923c;
+  --brand-500: #f97316;
+  /* Brand colour for TEXT: brand-400 on dark, a darker shade on light so it passes WCAG AA. */
+  --brand-text: #fb923c;
+
+  --bg: #0a0a0b;
+  --fg: #f4f4f5;
+  --muted: #a1a1aa;
+  --card: #141416;
+  --border: rgb(255 255 255 / 10%);
+
+  --muted-surface: #1f1f23;
+  --accent: #1f1f23;
+  --accent-foreground: var(--fg);
+  --input: rgb(255 255 255 / 14%);
+  --ring: var(--brand-400);
+
+  --background: var(--bg);
+  --foreground: var(--fg);
+  --card-foreground: var(--fg);
+  --popover: #141416;
+  --popover-foreground: var(--fg);
+  --primary: var(--brand-500);
+  --primary-foreground: #1a0f05;
+  --secondary: #1f1f23;
+  --secondary-foreground: var(--fg);
+  --destructive: oklch(0.704 0.191 22.216);
+
+  --chart-1: var(--brand-400);
+  --chart-2: var(--brand-500);
+  --chart-3: #a1a1aa;
+  --chart-4: #71717a;
+  --chart-5: #3f3f46;
+  --radius: 0.625rem;
+
+  --sidebar: var(--card);
+  --sidebar-foreground: var(--fg);
+  --sidebar-primary: var(--brand-500);
+  --sidebar-primary-foreground: #1a0f05;
+  --sidebar-accent: #1f1f23;
+  --sidebar-accent-foreground: var(--fg);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--brand-400);
+  color-scheme: dark;
+}
+
+.light {
+  --brand-text: #9a3412;
+
+  --bg: #fafaf9;
+  --fg: #18181b;
+  --muted: #484850;
+  --card: #ffffff;
+  --border: rgb(0 0 0 / 10%);
+
+  --muted-surface: #f1f1ef;
+  --accent: #f1f1ef;
+  --input: rgb(0 0 0 / 14%);
+  --ring: var(--brand-500);
+
+  --popover: #ffffff;
+  --primary: var(--brand-500);
+  --primary-foreground: #1a0f05;
+  --secondary: #f1f1ef;
+  --destructive: oklch(0.577 0.245 27.325);
+
+  --chart-3: #52525b;
+  --chart-4: #71717a;
+  --chart-5: #a1a1aa;
+
+  --sidebar-accent: #f1f1ef;
+  --sidebar-ring: var(--brand-500);
+  color-scheme: light;
+}
+
+/* Font stacks. The font variables are set on <body> by the locale layout (Noto Sans JP only for ja),
+   so the stacks are declared on <body> too. */
+body {
+  --font-stack-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+body:lang(ja) {
+  --font-stack-sans: var(--font-inter), var(--font-noto-sans-jp, "Yu Gothic"), ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-heading;
+  }
+}
+
+/* ---- fx: signature effect primitives (src/components/fx). Accent defaults to the Kohaku orange. ---- */
+@keyframes fx-wave {
+  to {
+    transform: translateX(-50%);
+  }
+}
+@keyframes fx-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+@keyframes fx-char-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.45em);
+  }
+}
+
+@layer components {
+  .fx-wave {
+    animation: fx-wave 12s linear infinite;
+  }
+  .fx-char {
+    animation: fx-char-in 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .fx-marquee-track {
+    animation: fx-marquee var(--fx-marquee-duration, 30s) linear infinite;
+  }
+  .fx-marquee-track[data-reverse] {
+    animation-direction: reverse;
+  }
+  .fx-marquee-track[data-static] {
+    animation: none;
+  }
+  .fx-marquee[data-pause-on-hover]:hover .fx-marquee-track {
+    animation-play-state: paused;
+  }
+
+  [data-glow-card] {
+    position: relative;
+  }
+  [data-glow-card]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 250ms ease;
+    background: radial-gradient(260px circle at var(--gx, 50%) var(--gy, 50%), var(--role-accent, #f97316), transparent 70%);
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+  [data-glow-card]:hover::before,
+  [data-glow-card]:focus-within::before {
+    opacity: 1;
+  }
+}
+
+/* <Reveal> server-renders hidden. Visitors who reduce motion get the final state before hydration, and a printout (or a
+   print-to-PDF taken before the reveals have run) shows everything. Keep the noscript copy in reveal-style.ts in step. */
+:root[data-motion="reduced"] [data-reveal] {
+  opacity: 1 !important;
+  transform: none !important;
+}
+:root[data-motion="reduced"] [data-reveal-unit] {
+  opacity: 1 !important;
+}
+
+@media print {
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ---- 60-second view (/[locale]/quick): a one-page layout without the site chrome ----
+   The page's root element carries data-quick-view, and <html data-quick> is set while it is shown (an inline script
+   before the first paint, then QuickViewMarker; see src/components/quick/quick-mark.tsx). Then every other child of
+   <body> (skip link, header, pill nav, toaster, spotlight, grain, progress koi, hello greeting, the 3D backdrop) is
+   hidden, and so are the side rail and the footer inside the shell, whose rail column and padding are flattened.
+   A soft navigation can leave a hidden copy of this page in the DOM; its marks are removed with it, so the chrome of
+   the page you came back to stays. No body-level :has() here: Chrome restyles the whole page whenever one of those
+   may have changed (DOM insertions, and with a [style] test every inline style change, i.e. every frame). */
+html[data-quick] body {
+  & > :not([data-site-shell]) {
+    display: none !important;
+  }
+  & [data-site-shell] {
+    display: block;
+    padding: 0;
+  }
+  & [data-site-shell] :is(aside, footer):not([data-quick-view] *) {
+    display: none;
+  }
+}
+
+/* Explicit, query-only scene capture used by scripts/capture-fallbacks.mjs; absent from normal visits. */
+html[data-scene-capture],
+html[data-scene-capture] body {
+  background: #08090d !important;
+}
+html[data-scene-capture] body > :not([data-koi-canvas]) {
+  visibility: hidden !important;
+}
+html[data-scene-capture] body > [data-koi-canvas] {
+  visibility: visible !important;
+}
+
+@page {
+  size: A4;
+  margin: 12mm;
+}
+
+/* Paper is light: on a dark theme the quick view prints with the light tokens, and no background is needed. */
+@media print {
+  html:has([data-quick-view]),
+  body:has([data-quick-view]) {
+    background: #fff !important;
+    color: #18181b !important;
+  }
+  body:has([data-quick-view]) {
+    --bg: #fff;
+    --fg: #18181b;
+    --muted: #52525b;
+    --card: #fff;
+    --border: rgb(0 0 0 / 18%);
+    --brand-text: #c2410c;
+    --muted-surface: #f1f1ef;
+    --background: var(--bg);
+    --foreground: var(--fg);
+    --card-foreground: var(--fg);
+    color-scheme: light;
+  }
+}
+
+:root[data-motion="reduced"] {
+  .fx-wave,
+  .fx-char,
+  .fx-marquee-track {
+    animation: none !important;
+  }
+}
+
+/* ---- site chrome: hello intro ---- */
+@keyframes hello-word-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.25em);
+  }
+}
+/* Safety net: if scripts never run, the overlay hides itself after 2.5s instead of covering the page for good. */
+@keyframes hello-failsafe {
+  to {
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+[data-hello] {
+  animation: hello-failsafe 0s linear 2.5s forwards;
+}
+.hello-word {
+  animation: hello-word-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+/* Returning visitors (head script sets data-hello-seen) and reduced motion never see the overlay. */
+html[data-hello-seen] [data-hello] {
+  display: none;
+}
+:root[data-motion="reduced"] {
+  [data-hello] {
+    display: none;
+  }
+}
+
+/* ---- hero: role wheel (src/components/sections/hero). Approved prototype: hero-desc-variants.html, variant A ---- */
+/* Default accent before hydration; RoleProvider writes the chosen role's accent inline on <html>. */
+:root {
+  --role-accent: #0ea5e9;
+  --role-accent-text: var(--role-accent);
+  /* Text on a surface filled with the role accent: near-black reaches >= 4.5:1 on all three accents
+     (#0ea5e9, #38bdf8, #e0a84e) in both themes; the page background colour does not. */
+  --role-accent-contrast: #0b0908;
+}
+.light {
+  /* Darker role hue for small text, with margin for bright scenery behind the page. */
+  --role-accent-text: color-mix(in srgb, var(--role-accent) 55%, #000);
+}
+
+@property --from {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@property --sweep {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes hero-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.hero-role-title {
+  color: var(--role-accent-text);
+  transition: color 0.4s;
+}
+.hero-phrase-word {
+  font-family: var(--font-serif), Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--role-accent-text);
+}
+:lang(ja) .hero-phrase-word {
+  font-family: inherit;
+  font-style: normal;
+}
+
+.hero-stage-wrap {
+  container-type: inline-size;
+}
+.hero-stage {
+  --wheel: min(360px, 80vw);
+  position: relative;
+  isolation: isolate;
+  padding-top: 8px;
+}
+/* Accent glow behind the wheel. Its own box fades to transparent at every edge (closest-side), so it never shows
+   a hard edge, and it never sticks out sideways (no horizontal scroll). */
+.hero-stage::before {
+  content: "";
+  position: absolute;
+  z-index: -2;
+  left: 50%;
+  top: calc(8px + var(--wheel) / 2 - 310px);
+  width: min(880px, 100%);
+  height: 620px;
+  translate: -50% 0;
+  pointer-events: none;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--role-accent) 15%, transparent), transparent);
+  transition: background 0.6s;
+}
+.hero-water {
+  position: absolute;
+  inset: 0 0 auto;
+  height: calc(var(--wheel) + 16px);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.hero-wheel {
+  position: relative;
+  z-index: 2;
+  width: var(--wheel);
+  aspect-ratio: 1;
+  margin-inline: auto;
+}
+.hero-disc {
+  position: absolute;
+  inset: 7.2727%; /* 32px of the 440px ring */
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  touch-action: pan-y;
+  background: #0b1220;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 8%),
+    0 40px 90px -30px color-mix(in srgb, var(--role-accent) 70%, transparent);
+  transition: box-shadow 0.5s;
+}
+.hero-layer {
+  position: absolute;
+  inset: 0;
+}
+.hero-layer img {
+  object-fit: cover;
+  object-position: 50% 30%;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.hero-peek {
+  -webkit-mask-image: conic-gradient(from var(--from), #000 0 var(--sweep), transparent 0);
+  mask-image: conic-gradient(from var(--from), #000 0 var(--sweep), transparent 0);
+}
+.hero-peek img {
+  opacity: 0;
+}
+.hero-peek img[data-on] {
+  opacity: 1;
+}
+
+.hero-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.hero-arc {
+  cursor: pointer;
+  outline: none;
+}
+.hero-arc-hit,
+.hero-arc-line {
+  fill: none;
+  stroke-linecap: round;
+  pointer-events: stroke;
+}
+.hero-arc-hit {
+  stroke: transparent;
+  stroke-width: 26;
+}
+.hero-arc:focus-visible .hero-arc-hit {
+  stroke: color-mix(in srgb, var(--ring) 40%, transparent);
+}
+.hero-arc-line {
+  stroke: var(--c);
+  stroke-width: 3;
+  stroke-opacity: 0.35;
+  transition:
+    stroke-width 0.3s,
+    stroke-opacity 0.3s,
+    filter 0.3s;
+}
+.hero-arc[data-on] .hero-arc-line {
+  stroke-width: 7;
+  stroke-opacity: 1;
+  filter: drop-shadow(0 0 8px var(--c));
+}
+.hero-arc-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  letter-spacing: 0.32em;
+  fill: var(--muted);
+  transition: fill 0.3s;
+  pointer-events: none;
+}
+.hero-arc[data-on] .hero-arc-label {
+  fill: var(--fg);
+}
+.hero-orbit {
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+  animation: hero-spin 18s linear infinite;
+  fill: var(--role-accent);
+  pointer-events: none;
+}
+
+.hero-lines {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: none;
+  overflow: visible;
+  pointer-events: none;
+}
+.hero-line {
+  fill: none;
+  stroke-width: 1.5;
+  opacity: 0;
+  transition:
+    stroke-dashoffset 0.6s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.3s;
+}
+.hero-line-dot {
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.hero-lines [data-on] .hero-line {
+  opacity: 0.9;
+}
+.hero-lines [data-on] .hero-line-dot {
+  opacity: 1;
+}
+
+/* Panels: stacked accordion under the wheel by default; around the wheel when there is room (below). */
+.hero-panels {
+  display: contents;
+}
+.hero-panel {
+  position: relative;
+  z-index: 3;
+  max-width: 32rem;
+  margin: 18px auto 0;
+  text-align: center;
+  cursor: pointer;
+}
+.hero-panel-button {
+  display: block;
+  width: 100%;
+  border-radius: 0.5rem;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  outline: none;
+}
+.hero-panel-button:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 50%, transparent);
+}
+.hero-panel-tag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.hero-panel-tag i {
+  display: inline-block;
+  width: 18px;
+  height: 2px;
+  background: var(--c);
+}
+.hero-panel-title {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--font-heading), sans-serif;
+  font-size: clamp(22px, 6vw, 28px);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.hero-panel-title em {
+  font-family: var(--font-serif), Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--c);
+  white-space: nowrap;
+}
+.light .hero-panel-title em {
+  color: color-mix(in srgb, var(--c) 50%, #000);
+}
+/* Collapsed panels are dimmed with solid colours instead of opacity, so the text keeps AA contrast for large text. */
+.hero-panel-title,
+.hero-panel-title em {
+  transition: color 0.35s;
+}
+.hero-panel[data-state="collapsed"] .hero-panel-title {
+  color: color-mix(in srgb, var(--fg) 60%, var(--bg));
+}
+.hero-panel[data-state="collapsed"] .hero-panel-title em {
+  color: color-mix(in srgb, var(--c) 55%, var(--muted));
+}
+.light .hero-panel[data-state="collapsed"] .hero-panel-title em {
+  color: color-mix(in srgb, var(--c) 50%, #000);
+}
+.light .hero-panel[data-state="collapsed"] .hero-panel-title {
+  color: color-mix(in srgb, var(--fg) 65%, var(--bg));
+}
+:lang(ja) .hero-panel-title em {
+  font-family: inherit;
+  font-style: normal;
+  font-weight: 700;
+}
+.hero-panel-more {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.hero-panel-more > div {
+  min-height: 0;
+  overflow: hidden;
+}
+.hero-panel[data-state="active"] .hero-panel-more {
+  grid-template-rows: 1fr;
+}
+.hero-panel-body {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--fg) 82%, transparent);
+}
+.hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 10px 0 2px;
+  padding: 0;
+  list-style: none;
+}
+.hero-chip {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11.5px;
+  color: var(--muted);
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity 0.35s,
+    transform 0.35s;
+}
+.hero-panel[data-state="active"] .hero-chip {
+  opacity: 1;
+  transform: none;
+  transition-delay: calc(var(--i, 0) * 50ms);
+}
+
+.hero-hint {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+.hero-hint-fine {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .hero-hint-fine {
+    display: inline;
+  }
+  .hero-hint-touch {
+    display: none;
+  }
+}
+
+/* Wide content column: Developer on the left, Tech Lead on the right, Technical PM below, with leader lines. */
+@container (min-width: 52rem) {
+  .hero-stage {
+    --wheel: clamp(320px, 40cqw, 440px);
+    --panel-gap: calc(var(--wheel) / 2 + 28px);
+  }
+  .hero-lines {
+    display: block;
+  }
+  .hero-panel[data-side="left"],
+  .hero-panel[data-side="right"] {
+    position: absolute;
+    top: calc(8px + var(--wheel) / 2 - 44px);
+    width: min(300px, calc(50cqw - var(--panel-gap) - 4px));
+    margin: 0;
+  }
+  .hero-panel[data-side="left"] {
+    right: calc(50% + var(--panel-gap));
+    text-align: right;
+  }
+  .hero-panel[data-side="right"] {
+    left: calc(50% + var(--panel-gap));
+    text-align: left;
+  }
+  .hero-panel[data-side="left"] :is(.hero-panel-tag, .hero-chips) {
+    justify-content: flex-end;
+  }
+  .hero-panel[data-side="right"] :is(.hero-panel-tag, .hero-chips) {
+    justify-content: flex-start;
+  }
+  .hero-panel[data-side="bottom"] {
+    width: min(420px, 100%);
+    margin: 64px auto 0;
+  }
+  .hero-panel-title {
+    font-size: clamp(22px, 2.9cqw, 28px);
+  }
+}
+
+.hero-stroke-text {
+  color: transparent;
+  -webkit-text-stroke: 1px color-mix(in srgb, var(--fg) 30%, transparent);
+}
+
+:root[data-motion="reduced"] {
+  .hero-orbit {
+    animation: none;
+  }
+  .hero-line,
+  .hero-line-dot,
+  .hero-arc-line,
+  .hero-panel-title,
+  .hero-panel-title em,
+  .hero-panel-more,
+  .hero-chip,
+  .hero-disc,
+  .hero-role-title {
+    transition: none !important;
+  }
+}
+
+/* ---- skills: waterfall map (src/components/sections/skills) ---- */
+/* Brand glyphs and monogram tiles are grey until the chip is hovered, focused or selected; then they take the brand
+   colour set inline as --sk-hex / --sk-hex-dark (near-black brands lift to a light neutral on the dark theme). */
+.skill-chip :is([data-skill-icon], [data-skill-monogram]),
+.skill-mq :is([data-skill-icon], [data-skill-monogram]) {
+  color: var(--color-muted-foreground);
+  transition: color 200ms ease;
+}
+.skill-chip:is(:hover, :focus-visible, [aria-pressed="true"]) :is([data-skill-icon], [data-skill-monogram]),
+.skill-mq:hover :is([data-skill-icon], [data-skill-monogram]) {
+  color: var(--sk-hex, var(--role-accent));
+}
+.dark .skill-chip:is(:hover, :focus-visible, [aria-pressed="true"]) :is([data-skill-icon], [data-skill-monogram]),
+.dark .skill-mq:hover :is([data-skill-icon], [data-skill-monogram]) {
+  color: var(--sk-hex-dark, var(--role-accent));
+}
+
+/* Beams: drawn with a dash trick (pathLength is 1), a soft glow, and a spark travelling along each one. */
+.skill-beams {
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--role-accent) 70%, transparent));
+}
+.skill-beam {
+  fill: none;
+  stroke: var(--role-accent);
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1;
+  animation: skill-beam-draw 650ms cubic-bezier(0.2, 0.7, 0.2, 1) var(--beam-delay, 0ms) forwards;
+  transition:
+    opacity 200ms ease,
+    stroke-width 200ms ease;
+}
+.skill-beams g[data-state="dim"] {
+  opacity: 0.25;
+}
+.skill-beams g[data-state="active"] .skill-beam {
+  stroke-width: 2.5;
+}
+.skill-beam-spark {
+  fill: #fff;
+}
+@keyframes skill-beam-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* A thin vertical line runs down the groups; light drops slide along it, like water down a fall. */
+.skill-fall::before,
+.skill-fall::after {
+  content: "";
+  position: absolute;
+  top: 0.6rem;
+  bottom: 0;
+  left: 0.09rem;
+  width: 1px;
+  pointer-events: none;
+}
+.skill-fall::before {
+  background: var(--border);
+}
+.skill-fall::after {
+  background: linear-gradient(to bottom, transparent, var(--role-accent) 55%, transparent) 0 0 / 1px 120px repeat-y;
+  opacity: 0.75;
+  animation: skill-fall 3.2s linear infinite;
+}
+@keyframes skill-fall {
+  to {
+    background-position-y: 120px;
+  }
+}
+
+.skill-caret {
+  display: inline-block;
+  width: 0.55em;
+  height: 1.05em;
+  margin-left: 1px;
+  vertical-align: -0.17em;
+  background: var(--role-accent);
+  animation: skill-caret 1.05s steps(1) infinite;
+}
+@keyframes skill-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+.skill-card-in {
+  animation: skill-card-in 320ms ease-out both;
+}
+@keyframes skill-card-in {
+  from {
+    opacity: 0;
+  }
+}
+
+:root[data-motion="reduced"] {
+  .skill-beam {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .skill-fall::after,
+  .skill-caret,
+  .skill-card-in {
+    animation: none;
+  }
+  .skill-fall::after {
+    display: none;
+  }
+}
+
+/* ---- certificates: lanterns (src/components/sections/certificates) ---- */
+/* A lantern hangs from its cord and bobs gently (staggered per card through --bob-delay / --bob-dur). The body has an
+   orange border and a warm inner light; hover, focus and the flipped state light it in the role accent. */
+.lantern-scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  --lantern-edge: var(--brand-400);
+}
+.light .lantern-scene {
+  --lantern-edge: var(--brand-500);
+}
+.lantern-bob {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  transform-origin: 50% 0;
+  animation: lantern-bob var(--bob-dur, 6s) ease-in-out var(--bob-delay, 0s) infinite;
+}
+@keyframes lantern-bob {
+  0%,
+  100% {
+    transform: translateY(calc(var(--bob-y, 5px) * -1)) rotate(-0.6deg);
+  }
+  50% {
+    transform: translateY(var(--bob-y, 5px)) rotate(0.6deg);
+  }
+}
+/* Hold still while you read or aim at it. */
+.lantern-scene:is(:hover, [data-flipped], :has(:focus-visible)) .lantern-bob {
+  animation-play-state: paused;
+}
+@media (hover: none) {
+  .lantern-bob {
+    --bob-y: 3px;
+  }
+}
+
+.lantern-cord {
+  width: 1px;
+  height: 1.4rem;
+  background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--lantern-edge) 75%, transparent));
+}
+.lantern-cap {
+  width: 44%;
+  height: 0.65rem;
+  border-radius: 0.3rem;
+  background: linear-gradient(to bottom, var(--lantern-edge), color-mix(in srgb, var(--lantern-edge) 55%, #7c2d12));
+  transition: box-shadow 300ms ease;
+}
+.lantern-tassel {
+  position: relative;
+  width: 1px;
+  height: 0.9rem;
+  background: color-mix(in srgb, var(--lantern-edge) 75%, transparent);
+}
+.lantern-tassel::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 0.55rem;
+  height: 1rem;
+  translate: -50% 0;
+  border-radius: 0.2rem 0.2rem 0.5rem 0.5rem;
+  background: linear-gradient(to bottom, var(--lantern-edge), color-mix(in srgb, var(--lantern-edge) 40%, transparent));
+}
+
+.lantern-body {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  perspective: 1100px;
+  border: 1.5px solid color-mix(in srgb, var(--lantern-edge) 80%, transparent);
+  border-radius: 2.4rem / 1.8rem;
+  background:
+    radial-gradient(ellipse 75% 62% at 50% 56%, color-mix(in srgb, var(--brand-500) 17%, transparent), transparent 78%),
+    color-mix(in srgb, var(--card) 62%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transition:
+    box-shadow 300ms ease,
+    border-color 300ms ease;
+}
+/* The paper ribs: faint vertical lines that fade out towards the caps. */
+.lantern-body::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 calc(25% - 0.5px),
+    color-mix(in srgb, var(--lantern-edge) 13%, transparent) calc(25% - 0.5px) 25%
+  );
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent);
+}
+
+.lantern-scene:has(.lantern-hit:focus-visible) .lantern-body {
+  outline: 2px solid var(--ring);
+  outline-offset: 4px;
+}
+.lantern-scene[data-flipped] .lantern-body,
+.lantern-scene:has(.lantern-hit:focus-visible) .lantern-body {
+  border-color: var(--role-accent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--role-accent) 35%, transparent),
+    0 0 34px -4px color-mix(in srgb, var(--role-accent) 55%, transparent),
+    inset 0 0 44px -14px color-mix(in srgb, var(--role-accent) 45%, transparent);
+}
+.lantern-scene[data-flipped] .lantern-cap,
+.lantern-scene:has(.lantern-hit:focus-visible) .lantern-cap {
+  box-shadow: 0 0 14px color-mix(in srgb, var(--role-accent) 70%, transparent);
+}
+@media (hover: hover) {
+  .lantern-scene:hover .lantern-body {
+    border-color: var(--role-accent);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--role-accent) 35%, transparent),
+      0 0 34px -4px color-mix(in srgb, var(--role-accent) 55%, transparent),
+      inset 0 0 44px -14px color-mix(in srgb, var(--role-accent) 45%, transparent);
+  }
+  .lantern-scene:hover .lantern-cap {
+    box-shadow: 0 0 14px color-mix(in srgb, var(--role-accent) 70%, transparent);
+  }
+}
+
+/* The toggle button covers the whole body underneath the faces; the faces ignore the pointer (except their links),
+   so any click that is not on a link lands on the button. */
+.lantern-hit {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  cursor: pointer;
+  outline: none;
+}
+.lantern-flip {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  flex: 1 1 auto;
+  min-height: 16rem;
+  pointer-events: none;
+  transform-style: preserve-3d;
+  transition: transform 750ms cubic-bezier(0.3, 0.8, 0.25, 1);
+}
+.lantern-scene[data-flipped] .lantern-flip {
+  transform: rotateY(180deg);
+}
+.lantern-face {
+  display: flex;
+  flex-direction: column;
+  grid-area: 1 / 1;
+  padding: 1.6rem 1.7rem;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.lantern-back {
+  transform: rotateY(180deg);
+}
+.lantern-static {
+  flex: 1 1 auto;
+  min-height: 16rem;
+}
+
+/* Reduced motion: no bobbing and no rotation; the two faces crossfade instead. */
+:root[data-motion="reduced"] {
+  .lantern-bob {
+    animation: none;
+  }
+  .lantern-flip {
+    transform: none !important;
+    transition: none;
+  }
+  .lantern-face {
+    -webkit-backface-visibility: visible;
+    backface-visibility: visible;
+    transition: opacity 250ms ease;
+  }
+  .lantern-back {
+    transform: none;
+    opacity: 0;
+  }
+  .lantern-scene[data-flipped] .lantern-front {
+    opacity: 0;
+  }
+  .lantern-scene[data-flipped] .lantern-back {
+    opacity: 1;
+  }
+}
+
+/* ---- why hire me (src/components/sections/why). The card look mirrors the old site's WhyCardList (commit 1f2585f) ----
+   WhyCard writes --why-tx / --why-ty (pointer offset from the card centre, -0.5..0.5) and --why-rx / --why-ry (tilt)
+   from requestAnimationFrame; everything below only reads them. data-hover is set by the pointer (or a touch press);
+   data-tilt is present only on a fine pointer above 640px without reduced motion. */
+.why-card {
+  transform-style: preserve-3d;
+  transition: transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.why-card[data-tilt][data-hover] {
+  transform: perspective(1200px) rotateX(var(--why-rx, 0deg)) rotateY(var(--why-ry, 0deg));
+}
+
+/* Depth layers: background, frame, content drift against the pointer by 5/10/15px and sit 12/24/36px apart in z. */
+.why-layer {
+  transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.why-card[data-tilt][data-hover] .why-layer-0 {
+  transform: translate3d(calc(var(--why-tx, 0) * 10px), calc(var(--why-ty, 0) * 10px), 12px);
+}
+.why-card[data-tilt][data-hover] .why-layer-1 {
+  transform: translate3d(calc(var(--why-tx, 0) * 20px), calc(var(--why-ty, 0) * 20px), 24px);
+}
+.why-card[data-tilt][data-hover] .why-layer-2 {
+  transform: translate3d(calc(var(--why-tx, 0) * 30px), calc(var(--why-ty, 0) * 30px), 36px);
+}
+
+/* Waves: the whole SVG drifts up to 10px and each path adds its own shift, up to 20px in total at the front wave. */
+.why-wave-svg,
+.why-wave {
+  transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.why-card[data-hover] .why-wave-svg {
+  transform: translate(calc(var(--why-tx, 0) * -20px), calc(var(--why-ty, 0) * -20px)) scale(1.05);
+}
+.why-card[data-hover] .why-wave-1 {
+  transform: translate(calc(var(--why-tx, 0) * -10px), calc(var(--why-ty, 0) * -6px));
+}
+.why-card[data-hover] .why-wave-2 {
+  transform: translate(calc(var(--why-tx, 0) * -15px), calc(var(--why-ty, 0) * -9px));
+}
+.why-card[data-hover] .why-wave-3 {
+  transform: translate(calc(var(--why-tx, 0) * -20px), calc(var(--why-ty, 0) * -12px));
+}
+
+/* Frame draws itself, text settles into place (hover, keyboard focus inside the card, or the active card on touch). */
+.why-frame {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 1.2s ease;
+}
+.why-meta-line {
+  transform: scaleX(0.5);
+  transform-origin: left;
+  transition: transform 800ms cubic-bezier(0.16, 1, 0.3, 1) 50ms;
+}
+.why-meta-text {
+  transform: translateX(-5px);
+  transition: transform 800ms cubic-bezier(0.16, 1, 0.3, 1) 150ms;
+}
+.why-title,
+.why-subtitle {
+  transform: translateY(8px);
+  transition: transform 800ms cubic-bezier(0.16, 1, 0.3, 1) 100ms;
+}
+.why-card:is([data-hover], :focus-within) .why-frame {
+  stroke-dashoffset: 0;
+}
+.why-card:is([data-hover], :focus-within) .why-meta-line {
+  transform: scaleX(1);
+}
+.why-card:is([data-hover], :focus-within) :is(.why-meta-text, .why-title, .why-subtitle) {
+  transform: none;
+}
+@media (hover: none) {
+  .why-slide[data-active] .why-frame {
+    stroke-dashoffset: 0;
+  }
+  .why-meta-line,
+  .why-meta-text,
+  .why-title,
+  .why-subtitle {
+    transform: none;
+  }
+}
+:root[data-motion="reduced"] {
+  .why-card,
+  .why-layer,
+  .why-wave-svg,
+  .why-wave,
+  .why-frame,
+  .why-meta-line,
+  .why-meta-text,
+  .why-title,
+  .why-subtitle {
+    transition: none !important;
+  }
+  .why-card[data-hover] .why-wave-svg,
+  .why-card[data-hover] .why-wave {
+    transform: none;
+  }
+  .why-frame {
+    stroke-dashoffset: 0;
+  }
+  .why-meta-line,
+  .why-meta-text,
+  .why-title,
+  .why-subtitle {
+    transform: none;
+  }
+}
+
+/* ---- contact + footer principles (Task 11) ---- */
+/* The contact headline waits off-screen with its letters held at their hidden pose (ContactHeadline). */
+[data-contact-headline][data-held] .fx-char {
+  animation-play-state: paused;
+}
+/* Footer principles come in one after another; --i is the line index. Plain visible text until armed. */
+.footer-principle {
+  transition-property: opacity, transform;
+  transition-duration: 700ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: calc(var(--i, 0) * 140ms);
+}
+[data-footer-principles][data-armed]:not([data-shown]) .footer-principle {
+  opacity: 0;
+  transform: translateY(1rem);
+}
+:root[data-motion="reduced"] {
+  [data-contact-headline][data-held] .fx-char {
+    animation-play-state: running;
+  }
+  .footer-principle {
+    transition: none;
+  }
+  [data-footer-principles][data-armed]:not([data-shown]) .footer-principle {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/*
+ * Text veil over the 3D backdrop (src/scene/TextVeil.tsx): calm, soft-edged panels behind blocks of text, so the pond
+ * never makes them hard to read. Near-black at night, near-white by day; the colour change runs with the pond's own
+ * 600 ms day/night crossfade.
+ */
+[data-koi-veil] {
+  --veil: 4 7 10;
+  --veil-a: 0.94;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.light [data-koi-veil] {
+  --veil: 250 250 249;
+  --veil-a: 1;
+}
+[data-koi-veil] > i {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: none;
+  border-radius: 34px;
+  background: rgb(var(--veil) / var(--veil-a));
+  /* The solid part reaches 24px past the text (TextVeil's PAD); the soft edge only needs a short fade, so whatever swims close to the text, the dragon included, stays in colour. */
+  box-shadow: 0 0 40px 14px rgb(var(--veil) / var(--veil-a));
+  will-change: transform;
+  transition:
+    opacity 0.35s ease,
+    background-color 0.6s ease,
+    box-shadow 0.6s ease;
+}
+
+/* Preserve the hero's 350ms vertical word swap and 200ms summary crossfade without a React presence runtime. */
+@keyframes hero-word-enter { from { transform: translateY(70%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes hero-word-exit { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-70%); opacity: 0; } }
+@keyframes hero-summary-enter { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hero-summary-exit { from { opacity: 1; } to { opacity: 0; } }
+.hero-word-enter { animation: hero-word-enter 350ms cubic-bezier(0.22,1,0.36,1) both; }
+.hero-word-exit { animation: hero-word-exit 350ms cubic-bezier(0.22,1,0.36,1) both; }
+.hero-summary-enter { animation: hero-summary-enter 200ms ease-in-out both; }
+.hero-summary-exit { animation: hero-summary-exit 200ms ease-in-out both; }
+:root[data-motion="reduced"] :is(.hero-word-enter,.hero-summary-enter) { animation: none; }
+:root[data-motion="reduced"] :is(.hero-word-exit,.hero-summary-exit) { display: none; }

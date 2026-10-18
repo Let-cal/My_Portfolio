@@ -1,0 +1,888 @@
+{
+  "profile": {
+    "name": "Le Tran Cat Lam",
+    "location": "Ho Chi Minh City, Vietnam",
+    "email": "letcal2003@gmail.com",
+    "linkedin": "https://www.linkedin.com/in/letcal",
+    "github": "https://github.com/Let-cal",
+    "avatarUrl": "/images/profile-portrait.png",
+    "openToWork": true,
+    "availabilityNote": {
+      "en": "Open to new roles from October 2026",
+      "ja": "2026年10月から新しいポジションを探しています",
+      "vi": "Sẵn sàng nhận vị trí mới từ tháng 10/2026"
+    },
+    "bookingUrl": null,
+    "summaries": {
+      "fullstack": {
+        "en": "Full-stack software engineer who worked on 6 projects for Japanese clients in 14 months at SKG Software. Wrote all of FlexyBox Phase 1 (Next.js, AWS serverless, fincode payments) and built the COA APIs in .NET 8 with about 300 unit test cases.",
+        "ja": "SKG Softwareで14か月間に日本のお客様向けプロジェクト6件に携わったフルスタックエンジニアです。FlexyBox Phase 1のコードをすべて担当し(Next.js、AWSサーバーレス、fincode決済)、COAでは.NET 8のAPIを開発し、約300件の単体テストを実施しました。",
+        "vi": "Kỹ sư phần mềm full-stack, đã tham gia 6 dự án cho khách hàng Nhật trong 14 tháng tại SKG Software. Tự viết toàn bộ code FlexyBox Phase 1 (Next.js, AWS serverless, thanh toán fincode) và làm API .NET 8 cho dự án COA với khoảng 300 unit test case."
+      },
+      "techlead": {
+        "en": "Software engineer and acting Tech Lead at SKG Software, across 6 Japanese client projects in 14 months. Wrote all FlexyBox Phase 1 code on AWS serverless, built the COA APIs in .NET 8 with about 300 unit test cases, and reviewed the dev team's code on every project.",
+        "ja": "SKG Softwareでソフトウェアエンジニア兼テックリード代行として、14か月間に日本のお客様向けプロジェクト6件を担当しました。FlexyBox Phase 1のコードをAWSサーバーレスですべて書き、COAでは.NET 8のAPIと約300件の単体テストを担当しました。全プロジェクトで開発チームのコードレビューも行いました。",
+        "vi": "Kỹ sư phần mềm kiêm Tech Lead tại SKG Software, tham gia 6 dự án khách hàng Nhật trong 14 tháng. Tự viết toàn bộ code FlexyBox Phase 1 trên AWS serverless, làm API .NET 8 cho COA với khoảng 300 unit test case, và review code của team dev ở mọi dự án."
+      },
+      "pm": {
+        "en": "Software engineer and acting Project Manager at SKG Software. Ran 2 Japanese client projects in parallel from April to September 2026 with teams of 3 to 8, covering estimates, schedules, releases and requirements definition in Japanese.",
+        "ja": "SKG Softwareでソフトウェアエンジニア兼プロジェクトマネージャー代行を務めました。2026年4月から9月まで日本のお客様向けプロジェクト2件を並行して担当し、3〜8名のチームで見積もり、スケジュール、リリース、日本語での要件定義を行いました。",
+        "vi": "Kỹ sư phần mềm kiêm Project Manager tại SKG Software. Điều phối song song 2 dự án khách hàng Nhật từ tháng 4 đến tháng 9/2026 với team từ 3 đến 8 người: estimate, lập lịch, release và định nghĩa yêu cầu bằng tiếng Nhật."
+      }
+    }
+  },
+  "roles": [
+    {
+      "key": "fullstack",
+      "title": {
+        "en": "Full-stack Software Engineer",
+        "ja": "フルスタックソフトウェアエンジニア",
+        "vi": "Kỹ sư phần mềm Full-stack"
+      },
+      "koiVariety": "kohaku",
+      "cvFileUrl": "/cv/LeTranCatLam_CV_TechLead.pdf",
+      "experienceOrder": ["skg-flexybox-p1", "skg-coa", "skg-flexybox-p2", "skg-ai-agent", "skg-intern", "fpt-japan"],
+      "skillGroupOrder": ["languages", "frameworks", "cloud", "databases", "ai", "testing", "delivery", "design"]
+    },
+    {
+      "key": "techlead",
+      "title": {
+        "en": "Software Engineer · Tech Lead",
+        "ja": "ソフトウェアエンジニア · テックリード",
+        "vi": "Kỹ sư phần mềm · Tech Lead"
+      },
+      "koiVariety": "showa",
+      "cvFileUrl": "/cv/LeTranCatLam_CV_TechLead.pdf",
+      "experienceOrder": ["skg-flexybox-p1", "skg-coa", "skg-flexybox-p2", "skg-ai-agent", "skg-intern", "fpt-japan"],
+      "skillGroupOrder": ["languages", "frameworks", "cloud", "databases", "ai", "testing", "delivery", "design"]
+    },
+    {
+      "key": "pm",
+      "title": {
+        "en": "Software Engineer · Technical Project Manager",
+        "ja": "ソフトウェアエンジニア · テクニカルプロジェクトマネージャー",
+        "vi": "Kỹ sư phần mềm · Technical Project Manager"
+      },
+      "koiVariety": "ogon",
+      "cvFileUrl": "/cv/LeTranCatLam_CV_TechnicalPM.pdf",
+      "experienceOrder": ["skg-ai-agent", "skg-flexybox-p2", "skg-coa", "skg-flexybox-p1", "skg-intern", "fpt-japan"],
+      "skillGroupOrder": ["delivery", "cloud", "languages", "frameworks", "ai", "databases", "testing", "design"]
+    }
+  ],
+  "experiences": [
+    {
+      "id": "skg-ai-agent",
+      "company": "AI Agent",
+      "parentCompany": "SKG Software (Splus)",
+      "location": "Ho Chi Minh City, Vietnam",
+      "position": {
+        "en": "Software Engineer, acting Project Manager",
+        "ja": "ソフトウェアエンジニア(プロジェクトマネージャー代行)",
+        "vi": "Kỹ sư phần mềm, kiêm Project Manager"
+      },
+      "start": "2026-04",
+      "end": "2026-09",
+      "employmentType": "full-time",
+      "summary": {
+        "en": "Multi-tenant LLM agent service that calls a Japanese client's business system APIs to query data and generate reports. Supports both cloud and local LLMs.",
+        "ja": "日本のお客様の業務システムAPIを呼び出し、データの照会やレポート作成を行うマルチテナントのLLMエージェントサービスです。クラウドとローカルの両方のLLMに対応しています。",
+        "vi": "Dịch vụ LLM agent multi-tenant, gọi API hệ thống nghiệp vụ của khách hàng Nhật để truy vấn dữ liệu và tạo báo cáo. Hỗ trợ cả LLM cloud và local."
+      },
+      "caseStudy": {
+        "problem": {
+          "en": "The client wanted an agent that could answer questions and build reports from its own business data, on top of about 15 existing business APIs, with both cloud and local model options.",
+          "ja": "お客様は、既存の約15本の業務APIを基に、自社の業務データから質問に答えたりレポートを作成したりできるエージェントを求めていました。クラウドとローカルの両方のモデルを選べることも条件でした。",
+          "vi": "Khách hàng cần một agent trả lời câu hỏi và tạo báo cáo từ dữ liệu nghiệp vụ của họ, dựa trên khoảng 15 API nghiệp vụ có sẵn, chạy được cả với model cloud lẫn local."
+        },
+        "role": {
+          "en": "Acting Project Manager. The team had 3 people until June 2026, then 6. Handled estimates, scheduling, task and progress tracking, and requirements definition with the client in Japanese. Wrote basic design documents and proposals, reviewed test cases and acceptance criteria, and built the PoC admin console and agent chat UI.",
+          "ja": "プロジェクトマネージャー代行として担当しました。チームは2026年6月まで3名、その後6名です。見積もり、スケジュール作成、タスクと進捗の管理、日本語でのお客様との要件定義を行いました。基本設計書と提案書を作成し、テストケースと受け入れ基準をレビューしました。PoCの管理画面とエージェントのチャットUIも自分で開発しました。",
+          "vi": "Đảm nhận vai trò Project Manager. Team có 3 người đến tháng 6/2026, sau đó là 6 người. Phụ trách estimate, lập lịch, quản lý task và tiến độ, lấy và định nghĩa yêu cầu với khách bằng tiếng Nhật. Viết tài liệu thiết kế cơ bản và tài liệu đề xuất, review test case và tiêu chí nghiệm thu, tự build admin console và chat UI cho bản PoC."
+        },
+        "decisions": {
+          "en": "Wrapped about 15 business APIs into about 10 agent tools. Merged the local AI setup into the cloud AI setup to cut cost and simplify security, and restructured the team around it. The trade-off: during UAT, answers from the cloud and local models had to be checked for consistency. Set up Terraform and Docker for the project.",
+          "ja": "約15本の業務APIを約10個のエージェントツールにまとめました。コスト削減とセキュリティの簡素化のため、ローカルAIの構成をクラウドAIに統合し、合わせてチーム体制も見直しました。その代わり、UAT期間中はクラウドとローカルの回答が近い内容になっているかを確認する必要がありました。TerraformとDockerの構成も自分で行いました。",
+          "vi": "Gói khoảng 15 API nghiệp vụ thành khoảng 10 agent tool. Hợp nhất AI Local vào AI Cloud để tiết kiệm chi phí và đơn giản hóa phần bảo mật, đồng thời tái cơ cấu team. Đánh đổi: trong giai đoạn UAT phải kiểm tra để câu trả lời từ cloud và local tương đồng nhau. Tự cấu hình Terraform và Docker cho dự án."
+        },
+        "result": {
+          "en": "The PoC was demoed to the client, and the client agreed to move on to the next phases. When the client's own PoC stage started, the tenant switched to hybrid mode, so the cloud/local consistency check was no longer needed.",
+          "ja": "PoCをお客様にデモし、次のフェーズへ進むことに合意いただきました。お客様側のPoC段階ではテナントがハイブリッドモードに切り替わったため、クラウドとローカルの回答の確認は不要になりました。",
+          "vi": "Bản PoC được demo cho khách và khách đồng ý chuyển sang các giai đoạn tiếp theo. Đến giai đoạn PoC phía khách, tenant chuyển sang chế độ hybrid nên việc kiểm tra câu trả lời giữa cloud và local không còn cần thiết."
+        }
+      },
+      "teamSize": "3 → 6",
+      "tech": ["Python", "FastAPI", "TypeScript", "React", "Vite", "Tailwind CSS", "OpenAI Agents SDK", "LiteLLM", "MCP", "Ollama", "vLLM", "PostgreSQL", "AWS Lambda", "Amazon RDS", "Amazon S3", "CloudFront", "AWS WAF", "Terraform", "Docker", "GitLab", "Redmine"],
+      "links": [],
+      "published": true,
+      "sortIndex": 0
+    },
+    {
+      "id": "skg-flexybox-p2",
+      "company": "FlexyBox Phase 2",
+      "parentCompany": "SKG Software (Splus)",
+      "location": "Ho Chi Minh City, Vietnam",
+      "position": {
+        "en": "Software Engineer, acting Project Manager / Tech Lead",
+        "ja": "ソフトウェアエンジニア(プロジェクトマネージャー / テックリード代行)",
+        "vi": "Kỹ sư phần mềm, kiêm Project Manager / Tech Lead"
+      },
+      "start": "2026-03",
+      "end": "2026-09",
+      "employmentType": "full-time",
+      "summary": {
+        "en": "Extended the FlexyBox smart-locker system into a multi-tenant platform. Each tenant turns the sales, rental and gacha modules on or off and manages its own lockers in a separate admin console.",
+        "ja": "スマートロッカーシステムFlexyBoxをマルチテナントのプラットフォームに拡張しました。テナントごとに販売・レンタル・ガチャのモジュールを選んで組み合わせ、専用の管理画面で自社のロッカーを管理できます。",
+        "vi": "Mở rộng hệ thống smart locker FlexyBox thành nền tảng multi-tenant. Mỗi tenant bật/tắt các module sales, rental, gacha và tự quản lý chuỗi locker của mình trên admin console riêng."
+      },
+      "caseStudy": {
+        "problem": {
+          "en": "Each tenant needed to run its own locker chain: IoT status for every locker, products and prices per locker, end-user usage history and audit logs, its own accounts and users, and LINE messages on rental, return and login, with payments through fincode.",
+          "ja": "テナントごとに自社のロッカーチェーンを運用できる必要がありました。各ロッカーのIoT状態の監視、ロッカー単位の商品と価格、エンドユーザーの利用履歴と操作ログ、テナント専用のアカウントとユーザー、レンタル・返却・ログイン時のLINE通知、fincodeによる決済が対象です。",
+          "vi": "Mỗi tenant cần tự vận hành chuỗi locker của mình: giám sát trạng thái IoT của từng locker, sản phẩm và giá theo từng locker, lịch sử sử dụng của end user và audit log, tài khoản và user riêng, gửi LINE message khi thuê, trả và đăng nhập, thanh toán qua fincode."
+        },
+        "role": {
+          "en": "Acting Project Manager / Tech Lead. Wrote estimates by phase, by new feature and for SKG's own proposals; wrote basic and detailed design documents and proposals; gathered and defined requirements with the client; solved technical problems for the team; reviewed code; mentored 3 interns (2 developers, 1 tester).",
+          "ja": "プロジェクトマネージャー / テックリード代行として担当しました。フェーズ別、新機能別、SKGからの提案別に見積もりを作成し、基本設計書・詳細設計書・提案書を作成しました。お客様との要件ヒアリングと要件定義、チームの技術課題の解決、コードレビューを行い、インターン3名(開発2名、テスター1名)の指導も担当しました。",
+          "vi": "Đảm nhận vai trò Project Manager / Tech Lead. Viết nhiều bản estimate theo phase, theo tính năng mới và theo đề xuất của SKG; viết tài liệu thiết kế cơ bản, chi tiết và đề xuất; lấy và định nghĩa yêu cầu với khách; giải quyết vấn đề kỹ thuật cho team; review code; mentor 3 intern (2 dev, 1 tester)."
+        },
+        "decisions": {
+          "en": "Sized the team for each phase from the estimate, the effort agreed with the client, the target release date and priority: up to 8 people, then 5 from May 2026. Released to production by phase and by feature, with a version check and risk review before each release. Locker status comes from AWS IoT Core, and LINE message content and settings can be edited from the admin console.",
+          "ja": "フェーズごとの見積もり、お客様と合意した工数、希望リリース日、優先度をもとにチーム規模を調整しました。最大8名で、2026年5月からは5名です。本番リリースはフェーズ・機能単位で行い、リリース前にバージョン確認とリスク管理を行いました。ロッカーの状態はAWS IoT Coreで取得し、LINEメッセージの内容や設定は管理画面から変更できるようにしました。",
+          "vi": "Điều chỉnh quy mô team theo estimate từng phase, effort đã chốt với khách, ngày release mong muốn và độ ưu tiên: tối đa 8 người, từ tháng 5/2026 còn 5 người. Release production theo phase và theo tính năng, kiểm tra version và quản lý rủi ro trước mỗi lần release. Trạng thái locker lấy qua AWS IoT Core; nội dung và setting LINE message chỉnh được ngay trên admin console."
+        },
+        "result": {
+          "en": "Bugs found in UAT were handled in time by the team on duty, with no impact on the client. Each release was followed by a lessons-learned review and process improvements.",
+          "ja": "UATで見つかったバグは担当チームが期限内に対応し、お客様への影響はありませんでした。リリースのたびに振り返りを行い、プロセスを改善しました。",
+          "vi": "Bug phát sinh ở UAT được team trực xử lý kịp thời, không ảnh hưởng tới khách. Sau mỗi lần release đều rút kinh nghiệm và cải tiến quy trình."
+        }
+      },
+      "teamSize": "8 → 5",
+      "tech": ["TypeScript", "Node.js", "Next.js", "React", "Tailwind CSS", "shadcn/ui", "DynamoDB", "AWS Lambda", "API Gateway", "Amazon S3", "AWS IoT Core", "Amazon SES", "AWS Amplify", "AWS SAM", "fincode", "LINE LIFF", "GitLab", "Backlog", "Redmine"],
+      "links": [],
+      "published": true,
+      "sortIndex": 1
+    },
+    {
+      "id": "skg-coa",
+      "company": "COA (Certificate of Analysis system)",
+      "parentCompany": "SKG Software (Splus)",
+      "location": "Ho Chi Minh City, Vietnam",
+      "position": {
+        "en": "Software Engineer, Tech Lead / Developer",
+        "ja": "ソフトウェアエンジニア(テックリード / 開発)",
+        "vi": "Kỹ sư phần mềm, Tech Lead / Developer"
+      },
+      "start": "2025-10",
+      "end": "2026-03",
+      "employmentType": "full-time",
+      "summary": {
+        "en": "System for issuing Certificates of Analysis, with a 3-level role-based approval workflow. At the final approval it generates the COA PDF from 6 templates and sends it by email.",
+        "ja": "分析証明書(COA)の発行システムです。ロール別の3段階承認ワークフローがあり、最終承認の時点で6種類のテンプレートからCOAのPDFを自動生成し、メールで送信します。",
+        "vi": "Hệ thống phát hành Certificate of Analysis với workflow phê duyệt 3 cấp theo role. Đến bước phê duyệt cuối, hệ thống tự sinh PDF COA (6 mẫu) và gửi email."
+      },
+      "caseStudy": {
+        "problem": {
+          "en": "Every COA had to pass 3 approval levels by role before it was issued, and the final step had to produce the right PDF out of 6 templates and email it.",
+          "ja": "COAは発行前にロール別の3段階承認を通す必要があり、最終段階では6種類のテンプレートから正しいPDFを生成してメールで送る必要がありました。",
+          "vi": "Mỗi COA phải qua 3 cấp phê duyệt theo role trước khi phát hành, và bước cuối phải sinh đúng PDF trong 6 mẫu rồi gửi email."
+        },
+        "role": {
+          "en": "Tech Lead / Developer in a team of 4. Built about 9–10 API endpoints and about 6 main screens. Supported estimates and progress tracking, and proposed and explained solutions in client meetings under the PM's guidance.",
+          "ja": "4名のチームでテックリード / 開発を担当しました。約9〜10本のAPIエンドポイントと約6つの主要画面を開発しました。PMの指導のもとで見積もりと進捗管理を支援し、お客様との会議で提案や説明を行いました。",
+          "vi": "Tech Lead / Developer trong team 4 người. Làm khoảng 9–10 API endpoint và khoảng 6 màn hình chính. Hỗ trợ estimate và quản lý tiến độ, đề xuất và giải thích trong họp với khách dưới sự hướng dẫn của PM."
+        },
+        "decisions": {
+          "en": "Built the APIs in C# .NET 8 with ASP.NET Core Web API and Dapper on Oracle, and the screens in Biz/Designer DT. Designed the Oracle schema. Worked inside the client's environment through AWS WorkSpaces, where source was managed by manual merges and diff checks.",
+          "ja": "APIはC# .NET 8(ASP.NET Core Web API、Dapper)とOracleで、画面はBiz/Designer DTで開発しました。Oracleのスキーマも設計しました。開発はAWS WorkSpaces経由でお客様の環境内で行い、ソースは手動マージと差分比較で管理しました。",
+          "vi": "Làm API bằng C# .NET 8 (ASP.NET Core Web API, Dapper) trên Oracle, màn hình bằng Biz/Designer DT. Thiết kế schema Oracle. Code trong môi trường của khách qua AWS WorkSpaces, quản lý source bằng merge tay và so sánh diff."
+        },
+        "result": {
+          "en": "Wrote and ran about 300 unit test cases. UAT found about 10–20 bugs across all releases combined.",
+          "ja": "約300件の単体テストケースを作成・実施しました。UATで検出されたバグは、全リリース合計で約10〜20件でした。",
+          "vi": "Viết và chạy khoảng 300 unit test case. Bug ở UAT khoảng 10–20 trên tổng tất cả các lần release."
+        }
+      },
+      "teamSize": "4",
+      "tech": ["C#", ".NET 8", "ASP.NET Core Web API", "Dapper", "Oracle", "Biz/Designer DT", "AWS WorkSpaces"],
+      "links": [],
+      "published": true,
+      "sortIndex": 2
+    },
+    {
+      "id": "skg-flexybox-p1",
+      "company": "FlexyBox Phase 1",
+      "parentCompany": "SKG Software (Splus)",
+      "location": "Ho Chi Minh City, Vietnam",
+      "position": {
+        "en": "Software Engineer, acting Project Manager / Full-stack",
+        "ja": "ソフトウェアエンジニア(プロジェクトマネージャー代行 / フルスタック)",
+        "vi": "Kỹ sư phần mềm, kiêm Project Manager / Full-stack"
+      },
+      "start": "2025-09",
+      "end": "2025-10",
+      "employmentType": "full-time",
+      "summary": {
+        "en": "Sales system for a smart locker with 9 doors: the user picks a product and pays, and the door opens once payment succeeds. Includes admin screens for the tenant admin.",
+        "ja": "9扉のスマートロッカーで商品を販売するシステムです。商品を選んで支払い、決済が完了すると扉が開きます。テナント管理者向けの管理画面もあります。",
+        "vi": "Hệ thống bán hàng qua smart locker 9 ngăn: chọn sản phẩm, thanh toán, thanh toán thành công thì mở ngăn. Kèm màn hình quản trị cho tenant admin."
+      },
+      "caseStudy": {
+        "problem": {
+          "en": "The client wanted to sell products through a smart locker and try it in real use before taking it to market.",
+          "ja": "お客様はスマートロッカーで商品を販売し、商用化の前に実環境で試したいと考えていました。",
+          "vi": "Khách hàng muốn bán sản phẩm qua smart locker và chạy thử thực tế trước khi thương mại hóa."
+        },
+        "role": {
+          "en": "Acting Project Manager / Full-stack in a team of 2, and the author of all Phase 1 code. Wrote basic and detailed design documents, proposals and estimates, and presented in regular meetings with an IT comtor.",
+          "ja": "2名のチームでプロジェクトマネージャー代行 / フルスタックを担当し、Phase 1のコードはすべて自分で書きました。基本設計書・詳細設計書・提案書・見積もりを作成し、定例会議ではITコミュニケーターと一緒に説明しました。",
+          "vi": "Project Manager / Full-stack trong team 2 người, tự viết toàn bộ code Phase 1. Viết tài liệu thiết kế cơ bản, chi tiết, đề xuất và estimate; trình bày trong họp định kỳ cùng IT comtor."
+        },
+        "decisions": {
+          "en": "Serverless API on AWS SAM, Lambda, API Gateway and DynamoDB, with the table and GSI design. fincode payment integration with webhooks, an API to open the locker, and purchase and admin screens in Next.js. Worked to a self-made schedule.",
+          "ja": "AWS SAM、Lambda、API Gateway、DynamoDBによるサーバーレスAPIを構築し、テーブルとGSIを設計しました。fincode決済とWebhookの連携、ロッカー解錠API、Next.jsによる購入画面と管理画面を開発しました。スケジュールは自分で作成しました。",
+          "vi": "API serverless trên AWS SAM, Lambda, API Gateway và DynamoDB (thiết kế table và GSI). Tích hợp thanh toán fincode và webhook, API mở locker, màn hình mua hàng và quản trị bằng Next.js. Làm theo schedule tự lập."
+        },
+        "result": {
+          "en": "Delivered on time, with several items ahead of schedule. Went into a real-world pilot with 1 tenant and 2 lockers, the gate before commercial launch.",
+          "ja": "期限どおりに納品し、いくつかの項目は前倒しで完了しました。商用化前の関門として、1テナント・2台のロッカーで実環境での試験運用に入りました。",
+          "vi": "Giao đúng hạn, nhiều hạng mục xong trước hạn. Đưa vào chạy thử thực tế với 1 tenant và 2 locker, làm cửa ải trước khi thương mại hóa."
+        }
+      },
+      "teamSize": "2",
+      "tech": ["TypeScript", "Next.js", "AWS SAM", "AWS Lambda", "API Gateway", "DynamoDB", "fincode"],
+      "links": [],
+      "published": true,
+      "sortIndex": 3
+    },
+    {
+      "id": "skg-intern",
+      "company": "TONGUE-AI & Driver MS",
+      "parentCompany": "SKG Software (Splus)",
+      "location": "Ho Chi Minh City, Vietnam",
+      "position": {
+        "en": "Software Engineer Intern",
+        "ja": "ソフトウェアエンジニア(インターン)",
+        "vi": "Thực tập sinh Kỹ sư phần mềm"
+      },
+      "start": "2025-08",
+      "end": "2025-09",
+      "employmentType": "internship",
+      "summary": {
+        "en": "Two client projects during the internship, each with a team of 4. TONGUE-AI is a mobile web app where AI analyses a tongue photo and questionnaire answers to assess disease risk. Driver MS digitises attendance, daily checks and work records for light-truck drivers.",
+        "ja": "インターン期間中に、それぞれ4名のチームでお客様向けプロジェクト2件に参加しました。TONGUE-AIは舌の写真と問診の回答をAIで分析し、病気の可能性を評価するモバイル向けWebアプリです。Driver MSは軽トラックドライバーの点呼、日常点検、業務記録をデジタル化するシステムです。",
+        "vi": "Hai dự án khách hàng trong thời gian thực tập, mỗi team 4 người. TONGUE-AI là web app trên mobile, dùng AI phân tích ảnh lưỡi và câu trả lời bảng hỏi để đánh giá khả năng mắc bệnh. Driver MS số hóa điểm danh, kiểm tra hằng ngày và ghi nhận công việc cho tài xế xe tải nhẹ."
+      },
+      "caseStudy": {
+        "problem": {
+          "en": "TONGUE-AI needed a mobile web flow for users plus a multi-tenant admin screen. Driver MS needed attendance, daily checks and work records for drivers in Japanese and English.",
+          "ja": "TONGUE-AIでは、ユーザー向けのモバイルWebの画面フローとマルチテナントの管理画面が必要でした。Driver MSでは、ドライバーの点呼、日常点検、業務記録を日本語と英語で扱う必要がありました。",
+          "vi": "TONGUE-AI cần luồng web trên mobile cho người dùng và màn hình quản trị multi-tenant. Driver MS cần điểm danh, kiểm tra hằng ngày và ghi nhận công việc cho tài xế bằng tiếng Nhật và tiếng Anh."
+        },
+        "role": {
+          "en": "Full-stack Developer. On TONGUE-AI: requirements analysis, sprint planning, UI/UX, the Next.js frontend, and test design and review. On Driver MS: frontend, Japanese/English localisation, Laravel API changes, change requests and bug fixes.",
+          "ja": "フルスタック開発者として参加しました。TONGUE-AIでは要件分析、スプリント計画、UI/UX、Next.jsのフロントエンド、テスト設計とレビューを担当しました。Driver MSではフロントエンド、日本語・英語の多言語対応、Laravel APIの修正、変更要求への対応とバグ修正を担当しました。",
+          "vi": "Full-stack Developer. Ở TONGUE-AI: phân tích yêu cầu, lập kế hoạch sprint, UI/UX, frontend Next.js, thiết kế và review test. Ở Driver MS: frontend, đa ngôn ngữ Nhật/Anh, sửa API Laravel, xử lý CR và sửa bug."
+        },
+        "decisions": {
+          "en": "Built the TONGUE-AI frontend in Next.js and TypeScript. On Driver MS, added Japanese/English support to the frontend and made changes to the existing Laravel API.",
+          "ja": "TONGUE-AIのフロントエンドはNext.jsとTypeScriptで開発しました。Driver MSでは、フロントエンドに日本語・英語対応を追加し、既存のLaravel APIを修正しました。",
+          "vi": "Làm frontend TONGUE-AI bằng Next.js và TypeScript. Ở Driver MS, thêm hỗ trợ tiếng Nhật/Anh cho frontend và sửa API Laravel có sẵn."
+        },
+        "result": {
+          "en": "Moved to a full-time Software Engineer role after the standard 2-month internship.",
+          "ja": "標準の2か月のインターン期間を経て、正社員のソフトウェアエンジニアになりました。",
+          "vi": "Lên nhân viên chính thức (Software Engineer) theo lộ trình thực tập chuẩn 2 tháng."
+        }
+      },
+      "teamSize": "4",
+      "tech": ["TypeScript", "PHP", "Next.js", "Laravel", "SQL Server", "MySQL", "Docker", "Swagger", "Jira"],
+      "links": [],
+      "published": true,
+      "sortIndex": 4
+    },
+    {
+      "id": "fpt-japan",
+      "company": "FPT Japan",
+      "parentCompany": null,
+      "location": "Tokyo, Japan",
+      "position": {
+        "en": "Business Analyst Intern / UI-UX Designer",
+        "ja": "ビジネスアナリスト(インターン)/ UI・UXデザイナー",
+        "vi": "Thực tập sinh Business Analyst / UI-UX Designer"
+      },
+      "start": "2024-03",
+      "end": "2024-03",
+      "employmentType": "internship",
+      "summary": {
+        "en": "Business analysis internship in Tokyo. Defined business goals, user roles, functional requirements and use cases, drew architecture, workflow and data model diagrams, and presented plans and designs to stakeholders. Studied Japanese at FPT Japan Academy at the same time.",
+        "ja": "東京でのビジネスアナリストのインターンです。業務目標、ユーザーロール、機能要件、ユースケースを定義し、アーキテクチャ図、ワークフロー、データモデルを作成しました。計画と設計をステークホルダーに説明しました。並行してFPT Japan Academyで日本語を学びました。",
+        "vi": "Thực tập Business Analyst tại Tokyo. Xác định mục tiêu nghiệp vụ, user role, yêu cầu chức năng và use case; vẽ sơ đồ kiến trúc, workflow và data model; trình bày kế hoạch và thiết kế cho stakeholder. Song song học tiếng Nhật tại FPT Japan Academy."
+      },
+      "caseStudy": null,
+      "teamSize": null,
+      "tech": [],
+      "links": [],
+      "published": true,
+      "sortIndex": 5
+    }
+  ],
+  "projects": [
+    {
+      "id": "siteplus",
+      "title": "SitePlus",
+      "role": {
+        "en": "Team Lead",
+        "ja": "チームリーダー",
+        "vi": "Trưởng nhóm"
+      },
+      "start": "2025-01",
+      "end": "2025-05",
+      "summary": {
+        "en": "University project: a web and mobile platform that supports site surveys and location selection for F&B and retail brands.",
+        "ja": "大学のプロジェクトです。飲食・小売ブランドの物件調査と出店場所の選定を支援するWebとモバイルのプラットフォームです。",
+        "vi": "Dự án đại học: nền tảng web và mobile hỗ trợ khảo sát và chọn mặt bằng cho thương hiệu F&B và bán lẻ."
+      },
+      "caseStudy": {
+        "problem": {
+          "en": "F&B and retail brands choosing a new location have to survey and compare sites. SitePlus supports that work on web and mobile.",
+          "ja": "飲食・小売ブランドが新しい出店場所を決めるには、物件の調査と比較が必要です。SitePlusはその作業をWebとモバイルで支援します。",
+          "vi": "Thương hiệu F&B và bán lẻ khi chọn địa điểm mới cần khảo sát và so sánh mặt bằng. SitePlus hỗ trợ việc đó trên web và mobile."
+        },
+        "role": {
+          "en": "Team Lead of a team of 5. Designed and built the whole mobile UI/UX, from Figma to Flutter.",
+          "ja": "5名のチームのリーダーを務めました。モバイルのUI/UXは、FigmaでのデザインからFlutterでの実装まで、すべて自分で担当しました。",
+          "vi": "Trưởng nhóm 5 người. Tự thiết kế và làm toàn bộ UI/UX mobile, từ Figma đến Flutter."
+        },
+        "decisions": {
+          "en": "Web app in React and TypeScript with Tailwind CSS, mobile app in Flutter, backend in Node.js/Express with SQL Server. Added RAG with Qdrant and Cohere.",
+          "ja": "WebはReact・TypeScript・Tailwind CSS、モバイルはFlutter、バックエンドはNode.js/ExpressとSQL Serverで構成しました。QdrantとCohereを使ったRAGも組み込みました。",
+          "vi": "Web dùng React, TypeScript và Tailwind CSS; mobile dùng Flutter; backend Node.js/Express với SQL Server. Có thêm RAG với Qdrant và Cohere."
+        },
+        "result": {
+          "en": "A web demo deployed on Vercel, with the web and mobile source code on GitHub.",
+          "ja": "WebのデモをVercelで公開し、WebとモバイルのソースコードはGitHubにあります。",
+          "vi": "Bản demo web chạy trên Vercel; source code web và mobile có trên GitHub."
+        }
+      },
+      "tech": ["React", "TypeScript", "Tailwind CSS", "Flutter", "Dart", "Node.js", "Express", "SQL Server", "Qdrant", "Cohere", "Figma"],
+      "demoUrl": "https://site-plus-15hdsvfpr-let-cals-projects.vercel.app/",
+      "repoUrls": ["https://github.com/Let-cal/SitePlus-FE", "https://github.com/Let-cal/SitePlus-MB"],
+      "posterUrl": null,
+      "videoUrl": null,
+      "published": true,
+      "sortIndex": 0
+    },
+    {
+      "id": "zodiacgems",
+      "title": "ZodiacGems",
+      "role": {
+        "en": "Front-end Developer",
+        "ja": "フロントエンド開発",
+        "vi": "Front-end Developer"
+      },
+      "start": "2024-06",
+      "end": "2024-10",
+      "summary": {
+        "en": "University project: a jewelry e-commerce site and mobile app that suggests pieces based on the customer's zodiac sign.",
+        "ja": "大学のプロジェクトです。お客様の星座に合わせてジュエリーを提案するECサイトとモバイルアプリです。",
+        "vi": "Dự án đại học: website và app thương mại điện tử bán trang sức, gợi ý sản phẩm theo cung hoàng đạo của khách hàng."
+      },
+      "caseStudy": null,
+      "tech": ["React", "JavaScript", "Tailwind CSS", "Flutter", "Dart", "SQL Server", "Figma"],
+      "demoUrl": "https://swd-392-rfr4ctba8-let-cals-projects.vercel.app/customer-page",
+      "repoUrls": ["https://github.com/Let-cal/SWD392", "https://github.com/Let-cal/ZodiacGems-MobileApp"],
+      "posterUrl": null,
+      "videoUrl": null,
+      "published": true,
+      "sortIndex": 1
+    },
+    {
+      "id": "meet-my-lecturer",
+      "title": "Meet My Lecturer",
+      "role": {
+        "en": "Full-stack Developer",
+        "ja": "フルスタック開発",
+        "vi": "Full-stack Developer"
+      },
+      "start": "2023-07",
+      "end": "2023-11",
+      "summary": {
+        "en": "University project: a web app for booking meetings with lecturers, linked to Google Calendar and Google Meet, with real-time notifications over Socket.io.",
+        "ja": "大学のプロジェクトです。講師との面談を予約するWebアプリで、Google CalendarとGoogle Meetに連携し、Socket.ioでリアルタイム通知を送ります。",
+        "vi": "Dự án đại học: web app đặt lịch gặp giảng viên, liên kết với Google Calendar và Google Meet, thông báo real-time qua Socket.io."
+      },
+      "caseStudy": null,
+      "tech": ["Java Servlet", "JSP", "SQL Server", "Socket.io", "Google Calendar API", "Google Meet API", "Figma"],
+      "demoUrl": null,
+      "repoUrls": ["https://github.com/Let-cal/meet-my-lecturers"],
+      "posterUrl": null,
+      "videoUrl": null,
+      "published": true,
+      "sortIndex": 2
+    }
+  ],
+  "skills": [
+    { "id": "typescript", "name": "TypeScript", "group": "languages", "sortIndex": 0, "experienceIds": ["skg-ai-agent", "skg-flexybox-p2", "skg-flexybox-p1", "skg-intern"], "projectIds": ["siteplus"] },
+    { "id": "javascript", "name": "JavaScript", "group": "languages", "sortIndex": 1, "experienceIds": [], "projectIds": ["zodiacgems"] },
+    { "id": "csharp", "name": "C#", "group": "languages", "sortIndex": 2, "experienceIds": ["skg-coa"], "projectIds": [] },
+    { "id": "python", "name": "Python", "group": "languages", "sortIndex": 3, "experienceIds": ["skg-ai-agent"], "projectIds": [] },
+    { "id": "java", "name": "Java", "group": "languages", "sortIndex": 4, "experienceIds": [], "projectIds": ["meet-my-lecturer"] },
+    { "id": "dart", "name": "Dart", "group": "languages", "sortIndex": 5, "experienceIds": [], "projectIds": ["siteplus", "zodiacgems"] },
+    { "id": "php", "name": "PHP", "group": "languages", "sortIndex": 6, "experienceIds": ["skg-intern"], "projectIds": [] },
+    { "id": "sql", "name": "SQL", "group": "languages", "sortIndex": 7, "experienceIds": ["skg-ai-agent", "skg-coa", "skg-intern"], "projectIds": ["siteplus", "meet-my-lecturer"] },
+
+    { "id": "nextjs", "name": "Next.js", "group": "frameworks", "sortIndex": 0, "experienceIds": ["skg-flexybox-p2", "skg-flexybox-p1", "skg-intern"], "projectIds": [] },
+    { "id": "react", "name": "React", "group": "frameworks", "sortIndex": 1, "experienceIds": ["skg-ai-agent", "skg-flexybox-p2"], "projectIds": ["siteplus", "zodiacgems"] },
+    { "id": "nodejs", "name": "Node.js", "group": "frameworks", "sortIndex": 2, "experienceIds": ["skg-flexybox-p2"], "projectIds": ["siteplus"] },
+    { "id": "aspnet-core", "name": "ASP.NET Core (.NET 8)", "group": "frameworks", "sortIndex": 3, "experienceIds": ["skg-coa"], "projectIds": [] },
+    { "id": "fastapi", "name": "FastAPI", "group": "frameworks", "sortIndex": 4, "experienceIds": ["skg-ai-agent"], "projectIds": [] },
+    { "id": "flutter", "name": "Flutter", "group": "frameworks", "sortIndex": 5, "experienceIds": [], "projectIds": ["siteplus", "zodiacgems"] },
+    { "id": "laravel", "name": "Laravel", "group": "frameworks", "sortIndex": 6, "experienceIds": ["skg-intern"], "projectIds": [] },
+    { "id": "tailwind-css", "name": "Tailwind CSS", "group": "frameworks", "sortIndex": 7, "experienceIds": ["skg-ai-agent", "skg-flexybox-p2"], "projectIds": ["siteplus", "zodiacgems"] },
+    { "id": "shadcn-ui", "name": "shadcn/ui", "group": "frameworks", "sortIndex": 8, "experienceIds": ["skg-flexybox-p2"], "projectIds": [] },
+    { "id": "dapper", "name": "Dapper", "group": "frameworks", "sortIndex": 9, "experienceIds": ["skg-coa"], "projectIds": [] },
+    { "id": "biz-designer-dt", "name": "Biz/Designer DT", "group": "frameworks", "sortIndex": 10, "experienceIds": ["skg-coa"], "projectIds": [] },
+    { "id": "framer-motion", "name": "Framer Motion", "group": "frameworks", "sortIndex": 11, "experienceIds": [], "projectIds": [] },
+    { "id": "gsap", "name": "GSAP", "group": "frameworks", "sortIndex": 12, "experienceIds": [], "projectIds": [] },
+    { "id": "sass", "name": "Sass/SCSS", "group": "frameworks", "sortIndex": 13, "experienceIds": [], "projectIds": [] },
+    { "id": "mui", "name": "MUI", "group": "frameworks", "sortIndex": 14, "experienceIds": [], "projectIds": [] },
+
+    { "id": "aws-lambda", "name": "AWS Lambda", "group": "cloud", "sortIndex": 0, "experienceIds": ["skg-ai-agent", "skg-flexybox-p2", "skg-flexybox-p1"], "projectIds": [] },
+    { "id": "aws-api-gateway", "name": "API Gateway", "group": "cloud", "sortIndex": 1, "experienceIds": ["skg-flexybox-p2", "skg-flexybox-p1"], "projectIds": [] },
+    { "id": "aws-sam", "name": "AWS SAM", "group": "cloud", "sortIndex": 2, "experienceIds": ["skg-flexybox-p2", "skg-flexybox-p1"], "projectIds": [] },
+    { "id": "aws-iot-core", "name": "AWS IoT Core", "group": "cloud", "sortIndex": 3, "experienceIds": ["skg-flexybox-p2"], "projectIds": [] },
+    { "id": "aws-s3", "name": "Amazon S3", "group": "cloud", "sortIndex": 4, "experienceIds": ["skg-ai-agent", "skg-flexybox-p2"], "projectIds": [] },
+    { "id": "aws-ses", "name": "Amazon SES", "group": "cloud", "sortIndex": 5, "experienceIds": ["skg-flexybox-p2"], "projectIds": [] },
+    { "id": "aws-amplify", "name": "AWS Amplify", "group": "cloud", "sortIndex": 6, "experienceIds": ["skg-flexybox-p2"], "projectIds": [] },
+    { "id": "aws-rds", "name": "Amazon RDS", "group": "cloud", "sortIndex": 7, "experienceIds": ["skg-ai-agent"], "projectIds": [] },
+    { "id": "aws-cloudfront", "name": "CloudFront", "group": "cloud", "sortIndex": 8, "experienceIds": ["skg-ai-agent"], "projectIds": [] },
+    { "id": "aws-waf", "name": "AWS WAF", "group": "cloud", "sortIndex": 9, "experienceIds": ["skg-ai-agent"], "projectIds": [] },
+    { "id": "terraform", "name": "Terraform", "group": "cloud", "sortIndex": 10, "experienceIds": ["skg-ai-agent"], "projectIds": [] },
+    { "id": "docker", "name": "Docker", "group": "cloud", "sortIndex": 11, "experienceIds": ["skg-ai-agent", "skg-intern"], "projectIds": [] },
+    { "id": "gitlab", "name": "GitLab", "group": "cloud", "sortIndex": 12, "experienceIds": ["skg-ai-agent", "skg-flexybox-p2"], "projectIds": [] },
+    { "id": "github", "name": "GitHub", "group": "cloud", "sortIndex": 13, "experienceIds": [], "projectIds": ["siteplus", "zodiacgems", "meet-my-lecturer"] },
+
+    { "id": "openai-agents-sdk", "name": "OpenAI Agents SDK", "group": "ai", "sortIndex": 0, "experienceIds": ["skg-ai-agent"], "projectIds": [] },
+    { "id": "litellm", "name": "LiteLLM", "group": "ai", "sortIndex": 1, "experienceIds": ["skg-ai-agent"], "projectIds": [] },
+    { "id": "mcp", "name": "MCP", "group": "ai", "sortIndex": 2, "experienceIds": ["skg-ai-agent"], "projectIds": [] },
+    { "id": "ollama", "name": "Ollama", "group": "ai", "sortIndex": 3, "experienceIds": ["skg-ai-agent"], "projectIds": [] },
+    { "id": "vllm", "name": "vLLM", "group": "ai", "sortIndex": 4, "experienceIds": ["skg-ai-agent"], "projectIds": [] },
+
+    { "id": "postgresql", "name": "PostgreSQL", "group": "databases", "sortIndex": 0, "experienceIds": ["skg-ai-agent"], "projectIds": [] },
+    { "id": "oracle", "name": "Oracle", "group": "databases", "sortIndex": 1, "experienceIds": ["skg-coa"], "projectIds": [] },
+    { "id": "sql-server", "name": "SQL Server", "group": "databases", "sortIndex": 2, "experienceIds": ["skg-intern"], "projectIds": ["siteplus", "zodiacgems", "meet-my-lecturer"] },
+    { "id": "mysql", "name": "MySQL", "group": "databases", "sortIndex": 3, "experienceIds": ["skg-intern"], "projectIds": [] },
+    { "id": "mongodb", "name": "MongoDB", "group": "databases", "sortIndex": 4, "experienceIds": [], "projectIds": [] },
+    { "id": "dynamodb", "name": "DynamoDB", "group": "databases", "sortIndex": 5, "experienceIds": ["skg-flexybox-p2", "skg-flexybox-p1"], "projectIds": [] },
+
+    { "id": "estimation", "name": "Estimation", "group": "delivery", "sortIndex": 0, "experienceIds": ["skg-ai-agent", "skg-flexybox-p2", "skg-coa", "skg-flexybox-p1"], "projectIds": [] },
+    { "id": "scheduling", "name": "Scheduling", "group": "delivery", "sortIndex": 1, "experienceIds": ["skg-ai-agent", "skg-flexybox-p1"], "projectIds": [] },
+    { "id": "risk-release-management", "name": "Risk and release management", "group": "delivery", "sortIndex": 2, "experienceIds": ["skg-flexybox-p2"], "projectIds": [] },
+    { "id": "requirements-definition", "name": "Requirements definition", "group": "delivery", "sortIndex": 3, "experienceIds": ["skg-ai-agent", "skg-flexybox-p2", "skg-intern", "fpt-japan"], "projectIds": [] },
+    { "id": "design-documents", "name": "Basic and detailed design documents", "group": "delivery", "sortIndex": 4, "experienceIds": ["skg-ai-agent", "skg-flexybox-p2", "skg-flexybox-p1"], "projectIds": [] },
+    { "id": "proposals", "name": "Proposals", "group": "delivery", "sortIndex": 5, "experienceIds": ["skg-ai-agent", "skg-flexybox-p2", "skg-coa", "skg-flexybox-p1"], "projectIds": [] },
+    { "id": "uat-review", "name": "UAT review", "group": "delivery", "sortIndex": 6, "experienceIds": ["skg-ai-agent"], "projectIds": [] },
+    { "id": "redmine", "name": "Redmine", "group": "delivery", "sortIndex": 7, "experienceIds": ["skg-ai-agent", "skg-flexybox-p2"], "projectIds": [] },
+    { "id": "backlog", "name": "Backlog", "group": "delivery", "sortIndex": 8, "experienceIds": ["skg-flexybox-p2"], "projectIds": [] },
+    { "id": "jira", "name": "Jira", "group": "delivery", "sortIndex": 9, "experienceIds": ["skg-intern"], "projectIds": [] },
+
+    { "id": "unit-testing", "name": "Unit test specs and execution", "group": "testing", "sortIndex": 0, "experienceIds": ["skg-coa"], "projectIds": [] },
+    { "id": "jest", "name": "Jest", "group": "testing", "sortIndex": 1, "experienceIds": [], "projectIds": [] },
+    { "id": "react-testing-library", "name": "React Testing Library", "group": "testing", "sortIndex": 2, "experienceIds": [], "projectIds": [] },
+    { "id": "playwright", "name": "Playwright", "group": "testing", "sortIndex": 3, "experienceIds": [], "projectIds": [] },
+    { "id": "cypress", "name": "Cypress", "group": "testing", "sortIndex": 4, "experienceIds": [], "projectIds": [] },
+    { "id": "github-actions", "name": "GitHub Actions", "group": "testing", "sortIndex": 5, "experienceIds": [], "projectIds": [] },
+
+    { "id": "figma", "name": "Figma", "group": "design", "sortIndex": 0, "experienceIds": [], "projectIds": ["siteplus", "zodiacgems", "meet-my-lecturer"] },
+    { "id": "drawio", "name": "draw.io", "group": "design", "sortIndex": 1, "experienceIds": [], "projectIds": [] },
+    { "id": "staruml", "name": "StarUML", "group": "design", "sortIndex": 2, "experienceIds": [], "projectIds": [] }
+  ],
+  "certificates": [
+    {
+      "id": "jlpt-n3",
+      "name": "Japanese Language Proficiency Test (JLPT) N3",
+      "organization": "Japan Foundation",
+      "issueDate": "2024-12-01",
+      "credentialId": null,
+      "credentialUrl": "https://www.dropbox.com/scl/fi/av3a4boxv3qb7c3l6lb35/certification_N3.pdf?rlkey=9gr3g8jvharnfanppfcaiwlgp&e=1&st=jjr45m31&dl=0",
+      "fileUrl": null,
+      "topic": "language",
+      "skills": ["Reading Comprehension", "Listening & Conversation"],
+      "description": {
+        "en": "Passed JLPT N3. Used Japanese in regular meetings with Japanese clients at SKG Software, with IT comtor support.",
+        "ja": "日本語能力試験N3に合格しました。SKG Softwareでは、ITコミュニケーターのサポートを受けながら、日本のお客様との定例会議で日本語を使っていました。",
+        "vi": "Đỗ JLPT N3. Dùng tiếng Nhật trong các buổi họp định kỳ với khách hàng Nhật tại SKG Software, có IT comtor hỗ trợ."
+      },
+      "published": true,
+      "sortIndex": 0
+    },
+    {
+      "id": "coursera-ux-research-design",
+      "name": "User Experience Research and Design",
+      "organization": "University of Michigan",
+      "issueDate": "2024-09-19",
+      "credentialId": "I03NH1TMEVV8",
+      "credentialUrl": "https://www.coursera.org/account/accomplishments/specialization/I03NH1TMEVV8",
+      "fileUrl": null,
+      "topic": "design",
+      "skills": ["User Research", "Wireframing & Prototyping", "Usability Testing", "Interaction Design"],
+      "description": {
+        "en": "Coursera specialization on user research, wireframes and prototypes, and usability testing.",
+        "ja": "ユーザーリサーチ、ワイヤーフレームとプロトタイプ、ユーザビリティテストを学ぶCourseraの専門講座です。",
+        "vi": "Chuyên ngành trên Coursera về nghiên cứu người dùng, wireframe và prototype, kiểm thử khả năng sử dụng."
+      },
+      "published": true,
+      "sortIndex": 1
+    },
+    {
+      "id": "coursera-entrepreneurship",
+      "name": "Entrepreneurship: Launching an Innovative Business",
+      "organization": "University of Maryland, College Park",
+      "issueDate": "2024-06-04",
+      "credentialId": "QFF6J76HEPZF",
+      "credentialUrl": "https://www.coursera.org/account/accomplishments/specialization/QFF6J76HEPZF",
+      "fileUrl": null,
+      "topic": "other",
+      "skills": ["Opportunity Identification", "Business Model Creation", "Pitch Development", "Startup Financing"],
+      "description": {
+        "en": "Coursera specialization on finding business opportunities, designing a business model, pitching and startup financing.",
+        "ja": "事業機会の発見、ビジネスモデルの設計、ピッチ、スタートアップの資金調達を学ぶCourseraの専門講座です。",
+        "vi": "Chuyên ngành trên Coursera về tìm cơ hội kinh doanh, thiết kế mô hình kinh doanh, pitch và gọi vốn cho startup."
+      },
+      "published": true,
+      "sortIndex": 2
+    },
+    {
+      "id": "coursera-pm-principles",
+      "name": "Project Management Principles and Practices",
+      "organization": "University of California, Irvine",
+      "issueDate": "2024-05-13",
+      "credentialId": "LUYMLLYA474P",
+      "credentialUrl": "https://www.coursera.org/account/accomplishments/specialization/LUYMLLYA474P",
+      "fileUrl": null,
+      "topic": "pm",
+      "skills": ["Project Initiation", "Project Planning", "Project Execution", "Project Closure"],
+      "description": {
+        "en": "Coursera specialization covering project initiation, planning, execution, monitoring and closure.",
+        "ja": "プロジェクトの立ち上げ、計画、実行、監視、終結を学ぶCourseraの専門講座です。",
+        "vi": "Chuyên ngành trên Coursera về khởi tạo, lập kế hoạch, thực thi, giám sát và kết thúc dự án."
+      },
+      "published": true,
+      "sortIndex": 3
+    },
+    {
+      "id": "coursera-academic-english-writing",
+      "name": "Academic English: Writing",
+      "organization": "University of California, Irvine",
+      "issueDate": "2024-01-14",
+      "credentialId": "QKRJRFHFT8ZA",
+      "credentialUrl": "https://www.coursera.org/account/accomplishments/specialization/QKRJRFHFT8ZA",
+      "fileUrl": null,
+      "topic": "language",
+      "skills": ["Academic Essay Writing", "Research Documentation", "Argument Development", "Editing & Proofreading"],
+      "description": {
+        "en": "Coursera specialization on writing structured academic essays and research papers in English, including editing.",
+        "ja": "英語で構成のしっかりした論文やレポートを書く方法と推敲を学ぶCourseraの専門講座です。",
+        "vi": "Chuyên ngành trên Coursera về viết bài luận và bài nghiên cứu học thuật bằng tiếng Anh, kèm kỹ năng biên tập."
+      },
+      "published": true,
+      "sortIndex": 4
+    },
+    {
+      "id": "coursera-certnexus-ethical-technologist",
+      "name": "CertNexus Certified Ethical Emerging Technologist Professional Certificate",
+      "organization": "CertNexus",
+      "issueDate": "2023-09-12",
+      "credentialId": "Z9XWVWFLHVSX",
+      "credentialUrl": "https://coursera.org/share/d30d57400d67418e8573cfcf80165b74",
+      "fileUrl": null,
+      "topic": "other",
+      "skills": ["Ethical Tech", "Risk Mitigation", "Data Ethics"],
+      "description": {
+        "en": "Professional certificate on spotting and handling ethical issues in emerging technologies, including data ethics and risk mitigation.",
+        "ja": "新しい技術における倫理的な課題の見つけ方と対応方法を学ぶ認定プログラムです。データ倫理とリスク低減も含みます。",
+        "vi": "Chứng chỉ chuyên môn về nhận diện và xử lý vấn đề đạo đức trong công nghệ mới, gồm đạo đức dữ liệu và giảm thiểu rủi ro."
+      },
+      "published": true,
+      "sortIndex": 5
+    },
+    {
+      "id": "coursera-sdlc",
+      "name": "Software Development Lifecycle Specialization",
+      "organization": "University of Minnesota",
+      "issueDate": "2023-05-16",
+      "credentialId": "UF4U7APZEZD2",
+      "credentialUrl": "https://coursera.org/share/1a913ee30f90b25413e36ddd02f06db9",
+      "fileUrl": null,
+      "topic": "engineering",
+      "skills": ["Software Development", "Agile Methodologies", "Project Management"],
+      "description": {
+        "en": "Coursera specialization covering the software development lifecycle from requirements to deployment, with a focus on agile methods.",
+        "ja": "要件定義からデプロイまでのソフトウェア開発ライフサイクルを、アジャイル手法を中心に学ぶCourseraの専門講座です。",
+        "vi": "Chuyên ngành trên Coursera về vòng đời phát triển phần mềm từ yêu cầu đến triển khai, tập trung vào phương pháp Agile."
+      },
+      "published": true,
+      "sortIndex": 6
+    },
+    {
+      "id": "coursera-web-design-for-everybody",
+      "name": "Web Design for Everybody: Basics of Web Development & Coding Specialization",
+      "organization": "University of Michigan",
+      "issueDate": "2023-02-06",
+      "credentialId": "SFQFBTGTYU3B",
+      "credentialUrl": "https://coursera.org/share/7db6d4b982b2a79910548d414e7240c6",
+      "fileUrl": null,
+      "topic": "design",
+      "skills": ["HTML5", "CSS3", "JavaScript", "Responsive Design"],
+      "description": {
+        "en": "Coursera specialization on the basics of web development: HTML, CSS, JavaScript and responsive design.",
+        "ja": "HTML、CSS、JavaScript、レスポンシブデザインなど、Web開発の基礎を学ぶCourseraの専門講座です。",
+        "vi": "Chuyên ngành trên Coursera về nền tảng phát triển web: HTML, CSS, JavaScript và responsive design."
+      },
+      "published": true,
+      "sortIndex": 7
+    },
+    {
+      "id": "coursera-computer-communications",
+      "name": "Computer Communications Specialization",
+      "organization": "University of Colorado System",
+      "issueDate": "2022-09-23",
+      "credentialId": "4FNLNT8AY6V7",
+      "credentialUrl": "https://coursera.org/share/09e0cf48c02eac4d8b02617da51689cf",
+      "fileUrl": null,
+      "topic": "engineering",
+      "skills": ["Network Communication", "Peer-to-Peer Protocols", "Local Area Networks", "Packet Switching", "TCP/IP"],
+      "description": {
+        "en": "Coursera specialization on computer networking fundamentals: protocols, local area networks, packet switching and TCP/IP.",
+        "ja": "プロトコル、LAN、パケット交換、TCP/IPなど、コンピュータネットワークの基礎を学ぶCourseraの専門講座です。",
+        "vi": "Chuyên ngành trên Coursera về nền tảng mạng máy tính: giao thức, mạng LAN, chuyển mạch gói và TCP/IP."
+      },
+      "published": true,
+      "sortIndex": 8
+    },
+    {
+      "id": "coursera-academic-skills",
+      "name": "Academic Skills for University Success",
+      "organization": "The University of Sydney",
+      "issueDate": "2022-06-27",
+      "credentialId": "DVP6AL4ME98R",
+      "credentialUrl": "https://www.coursera.org/account/accomplishments/specialization/DVP6AL4ME98",
+      "fileUrl": null,
+      "topic": "other",
+      "skills": ["Time Management", "Critical Thinking", "Academic Research", "Collaborative Learning"],
+      "description": {
+        "en": "Coursera specialization on study skills for university: time management, critical thinking, research and group work.",
+        "ja": "時間管理、批判的思考、リサーチ、グループワークなど、大学で必要な学習スキルを学ぶCourseraの専門講座です。",
+        "vi": "Chuyên ngành trên Coursera về kỹ năng học đại học: quản lý thời gian, tư duy phản biện, nghiên cứu và làm việc nhóm."
+      },
+      "published": true,
+      "sortIndex": 9
+    }
+  ],
+  "activities": [
+    {
+      "id": "ssg104-soft-skills-leader",
+      "name": {
+        "en": "Soft Skills Leader, Communication & In-Group Working Skills (SSG104)",
+        "ja": "ソフトスキルリーダー:コミュニケーションとグループワーク(SSG104)",
+        "vi": "Trưởng nhóm kỹ năng mềm, môn Giao tiếp và Làm việc nhóm (SSG104)"
+      },
+      "date": "2022-09-01",
+      "skills": ["Leadership", "Communication", "Teamwork"],
+      "description": {
+        "en": "Led workshops on teamwork and leadership from September to November 2022.",
+        "ja": "2022年9月から11月まで、チームワークとリーダーシップのワークショップを進行しました。",
+        "vi": "Dẫn dắt các buổi workshop về làm việc nhóm và lãnh đạo từ tháng 9 đến tháng 11/2022."
+      },
+      "sortIndex": 0
+    },
+    {
+      "id": "bau-bang-basketball",
+      "name": {
+        "en": "Bau Bang High School Basketball Club",
+        "ja": "バウバン高校 バスケットボール部",
+        "vi": "Câu lạc bộ bóng rổ trường THPT Bàu Bàng"
+      },
+      "date": "2020-01-01",
+      "skills": ["Teamwork", "Discipline", "Physical Fitness"],
+      "description": {
+        "en": "Played in the school basketball club for 2 years and represented the school in provincial tournaments.",
+        "ja": "2年間バスケットボール部に所属し、学校の代表として省の大会に出場しました。",
+        "vi": "Tham gia câu lạc bộ bóng rổ của trường trong 2 năm, đại diện trường thi đấu các giải cấp tỉnh."
+      },
+      "sortIndex": 1
+    },
+    {
+      "id": "cultural-activities",
+      "name": {
+        "en": "Cultural activities",
+        "ja": "文化活動",
+        "vi": "Hoạt động văn nghệ"
+      },
+      "date": "2019-06-01",
+      "skills": ["Public Speaking", "Creativity", "Performance"],
+      "description": {
+        "en": "Took part in school cultural activities such as singing and acting, which built confidence in speaking in front of an audience.",
+        "ja": "歌や演劇などの学校の文化活動に参加し、人前で話すことに慣れました。",
+        "vi": "Tham gia các hoạt động văn nghệ của trường như hát và diễn kịch, nhờ đó tự tin hơn khi nói trước đám đông."
+      },
+      "sortIndex": 2
+    }
+  ],
+  "education": [
+    {
+      "id": "fpt-university",
+      "school": "FPT University",
+      "degree": {
+        "en": "Bachelor of Information Technology",
+        "ja": "情報技術学士",
+        "vi": "Cử nhân Công nghệ Thông tin"
+      },
+      "major": {
+        "en": "Software Engineering",
+        "ja": "ソフトウェア工学",
+        "vi": "Kỹ thuật phần mềm"
+      },
+      "start": "2021-09",
+      "end": "2025-05",
+      "gpa": "7.66/10",
+      "notes": {
+        "en": "Half-tuition scholarship (July 2021)",
+        "ja": "学費半額奨学金(2021年7月)",
+        "vi": "Học bổng một nửa học phí (07/2021)"
+      },
+      "sortIndex": 0
+    }
+  ],
+  "whyCards": [
+    {
+      "id": "japanese-clients",
+      "title": {
+        "en": "Japanese clients, in Japanese",
+        "ja": "日本のお客様と日本語で",
+        "vi": "Làm việc với khách Nhật bằng tiếng Nhật"
+      },
+      "subtitle": {
+        "en": "Requirements to design",
+        "ja": "要件定義から設計まで",
+        "vi": "Từ yêu cầu đến thiết kế"
+      },
+      "tag": {
+        "en": "Communication",
+        "ja": "コミュニケーション",
+        "vi": "Giao tiếp"
+      },
+      "body": {
+        "en": "Took part directly in regular meetings with Japanese clients in Japanese, with IT comtor support: gathering and defining requirements, design documents and proposals.",
+        "ja": "ITコミュニケーターのサポートを受けながら、日本のお客様との定例会議に日本語で直接参加しました。要件のヒアリングと定義、設計書、提案を担当しました。",
+        "vi": "Trực tiếp tham gia họp định kỳ với khách Nhật bằng tiếng Nhật, có IT comtor hỗ trợ: lấy và định nghĩa yêu cầu, viết tài liệu thiết kế và đề xuất."
+      },
+      "colors": ["#118AB2", "#5AC8E3"],
+      "evidenceLink": "#exp-skg-flexybox-p2",
+      "stat": {
+        "value": 6,
+        "label": {
+          "en": "Japanese client projects in 14 months",
+          "ja": "14か月で担当した日本のお客様のプロジェクト",
+          "vi": "dự án khách hàng Nhật trong 14 tháng"
+        }
+      },
+      "sortIndex": 0
+    },
+    {
+      "id": "built-flexybox-p1",
+      "title": {
+        "en": "Built FlexyBox Phase 1",
+        "ja": "FlexyBox Phase 1を自分で構築",
+        "vi": "Tự build FlexyBox Phase 1"
+      },
+      "subtitle": {
+        "en": "End to end",
+        "ja": "API から画面まで",
+        "vi": "Từ API đến giao diện"
+      },
+      "tag": {
+        "en": "Full-stack",
+        "ja": "フルスタック",
+        "vi": "Full-stack"
+      },
+      "body": {
+        "en": "Wrote all Phase 1 code: a serverless API on AWS, fincode payments with webhooks, the locker-open API and the Next.js screens. It went into a real-world pilot with 1 tenant and 2 lockers.",
+        "ja": "Phase 1のコードをすべて書きました。AWSのサーバーレスAPI、fincode決済とWebhook、ロッカー解錠API、Next.jsの画面です。1テナント・2台のロッカーで実環境の試験運用に入りました。",
+        "vi": "Tự viết toàn bộ code Phase 1: API serverless trên AWS, thanh toán fincode và webhook, API mở locker và các màn hình Next.js. Hệ thống được đưa vào chạy thử thực tế với 1 tenant và 2 locker."
+      },
+      "colors": ["#fb923c", "#f97316"],
+      "evidenceLink": "#exp-skg-flexybox-p1",
+      "stat": {
+        "value": 2,
+        "label": {
+          "en": "lockers in the live pilot",
+          "ja": "実環境の試験運用のロッカー",
+          "vi": "locker trong đợt chạy thử thực tế"
+        }
+      },
+      "sortIndex": 1
+    },
+    {
+      "id": "two-projects-in-parallel",
+      "title": {
+        "en": "Two projects at once",
+        "ja": "2つのプロジェクトを並行",
+        "vi": "Hai dự án song song"
+      },
+      "subtitle": {
+        "en": "April to September 2026",
+        "ja": "2026年4月〜9月",
+        "vi": "Tháng 4 đến tháng 9/2026"
+      },
+      "tag": {
+        "en": "Delivery",
+        "ja": "プロジェクト管理",
+        "vi": "Quản lý dự án"
+      },
+      "body": {
+        "en": "Ran FlexyBox Phase 2 and the AI Agent project in parallel, handling estimates, schedules and client meetings for both, with teams of 3 to 8.",
+        "ja": "FlexyBox Phase 2とAI Agentを並行して担当し、両方の見積もり、スケジュール、お客様との会議を3〜8名のチームで進めました。",
+        "vi": "Điều phối song song FlexyBox Phase 2 và AI Agent: estimate, lập lịch và họp với khách cho cả hai dự án, với team từ 3 đến 8 người."
+      },
+      "colors": ["#118AB2", "#5AC8E3"],
+      "evidenceLink": "#exp-skg-ai-agent",
+      "stat": {
+        "value": 2,
+        "label": {
+          "en": "projects run in parallel",
+          "ja": "並行して進めたプロジェクト",
+          "vi": "dự án chạy song song"
+        }
+      },
+      "sortIndex": 2
+    },
+    {
+      "id": "ui-ux-motion",
+      "title": {
+        "en": "UI/UX and motion",
+        "ja": "UI/UXとモーション",
+        "vi": "UI/UX và chuyển động"
+      },
+      "subtitle": {
+        "en": "From Figma to code",
+        "ja": "Figmaからコードまで",
+        "vi": "Từ Figma đến code"
+      },
+      "tag": {
+        "en": "Design",
+        "ja": "デザイン",
+        "vi": "Thiết kế"
+      },
+      "body": {
+        "en": "Designs screens in Figma and builds them, with animation in Framer Motion and GSAP. Designed and built the whole SitePlus mobile UI.",
+        "ja": "Figmaで画面をデザインし、Framer MotionやGSAPでアニメーションも含めて実装します。SitePlusのモバイルUIはデザインから実装まですべて担当しました。",
+        "vi": "Thiết kế màn hình trên Figma và tự code, kèm animation bằng Framer Motion và GSAP. Tự thiết kế và làm toàn bộ UI mobile của SitePlus."
+      },
+      "colors": ["#fb923c", "#f97316"],
+      "evidenceLink": "#proj-siteplus",
+      "stat": null,
+      "sortIndex": 3
+    }
+  ]
+}

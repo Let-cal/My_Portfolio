@@ -1,0 +1,318 @@
+{
+  "meta": {
+    "title": "Le Tran Cat Lam · Software Engineer Portfolio",
+    "description": "Portfolio of Le Tran Cat Lam, a software engineer in Ho Chi Minh City who has worked on projects for Japanese clients."
+  },
+  "nav": {
+    "hero": "Home",
+    "experience": "Experience",
+    "projects": "Projects",
+    "skills": "Skills",
+    "certificates": "Certificates",
+    "why": "Why me",
+    "contact": "Contact"
+  },
+  "pill": {
+    "hero": "Home",
+    "experience": "Work",
+    "projects": "Projects",
+    "skills": "Skills",
+    "certificates": "Certs",
+    "why": "Why me",
+    "contact": "Contact"
+  },
+  "sections": {
+    "hero": "Le Tran Cat Lam",
+    "experience": "Experience",
+    "projects": "Projects",
+    "skills": "Skills",
+    "certificates": "Certificates",
+    "why": "Why work with me",
+    "contact": "Contact"
+  },
+  "header": {
+    "home": "LETCAL home",
+    "primaryNav": "Main navigation",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "openCommand": "Open command palette",
+    "skipToContent": "Skip to content"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "ja": "日本語",
+    "vi": "Tiếng Việt"
+  },
+  "theme": {
+    "toLight": "Switch to light theme",
+    "toDark": "Switch to dark theme"
+  },
+  "motion": {
+    "label": "Motion effects"
+  },
+  "sound": {
+    "label": "Sound effects"
+  },
+  "command": {
+    "title": "Command palette",
+    "description": "Search for a command, then press Enter to run it.",
+    "inputLabel": "Search commands",
+    "placeholder": "Type a command or a section name",
+    "empty": "No matching command.",
+    "hint": "Up and down to move, Enter to run, Esc to close.",
+    "groups": {
+      "goTo": "Go to",
+      "role": "Role",
+      "language": "Language",
+      "theme": "Theme",
+      "motion": "Motion",
+      "actions": "Actions"
+    },
+    "theme": {
+      "dark": "Theme: Dark",
+      "light": "Theme: Light"
+    },
+    "motion": {
+      "system": "Motion: System",
+      "on": "Motion: On",
+      "off": "Motion: Off"
+    },
+    "actions": {
+      "downloadCv": "Download CV",
+      "copyEmail": "Copy email",
+      "quickView": "60-second view"
+    }
+  },
+  "roles": {
+    "label": "Role",
+    "fullstack": "Full-stack",
+    "techlead": "Tech Lead",
+    "pm": "Project Manager"
+  },
+  "hero": {
+    "openToWork": "Open to work",
+    "downloadCv": "Download CV",
+    "contact": "Contact",
+    "quickView": "60-second view",
+    "nameJa": "レ・チャン・カット・ラム",
+    "nameVi": "Lê Trần Cát Lâm",
+    "phrase": "I build <item></item> for Japanese clients",
+    "phraseItems": {
+      "0": "web apps",
+      "1": "AI agents",
+      "2": "IoT locker systems"
+    },
+    "wheel": {
+      "label": "Choose a role",
+      "hint": "Hover a slice or an arc · click to choose · ← → keys",
+      "touchHint": "Tap the portrait or swipe to switch role",
+      "alt": {
+        "fullstack": "Portrait rendered from code, in terminal blue",
+        "techlead": "Low-poly portrait on a blueprint grid with architecture nodes",
+        "pm": "Portrait built from sprint-calendar cells in Ogon gold"
+      }
+    },
+    "roles": {
+      "fullstack": {
+        "eyebrow": "Developer",
+        "arc": "DEVELOPER",
+        "title": "'<builds/>' <accent></accent>",
+        "accent": "end to end",
+        "body": "Next.js and React front ends, serverless APIs on AWS, payments and IoT locker integration for Japanese clients.",
+        "chips": {
+          "0": "Next.js",
+          "1": "TypeScript",
+          "2": "AWS Lambda",
+          "3": ".NET 8"
+        }
+      },
+      "techlead": {
+        "eyebrow": "Tech Lead",
+        "arc": "TECH LEAD",
+        "title": "Designs, <accent></accent>, mentors",
+        "accent": "reviews",
+        "body": "Basic and detailed design documents, code review against a fixed checklist, and mentoring interns on client projects.",
+        "chips": {
+          "0": "Architecture",
+          "1": "Code review",
+          "2": "DB design",
+          "3": "Mentoring"
+        }
+      },
+      "pm": {
+        "eyebrow": "Technical PM",
+        "arc": "TECHNICAL PM",
+        "title": "Plans, <accent></accent>, ships",
+        "accent": "aligns",
+        "body": "Estimates, schedules and requirements definition in Japanese, release planning, and two projects run in parallel.",
+        "chips": {
+          "0": "Estimation",
+          "1": "Scheduling",
+          "2": "JLPT N3",
+          "3": "Release"
+        }
+      }
+    },
+    "stats": {
+      "label": "Key numbers",
+      "monthsAtSkg": "months at SKG",
+      "jpProjects": "Japanese client projects",
+      "parallel": "projects in parallel",
+      "jlpt": "Japanese (JLPT)"
+    },
+    "status": {
+      "label": "Profile status",
+      "localTime": "Local time",
+      "copyEmail": "Copy email",
+      "copied": "Copied"
+    },
+    "facts": {
+      "label": "Quick facts",
+      "location": {
+        "label": "Location",
+        "value": "Ho Chi Minh City",
+        "detail": "10.82° N, 106.63° E · GMT+7"
+      },
+      "languages": {
+        "label": "Languages",
+        "value": "Vietnamese · English · Japanese",
+        "detail": "Vietnamese native · English professional working · Japanese JLPT N3"
+      },
+      "education": {
+        "label": "Education"
+      },
+      "now": {
+        "label": "Now"
+      }
+    }
+  },
+  "footer": {
+    "rights": "All rights reserved.",
+    "links": "Links",
+    "github": "GitHub",
+    "linkedin": "LinkedIn",
+    "email": "Email",
+    "principlesLabel": "How I work",
+    "principles": {
+      "0": "Get the requirements clear before writing code.",
+      "1": "Give honest estimates, and say early when they change.",
+      "2": "Write decisions down, so the next person does not have to guess.",
+      "3": "Review before the release, and look back after it."
+    }
+  },
+  "experience": {
+    "education": "Education",
+    "teamSize": "Team size: {size}",
+    "viewCaseStudy": "View case study",
+    "techLabel": "Tech stack",
+    "moreTech": "+{count} more",
+    "skgIntern": "Software Engineer Intern",
+    "skgEngineer": "Software Engineer — acting Project Manager / Tech Lead",
+    "gpa": "GPA {gpa}"
+  },
+  "skills": {
+    "intro": "Pick a skill to see which experience and projects it comes from.",
+    "groupsLabel": "Skill groups",
+    "groups": {
+      "languages": "Languages",
+      "frameworks": "Frameworks",
+      "cloud": "Cloud & DevOps",
+      "ai": "AI / LLM",
+      "databases": "Databases",
+      "delivery": "Delivery",
+      "testing": "Testing",
+      "design": "Design"
+    },
+    "evidence": "Evidence",
+    "evidenceTitle": "Where I used {skill}",
+    "evidenceHint": "Select a skill to see the experience and projects behind it.",
+    "noEvidence": "No linked experience or project recorded yet.",
+    "linked": "{count, plural, one {# linked record} other {# linked records}}",
+    "kindExperience": "Experience",
+    "kindProject": "Project",
+    "terminal": "Skills terminal"
+  },
+  "caseStudy": {
+    "problem": "Problem",
+    "role": "Role",
+    "decisions": "Decisions",
+    "result": "Result",
+    "tech": "Tech stack",
+    "team": "Team size: {size}"
+  },
+  "projects": {
+    "viewCaseStudy": "View case study",
+    "techLabel": "Tech stack",
+    "moreTech": "+{count} more",
+    "demo": "Demo",
+    "code": "Code",
+    "codeWeb": "Code (Web)",
+    "codeMobile": "Code (Mobile)",
+    "codeN": "Code {n}",
+    "newTab": "(opens in new tab)"
+  },
+  "certificates": {
+    "intro": "Courses, certificates and school activities. Pick a lantern to see its credential.",
+    "tabsLabel": "Certificates and activities",
+    "tabCertificates": "Certificates",
+    "tabActivities": "Activities",
+    "filterLabel": "Filter by topic",
+    "topics": {
+      "all": "All",
+      "language": "Language",
+      "pm": "PM",
+      "design": "UX/Design",
+      "engineering": "Engineering",
+      "other": "Other"
+    },
+    "showing": "Showing {count} of {total} certificates",
+    "flipHint": "Press to show the credential details",
+    "showDetails": "Credential",
+    "showFront": "Back",
+    "credentialId": "Credential ID",
+    "verify": "Verify",
+    "viewFile": "View file"
+  },
+  "why": {
+    "manifesto": "I turn what Japanese clients ask for into software that has been released, from requirements to design to code.",
+    "carouselLabel": "Reasons to work with me",
+    "slideStatus": "{current} of {total}",
+    "prev": "Previous card",
+    "next": "Next card",
+    "goTo": "Go to card {n}",
+    "seeEvidence": "See evidence",
+    "hint": "Drag, swipe or use the arrow keys to browse."
+  },
+  "contact": {
+    "headline": "Let's build together",
+    "intro": "A role, a project or a question about my work: email is the quickest way to reach me.",
+    "cta": "Get in touch",
+    "detailsLabel": "Contact details",
+    "email": "Email",
+    "copyEmail": "Copy email",
+    "copied": "Copied",
+    "linkedin": "LinkedIn",
+    "github": "GitHub",
+    "downloadCv": "Download CV",
+    "booking": "Book a call",
+    "statusLabel": "Availability",
+    "openToWork": "Open to work",
+    "localTime": "Local time"
+  },
+  "quick": {
+    "title": "60-second view",
+    "metaTitle": "60-second view | Le Tran Cat Lam",
+    "description": "A one-page summary of Le Tran Cat Lam for recruiters: role, recent experience, skills, certificates and contact. It prints on one A4 page.",
+    "back": "Back to full site",
+    "print": "Print",
+    "toolsLabel": "Page tools",
+    "loading": "Loading the 60-second view",
+    "keyExperience": "Recent experience",
+    "contactLabel": "Contact details"
+  },
+  "common": {
+    "present": "Present",
+    "close": "Close"
+  }
+}

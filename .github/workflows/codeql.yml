@@ -1,0 +1,93 @@
+name: CodeQL
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: '47 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pull-request:
+    name: Read-only JavaScript and TypeScript analysis
+    if: github.event.repository.private == false && github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout PR merge revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Initialize CodeQL without executing application builds
+        uses: github/codeql-action/init@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4, verified 2026-10-15
+        with:
+          languages: javascript-typescript
+          build-mode: none
+          queries: security-extended
+          dependency-caching: false
+      - name: Analyze locally without security uploads
+        uses: github/codeql-action/analyze@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4, verified 2026-10-15
+        with:
+          category: /language:javascript-typescript
+          output: codeql-results
+          upload: never
+          upload-database: false
+      - name: Reject errors and high or critical security findings
+        run: node .github/scripts/check-codeql.mjs codeql-results
+      - name: Upload PR SARIF for review
+        if: always() && !cancelled()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: codeql-pr-${{ github.run_id }}-${{ github.run_attempt }}
+          path: codeql-results/*.sarif
+          if-no-files-found: ignore
+          retention-days: 3
+
+  trusted-main:
+    name: Publish main JavaScript and TypeScript analysis
+    if: github.event.repository.private == false && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout trusted main revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Initialize CodeQL without executing application builds
+        uses: github/codeql-action/init@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4, verified 2026-10-15
+        with:
+          languages: javascript-typescript
+          build-mode: none
+          queries: security-extended
+          dependency-caching: false
+      - name: Analyze and publish code scanning results
+        uses: github/codeql-action/analyze@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4, verified 2026-10-15
+        with:
+          category: /language:javascript-typescript
+          output: codeql-results
+          upload: always
+          upload-database: false
+      - name: Reject errors and high or critical security findings
+        run: node .github/scripts/check-codeql.mjs codeql-results
+      - name: Upload analysis failure report
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: codeql-main-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          path: codeql-results/*.sarif
+          if-no-files-found: ignore
+          retention-days: 3

@@ -1,0 +1,35 @@
+name: Change proposal / 変更提案
+description: Propose a focused improvement before implementation.
+title: "[Proposal] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the user problem and proposed scope. English and Japanese are welcome.
+        利用上の課題と変更範囲を記載してください。承認済みのデザインとリリース基準を前提に検討します。
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / 課題
+      description: Who is affected, and in which situation?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change / 変更内容
+      description: Explain the expected behavior and scope, including effects on design, accessibility, motion, content, dependencies, or hosting cost.
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Acceptance criteria / 完了条件
+      description: How can this be verified while preserving existing release gates?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and references / 代替案・参考資料
+      description: Optional alternatives or primary documentation supporting the proposal.

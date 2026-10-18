@@ -1,0 +1,318 @@
+{
+  "meta": {
+    "title": "Lê Trần Cát Lâm · Portfolio Kỹ sư Phần mềm",
+    "description": "Portfolio của Le Tran Cat Lam, kỹ sư phần mềm ở TP. Hồ Chí Minh, đã tham gia các dự án cho khách hàng Nhật."
+  },
+  "nav": {
+    "hero": "Trang chủ",
+    "experience": "Kinh nghiệm",
+    "projects": "Dự án",
+    "skills": "Kỹ năng",
+    "certificates": "Chứng chỉ",
+    "why": "Vì sao chọn tôi",
+    "contact": "Liên hệ"
+  },
+  "pill": {
+    "hero": "Trang chủ",
+    "experience": "Công việc",
+    "projects": "Dự án",
+    "skills": "Kỹ năng",
+    "certificates": "Chứng chỉ",
+    "why": "Vì sao",
+    "contact": "Liên hệ"
+  },
+  "sections": {
+    "hero": "Le Tran Cat Lam",
+    "experience": "Kinh nghiệm",
+    "projects": "Dự án",
+    "skills": "Kỹ năng",
+    "certificates": "Chứng chỉ",
+    "why": "Vì sao nên làm việc cùng tôi",
+    "contact": "Liên hệ"
+  },
+  "header": {
+    "home": "Trang chủ LETCAL",
+    "primaryNav": "Điều hướng chính",
+    "openMenu": "Mở menu",
+    "closeMenu": "Đóng menu",
+    "openCommand": "Mở bảng lệnh",
+    "skipToContent": "Bỏ qua tới nội dung"
+  },
+  "language": {
+    "label": "Ngôn ngữ",
+    "en": "English",
+    "ja": "日本語",
+    "vi": "Tiếng Việt"
+  },
+  "theme": {
+    "toLight": "Chuyển sang giao diện sáng",
+    "toDark": "Chuyển sang giao diện tối"
+  },
+  "motion": {
+    "label": "Hiệu ứng chuyển động"
+  },
+  "sound": {
+    "label": "Âm thanh"
+  },
+  "command": {
+    "title": "Bảng lệnh",
+    "description": "Tìm một lệnh rồi nhấn Enter để chạy.",
+    "inputLabel": "Tìm lệnh",
+    "placeholder": "Nhập lệnh hoặc tên mục",
+    "empty": "Không có lệnh phù hợp.",
+    "hint": "Lên xuống để di chuyển, Enter để chạy, Esc để đóng.",
+    "groups": {
+      "goTo": "Đi tới",
+      "role": "Vai trò",
+      "language": "Ngôn ngữ",
+      "theme": "Giao diện",
+      "motion": "Chuyển động",
+      "actions": "Thao tác"
+    },
+    "theme": {
+      "dark": "Giao diện: Tối",
+      "light": "Giao diện: Sáng"
+    },
+    "motion": {
+      "system": "Chuyển động: Theo hệ thống",
+      "on": "Chuyển động: Bật",
+      "off": "Chuyển động: Tắt"
+    },
+    "actions": {
+      "downloadCv": "Tải CV",
+      "copyEmail": "Sao chép email",
+      "quickView": "Xem nhanh 60 giây"
+    }
+  },
+  "roles": {
+    "label": "Vai trò",
+    "fullstack": "Full-stack",
+    "techlead": "Tech Lead",
+    "pm": "Quản lý dự án"
+  },
+  "hero": {
+    "openToWork": "Đang tìm việc",
+    "downloadCv": "Tải CV",
+    "contact": "Liên hệ",
+    "quickView": "Xem nhanh 60 giây",
+    "nameJa": "レ・チャン・カット・ラム",
+    "nameVi": "Lê Trần Cát Lâm",
+    "phrase": "Tôi xây dựng <item></item> cho khách hàng Nhật",
+    "phraseItems": {
+      "0": "web app",
+      "1": "AI agent",
+      "2": "hệ thống locker IoT"
+    },
+    "wheel": {
+      "label": "Chọn vai trò",
+      "hint": "Rê chuột vào lát cắt hoặc cung · bấm để chọn · phím ← →",
+      "touchHint": "Chạm vào ảnh hoặc vuốt ngang để đổi vai trò",
+      "alt": {
+        "fullstack": "Chân dung ghép từ code, tông xanh terminal",
+        "techlead": "Chân dung low-poly trên nền blueprint có các node kiến trúc",
+        "pm": "Chân dung ghép từ các ô lịch sprint màu vàng Ogon"
+      }
+    },
+    "roles": {
+      "fullstack": {
+        "eyebrow": "Developer",
+        "arc": "DEVELOPER",
+        "title": "'<builds/>' <accent></accent>",
+        "accent": "từ đầu đến cuối",
+        "body": "Front-end Next.js và React, API serverless trên AWS, tích hợp thanh toán và locker IoT cho khách hàng Nhật.",
+        "chips": {
+          "0": "Next.js",
+          "1": "TypeScript",
+          "2": "AWS Lambda",
+          "3": ".NET 8"
+        }
+      },
+      "techlead": {
+        "eyebrow": "Tech Lead",
+        "arc": "TECH LEAD",
+        "title": "Thiết kế, <accent></accent>, kèm cặp",
+        "accent": "review",
+        "body": "Viết tài liệu thiết kế cơ bản và chi tiết, review code theo checklist cố định, và kèm cặp intern trong dự án khách hàng.",
+        "chips": {
+          "0": "Kiến trúc",
+          "1": "Code review",
+          "2": "Thiết kế DB",
+          "3": "Mentoring"
+        }
+      },
+      "pm": {
+        "eyebrow": "Technical PM",
+        "arc": "TECHNICAL PM",
+        "title": "Lên kế hoạch, <accent></accent>, release",
+        "accent": "thống nhất",
+        "body": "Estimate, lập lịch và định nghĩa yêu cầu bằng tiếng Nhật, lên kế hoạch release, và điều phối 2 dự án song song.",
+        "chips": {
+          "0": "Estimate",
+          "1": "Lập lịch",
+          "2": "JLPT N3",
+          "3": "Release"
+        }
+      }
+    },
+    "stats": {
+      "label": "Số liệu chính",
+      "monthsAtSkg": "tháng tại SKG",
+      "jpProjects": "dự án khách hàng Nhật",
+      "parallel": "dự án song song",
+      "jlpt": "tiếng Nhật (JLPT)"
+    },
+    "status": {
+      "label": "Trạng thái hồ sơ",
+      "localTime": "Giờ địa phương",
+      "copyEmail": "Sao chép email",
+      "copied": "Đã sao chép"
+    },
+    "facts": {
+      "label": "Thông tin nhanh",
+      "location": {
+        "label": "Nơi ở",
+        "value": "TP. Hồ Chí Minh",
+        "detail": "10.82° N, 106.63° E · GMT+7"
+      },
+      "languages": {
+        "label": "Ngôn ngữ",
+        "value": "Tiếng Việt · Anh · Nhật",
+        "detail": "Tiếng Việt bản ngữ · Tiếng Anh mức làm việc chuyên nghiệp · Tiếng Nhật JLPT N3"
+      },
+      "education": {
+        "label": "Học vấn"
+      },
+      "now": {
+        "label": "Hiện tại"
+      }
+    }
+  },
+  "footer": {
+    "rights": "Bảo lưu mọi quyền.",
+    "links": "Liên kết",
+    "github": "GitHub",
+    "linkedin": "LinkedIn",
+    "email": "Email",
+    "principlesLabel": "Cách tôi làm việc",
+    "principles": {
+      "0": "Làm rõ yêu cầu trước khi viết code.",
+      "1": "Estimate thành thật, và báo sớm khi có thay đổi.",
+      "2": "Quyết định nào cũng ghi lại, để người sau không phải đoán.",
+      "3": "Review trước khi release, rút kinh nghiệm sau khi release."
+    }
+  },
+  "experience": {
+    "education": "Học vấn",
+    "teamSize": "Quy mô team: {size}",
+    "viewCaseStudy": "Xem case study",
+    "techLabel": "Công nghệ",
+    "moreTech": "+{count} nữa",
+    "skgIntern": "Thực tập sinh kỹ sư phần mềm",
+    "skgEngineer": "Kỹ sư phần mềm, kiêm Project Manager / Tech Lead",
+    "gpa": "GPA {gpa}"
+  },
+  "skills": {
+    "intro": "Chọn một kỹ năng để xem nó đến từ kinh nghiệm và dự án nào.",
+    "groupsLabel": "Nhóm kỹ năng",
+    "groups": {
+      "languages": "Ngôn ngữ",
+      "frameworks": "Framework",
+      "cloud": "Cloud & DevOps",
+      "ai": "AI / LLM",
+      "databases": "Cơ sở dữ liệu",
+      "delivery": "Triển khai dự án",
+      "testing": "Kiểm thử",
+      "design": "Thiết kế"
+    },
+    "evidence": "Bằng chứng",
+    "evidenceTitle": "Nơi mình đã dùng {skill}",
+    "evidenceHint": "Chọn một kỹ năng để xem kinh nghiệm và dự án đứng sau nó.",
+    "noEvidence": "Chưa có kinh nghiệm hay dự án nào được liên kết.",
+    "linked": "{count} mục liên quan",
+    "kindExperience": "Kinh nghiệm",
+    "kindProject": "Dự án",
+    "terminal": "Terminal kỹ năng"
+  },
+  "caseStudy": {
+    "problem": "Vấn đề",
+    "role": "Vai trò",
+    "decisions": "Quyết định",
+    "result": "Kết quả",
+    "tech": "Công nghệ",
+    "team": "Quy mô team: {size}"
+  },
+  "projects": {
+    "viewCaseStudy": "Xem case study",
+    "techLabel": "Công nghệ",
+    "moreTech": "+{count} nữa",
+    "demo": "Demo",
+    "code": "Code",
+    "codeWeb": "Code (Web)",
+    "codeMobile": "Code (Mobile)",
+    "codeN": "Code {n}",
+    "newTab": "(mở trong tab mới)"
+  },
+  "certificates": {
+    "intro": "Các khóa học, chứng chỉ và hoạt động ở trường. Chọn một chiếc đèn lồng để xem thông tin chứng chỉ.",
+    "tabsLabel": "Chứng chỉ và hoạt động",
+    "tabCertificates": "Chứng chỉ",
+    "tabActivities": "Hoạt động",
+    "filterLabel": "Lọc theo chủ đề",
+    "topics": {
+      "all": "Tất cả",
+      "language": "Ngôn ngữ",
+      "pm": "PM",
+      "design": "UX/Thiết kế",
+      "engineering": "Kỹ thuật",
+      "other": "Khác"
+    },
+    "showing": "Hiển thị {count} trong {total} chứng chỉ",
+    "flipHint": "Nhấn để xem thông tin chứng chỉ",
+    "showDetails": "Chứng chỉ",
+    "showFront": "Quay lại",
+    "credentialId": "Mã chứng chỉ",
+    "verify": "Xác minh",
+    "viewFile": "Xem tệp"
+  },
+  "why": {
+    "manifesto": "Tôi biến yêu cầu của khách hàng Nhật thành sản phẩm đã release, từ lấy yêu cầu, thiết kế đến code.",
+    "carouselLabel": "Lý do nên làm việc cùng tôi",
+    "slideStatus": "{current} trên {total}",
+    "prev": "Thẻ trước",
+    "next": "Thẻ sau",
+    "goTo": "Đến thẻ {n}",
+    "seeEvidence": "Xem bằng chứng",
+    "hint": "Kéo, vuốt hoặc dùng phím mũi tên để xem tiếp."
+  },
+  "contact": {
+    "headline": "Cùng nhau xây dựng",
+    "intro": "Một vị trí, một dự án hay câu hỏi về công việc của mình: email là cách nhanh nhất để liên hệ.",
+    "cta": "Liên hệ",
+    "detailsLabel": "Thông tin liên hệ",
+    "email": "Email",
+    "copyEmail": "Sao chép email",
+    "copied": "Đã sao chép",
+    "linkedin": "LinkedIn",
+    "github": "GitHub",
+    "downloadCv": "Tải CV",
+    "booking": "Đặt lịch gọi",
+    "statusLabel": "Tình trạng",
+    "openToWork": "Đang tìm việc",
+    "localTime": "Giờ địa phương"
+  },
+  "quick": {
+    "title": "Xem nhanh 60 giây",
+    "metaTitle": "Xem nhanh 60 giây | Le Tran Cat Lam",
+    "description": "Tóm tắt một trang về Le Tran Cat Lam dành cho nhà tuyển dụng: vai trò, kinh nghiệm gần đây, kỹ năng, chứng chỉ và liên hệ. In vừa một trang A4.",
+    "back": "Quay lại trang đầy đủ",
+    "print": "In",
+    "toolsLabel": "Công cụ của trang",
+    "loading": "Đang tải bản xem nhanh 60 giây",
+    "keyExperience": "Kinh nghiệm gần đây",
+    "contactLabel": "Thông tin liên hệ"
+  },
+  "common": {
+    "present": "Hiện tại",
+    "close": "Đóng"
+  }
+}
