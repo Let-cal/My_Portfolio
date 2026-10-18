@@ -36,7 +36,7 @@ Research examined Adham Dannaway's design portfolio, Brittany Chiang's engineeri
 
 ## Recommendation
 
-This makes the product trade-off reviewable, preserves the approved UI/UX, and avoids a speculative framework or mobile-layout rewrite. The approved policy is recorded in `scripts/fe-v1-performance-exception.json`, scoped to reviewed application/build content at `abb34d3`, and expires at 2026-10-25 23:59:59 Asia/Ho_Chi_Minh. This incorporates the necessary asset-generator security fixes after `9317fc9`; regression tests confirm that all four AVIFs and the skill SVG remain byte-identical. Changed application/build inputs restore strict budgets. [Issue #2](https://github.com/Let-cal/My_Portfolio/issues/2) tracks the original targets. Approval does not itself establish that the new CI run passes or that production is released.
+This makes the product trade-off reviewable, preserves the approved UI/UX, and avoids a speculative framework or mobile-layout rewrite. The approved policy is recorded in `scripts/fe-v1-performance-exception.json`, scoped to reviewed application/build content at `56d9889`, and expires at 2026-10-25 23:59:59 Asia/Ho_Chi_Minh. This incorporates necessary asset-generator security fixes and immutable build assets after `9317fc9`. Production builds verify committed images rather than re-encoding them differently on each platform; manual regeneration remains available through `npm run generate:assets`. No committed artwork was changed. Changed application/build inputs restore strict budgets. [Issue #2](https://github.com/Let-cal/My_Portfolio/issues/2) tracks the original targets. Approval does not itself establish that the new CI run passes or that production is released.
 
 ## Primary references
 

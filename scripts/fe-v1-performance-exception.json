@@ -1,7 +1,7 @@
 {
   "id": "fe-v1-2026-10-18",
-  "sourceCommit": "abb34d398eecec8bdcf3bcaec5d5110ab20ca2c2",
-  "applicationHash": "c3b3084194f59f6d60895608829ab92fccd1466ee50a2b15ebb108408a160f8f",
+  "sourceCommit": "56d9889a0de91f4f575541b05eb516d8e874f88c",
+  "applicationHash": "4bc617ebe5878be7bac711bbf00fe2259ce3733a2b1b8f58911e2865cfa4db63",
   "approvedOn": "2026-10-18",
   "expiresAt": "2026-10-25T16:59:59Z",
   "limits": {

@@ -4,6 +4,8 @@
 
 Final security review subsequently corrected CodeQL extension-rule severity parsing and removed exists/read races in two asset generators (`abb34d3`). Their generated outputs are byte-identical in isolated regression tests. The bounded exception is rebound to this reviewed build-input revision; the website design and runtime source remain unchanged. New CI must verify the corrected scanner and final release revision.
 
+Cross-platform build verification then found that Linux AVIF re-encoding changes committed asset bytes. Build revision `56d9889` now verifies and uses the committed images, icons and sprite; `npm run generate:assets` performs deliberate regeneration separately. No artwork was changed. The final exception fingerprint is bound to this reviewed build revision. The production build, 55 artifact/script tests, lint and TypeScript pass locally; fresh Linux checks remain mandatory.
+
 ## Current verification
 
 - [CI run 38999198200](https://github.com/Let-cal/My_Portfolio/actions/runs/38999198200) passes quality (lint, unit tests, production build, types, initial JavaScript and artifact budgets) and the full Linux Chromium suite. The Linux weight-500 font raster regression is resolved by retaining cmap aliases needed by FreeType autohinting; exact pixel assertions remain in place.
