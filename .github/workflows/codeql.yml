@@ -44,27 +44,7 @@ jobs:
           upload: never
           upload-database: false
       - name: Reject errors and high or critical security findings
-        run: |
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-
-          files = list(Path('codeql-results').glob('*.sarif'))
-          if not files:
-              raise SystemExit('CodeQL did not produce SARIF results')
-          failures = 0
-          for file in files:
-              for run in json.loads(file.read_text()).get('runs', []):
-                  rules = {r['id']: r for r in run.get('tool', {}).get('driver', {}).get('rules', [])}
-                  for result in run.get('results', []):
-                      rule = rules.get(result.get('ruleId'), {})
-                      score = float(rule.get('properties', {}).get('security-severity', 0))
-                      level = result.get('level', rule.get('defaultConfiguration', {}).get('level', 'warning'))
-                      if level == 'error' or score >= 7:
-                          failures += 1
-          print(f'CodeQL blocking findings: {failures}')
-          raise SystemExit(1 if failures else 0)
-          PY
+        run: node .github/scripts/check-codeql.mjs codeql-results
       - name: Upload PR SARIF for review
         if: always() && !cancelled()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -101,6 +81,8 @@ jobs:
           output: codeql-results
           upload: always
           upload-database: false
+      - name: Reject errors and high or critical security findings
+        run: node .github/scripts/check-codeql.mjs codeql-results
       - name: Upload analysis failure report
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

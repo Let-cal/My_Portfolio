@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { SKILL_ICON_IDS, skillIconFor } from "../src/components/sections/skills/skill-icons";
 
 // Simple Icons glyphs are CC0. External symbols keep their exact currentColor artwork
@@ -6,6 +6,9 @@ import { SKILL_ICON_IDS, skillIconFor } from "../src/components/sections/skills/
 const symbols = SKILL_ICON_IDS.map(id => `<symbol id="skill-icon-${id}" viewBox="0 0 24 24"><path d="${skillIconFor(id)!.path}"/></symbol>`).join("");
 const svg = `<svg xmlns="http://www.w3.org/2000/svg"><defs>${symbols}</defs></svg>\n`;
 const path = "public/images/skill-sprite.svg";
+let current: string | null = null;
+try { current = readFileSync(path, "utf8"); }
+catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; }
 if (process.argv.includes("--check")) {
-  if (!existsSync(path) || readFileSync(path, "utf8") !== svg) throw new Error("Skill sprite is stale");
-} else if (!existsSync(path) || readFileSync(path, "utf8") !== svg) writeFileSync(path, svg);
+  if (current !== svg) throw new Error("Skill sprite is stale");
+} else if (current !== svg) writeFileSync(path, svg);
