@@ -17,6 +17,7 @@ vi.mock("@/i18n/navigation", () => ({
   usePathname: () => "/en",
 }));
 vi.mock("sonner", () => ({ toast: toastMock }));
+vi.mock("@/components/site/toast-readiness", () => ({ ensureToaster: () => Promise.resolve() }));
 
 import { Contact } from "@/components/sections/Contact";
 import { FooterPrinciples } from "@/components/site/FooterPrinciples";

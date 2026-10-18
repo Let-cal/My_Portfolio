@@ -42,9 +42,13 @@ it("static scenery observes the dragon chapter without synchronously measuring h
     const { unmount } = render(<StaticProbe />);
     expect(bounds).not.toHaveBeenCalled();
     expect(observe).toHaveBeenCalledWith(document.getElementById("why"));
-    expect(margins).toEqual(["0px 0px -400px 0px"]);
+    expect(margins).toEqual([""]);
+    act(() => notify([{ rootBounds: { height: 800 } } as IntersectionObserverEntry], {} as IntersectionObserver));
+    expect(margins.at(-1)).toBe("0px 0px -400px 0px");
     define("innerHeight", 1000);
     act(() => window.dispatchEvent(new Event("resize")));
+    expect(margins.at(-1)).toBe("");
+    act(() => notify([{ rootBounds: { height: 1000 } } as IntersectionObserverEntry], {} as IntersectionObserver));
     expect(margins.at(-1)).toBe("0px 0px -500px 0px");
     act(() => notify([{ isIntersecting: true, boundingClientRect: { top: 200 } } as IntersectionObserverEntry], {} as IntersectionObserver));
     expect(sceneStore.getState().chapter).toBe(5);

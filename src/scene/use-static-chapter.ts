@@ -19,12 +19,21 @@ export function useStaticChapterTracking(enabled: boolean) {
     }
     let observer: IntersectionObserver, generation = 0;
     const observe = () => {
+      if (disposed) return;
       observer?.disconnect();
       const current = ++generation;
-      // Percentage IO margins use viewport width, even on the vertical axis.
+      // Let IO supply viewport geometry without forcing layout during startup.
       observer = new IntersectionObserver(([entry]) => {
-        if (entry && current === generation) update(entry.isIntersecting || entry.boundingClientRect.top < 0);
-      }, { rootMargin: `0px 0px -${window.innerHeight / 2}px 0px` });
+        if (!entry || disposed || current !== generation) return;
+        observer.disconnect();
+        const tracking = ++generation;
+        const height = entry.rootBounds?.height ?? window.innerHeight;
+        // Percentage IO margins use viewport width, even on the vertical axis.
+        observer = new IntersectionObserver(([entry]) => {
+          if (entry && !disposed && tracking === generation) update(entry.isIntersecting || entry.boundingClientRect.top < 0);
+        }, { rootMargin: `0px 0px -${height / 2}px 0px` });
+        observer.observe(why);
+      });
       observer.observe(why);
     };
     observe(); window.addEventListener("resize", observe);

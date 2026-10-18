@@ -1,9 +1,12 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useSyncExternalStore } from 'react';
+import { subscribeToaster, toasterRequested, toasterServerSnapshot } from './toast-readiness';
 
-const Toaster = dynamic(() => import("@/components/ui/sonner").then((module) => module.Toaster), { ssr: false });
+const Toaster = dynamic(() => import('./ReadyToaster'), { ssr: false });
 
 export function DeferredToaster() {
-  return <Toaster />;
+  const requested = useSyncExternalStore(subscribeToaster, toasterRequested, toasterServerSnapshot);
+  return requested ? <Toaster /> : null;
 }
