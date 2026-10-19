@@ -1,0 +1,28 @@
+name: Supabase keep-alive
+
+# Free Supabase projects pause after 7 days without activity. One small read twice a week keeps
+# the admin usable. The public site does not depend on it: pages are cached and fall back to the seed.
+on:
+  schedule:
+    - cron: '17 3 * * 1,4'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping:
+    name: Read one row through the public API
+    if: github.event.repository.private == false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Query the profile table
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$SUPABASE_URL" && test -n "$SUPABASE_PUBLISHABLE_KEY"
+          curl --fail --silent --show-error --max-time 30 \
+            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
+            "$SUPABASE_URL/rest/v1/profile?select=id&limit=1"
