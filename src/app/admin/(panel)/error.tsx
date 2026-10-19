@@ -7,7 +7,10 @@ export default function AdminError({ error, reset }: { error: Error & { digest?:
   return (
     <main role="alert" className="flex flex-col items-start gap-3 rounded-lg border border-red-500/40 p-4">
       <h1 className="text-lg font-semibold">Không tải được trang này</h1>
-      <p className="text-sm text-muted-foreground">{error.message || "Lỗi không rõ."}</p>
+      <p className="text-sm text-muted-foreground">
+        Có lỗi phía server khi tải dữ liệu. Thử lại; nếu vẫn lỗi, gửi mã bên dưới để tra log.
+      </p>
+      {error.digest && <code className="rounded bg-muted px-2 py-1 text-xs">Mã lỗi: {error.digest}</code>}
       <Button variant="outline" onClick={reset}>
         Thử lại
       </Button>
