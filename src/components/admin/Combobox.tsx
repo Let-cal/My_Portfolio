@@ -15,12 +15,16 @@ const fold = (s: string) =>
  * the typed text itself. Escape closes the list.
  */
 export function Combobox({
+  id: inputId,
+  error,
   label,
   options,
   onPick,
   onEnterText,
   placeholder,
 }: {
+  id?: string;
+  error?: string;
   label: string;
   options: ComboOption[];
   onPick: (value: string) => void;
@@ -65,6 +69,10 @@ export function Combobox({
   return (
     <div className="relative">
       <Input
+        id={inputId}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error && inputId ? `${inputId}-error` : undefined}
+        className={error ? "border-destructive" : undefined}
         role="combobox"
         aria-label={label}
         aria-expanded={showList}

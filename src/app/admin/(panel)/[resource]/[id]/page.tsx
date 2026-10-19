@@ -21,8 +21,19 @@ async function Editor({ params }: { params: Params }) {
     needsSkills ? (listItems("skills") as unknown as Promise<Skill[]>) : Promise.resolve([] as Skill[]),
   ]);
   if (!found) notFound();
+  const [ownList, experiences, projects] = await Promise.all([
+    listItems(key),
+    key === "why_cards" ? listItems("experiences") : Promise.resolve([]),
+    key === "why_cards" ? listItems("projects") : Promise.resolve([]),
+  ]);
+  const hiddenMark = (item: Record<string, unknown>) => (item.published === false ? " (đang ẩn)" : "");
   const options: Options = {
     ...relations,
+    existingIds: ownList.map((i) => i.id),
+    evidence: {
+      experiences: experiences.map((e) => ({ id: e.id, label: `${String(e.company)} · ${String(e.start)}${hiddenMark(e)}` })),
+      projects: projects.map((p) => ({ id: p.id, label: `${String(p.title)}${hiddenMark(p)}` })),
+    },
     skills: skills.map((s) => ({ id: s.id, label: s.name, group: s.group })),
     skillNames: skills.map((s) => s.name),
   };

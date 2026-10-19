@@ -62,6 +62,7 @@ export type FieldSpec = Base &
     | { kind: "relations"; source: "experiences" | "projects" }
     | { kind: "order"; source: "experiences" | "skillGroups" }
     | { kind: "skills" }
+    | { kind: "evidence"; nullable: true }
   );
 
 type AnyRow = Record<string, unknown>;
@@ -115,7 +116,7 @@ export const resources: Record<ResourceKey, Resource> = {
       { name: "summary", label: "Tóm tắt", kind: "i18n", multiline: true },
       { name: "caseStudy", label: "Case study", kind: "caseStudy" },
       { name: "teamSize", label: "Quy mô team", kind: "text", nullable: true },
-      { name: "tech", label: "Công nghệ", kind: "tags" },
+      { name: "tech", label: "Công nghệ", kind: "tags", suggest: "skills" },
       { name: "links", label: "Liên kết", kind: "links" },
       { name: "skillIds", label: "Skills dùng ở đây", kind: "skills", virtual: true },
       published,
@@ -144,7 +145,7 @@ export const resources: Record<ResourceKey, Resource> = {
       { name: "end", label: "Kết thúc (trống = đang làm)", kind: "month", nullable: true },
       { name: "summary", label: "Tóm tắt", kind: "i18n", multiline: true },
       { name: "caseStudy", label: "Case study", kind: "caseStudy" },
-      { name: "tech", label: "Công nghệ", kind: "tags" },
+      { name: "tech", label: "Công nghệ", kind: "tags", suggest: "skills" },
       { name: "demoUrl", label: "Link demo", kind: "url", nullable: true },
       { name: "repoUrls", label: "Link repo (mỗi dòng một link)", kind: "tags" },
       { name: "posterUrl", label: "Ảnh poster", kind: "upload", upload: "image" },
@@ -241,13 +242,7 @@ export const resources: Record<ResourceKey, Resource> = {
       { name: "tag", label: "Nhãn", kind: "i18n" },
       { name: "body", label: "Nội dung", kind: "i18n", multiline: true },
       { name: "colors", label: "Màu gradient", kind: "colors" },
-      {
-        name: "evidenceLink",
-        label: "Liên kết bằng chứng",
-        kind: "text",
-        nullable: true,
-        hint: "#exp-<id> hoặc #proj-<id>",
-      },
+      { name: "evidenceLink", label: "Liên kết bằng chứng", kind: "evidence", nullable: true },
       { name: "stat", label: "Con số nổi bật", kind: "stat" },
     ],
   },

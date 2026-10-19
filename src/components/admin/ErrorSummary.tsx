@@ -3,9 +3,9 @@
 import { useEffect, useRef } from "react";
 import type { FieldError } from "@/lib/admin/validation";
 
-/** Focuses the input for `path` and scrolls it into view (instantly when motion is reduced). */
-export function focusField(path: string) {
-  const el = document.getElementById(`field-${path}`);
+/** Focuses the input with `id` and scrolls it into view (instantly when motion is reduced). */
+export function focusField(id: string) {
+  const el = document.getElementById(id);
   if (!el) return;
   const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   el.scrollIntoView({ block: "center", behavior: reduce ? "auto" : "smooth" });
@@ -16,7 +16,16 @@ export function focusField(path: string) {
  * "Có N mục cần sửa": shown after a failed save, focused each time `focusKey` changes, each
  * item a link to its field. Inline errors stay under the fields as well.
  */
-export function ErrorSummary({ errors, focusKey }: { errors: FieldError[]; focusKey: number }) {
+export function ErrorSummary({
+  errors,
+  focusKey,
+  idFor = (path) => `field-${path}`,
+}: {
+  errors: FieldError[];
+  focusKey: number;
+  /** Input id for an error path (forms that share a page prefix their ids). */
+  idFor?: (path: string) => string;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   // A failed save may render the errors a moment after `focusKey` changes; focus once both exist.
   const wantFocus = useRef(0);
@@ -43,11 +52,11 @@ export function ErrorSummary({ errors, focusKey }: { errors: FieldError[]; focus
         {errors.map((e) => (
           <li key={e.path}>
             <a
-              href={`#field-${e.path}`}
+              href={`#${idFor(e.path)}`}
               className="text-destructive underline underline-offset-2 hover:no-underline"
               onClick={(ev) => {
                 ev.preventDefault();
-                focusField(e.path);
+                focusField(idFor(e.path));
               }}
             >
               {e.message}

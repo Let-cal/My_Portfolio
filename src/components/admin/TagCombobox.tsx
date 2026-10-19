@@ -1,14 +1,19 @@
 "use client";
 
 import { Combobox } from "./Combobox";
+import { FieldError } from "./FieldShell";
 
 /** Free-text tags with suggestions (e.g. skill names for certificates). Enter keeps any text. */
 export function TagCombobox({
+  id,
   label,
   value,
   onChange,
   suggestions,
+  error,
 }: {
+  id?: string;
+  error?: string;
   label: string;
   value: string[];
   onChange: (tags: string[]) => void;
@@ -38,12 +43,15 @@ export function TagCombobox({
         </ul>
       )}
       <Combobox
+        id={id}
+        error={error}
         label={label}
         placeholder="Gõ để tìm, Enter để thêm"
         options={suggestions.filter((s) => !value.includes(s)).map((s) => ({ value: s, label: s }))}
         onPick={add}
         onEnterText={add}
       />
+      {id && <FieldError id={id} message={error} />}
     </fieldset>
   );
 }

@@ -1,14 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { saveResource, type ActionResult } from "@/app/admin/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import type { ZodObject } from "zod";
 import type { Option } from "@/lib/admin/data";
 import {
@@ -21,6 +20,7 @@ import {
   flattenErrors,
   isRequired,
 } from "@/lib/admin/validation";
+import { slugify } from "@/lib/admin/slug";
 import { cn } from "@/lib/utils";
 import { ErrorSummary, focusField } from "./ErrorSummary";
 import {
@@ -59,7 +59,14 @@ export type Options = Partial<
   skills?: SkillOption[];
   /** Skill names suggested for free-text tags (certificates, activities). */
   skillNames?: string[];
+  /** IDs already used in this list, for the live "ID đã được dùng" check on new items. */
+  existingIds?: string[];
+  /** Items a why card can point to as evidence. */
+  evidence?: { experiences: Option[]; projects: Option[] };
 };
+
+/** Field that seeds a new item's ID, in order of preference. */
+const ID_SOURCES = ["name", "title", "company", "school"];
 
 /** A form for any list of field specs, validated with `schema` and saved with `onSave`. */
 export function FieldsForm({
@@ -71,8 +78,11 @@ export function FieldsForm({
   onSave,
   doneHref,
   sections,
+  idScope,
 }: {
   sections?: FormSection[];
+  /** Prefix for input ids when several forms share a page (e.g. one per role). */
+  idScope?: string;
   fields: FieldSpec[];
   schema: ZodObject;
   initial: Values;
@@ -96,6 +106,28 @@ export function FieldsForm({
   });
   const { control, register, handleSubmit, formState, setError } = form;
   const isNew = !lockId;
+  const scoped = (path: string) => (idScope ? `${idScope}-${path}` : path);
+  const fid = (path: string) => `field-${scoped(path)}`;
+
+  // New items: the ID follows the name/title until the user edits the ID field.
+  const idEdited = useRef(false);
+  const idSource = fields.find((f) => ID_SOURCES.includes(f.name))?.name ?? (fields.some((f) => f.name === "name") ? "name" : undefined);
+  useEffect(() => {
+    if (!isNew || !idSource || !fields.some((f) => f.name === "id")) return;
+    const sub = form.watch((values, { name }) => {
+      if (name !== idSource && name !== `${idSource}.en`) return;
+      if (idEdited.current) return;
+      const source = values[idSource];
+      const text = typeof source === "string" ? source : ((source as { en?: string } | undefined)?.en ?? "");
+      form.setValue("id", slugify(text), { shouldDirty: true, shouldValidate: formState.submitCount > 0 });
+    });
+    return () => sub.unsubscribe();
+  }, [form, idSource, isNew, fields, formState.submitCount]);
+  const watchedId = form.watch("id");
+  const takenId =
+    isNew && typeof watchedId === "string" && watchedId && options.existingIds?.includes(watchedId)
+      ? `ID "${watchedId}" đã được dùng, chọn ID khác`
+      : undefined;
   const errors = flattenErrors(formState.errors, fields);
   const errAt = (path: string) => errors.find((e) => e.path === path)?.message;
   const i18nErrors = (prefix: string): I18nErrors => ({
@@ -134,7 +166,7 @@ export function FieldsForm({
   );
 
   function renderField(f: FieldSpec) {
-    const id = `field-${f.name}`;
+    const id = fid(f.name);
     const error = errAt(f.name);
     const required = isRequired(f);
     const nullableText = "nullable" in f && f.nullable;
@@ -143,28 +175,59 @@ export function FieldsForm({
       case "text":
       case "url":
       case "month":
-      case "date":
+      case "date": {
+        const shownError = error ?? (f.name === "id" ? takenId : undefined);
+        const hint =
+          f.name === "id" && isNew
+            ? "Tự tạo từ tên; sửa nếu muốn. Chỉ chữ thường không dấu, số và dấu gạch ngang."
+            : f.hint;
+        const reg = register(f.name, {
+          setValueAs: (v: string) => (nullableText && v === "" ? null : v),
+        });
         return (
-          <FieldShell
-            key={f.name}
-            id={id}
-            label={f.label}
-            required={required}
-            hint={f.hint}
-            error={error}
-          >
+          <FieldShell key={f.name} id={id} label={f.label} required={required} hint={hint} error={shownError}>
             <Input
-              {...a11yProps(id, error)}
-              className={invalid(error)}
+              {...a11yProps(id, shownError)}
+              className={invalid(shownError)}
               type={f.kind === "text" ? "text" : f.kind}
               disabled={f.name === "id" && !isNew}
-              {...register(f.name, {
-                setValueAs: (v: string) =>
-                  nullableText && v === "" ? null : v,
-              })}
+              {...reg}
+              onChange={(e) => {
+                if (f.name === "id") idEdited.current = true;
+                return reg.onChange(e);
+              }}
             />
           </FieldShell>
         );
+      }
+      case "evidence": {
+        const ev = options.evidence ?? { experiences: [], projects: [] };
+        return (
+          <FieldShell key={f.name} id={id} label={f.label} hint="Thẻ sẽ dẫn tới mục này trên trang." error={error}>
+            <select
+              {...a11yProps(id, error)}
+              className={cn("h-9 rounded-md border bg-background px-2 text-sm", invalid(error))}
+              {...register(f.name, { setValueAs: (v: string) => (v === "" ? null : v) })}
+            >
+              <option value="">Không có</option>
+              <optgroup label="Kinh nghiệm">
+                {ev.experiences.map((o) => (
+                  <option key={o.id} value={`#exp-${o.id}`}>
+                    {o.label}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Dự án">
+                {ev.projects.map((o) => (
+                  <option key={o.id} value={`#proj-${o.id}`}>
+                    {o.label}
+                  </option>
+                ))}
+              </optgroup>
+            </select>
+          </FieldShell>
+        );
+      }
       case "i18n":
         return (
           <Controller
@@ -187,7 +250,7 @@ export function FieldsForm({
               ) : (
                 <I18nField
                   label={f.label}
-                  idPrefix={f.name}
+                  idPrefix={scoped(f.name)}
                   required={required}
                   value={(field.value as I18nValue) ?? EMPTY_I18N}
                   onChange={field.onChange}
@@ -257,47 +320,26 @@ export function FieldsForm({
             )}
           />
         );
-      case "tags":
+      case "tags": {
+        const tagError = errors.find((e) => e.field === f.name)?.message;
         return (
           <Controller
             key={f.name}
             control={control}
             name={f.name}
-            render={({ field }) =>
-              f.suggest === "skills" ? (
-                <TagCombobox
-                  label={f.label}
-                  value={(field.value as string[]) ?? []}
-                  onChange={field.onChange}
-                  suggestions={options.skillNames ?? []}
-                />
-              ) : (
-                <FieldShell
-                  id={id}
-                  label={f.label}
-                  hint="Mỗi dòng một mục"
-                  error={
-                    error ?? errors.find((e) => e.field === f.name)?.message
-                  }
-                >
-                  <Textarea
-                    {...a11yProps(id, error)}
-                    rows={3}
-                    value={((field.value as string[]) ?? []).join("\n")}
-                    onChange={(e) => field.onChange(e.target.value.split("\n"))}
-                    onBlur={() =>
-                      field.onChange(
-                        ((field.value as string[]) ?? [])
-                          .map((s) => s.trim())
-                          .filter(Boolean),
-                      )
-                    }
-                  />
-                </FieldShell>
-              )
-            }
+            render={({ field }) => (
+              <TagCombobox
+                id={id}
+                label={f.label}
+                error={tagError}
+                value={(field.value as string[]) ?? []}
+                onChange={field.onChange}
+                suggestions={f.suggest === "skills" ? (options.skillNames ?? []) : []}
+              />
+            )}
           />
         );
+      }
       case "upload":
         return (
           <Controller
@@ -446,7 +488,7 @@ export function FieldsForm({
                       <I18nField
                         key={part}
                         label={label}
-                        idPrefix={`${f.name}.${part}`}
+                        idPrefix={scoped(`${f.name}.${part}`)}
                         required
                         multiline
                         value={value[part] ?? EMPTY_I18N}
@@ -485,8 +527,8 @@ export function FieldsForm({
                   hint="Không bắt buộc. Mỗi liên kết cần nhãn và URL đầy đủ."
                 >
                   {links.map((l, i) => {
-                    const labelId = `field-${f.name}.${i}.label`;
-                    const urlId = `field-${f.name}.${i}.url`;
+                    const labelId = fid(`${f.name}.${i}.label`);
+                    const urlId = fid(`${f.name}.${i}.url`);
                     const labelErr = errAt(`${f.name}.${i}.label`);
                     const urlErr = errAt(`${f.name}.${i}.url`);
                     return (
@@ -567,14 +609,14 @@ export function FieldsForm({
                 >
                   <div className="flex items-center gap-3">
                     <input
-                      id={`field-${f.name}.0`}
+                      id={fid(`${f.name}.0`)}
                       type="color"
                       aria-label="Màu bắt đầu"
                       value={from}
                       onChange={(e) => field.onChange([e.target.value, to])}
                     />
                     <input
-                      id={`field-${f.name}.1`}
+                      id={fid(`${f.name}.1`)}
                       type="color"
                       aria-label="Màu kết thúc"
                       value={to}
@@ -639,7 +681,7 @@ export function FieldsForm({
                         />
                         <div className="flex flex-col gap-1">
                           <Input
-                            {...a11yProps(`field-${f.name}.value`, valueErr)}
+                            {...a11yProps(fid(`${f.name}.value`), valueErr)}
                             aria-label="Giá trị"
                             type="number"
                             value={stat.value}
@@ -651,7 +693,7 @@ export function FieldsForm({
                             }
                           />
                           <FieldError
-                            id={`field-${f.name}.value`}
+                            id={fid(`${f.name}.value`)}
                             message={valueErr}
                           />
                         </div>
@@ -669,7 +711,7 @@ export function FieldsForm({
                       </div>
                       <I18nField
                         label="Chú thích"
-                        idPrefix={`${f.name}.label`}
+                        idPrefix={scoped(`${f.name}.label`)}
                         required
                         value={stat.label}
                         onChange={(label) => field.onChange({ ...stat, label })}
@@ -724,7 +766,7 @@ export function FieldsForm({
           <p className="text-xs text-muted-foreground">Mục có * là bắt buộc</p>
           {translated && <LocaleModeSwitch errorLocales={errorLocales} />}
         </div>
-        <ErrorSummary errors={shownErrors} focusKey={focusKey} />
+        <ErrorSummary errors={shownErrors} focusKey={focusKey} idFor={fid} />
         {sections?.length ? (
           <div className="grid gap-6 lg:grid-cols-[11rem_minmax(0,1fr)]">
             <FormSectionNav sections={sections} errorsByField={errorsByField} />
@@ -739,7 +781,7 @@ export function FieldsForm({
           saved={saved}
           errorCount={shownErrors.length}
           onSave={() => void onSubmit()}
-          onShowErrors={() => shownErrors[0] && focusField(shownErrors[0].path)}
+          onShowErrors={() => shownErrors[0] && focusField(fid(shownErrors[0].path))}
           onCancel={doneHref ? () => router.push(doneHref) : undefined}
         />
       </form>
