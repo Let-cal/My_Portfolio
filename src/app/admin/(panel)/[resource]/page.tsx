@@ -1,3 +1,4 @@
+import { ListSkeleton } from "@/components/admin/Skeletons";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -11,7 +12,13 @@ import { isResourceKey, resources } from "@/lib/admin/resources";
 type Params = Promise<{ resource: string }>;
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
-async function ResourceList({ params, searchParams }: { params: Params; searchParams: SearchParams }) {
+async function ResourceList({
+  params,
+  searchParams,
+}: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
   const [{ resource: key }, sp] = await Promise.all([params, searchParams]);
   if (!isResourceKey(key)) notFound();
   const matrix = key === "skills" && sp.view !== "list";
@@ -23,7 +30,9 @@ async function ResourceList({ params, searchParams }: { params: Params; searchPa
         <div className="flex gap-2">
           {key === "skills" && (
             <Button asChild variant="outline">
-              <Link href={matrix ? "/admin/skills?view=list" : "/admin/skills"}>{matrix ? "Dạng danh sách" : "Dạng ma trận"}</Link>
+              <Link href={matrix ? "/admin/skills?view=list" : "/admin/skills"}>
+                {matrix ? "Dạng danh sách" : "Dạng ma trận"}
+              </Link>
             </Button>
           )}
           <Button asChild>
@@ -33,24 +42,40 @@ async function ResourceList({ params, searchParams }: { params: Params; searchPa
       </header>
       {matrix ? (
         content ? (
-          <SkillMatrix content={content} initialFilter={parseMatrixFilter(sp)} />
+          <SkillMatrix
+            content={content}
+            initialFilter={parseMatrixFilter(sp)}
+          />
         ) : (
-          <p role="alert" className="rounded-md border p-3 text-sm">Chưa có hồ sơ trong database. Chạy npm run db:seed.</p>
+          <p role="alert" className="rounded-md border p-3 text-sm">
+            Chưa có hồ sơ trong database. Chạy npm run db:seed.
+          </p>
         )
       ) : (
         <>
-          <p className="text-sm text-muted-foreground">Kéo biểu tượng ⠿ để đổi thứ tự hiển thị trên trang.</p>
-          <ResourceTable resourceKey={key} initialItems={await listItems(key)} />
+          <p className="text-sm text-muted-foreground">
+            Kéo biểu tượng ⠿ để đổi thứ tự hiển thị trên trang.
+          </p>
+          <ResourceTable
+            resourceKey={key}
+            initialItems={await listItems(key)}
+          />
         </>
       )}
     </>
   );
 }
 
-export default function ResourcePage({ params, searchParams }: { params: Params; searchParams: SearchParams }) {
+export default function ResourcePage({
+  params,
+  searchParams,
+}: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
   return (
     <main className="flex min-w-0 flex-col gap-4">
-      <Suspense fallback={<p className="text-sm text-muted-foreground">Đang tải…</p>}>
+      <Suspense fallback={<ListSkeleton />}>
         <ResourceList params={params} searchParams={searchParams} />
       </Suspense>
     </main>

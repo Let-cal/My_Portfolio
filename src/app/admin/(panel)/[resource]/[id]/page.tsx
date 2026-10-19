@@ -1,3 +1,4 @@
+import { FormSkeleton } from "@/components/admin/Skeletons";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -14,11 +15,19 @@ async function Editor({ params }: { params: Params }) {
   const { resource: key, id } = await params;
   if (!isResourceKey(key)) notFound();
   const isNew = id === "new";
-  const needsSkills = key === "experiences" || key === "projects" || key === "certificates" || key === "activities";
+  const needsSkills =
+    key === "experiences" ||
+    key === "projects" ||
+    key === "certificates" ||
+    key === "activities";
   const [found, relations, skills] = await Promise.all([
     isNew ? Promise.resolve(emptyItem(key)) : getItem(key, id),
-    key === "skills" ? relationOptions() : Promise.resolve({ experiences: [], projects: [] }),
-    needsSkills ? (listItems("skills") as unknown as Promise<Skill[]>) : Promise.resolve([] as Skill[]),
+    key === "skills"
+      ? relationOptions()
+      : Promise.resolve({ experiences: [], projects: [] }),
+    needsSkills
+      ? (listItems("skills") as unknown as Promise<Skill[]>)
+      : Promise.resolve([] as Skill[]),
   ]);
   if (!found) notFound();
   const [ownList, experiences, projects] = await Promise.all([
@@ -26,32 +35,55 @@ async function Editor({ params }: { params: Params }) {
     key === "why_cards" ? listItems("experiences") : Promise.resolve([]),
     key === "why_cards" ? listItems("projects") : Promise.resolve([]),
   ]);
-  const hiddenMark = (item: Record<string, unknown>) => (item.published === false ? " (đang ẩn)" : "");
+  const hiddenMark = (item: Record<string, unknown>) =>
+    item.published === false ? " (đang ẩn)" : "";
   const options: Options = {
     ...relations,
     existingIds: ownList.map((i) => i.id),
     evidence: {
-      experiences: experiences.map((e) => ({ id: e.id, label: `${String(e.company)} · ${String(e.start)}${hiddenMark(e)}` })),
-      projects: projects.map((p) => ({ id: p.id, label: `${String(p.title)}${hiddenMark(p)}` })),
+      experiences: experiences.map((e) => ({
+        id: e.id,
+        label: `${String(e.company)} · ${String(e.start)}${hiddenMark(e)}`,
+      })),
+      projects: projects.map((p) => ({
+        id: p.id,
+        label: `${String(p.title)}${hiddenMark(p)}`,
+      })),
     },
     skills: skills.map((s) => ({ id: s.id, label: s.name, group: s.group })),
     skillNames: skills.map((s) => s.name),
   };
   // An experience or project edits its skills here; they live in skill_links.
-  const linkIds = (s: Skill) => (key === "experiences" ? s.experienceIds : s.projectIds);
+  const linkIds = (s: Skill) =>
+    key === "experiences" ? s.experienceIds : s.projectIds;
   const item =
     key === "experiences" || key === "projects"
-      ? { ...found, skillIds: isNew ? [] : skills.filter((s) => linkIds(s).includes(id)).map((s) => s.id) }
+      ? {
+          ...found,
+          skillIds: isNew
+            ? []
+            : skills.filter((s) => linkIds(s).includes(id)).map((s) => s.id),
+        }
       : found;
   return (
     <>
       <header className="flex flex-col gap-1">
-        <Link href={`/admin/${key}`} className="text-sm text-muted-foreground hover:underline">
+        <Link
+          href={`/admin/${key}`}
+          className="text-sm text-muted-foreground hover:underline"
+        >
           ← {resources[key].label}
         </Link>
-        <h1 className="text-2xl font-semibold">{isNew ? "Thêm mới" : `Sửa ${id}`}</h1>
+        <h1 className="text-2xl font-semibold">
+          {isNew ? "Thêm mới" : `Sửa ${id}`}
+        </h1>
       </header>
-      <ResourceForm resourceKey={key} initial={item} isNew={isNew} options={options} />
+      <ResourceForm
+        resourceKey={key}
+        initial={item}
+        isNew={isNew}
+        options={options}
+      />
     </>
   );
 }
@@ -59,7 +91,7 @@ async function Editor({ params }: { params: Params }) {
 export default function EditResourcePage({ params }: { params: Params }) {
   return (
     <main className="flex flex-col gap-4">
-      <Suspense fallback={<p className="text-sm text-muted-foreground">Đang tải…</p>}>
+      <Suspense fallback={<FormSkeleton />}>
         <Editor params={params} />
       </Suspense>
     </main>
