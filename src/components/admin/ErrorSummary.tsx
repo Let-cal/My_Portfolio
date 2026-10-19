@@ -47,7 +47,9 @@ export function ErrorSummary({
       animate={{ opacity: 1, y: 0 }}
       ref={ref}
       tabIndex={-1}
-      role="alert"
+      // GOV.UK Frontend v5: the summary is focused on a failed save, which reads it; an alert
+      // role on top would announce it twice.
+      role="region"
       aria-labelledby={titleId}
       className="rounded-lg border-2 border-destructive/60 bg-destructive/5 p-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-destructive"
     >

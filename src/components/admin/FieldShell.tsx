@@ -14,7 +14,10 @@ export function FieldError({ id, message }: { id: string; message?: string }) {
   return (
     <div className="flex items-start gap-1.5 text-sm font-normal text-destructive">
       <span aria-hidden>⚠</span>
-      <p id={`${id}-error`}>{message}</p>
+      <p id={`${id}-error`}>
+        <span className="sr-only">Lỗi: </span>
+        {message}
+      </p>
     </div>
   );
 }
@@ -57,7 +60,9 @@ export function FieldShell({
       {required && <RequiredMark />}
     </>
   );
-  const hintEl = hint ? <span className="text-xs font-normal text-muted-foreground">{hint}</span> : null;
+  const hintEl = hint ? (
+    <span className="text-xs font-normal text-muted-foreground">{hint}</span>
+  ) : null;
   if (group) {
     return (
       <fieldset className="flex flex-col gap-2" data-field={id}>

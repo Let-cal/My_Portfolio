@@ -1,37 +1,56 @@
 "use client";
 
 import { motion } from "motion/react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+// Every form with unsaved edits registers here; one shared listener asks once, however many are dirty.
+const dirtyForms = new Set<object>();
+
+function onBeforeUnload(e: BeforeUnloadEvent) {
+  e.preventDefault();
+}
+
+function onLinkClick(e: MouseEvent) {
+  const link = (e.target as Element | null)?.closest?.("a[href]");
+  if (
+    !link ||
+    link.getAttribute("target") === "_blank" ||
+    link.getAttribute("href")?.startsWith("#")
+  )
+    return;
+  if (
+    !window.confirm(
+      "Bạn có thay đổi chưa lưu. Rời trang và bỏ các thay đổi này?",
+    )
+  ) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+}
+
+function syncGuard() {
+  if (dirtyForms.size > 0) {
+    window.addEventListener("beforeunload", onBeforeUnload);
+    document.addEventListener("click", onLinkClick, true);
+  } else {
+    window.removeEventListener("beforeunload", onBeforeUnload);
+    document.removeEventListener("click", onLinkClick, true);
+  }
+}
+
 /** Asks before the tab closes, and before following an in-app link, while there are unsaved edits. */
 export function useUnsavedGuard(dirty: boolean) {
+  const token = useRef({});
   useEffect(() => {
     if (!dirty) return;
-    const onLeave = (e: BeforeUnloadEvent) => e.preventDefault();
-    const onClick = (e: MouseEvent) => {
-      const link = (e.target as Element | null)?.closest?.("a[href]");
-      if (
-        !link ||
-        link.getAttribute("target") === "_blank" ||
-        link.getAttribute("href")?.startsWith("#")
-      )
-        return;
-      if (
-        !window.confirm(
-          "Bạn có thay đổi chưa lưu. Rời trang và bỏ các thay đổi này?",
-        )
-      ) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    };
-    window.addEventListener("beforeunload", onLeave);
-    document.addEventListener("click", onClick, true);
+    const form = token.current;
+    dirtyForms.add(form);
+    syncGuard();
     return () => {
-      window.removeEventListener("beforeunload", onLeave);
-      document.removeEventListener("click", onClick, true);
+      dirtyForms.delete(form);
+      syncGuard();
     };
   }, [dirty]);
 }
