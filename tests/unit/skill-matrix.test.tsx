@@ -22,8 +22,14 @@ const all = {
   group: "all" as const,
   showHidden: true,
 };
-const cell = (skill: string, column: string) =>
-  screen.getByRole("checkbox", { name: `${skill} × ${column}` });
+/** One matrix cell. A direct attribute lookup: role queries over ~400 cells are slow in jsdom. */
+const cell = (skill: string, column: string) => {
+  const el = document.querySelector<HTMLElement>(
+    `button[role="checkbox"][aria-label="${skill} × ${column}"]`,
+  );
+  if (!el) throw new Error(`No cell ${skill} × ${column}`);
+  return el;
+};
 const saveButton = () => screen.queryByRole("button", { name: /^Lưu/ });
 
 beforeEach(() => {
@@ -212,5 +218,30 @@ describe("SkillMatrix (add skills, headers)", () => {
     expect(confirm).toHaveBeenCalledTimes(1);
     expect(event.defaultPrevented).toBe(true);
     confirm.mockRestore();
+  });
+
+  it("left-aligns each slanted column name so it starts at its own column", () => {
+    render(<SkillMatrix content={content} initialFilter={all} />);
+    const label = screen
+      .getAllByRole("columnheader")
+      .find((h) => h.querySelector("a"))!
+      .querySelector("a")!.parentElement!;
+    expect(label.className).toContain("text-left");
+    expect(label.className).toContain("-rotate-45");
+  });
+
+  it("highlights the row and column of the hovered cell", () => {
+    render(<SkillMatrix content={content} initialFilter={all} />);
+    const target = cell("C#", "SitePlus");
+    fireEvent.mouseEnter(target);
+    const header = screen
+      .getByRole("link", { name: "SitePlus" })
+      .closest("th")!;
+    expect(header.getAttribute("data-active")).toBe("true");
+    expect(
+      screen.getByRole("rowheader", { name: "C#" }).getAttribute("data-active"),
+    ).toBe("true");
+    fireEvent.mouseLeave(screen.getByRole("grid"));
+    expect(header.getAttribute("data-active")).toBeNull();
   });
 });

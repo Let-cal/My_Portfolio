@@ -50,6 +50,8 @@ export function SkillMatrix({
   const [saved, setSaved] = useState<Map<string, boolean>>(new Map());
   const [pinned, setPinned] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
+  // The hovered or focused cell: its row and column light up like a crosshair (r = -1: a header).
+  const [hot, setHot] = useState<{ r: number; c: number } | null>(null);
   const base = useMemo(() => buildMatrix(content), [content]);
   const view = useMemo(
     () => filterMatrix(base, filter, content, pinned),
@@ -257,6 +259,7 @@ export function SkillMatrix({
             role="grid"
             aria-label="Skills × Bằng chứng"
             className="border-separate border-spacing-0 text-sm"
+            onMouseLeave={() => setHot(null)}
           >
             {/* Column names lean at -45° from the bottom-left of their column, so long names stay
                 readable while columns stay narrow. The header row (not each cell) carries the
@@ -273,6 +276,8 @@ export function SkillMatrix({
                   <th
                     key={columnKey(col)}
                     scope="col"
+                    data-active={hot?.c === i || undefined}
+                    onMouseEnter={() => setHot({ r: -1, c: i })}
                     className={cn(
                       "relative w-9 min-w-9 p-0 align-bottom text-xs font-medium",
                       i > 0 &&
@@ -281,11 +286,22 @@ export function SkillMatrix({
                       col.hidden && "text-muted-foreground italic",
                     )}
                   >
-                    <div className="absolute bottom-2 left-1/2 w-40 origin-bottom-left -rotate-45">
+                    {/* A short tick ties the slanted name to the centre of its column. */}
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "absolute bottom-0 left-1/2 h-1.5 w-px transition-colors duration-150",
+                        hot?.c === i ? "bg-primary" : "bg-border",
+                      )}
+                    />
+                    <div className="absolute bottom-2 left-1/2 w-44 origin-bottom-left -rotate-45 text-left">
                       <Link
                         href={`/admin/${col.kind === "experience" ? "experiences" : "projects"}/${col.id}`}
                         title={`${col.kind === "experience" ? "Kinh nghiệm" : "Dự án"}: ${col.label}${col.hidden ? " (đang ẩn)" : ""}`}
-                        className="block truncate rounded-sm px-1 hover:bg-muted hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                        className={cn(
+                          "block truncate rounded-sm leading-4 transition-colors duration-150 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                          hot?.c === i && "font-semibold text-primary",
+                        )}
                       >
                         {col.label}
                       </Link>
@@ -324,7 +340,11 @@ export function SkillMatrix({
                       >
                         <th
                           scope="row"
-                          className="sticky left-0 z-10 bg-background p-2 text-left font-medium whitespace-nowrap"
+                          data-active={hot?.r === r || undefined}
+                          className={cn(
+                            "sticky left-0 z-10 bg-background p-2 text-left font-medium whitespace-nowrap transition-colors duration-150",
+                            hot?.r === r && "text-primary",
+                          )}
                         >
                           <Link
                             href={`/admin/skills/${row.skill.id}`}
@@ -343,7 +363,11 @@ export function SkillMatrix({
                               key={columnKey(col)}
                               role="gridcell"
                               className={cn(
-                                "p-1 text-center",
+                                "p-1 text-center transition-colors duration-150",
+                                hot &&
+                                  (hot.r === r || hot.c === c) &&
+                                  "bg-primary/[0.07]",
+                                hot?.r === r && hot.c === c && "bg-primary/15",
                                 c > 0 &&
                                   view.columns[c - 1].kind !== col.kind &&
                                   "border-l-2",
@@ -358,9 +382,11 @@ export function SkillMatrix({
                                 data-cell={`${r}:${c}`}
                                 tabIndex={r === 0 && c === 0 ? 0 : -1}
                                 onClick={() => toggle(row.skill.id, col)}
+                                onMouseEnter={() => setHot({ r, c })}
+                                onFocus={() => setHot({ r, c })}
                                 onKeyDown={(e) => onKeyDown(e, r, c)}
                                 className={cn(
-                                  "size-6 rounded-full border transition-transform focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:scale-90",
+                                  "size-6 rounded-full border transition-[transform,background-color,border-color] duration-150 hover:scale-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:scale-90",
                                   on &&
                                     !col.hidden &&
                                     "border-emerald-600 bg-emerald-500",
@@ -370,7 +396,7 @@ export function SkillMatrix({
                                   !on &&
                                     "border-muted-foreground/30 hover:border-foreground/60",
                                   changed &&
-                                    "ring-2 ring-sky-500 ring-offset-2 ring-offset-background",
+                                    "matrix-pop ring-2 ring-sky-500 ring-offset-2 ring-offset-background",
                                 )}
                               />
                             </td>

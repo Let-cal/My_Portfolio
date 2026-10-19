@@ -1260,3 +1260,13 @@ html[data-hello-seen] [data-hello] {
 .hero-summary-exit { animation: hero-summary-exit 200ms ease-in-out both; }
 :root[data-motion="reduced"] :is(.hero-word-enter,.hero-summary-enter) { animation: none; }
 :root[data-motion="reduced"] :is(.hero-word-exit,.hero-summary-exit) { display: none; }
+
+/* Admin skill matrix: a toggled cell gives a short pop (skipped when motion is reduced). */
+@keyframes matrix-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+:root[data-motion="full"] .matrix-pop {
+  animation: matrix-pop 180ms cubic-bezier(0.2, 0, 0, 1);
+}
