@@ -2,7 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { emptyItem, ResourceForm } from "@/components/admin/ResourceForm";
-import { getItem, relationOptions } from "@/lib/admin/data";
+import type { Options } from "@/components/admin/ResourceForm";
+import type { Skill } from "@/content/schema";
+import { getItem, listItems, relationOptions } from "@/lib/admin/data";
 import { isResourceKey, resources } from "@/lib/admin/resources";
 
 type Params = Promise<{ resource: string; id: string }>;
@@ -11,11 +13,24 @@ async function Editor({ params }: { params: Params }) {
   const { resource: key, id } = await params;
   if (!isResourceKey(key)) notFound();
   const isNew = id === "new";
-  const [item, options] = await Promise.all([
+  const needsSkills = key === "experiences" || key === "projects" || key === "certificates" || key === "activities";
+  const [found, relations, skills] = await Promise.all([
     isNew ? Promise.resolve(emptyItem(key)) : getItem(key, id),
     key === "skills" ? relationOptions() : Promise.resolve({ experiences: [], projects: [] }),
+    needsSkills ? (listItems("skills") as unknown as Promise<Skill[]>) : Promise.resolve([] as Skill[]),
   ]);
-  if (!item) notFound();
+  if (!found) notFound();
+  const options: Options = {
+    ...relations,
+    skills: skills.map((s) => ({ id: s.id, label: s.name, group: s.group })),
+    skillNames: skills.map((s) => s.name),
+  };
+  // An experience or project edits its skills here; they live in skill_links.
+  const linkIds = (s: Skill) => (key === "experiences" ? s.experienceIds : s.projectIds);
+  const item =
+    key === "experiences" || key === "projects"
+      ? { ...found, skillIds: isNew ? [] : skills.filter((s) => linkIds(s).includes(id)).map((s) => s.id) }
+      : found;
   return (
     <>
       <header className="flex flex-col gap-1">

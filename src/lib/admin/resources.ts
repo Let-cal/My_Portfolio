@@ -56,7 +56,7 @@ export type FieldSpec = Base &
     | { kind: "i18n"; multiline?: boolean; nullable?: boolean }
     | { kind: "boolean" }
     | { kind: "select"; options: readonly string[] }
-    | { kind: "tags" }
+    | { kind: "tags"; suggest?: "skills" }
     | { kind: "upload"; upload: UploadKind }
     | { kind: "caseStudy" | "links" | "colors" | "stat" }
     | { kind: "relations"; source: "experiences" | "projects" }
@@ -170,7 +170,7 @@ export const resources: Record<ResourceKey, Resource> = {
       { name: "credentialUrl", label: "Link xác minh", kind: "url", nullable: true },
       { name: "fileUrl", label: "Tệp chứng chỉ (PDF)", kind: "upload", upload: "pdf" },
       { name: "topic", label: "Chủ đề", kind: "select", options: CERT_TOPICS },
-      { name: "skills", label: "Kỹ năng liên quan", kind: "tags" },
+      { name: "skills", label: "Kỹ năng liên quan", kind: "tags", suggest: "skills" },
       { name: "description", label: "Mô tả", kind: "i18n", multiline: true },
       published,
     ],
@@ -187,7 +187,7 @@ export const resources: Record<ResourceKey, Resource> = {
       idField,
       { name: "name", label: "Tên hoạt động", kind: "i18n" },
       { name: "date", label: "Ngày", kind: "date" },
-      { name: "skills", label: "Kỹ năng", kind: "tags" },
+      { name: "skills", label: "Kỹ năng", kind: "tags", suggest: "skills" },
       { name: "description", label: "Mô tả", kind: "i18n", multiline: true },
     ],
   },
