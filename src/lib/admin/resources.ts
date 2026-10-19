@@ -48,7 +48,8 @@ export function isResourceKey(value: string): value is ResourceKey {
   return (RESOURCE_KEYS as readonly string[]).includes(value);
 }
 
-type Base = { name: string; label: string; hint?: string };
+/** `virtual` fields are edited in the form but stored elsewhere (e.g. skill_links), not in the item. */
+type Base = { name: string; label: string; hint?: string; virtual?: true };
 export type FieldSpec = Base &
   (
     | { kind: "text" | "url" | "month" | "date"; nullable?: boolean }
@@ -60,6 +61,7 @@ export type FieldSpec = Base &
     | { kind: "caseStudy" | "links" | "colors" | "stat" }
     | { kind: "relations"; source: "experiences" | "projects" }
     | { kind: "order"; source: "experiences" | "skillGroups" }
+    | { kind: "skills" }
   );
 
 type AnyRow = Record<string, unknown>;
@@ -106,6 +108,7 @@ export const resources: Record<ResourceKey, Resource> = {
       { name: "teamSize", label: "Quy mô team", kind: "text", nullable: true },
       { name: "tech", label: "Công nghệ", kind: "tags" },
       { name: "links", label: "Liên kết", kind: "links" },
+      { name: "skillIds", label: "Skills dùng ở đây", kind: "skills", virtual: true },
       published,
     ],
   },
@@ -130,6 +133,7 @@ export const resources: Record<ResourceKey, Resource> = {
       { name: "repoUrls", label: "Link repo (mỗi dòng một link)", kind: "tags" },
       { name: "posterUrl", label: "Ảnh poster", kind: "upload", upload: "image" },
       { name: "videoUrl", label: "Video khi rê chuột", kind: "upload", upload: "video" },
+      { name: "skillIds", label: "Skills dùng ở đây", kind: "skills", virtual: true },
       published,
     ],
   },

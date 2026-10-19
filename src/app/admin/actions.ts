@@ -2,6 +2,7 @@
 
 import { updateTag } from "next/cache";
 import { profileToRow, roleToRow, skillToLinkRows } from "@/lib/data/mappers";
+import { diffLinks, linkMatch, linkRow, type LinkTarget } from "@/lib/admin/links";
 import { isResourceKey, resources, type ResourceKey } from "@/lib/admin/resources";
 import { requireAdmin } from "@/lib/admin/session";
 import { createServerSupabase } from "@/lib/supabase/server";
@@ -36,6 +37,8 @@ export async function saveResource(key: string, data: Record<string, unknown>, i
   return adminWrite(key, async (k) => {
     const resource = resources[k];
     const supabase = await createServerSupabase();
+    const { skillIds, ...fields } = data;
+    data = fields;
     const id = String(data.id ?? "");
     const { data: existing, error } = await supabase
       .from(resource.table)
@@ -58,7 +61,45 @@ export async function saveResource(key: string, data: Record<string, unknown>, i
       const links = skillToLinkRows(item as Skill);
       if (links.length) check((await supabase.from("skill_links").insert(links)).error);
     }
+    if ((k === "experiences" || k === "projects") && Array.isArray(skillIds)) {
+      const column = k === "experiences" ? "experience_id" : "project_id";
+      const target: LinkTarget = k === "experiences" ? { experienceId: id } : { projectId: id };
+      const { data: rows, error: linkError } = await supabase.from("skill_links").select("skill_id").eq(column, id);
+      check(linkError);
+      const { add, remove } = diffLinks((rows ?? []).map((r) => r.skill_id as string), skillIds as string[]);
+      if (add.length) check((await supabase.from("skill_links").insert(add.map((skillId) => linkRow(skillId, target)))).error);
+      for (const skillId of remove) check((await supabase.from("skill_links").delete().match(linkMatch(skillId, target))).error);
+    }
   });
+}
+
+/**
+ * Links or unlinks one skill and one evidence item. The matrix calls this per cell and then
+ * `flushContent` once after a pause, so a burst of clicks refreshes the site cache only once.
+ */
+export async function setSkillLink(skillId: string, target: LinkTarget, linked: boolean): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    const supabase = await createServerSupabase();
+    const table = supabase.from("skill_links");
+    const { error } = linked
+      ? await table.upsert(linkRow(skillId, target), { onConflict: "skill_id,experience_id,project_id", ignoreDuplicates: true })
+      : await table.delete().match(linkMatch(skillId, target));
+    check(error);
+    return { ok: true };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function flushContent(): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    updateTag("content");
+    return { ok: true };
+  } catch (error) {
+    return fail(error);
+  }
 }
 
 export async function deleteResource(key: string, id: string) {
