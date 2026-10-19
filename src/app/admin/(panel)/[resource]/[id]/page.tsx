@@ -7,6 +7,7 @@ import { emptyItem } from "@/lib/admin/empty-item";
 import type { Options } from "@/components/admin/ResourceForm";
 import type { Skill } from "@/content/schema";
 import { getItem, listItems, relationOptions } from "@/lib/admin/data";
+import { neighbours } from "@/lib/admin/list-view";
 import { isResourceKey, resources } from "@/lib/admin/resources";
 
 type Params = Promise<{ resource: string; id: string }>;
@@ -39,7 +40,8 @@ async function Editor({ params }: { params: Params }) {
     item.published === false ? " (đang ẩn)" : "";
   const options: Options = {
     ...relations,
-    existingIds: ownList.map((i) => i.id),
+    // Only a new item can clash with an existing id; an edit keeps its own.
+    existingIds: isNew ? ownList.map((i) => i.id) : [],
     evidence: {
       experiences: experiences.map((e) => ({
         id: e.id,
@@ -65,15 +67,52 @@ async function Editor({ params }: { params: Params }) {
             : skills.filter((s) => linkIds(s).includes(id)).map((s) => s.id),
         }
       : found;
+  const nav = isNew
+    ? null
+    : neighbours(
+        ownList.map((i) => i.id),
+        id,
+      );
+  const navLink =
+    "text-sm text-muted-foreground hover:text-foreground hover:underline";
   return (
     <>
       <header className="flex flex-col gap-1">
-        <Link
-          href={`/admin/${key}`}
-          className="text-sm text-muted-foreground hover:underline"
-        >
-          ← {resources[key].label}
-        </Link>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Link href={`/admin/${key}`} className={navLink}>
+            ← {resources[key].label}
+          </Link>
+          {nav && (nav.prev || nav.next) && (
+            <nav aria-label="Mục khác trong danh sách" className="flex gap-4">
+              {nav.prev ? (
+                <Link
+                  href={`/admin/${key}/${nav.prev}`}
+                  className={navLink}
+                  aria-label={`Mục trước: ${nav.prev}`}
+                >
+                  ← Trước
+                </Link>
+              ) : (
+                <span className="text-sm text-muted-foreground/50" aria-hidden>
+                  ← Trước
+                </span>
+              )}
+              {nav.next ? (
+                <Link
+                  href={`/admin/${key}/${nav.next}`}
+                  className={navLink}
+                  aria-label={`Mục sau: ${nav.next}`}
+                >
+                  Sau →
+                </Link>
+              ) : (
+                <span className="text-sm text-muted-foreground/50" aria-hidden>
+                  Sau →
+                </span>
+              )}
+            </nav>
+          )}
+        </div>
         <h1 className="text-2xl font-semibold">
           {isNew ? "Thêm mới" : `Sửa ${id}`}
         </h1>
