@@ -1,6 +1,7 @@
 import { ROLE_KEYS } from "@/content/schema";
 import { rowToProfile, rowToRole, type SkillLinkRow } from "@/lib/data/mappers";
 import { createServerSupabase } from "@/lib/supabase/server";
+import type { AdminContent } from "./health";
 import { RESOURCE_KEYS, resources, type ResourceKey } from "./resources";
 
 export type Item = Record<string, unknown> & { id: string; sortIndex: number };
@@ -69,4 +70,25 @@ export async function countRows(): Promise<{ key: ResourceKey; count: number; hi
       return { key, count: all.count ?? 0, hidden };
     }),
   );
+}
+
+/** Everything, hidden items included, in the public content shape (for health checks and the matrix). */
+export async function getAdminContent(): Promise<AdminContent> {
+  const [lists, { profile, roles }] = await Promise.all([
+    Promise.all(RESOURCE_KEYS.map(async (key) => [key, await listItems(key)] as const)),
+    getProfileAndRoles(),
+  ]);
+  const byKey = Object.fromEntries(lists) as Record<ResourceKey, Item[]>;
+  if (!profile) throw new Error("profile: no row");
+  return {
+    profile,
+    roles,
+    experiences: byKey.experiences,
+    projects: byKey.projects,
+    skills: byKey.skills,
+    certificates: byKey.certificates,
+    activities: byKey.activities,
+    education: byKey.education,
+    whyCards: byKey.why_cards,
+  } as unknown as AdminContent;
 }

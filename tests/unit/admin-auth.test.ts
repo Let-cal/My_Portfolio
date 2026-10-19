@@ -25,3 +25,13 @@ describe("safeNextPath", () => {
     }
   });
 });
+
+describe("safeNextPath with a query", () => {
+  it("keeps a query string on admin paths", () => {
+    expect(safeNextPath("/admin/skills?filter=orphan")).toBe("/admin/skills?filter=orphan");
+  });
+  it("still rejects off-site paths that carry a query", () => {
+    expect(safeNextPath("/en?x=/admin")).toBe("/admin");
+    expect(safeNextPath("//evil.test/admin?x=1")).toBe("/admin");
+  });
+});
