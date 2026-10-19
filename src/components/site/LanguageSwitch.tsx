@@ -17,7 +17,11 @@ export function LanguageSwitch({ className }: { className?: string }) {
   const current = useLocale();
 
   return (
-    <div role="group" aria-label={t("label")} className={cn("flex items-center gap-0.5", className)}>
+    <div
+      role="group"
+      aria-label={t("label")}
+      className={cn("flex items-center gap-0.5", className)}
+    >
       {routing.locales.map((locale) => {
         const active = locale === current;
         return (
@@ -36,7 +40,9 @@ export function LanguageSwitch({ className }: { className?: string }) {
             }}
             className={clsx(
               "rounded-md px-1.5 py-1 text-xs font-medium uppercase tracking-wide transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-              active ? "bg-muted text-brand-text" : "text-muted-foreground hover:text-foreground",
+              active
+                ? "bg-muted text-brand-text"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             {locale}

@@ -7,7 +7,11 @@ const round = (n: number) => Math.round(n * 10) / 10;
  * (the top-left of the element the SVG overlays). A card that sits clearly to the right gets a sideways beam from the
  * chip's right edge; otherwise the beam leaves the chip's bottom (or top) edge and enters the card's left edge.
  */
-export function beamPath(from: Box, to: Box, origin: { left: number; top: number }): string {
+export function beamPath(
+  from: Box,
+  to: Box,
+  origin: { left: number; top: number },
+): string {
   const ox = origin.left;
   const oy = origin.top;
   const cx = (b: Box) => (b.left + b.right) / 2 - ox;

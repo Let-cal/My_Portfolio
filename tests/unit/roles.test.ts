@@ -22,10 +22,14 @@ describe("parseRole", () => {
 
 describe("orderExperiences", () => {
   it("puts the pm order first", () => {
-    expect(orderExperiences(content.experiences, role("pm"))[0].id).toBe("skg-ai-agent");
+    expect(orderExperiences(content.experiences, role("pm"))[0].id).toBe(
+      "skg-ai-agent",
+    );
   });
   it("puts the techlead order first", () => {
-    expect(orderExperiences(content.experiences, role("techlead"))[0].id).toBe("skg-flexybox-p1");
+    expect(orderExperiences(content.experiences, role("techlead"))[0].id).toBe(
+      "skg-flexybox-p1",
+    );
   });
   it("drops unpublished entries", () => {
     const exps = content.experiences.map((e) =>
@@ -60,7 +64,10 @@ describe("orderSkillGroups", () => {
     expect(new Set(groups).size).toBe(8);
   });
   it("appends missing groups in declaration order", () => {
-    const groups = orderSkillGroups({ ...role("pm"), skillGroupOrder: ["design"] });
+    const groups = orderSkillGroups({
+      ...role("pm"),
+      skillGroupOrder: ["design"],
+    });
     expect(groups[0]).toBe("design");
     expect(groups.slice(1)).toEqual(SKILL_GROUPS.filter((g) => g !== "design"));
   });

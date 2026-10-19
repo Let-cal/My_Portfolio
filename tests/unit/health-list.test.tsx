@@ -17,9 +17,26 @@ describe("HealthList", () => {
     render(
       <HealthList
         issues={[
-          issue({ id: "a", severity: "info", kind: "hidden-items", message: "2 chứng chỉ đang ẩn", href: "/admin/certificates" }),
-          issue({ id: "b", severity: "error", kind: "missing-cv", message: "Thiếu CV", href: "/admin/roles" }),
-          issue({ id: "c", severity: "warning", message: "12 skill chưa gắn", href: "/admin/skills?filter=orphan" }),
+          issue({
+            id: "a",
+            severity: "info",
+            kind: "hidden-items",
+            message: "2 chứng chỉ đang ẩn",
+            href: "/admin/certificates",
+          }),
+          issue({
+            id: "b",
+            severity: "error",
+            kind: "missing-cv",
+            message: "Thiếu CV",
+            href: "/admin/roles",
+          }),
+          issue({
+            id: "c",
+            severity: "warning",
+            message: "12 skill chưa gắn",
+            href: "/admin/skills?filter=orphan",
+          }),
         ]}
       />,
     );

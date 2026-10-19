@@ -1,6 +1,11 @@
 import { KineticText } from "@/components/fx/KineticText";
 import { segmentKineticWords } from "@/components/fx/kinetic-words";
-import { ROLE_KEYS, type Content, type Locale, type RoleKey } from "@/content/schema";
+import {
+  ROLE_KEYS,
+  type Content,
+  type Locale,
+  type RoleKey,
+} from "@/content/schema";
 import { pickLocale } from "@/lib/i18n-text";
 import { getRolePortraits } from "@/lib/role-portraits.server";
 import { HeroStats } from "./hero/HeroStats";
@@ -18,7 +23,13 @@ import { HeroRoleBody, HeroRoleTitle, type HeroRoleData } from "./HeroRole";
  * card, the numbers, the trilingual name ticker and the quick facts. Role-dependent parts are small client components
  * that only receive the three roles' display data.
  */
-export function Hero({ content, locale }: { content: Content; locale: Locale }) {
+export function Hero({
+  content,
+  locale,
+}: {
+  content: Content;
+  locale: Locale;
+}) {
   const { profile, roles, education } = content;
 
   const roleData = Object.fromEntries(
@@ -34,7 +45,9 @@ export function Hero({ content, locale }: { content: Content; locale: Locale }) 
       ];
     }),
   ) as Record<RoleKey, HeroRoleData>;
-  const cvUrls = Object.fromEntries(ROLE_KEYS.map((key) => [key, roleData[key].cvFileUrl])) as Record<RoleKey, string>;
+  const cvUrls = Object.fromEntries(
+    ROLE_KEYS.map((key) => [key, roleData[key].cvFileUrl]),
+  ) as Record<RoleKey, string>;
   const availabilityNote = pickLocale(profile.availabilityNote, locale);
   const school = [...education].sort((a, b) => a.sortIndex - b.sortIndex)[0];
 
@@ -49,7 +62,10 @@ export function Hero({ content, locale }: { content: Content; locale: Locale }) 
           id="hero-heading"
           className="font-heading text-[clamp(2.4rem,6vw,4.25rem)] leading-[1.02] font-extrabold tracking-[-0.025em] text-balance"
         >
-          <KineticText text={profile.name} preparedWords={segmentKineticWords(profile.name)} />
+          <KineticText
+            text={profile.name}
+            preparedWords={segmentKineticWords(profile.name)}
+          />
         </h1>
         <HeroRoleTitle roles={roleData} />
       </header>
@@ -80,7 +96,11 @@ export function Hero({ content, locale }: { content: Content; locale: Locale }) 
 
       <div data-scene-avoid="" className="mt-10">
         <QuickFacts
-          education={{ school: school?.school ?? "", major: pickLocale(school?.major, locale), gpa: school?.gpa }}
+          education={{
+            school: school?.school ?? "",
+            major: pickLocale(school?.major, locale),
+            gpa: school?.gpa,
+          }}
           openToWork={profile.openToWork}
           availabilityNote={availabilityNote}
         />

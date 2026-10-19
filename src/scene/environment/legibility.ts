@@ -22,7 +22,12 @@ const smooth = (t: number) => {
  * How much text-protection covers the point (x, y): 1 inside a rectangle, falling smoothly to 0 over `feather`
  * pixels outside it. The strongest rectangle wins. The same falloff the veil shader draws.
  */
-export function rectCoverage(rects: readonly Rect[], x: number, y: number, feather: number): number {
+export function rectCoverage(
+  rects: readonly Rect[],
+  x: number,
+  y: number,
+  feather: number,
+): number {
   let best = 0;
   for (const r of rects) {
     const dx = Math.max(r.x0 - x, 0, x - r.x1);
@@ -69,17 +74,32 @@ export function mergeRects(rects: readonly Rect[], gap: number): Rect[] {
       for (let j = i + 1; j < out.length; j++) {
         const a = out[i];
         const b = out[j];
-        const unionArea = (Math.max(a.x1, b.x1) - Math.min(a.x0, b.x0)) * (Math.max(a.y1, b.y1) - Math.min(a.y0, b.y0));
-        const overlap = Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0)) * Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0));
-        const filledArea = (a.x1 - a.x0) * (a.y1 - a.y0) + (b.x1 - b.x0) * (b.y1 - b.y0) - overlap;
+        const unionArea =
+          (Math.max(a.x1, b.x1) - Math.min(a.x0, b.x0)) *
+          (Math.max(a.y1, b.y1) - Math.min(a.y0, b.y0));
+        const overlap =
+          Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0)) *
+          Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0));
+        const filledArea =
+          (a.x1 - a.x0) * (a.y1 - a.y0) +
+          (b.x1 - b.x0) * (b.y1 - b.y0) -
+          overlap;
         // A shared backdrop must not turn an L-shaped pair into a large empty panel.
         const compact = filledArea >= unionArea * 0.75;
-        if ((a.veil !== false) === (b.veil !== false) && compact && b.x0 - a.x1 <= gap && a.x0 - b.x1 <= gap && b.y0 - a.y1 <= gap && a.y0 - b.y1 <= gap) {
+        if (
+          (a.veil !== false) === (b.veil !== false) &&
+          compact &&
+          b.x0 - a.x1 <= gap &&
+          a.x0 - b.x1 <= gap &&
+          b.y0 - a.y1 <= gap &&
+          a.y0 - b.y1 <= gap
+        ) {
           a.x0 = Math.min(a.x0, b.x0);
           a.y0 = Math.min(a.y0, b.y0);
           a.x1 = Math.max(a.x1, b.x1);
           a.y1 = Math.max(a.y1, b.y1);
-          if (a.large !== undefined || b.large !== undefined) a.large = a.large === true && b.large === true;
+          if (a.large !== undefined || b.large !== undefined)
+            a.large = a.large === true && b.large === true;
           out.splice(j, 1);
           merged = true;
           break;
@@ -94,22 +114,42 @@ export function mergeRects(rects: readonly Rect[], gap: number): Rect[] {
  * The rectangles worth drawing: clipped to the viewport, empty and off-screen ones dropped, and at most
  * `MAX_AVOID` of them, the biggest first.
  */
-export function selectRects(rects: readonly Rect[], width: number, height: number, max = MAX_AVOID): Rect[] {
+export function selectRects(
+  rects: readonly Rect[],
+  width: number,
+  height: number,
+  max = MAX_AVOID,
+): Rect[] {
   const kept: Rect[] = [];
   for (const r of rects) {
     const x0 = Math.max(0, r.x0);
     const y0 = Math.max(0, r.y0);
     const x1 = Math.min(width, r.x1);
     const y1 = Math.min(height, r.y1);
-    if (x1 - x0 > 0 && y1 - y0 > 0) kept.push({ x0, y0, x1, y1, large: r.large, ...(r.veil === false ? { veil: false } : {}) });
+    if (x1 - x0 > 0 && y1 - y0 > 0)
+      kept.push({
+        x0,
+        y0,
+        x1,
+        y1,
+        large: r.large,
+        ...(r.veil === false ? { veil: false } : {}),
+      });
   }
-  kept.sort((a, b) => (b.x1 - b.x0) * (b.y1 - b.y0) - (a.x1 - a.x0) * (a.y1 - a.y0));
+  kept.sort(
+    (a, b) => (b.x1 - b.x0) * (b.y1 - b.y0) - (a.x1 - a.x0) * (a.y1 - a.y0),
+  );
   return kept.length > max ? kept.slice(0, max) : kept;
 }
 
 /** True when the rectangles overlap or are within `margin` pixels of each other. */
 export function rectsNear(a: Rect, b: Rect, margin: number): boolean {
-  return b.x0 - a.x1 <= margin && a.x0 - b.x1 <= margin && b.y0 - a.y1 <= margin && a.y0 - b.y1 <= margin;
+  return (
+    b.x0 - a.x1 <= margin &&
+    a.x0 - b.x1 <= margin &&
+    b.y0 - a.y1 <= margin &&
+    a.y0 - b.y1 <= margin
+  );
 }
 
 /**
@@ -124,12 +164,21 @@ export const LARGE_DAY_SHARE = 0.8;
 export function veilOpacity(
   rect: Rect,
   creature: Rect | null,
-  { day, props, floor, margin }: { day: number; props: number; floor: number; margin: number },
+  {
+    day,
+    props,
+    floor,
+    margin,
+  }: { day: number; props: number; floor: number; margin: number },
 ): number {
   const dayShare = Math.min(1, Math.max(0, day));
   const large = rect.large === true;
   const near = creature && rectsNear(rect, creature, margin) ? 1 : 0;
-  const need = Math.max(near, Math.min(1, Math.max(0, props)), dayShare * (large ? LARGE_DAY_SHARE : 1));
+  const need = Math.max(
+    near,
+    Math.min(1, Math.max(0, props)),
+    dayShare * (large ? LARGE_DAY_SHARE : 1),
+  );
   return floor + (1 - floor) * need;
 }
 
@@ -165,7 +214,13 @@ export function findOpenSpot(
   const dx = (width * (1 - 2 * SPOT_MARGIN_X)) / (SPOT_COLS - 1);
   const dy = (height * (1 - 2 * SPOT_MARGIN_Y)) / (SPOT_ROWS - 1);
   for (let j = 0; j < SPOT_ROWS; j++) {
-    for (let i = 0; i < SPOT_COLS; i++) spotCover[j * SPOT_COLS + i] = rectCoverage(rects, x0 + i * dx, y0 + j * dy, SPOT_FEATHER);
+    for (let i = 0; i < SPOT_COLS; i++)
+      spotCover[j * SPOT_COLS + i] = rectCoverage(
+        rects,
+        x0 + i * dx,
+        y0 + j * dy,
+        SPOT_FEATHER,
+      );
   }
   let best = Infinity;
   let bi = 0;
@@ -174,13 +229,27 @@ export function findOpenSpot(
     for (let i = 0; i < SPOT_COLS; i++) {
       let sum = 0;
       let n = 0;
-      for (let b = Math.max(0, j - 1); b <= Math.min(SPOT_ROWS - 1, j + 1); b++) {
-        for (let a = Math.max(0, i - 1); a <= Math.min(SPOT_COLS - 1, i + 1); a++) {
+      for (
+        let b = Math.max(0, j - 1);
+        b <= Math.min(SPOT_ROWS - 1, j + 1);
+        b++
+      ) {
+        for (
+          let a = Math.max(0, i - 1);
+          a <= Math.min(SPOT_COLS - 1, i + 1);
+          a++
+        ) {
           sum += spotCover[b * SPOT_COLS + a];
           n++;
         }
       }
-      const c = sum / n + 0.06 * Math.hypot((x0 + i * dx) / width - 0.45, (y0 + j * dy) / height - 0.6);
+      const c =
+        sum / n +
+        0.06 *
+          Math.hypot(
+            (x0 + i * dx) / width - 0.45,
+            (y0 + j * dy) / height - 0.6,
+          );
       spotCost[j * SPOT_COLS + i] = c;
       if (c < best) {
         best = c;
@@ -190,8 +259,14 @@ export function findOpenSpot(
     }
   }
   if (prev) {
-    const pi = Math.min(SPOT_COLS - 1, Math.max(0, Math.round((prev.x - x0) / dx)));
-    const pj = Math.min(SPOT_ROWS - 1, Math.max(0, Math.round((prev.y - y0) / dy)));
+    const pi = Math.min(
+      SPOT_COLS - 1,
+      Math.max(0, Math.round((prev.x - x0) / dx)),
+    );
+    const pj = Math.min(
+      SPOT_ROWS - 1,
+      Math.max(0, Math.round((prev.y - y0) / dy)),
+    );
     if (spotCost[pj * SPOT_COLS + pi] <= best + SPOT_KEEP) return prev;
   }
   out.x = x0 + bi * dx;

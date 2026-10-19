@@ -12,7 +12,11 @@ const MOTION_EVENT = "letcal-motion-change";
 let memoryPref: MotionPreference | null = null;
 
 function osPrefersReduced(): boolean {
-  return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia(REDUCED_MOTION_QUERY).matches;
+  return (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia(REDUCED_MOTION_QUERY).matches
+  );
 }
 
 /** The saved choice (`system` when nothing, or junk, is stored). */
@@ -25,7 +29,10 @@ export function getMotionPreference(): MotionPreference {
   }
 }
 
-export function isMotionReduced(pref: MotionPreference, osReduced: boolean): boolean {
+export function isMotionReduced(
+  pref: MotionPreference,
+  osReduced: boolean,
+): boolean {
   return pref === "off" || (pref === "system" && osReduced);
 }
 
@@ -36,7 +43,9 @@ export function getMotionReduced(): boolean {
 
 /** Writes the effective state to <html data-motion> (what the pre-paint script does on first load). */
 export function syncMotionAttribute() {
-  document.documentElement.dataset.motion = getMotionReduced() ? "reduced" : "full";
+  document.documentElement.dataset.motion = getMotionReduced()
+    ? "reduced"
+    : "full";
 }
 
 /**
@@ -56,7 +65,10 @@ export function setMotionPreference(pref: MotionPreference) {
 }
 
 function subscribe(onChange: () => void) {
-  const mql = typeof window.matchMedia === "function" ? window.matchMedia(REDUCED_MOTION_QUERY) : null;
+  const mql =
+    typeof window.matchMedia === "function"
+      ? window.matchMedia(REDUCED_MOTION_QUERY)
+      : null;
   const onSystemChange = () => {
     syncMotionAttribute();
     onChange();
@@ -72,14 +84,33 @@ function subscribe(onChange: () => void) {
 }
 
 /** The saved preference, the effective `reduced` flag and a setter. Server snapshot: `system`, not reduced. */
-export function useMotionPreference(): { pref: MotionPreference; reduced: boolean; setPref: (pref: MotionPreference) => void } {
-  const pref = useSyncExternalStore(subscribe, getMotionPreference, () => "system" as const);
-  const reduced = useSyncExternalStore(subscribe, () => isMotionReduced(getMotionPreference(), osPrefersReduced()), () => false);
-  const setPref = useCallback((next: MotionPreference) => setMotionPreference(next), []);
+export function useMotionPreference(): {
+  pref: MotionPreference;
+  reduced: boolean;
+  setPref: (pref: MotionPreference) => void;
+} {
+  const pref = useSyncExternalStore(
+    subscribe,
+    getMotionPreference,
+    () => "system" as const,
+  );
+  const reduced = useSyncExternalStore(
+    subscribe,
+    () => isMotionReduced(getMotionPreference(), osPrefersReduced()),
+    () => false,
+  );
+  const setPref = useCallback(
+    (next: MotionPreference) => setMotionPreference(next),
+    [],
+  );
   return { pref, reduced, setPref };
 }
 
 /** The effective reduced-motion flag alone (what `usePrefersReducedMotion` returns). */
 export function useReducedMotionEffective(): boolean {
-  return useSyncExternalStore(subscribe, () => isMotionReduced(getMotionPreference(), osPrefersReduced()), () => false);
+  return useSyncExternalStore(
+    subscribe,
+    () => isMotionReduced(getMotionPreference(), osPrefersReduced()),
+    () => false,
+  );
 }

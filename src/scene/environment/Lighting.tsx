@@ -2,7 +2,12 @@
 
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
-import { Color, type DirectionalLight, type HemisphereLight, type PointLight } from "three";
+import {
+  Color,
+  type DirectionalLight,
+  type HemisphereLight,
+  type PointLight,
+} from "three";
 import { creatureLive } from "../creature/live";
 import { lerp } from "../creature/profiles";
 import { sceneLive } from "./live";
@@ -36,7 +41,10 @@ export function Lighting() {
   const hemi = useRef<HemisphereLight>(null);
   const key = useRef<DirectionalLight>(null);
   const glow = useRef<PointLight>(null);
-  const initial = useMemo(() => ({ sky: NIGHT.hemiSky.clone(), ground: NIGHT.hemiGround.clone() }), []);
+  const initial = useMemo(
+    () => ({ sky: NIGHT.hemiSky.clone(), ground: NIGHT.hemiGround.clone() }),
+    [],
+  );
   const moonlight = useMemo(() => new Color(0x9ec8eb), []);
 
   useFrame(() => {
@@ -45,28 +53,48 @@ export function Lighting() {
     if (hemi.current) {
       hemi.current.color.copy(NIGHT.hemiSky).lerp(DAY.hemiSky, day);
       hemi.current.groundColor.copy(NIGHT.hemiGround).lerp(DAY.hemiGround, day);
-      hemi.current.intensity = lerp(NIGHT.hemi, DAY.hemi, day) + garden * (1 - day) * 0.12;
+      hemi.current.intensity =
+        lerp(NIGHT.hemi, DAY.hemi, day) + garden * (1 - day) * 0.12;
     }
     if (key.current) {
       key.current.color.copy(NIGHT.key).lerp(DAY.key, day);
       key.current.color.lerp(moonlight, garden * (1 - day) * 0.65);
       key.current.intensity = lerp(NIGHT.keyIntensity, DAY.keyIntensity, day);
-      key.current.position.set(lerp(3, GARDEN_CELESTIAL[0], garden), lerp(6, GARDEN_CELESTIAL[1], garden), lerp(2, GARDEN_CELESTIAL[2], garden));
+      key.current.position.set(
+        lerp(3, GARDEN_CELESTIAL[0], garden),
+        lerp(6, GARDEN_CELESTIAL[1], garden),
+        lerp(2, GARDEN_CELESTIAL[2], garden),
+      );
     }
     if (glow.current) {
       const h = creatureLive.head;
       glow.current.position.set(h.x, h.y + 1.6, h.z);
       glow.current.color.copy(NIGHT.glow).lerp(DAY.glow, day);
       // Dimmed along with the creature while it swims under text.
-      glow.current.intensity = lerp(NIGHT.glowIntensity, DAY.glowIntensity, day) * creatureLive.visibility;
+      glow.current.intensity =
+        lerp(NIGHT.glowIntensity, DAY.glowIntensity, day) *
+        creatureLive.visibility;
     }
   });
 
   return (
     <>
-      <hemisphereLight ref={hemi} args={[initial.sky, initial.ground, NIGHT.hemi]} />
-      <directionalLight ref={key} position={[3, 6, 2]} intensity={NIGHT.keyIntensity} />
-      <pointLight ref={glow} color={NIGHT.glow} intensity={NIGHT.glowIntensity} distance={6} decay={1.6} />
+      <hemisphereLight
+        ref={hemi}
+        args={[initial.sky, initial.ground, NIGHT.hemi]}
+      />
+      <directionalLight
+        ref={key}
+        position={[3, 6, 2]}
+        intensity={NIGHT.keyIntensity}
+      />
+      <pointLight
+        ref={glow}
+        color={NIGHT.glow}
+        intensity={NIGHT.glowIntensity}
+        distance={6}
+        decay={1.6}
+      />
     </>
   );
 }

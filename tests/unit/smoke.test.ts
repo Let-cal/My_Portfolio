@@ -8,12 +8,18 @@ describe("scaffold smoke test", () => {
   });
 
   it("ships the Tech Lead CV PDF", () => {
-    const pdf = resolve(process.cwd(), "public/cv/LeTranCatLam_CV_TechLead.pdf");
+    const pdf = resolve(
+      process.cwd(),
+      "public/cv/LeTranCatLam_CV_TechLead.pdf",
+    );
     expect(existsSync(pdf)).toBe(true);
   });
 
   it("ships the Technical PM CV PDF", () => {
-    const pdf = resolve(process.cwd(), "public/cv/LeTranCatLam_CV_TechnicalPM.pdf");
+    const pdf = resolve(
+      process.cwd(),
+      "public/cv/LeTranCatLam_CV_TechnicalPM.pdf",
+    );
     expect(existsSync(pdf)).toBe(true);
   });
 });

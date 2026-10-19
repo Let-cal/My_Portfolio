@@ -1,6 +1,10 @@
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
-import { applyTheme, restoreSavedTheme, useTheme } from "@/components/site/theme";
+import {
+  applyTheme,
+  restoreSavedTheme,
+  useTheme,
+} from "@/components/site/theme";
 import { THEME_INIT_SCRIPT } from "@/components/site/theme-script";
 
 const html = document.documentElement;

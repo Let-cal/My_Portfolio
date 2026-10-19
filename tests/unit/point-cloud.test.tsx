@@ -1,6 +1,13 @@
-import { InstancedBufferGeometry, PerspectiveCamera, type ShaderMaterial } from "three";
+import {
+  InstancedBufferGeometry,
+  PerspectiveCamera,
+  type ShaderMaterial,
+} from "three";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { createPointCloud, cloudQualityForTier } from "@/scene/creature/PointCloudMorph";
+import {
+  createPointCloud,
+  cloudQualityForTier,
+} from "@/scene/creature/PointCloudMorph";
 import { createCreatureRig } from "@/scene/creature/rig";
 import type { SceneState } from "@/scene/store";
 
@@ -23,12 +30,18 @@ const state = (patch: Partial<SceneState> = {}): SceneState => ({
   ...patch,
 });
 
-function drive(rig: ReturnType<typeof createCreatureRig>, frames: number, s: SceneState, t0 = 0) {
+function drive(
+  rig: ReturnType<typeof createCreatureRig>,
+  frames: number,
+  s: SceneState,
+  t0 = 0,
+) {
   const cam = new PerspectiveCamera(40, 16 / 9, 0.1, 60);
   cam.position.set(0, 3.2, 3.5);
   cam.lookAt(0, 0, 0);
   cam.updateMatrixWorld();
-  for (let f = 0; f < frames; f++) rig.update({ dt: 1 / 60, time: t0 + f / 60, camera: cam, state: s });
+  for (let f = 0; f < frames; f++)
+    rig.update({ dt: 1 / 60, time: t0 + f / 60, camera: cam, state: s });
   return t0 + frames / 60;
 }
 
@@ -37,8 +50,12 @@ describe("point cloud", () => {
     const rig = createCreatureRig({ rings: 40, sides: 10 });
     const cloud = createPointCloud(rig, "high");
     const g = cloud.points.geometry;
-    expect(g.getAttribute("position")).toBe(rig.bodyGeometry.getAttribute("position"));
-    expect(g.getAttribute("aRand")).toBe(rig.bodyGeometry.getAttribute("aRand"));
+    expect(g.getAttribute("position")).toBe(
+      rig.bodyGeometry.getAttribute("position"),
+    );
+    expect(g.getAttribute("aRand")).toBe(
+      rig.bodyGeometry.getAttribute("aRand"),
+    );
     expect(g.getAttribute("uv")).toBe(rig.bodyGeometry.getAttribute("uv"));
     expect(g.getIndex()).not.toBeNull();
     cloud.dispose();
@@ -49,10 +66,14 @@ describe("point cloud", () => {
     const rig = createCreatureRig({ rings: 40, sides: 10 });
     const high = createPointCloud(rig, "high");
     const low = createPointCloud(rig, "low");
-    const count = (c: typeof high) => c.points.geometry.getIndex()!.count * (c.points.geometry as InstancedBufferGeometry).instanceCount;
+    const count = (c: typeof high) =>
+      c.points.geometry.getIndex()!.count *
+      (c.points.geometry as InstancedBufferGeometry).instanceCount;
     expect(count(low)).toBeLessThan(count(high) * 0.6);
     expect(count(low)).toBeGreaterThan(0);
-    expect(cloudQualityForTier("low").stride).toBeGreaterThan(cloudQualityForTier("high").stride);
+    expect(cloudQualityForTier("low").stride).toBeGreaterThan(
+      cloudQualityForTier("high").stride,
+    );
     high.dispose();
     low.dispose();
     rig.dispose();
@@ -65,7 +86,8 @@ describe("point cloud", () => {
     let t = drive(rig, 30, state({ chapter: 4, t: 1 }));
     cloud.update(rig, t, 0, 1000);
     expect(cloud.points.visible).toBe(false);
-    for (let i = 0; i < 180; i++) t = drive(rig, 1, state({ chapter: 5, t: 0.5 }), t);
+    for (let i = 0; i < 180; i++)
+      t = drive(rig, 1, state({ chapter: 5, t: 0.5 }), t);
     cloud.update(rig, t, 0, 1000);
     expect(cloud.points.visible).toBe(true);
     expect(mat.uniforms.uScatter.value).toBeGreaterThan(0.95);

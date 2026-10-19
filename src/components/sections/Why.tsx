@@ -19,25 +19,36 @@ export function Why({ content, locale }: { content: Content; locale: Locale }) {
 
   const cards = [...content.whyCards]
     .sort((a, b) => a.sortIndex - b.sortIndex)
-    .map(
-      (c): WhyCardView => ({
-        id: c.id,
-        title: pickLocale(c.title, locale),
-        subtitle: pickLocale(c.subtitle, locale),
-        tag: pickLocale(c.tag, locale),
-        body: pickLocale(c.body, locale),
-        colors: c.colors,
-        evidenceLink: c.evidenceLink,
-        stat: c.stat
-          ? { value: c.stat.value, prefix: c.stat.prefix, suffix: c.stat.suffix, label: pickLocale(c.stat.label, locale) }
-          : null,
-      }),
-    );
+    .map((c): WhyCardView => ({
+      id: c.id,
+      title: pickLocale(c.title, locale),
+      subtitle: pickLocale(c.subtitle, locale),
+      tag: pickLocale(c.tag, locale),
+      body: pickLocale(c.body, locale),
+      colors: c.colors,
+      evidenceLink: c.evidenceLink,
+      stat: c.stat
+        ? {
+            value: c.stat.value,
+            prefix: c.stat.prefix,
+            suffix: c.stat.suffix,
+            label: pickLocale(c.stat.label, locale),
+          }
+        : null,
+    }));
 
   return (
-    <section id="why" aria-labelledby="why-heading" className="relative mx-auto max-w-6xl scroll-mt-14 px-4 py-24 sm:px-6">
+    <section
+      id="why"
+      aria-labelledby="why-heading"
+      className="relative mx-auto max-w-6xl scroll-mt-14 px-4 py-24 sm:px-6"
+    >
       <Reveal>
-        <h2 id="why-heading" data-scene-avoid="" className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+        <h2
+          id="why-heading"
+          data-scene-avoid=""
+          className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl"
+        >
           {ts("why")}
         </h2>
       </Reveal>
@@ -49,7 +60,12 @@ export function Why({ content, locale }: { content: Content; locale: Locale }) {
           className="font-heading text-2xl leading-snug font-medium tracking-tight text-balance sm:text-3xl md:text-4xl"
         />
       </div>
-      <WhyCarousel cards={cards.map((card) => ({ id: card.id, content: <WhyCard card={card} evidenceLabel={t("seeEvidence")} /> }))} />
+      <WhyCarousel
+        cards={cards.map((card) => ({
+          id: card.id,
+          content: <WhyCard card={card} evidenceLabel={t("seeEvidence")} />,
+        }))}
+      />
     </section>
   );
 }

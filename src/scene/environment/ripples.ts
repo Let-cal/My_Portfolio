@@ -13,7 +13,12 @@ export function createRipples(): RippleBuffer {
 }
 
 /** Starts a ripple at (x, z) at time `t0`, in the oldest slot. No allocation. */
-export function addRipple(buffer: RippleBuffer, x: number, z: number, t0: number): void {
+export function addRipple(
+  buffer: RippleBuffer,
+  x: number,
+  z: number,
+  t0: number,
+): void {
   const i = buffer.next * 3;
   buffer.data[i] = x;
   buffer.data[i + 1] = z;

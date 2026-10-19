@@ -60,7 +60,10 @@ export function HelloIntro() {
 
   useEffect(() => {
     if (!running) return;
-    const timer = setTimeout(() => (step >= 3 ? finish() : setStep(step + 1)), step === 3 ? SLIDE_MS : WORD_MS);
+    const timer = setTimeout(
+      () => (step >= 3 ? finish() : setStep(step + 1)),
+      step === 3 ? SLIDE_MS : WORD_MS,
+    );
     return () => clearTimeout(timer);
   }, [running, step, finish]);
 
@@ -88,7 +91,11 @@ export function HelloIntro() {
         lang={greeting.lang}
         className="hello-word flex items-center gap-4 font-heading text-base font-medium tracking-tight md:text-5xl lg:text-7xl"
       >
-        <span aria-hidden="true" className="size-2.5 rounded-full sm:size-3.5" style={{ backgroundColor: "var(--role-accent, #f97316)" }} />
+        <span
+          aria-hidden="true"
+          className="size-2.5 rounded-full sm:size-3.5"
+          style={{ backgroundColor: "var(--role-accent, #f97316)" }}
+        />
         {greeting.text}
       </p>
     </div>

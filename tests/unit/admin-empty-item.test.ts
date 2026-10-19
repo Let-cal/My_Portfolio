@@ -6,7 +6,9 @@ import { RESOURCE_KEYS, resources } from "@/lib/admin/resources";
 describe("emptyItem", () => {
   it.each(RESOURCE_KEYS)("gives a starting value for every %s field", (key) => {
     const item = emptyItem(key);
-    expect(Object.keys(item).sort()).toEqual(resources[key].fields.map((f) => f.name).sort());
+    expect(Object.keys(item).sort()).toEqual(
+      resources[key].fields.map((f) => f.name).sort(),
+    );
   });
 
   it("starts lists empty and translations blank", () => {

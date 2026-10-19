@@ -5,13 +5,21 @@ import type { RoleKey } from "@/content/schema";
  * (tech lead), Ogon gold (PM). They match the three role portraits. Set as `--role-accent` on <html>; text on the
  * light theme uses the darker `--role-accent-text` (globals.css).
  */
-export const ROLE_ACCENT: Record<RoleKey, string> = { fullstack: "#0ea5e9", techlead: "#38bdf8", pm: "#e0a84e" };
+export const ROLE_ACCENT: Record<RoleKey, string> = {
+  fullstack: "#0ea5e9",
+  techlead: "#38bdf8",
+  pm: "#e0a84e",
+};
 
 /**
  * Start angle of each role's 120° slice of the hero wheel, as a CSS angle (0° = top, clockwise):
  * full-stack upper-left, tech lead upper-right, PM at the bottom.
  */
-export const SECTOR_FROM: Record<RoleKey, number> = { fullstack: 240, techlead: 0, pm: 120 };
+export const SECTOR_FROM: Record<RoleKey, number> = {
+  fullstack: 240,
+  techlead: 0,
+  pm: 120,
+};
 
 /** Role order around the wheel, clockwise from the top. Arrow keys follow this order. */
 export const WHEEL_ORDER: readonly RoleKey[] = ["fullstack", "techlead", "pm"];
@@ -27,7 +35,12 @@ export function sectorForAngle(deg: number): RoleKey {
 }
 
 /** CSS angle (0° = up, clockwise, in [0, 360)) of the point (x, y) seen from the centre (cx, cy). Screen y grows down. */
-export function angleFromPoint(x: number, y: number, cx: number, cy: number): number {
+export function angleFromPoint(
+  x: number,
+  y: number,
+  cx: number,
+  cy: number,
+): number {
   const deg = (Math.atan2(x - cx, -(y - cy)) * 180) / Math.PI;
   return normalize(deg);
 }

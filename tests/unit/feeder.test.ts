@@ -1,7 +1,11 @@
 import { PerspectiveCamera } from "three";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { creatureLive } from "@/scene/creature/live";
-import { FOOD_FALL_SECONDS, FOOD_LIFETIME_SECONDS, MAX_FOOD } from "@/scene/interactions/feed";
+import {
+  FOOD_FALL_SECONDS,
+  FOOD_LIFETIME_SECONDS,
+  MAX_FOOD,
+} from "@/scene/interactions/feed";
 import { createFeeder } from "@/scene/interactions/feeder";
 import { sceneStore } from "@/scene/store";
 
@@ -15,7 +19,8 @@ function camera() {
 
 let feeder: ReturnType<typeof createFeeder>;
 let dropId = 0;
-const click = (x = 0, y = 0) => sceneStore.setState({ drop: { x, y, id: ++dropId } });
+const click = (x = 0, y = 0) =>
+  sceneStore.setState({ drop: { x, y, id: ++dropId } });
 
 beforeEach(() => {
   sceneStore.reset();
@@ -88,7 +93,9 @@ describe("feeder: click to food", () => {
     // The snout reaches the first pellet.
     Object.assign(creatureLive.head, { x: first.x, y: 0, z: first.z });
     feeder.update(cam, 1.1, vi.fn());
-    expect(sceneStore.getState().foods.some((f) => f.id === first.id)).toBe(false);
+    expect(sceneStore.getState().foods.some((f) => f.id === first.id)).toBe(
+      false,
+    );
     // Nobody eats the rest.
     Object.assign(creatureLive.head, { x: 20, y: 0, z: 20 });
     feeder.update(cam, FOOD_LIFETIME_SECONDS + 5, vi.fn());

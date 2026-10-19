@@ -5,7 +5,9 @@ import seed from "@/content/seed.json";
 
 const saveResource = vi.fn().mockResolvedValue({ ok: true });
 vi.mock("@/app/admin/actions", () => ({ saveResource }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+}));
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 vi.mock("@/lib/supabase/browser", () => ({ createBrowserSupabase: vi.fn() }));
 
@@ -25,12 +27,22 @@ describe("ResourceForm skills field", () => {
         resourceKey="projects"
         isNew={false}
         initial={{ ...project, skillIds: ["react"] }}
-        options={{ skills: [{ id: "react", label: "React", group: "frameworks" }, { id: "dart", label: "Dart", group: "languages" }] }}
+        options={{
+          skills: [
+            { id: "react", label: "React", group: "frameworks" },
+            { id: "dart", label: "Dart", group: "languages" },
+          ],
+        }}
       />,
     );
-    fireEvent.change(screen.getByRole("combobox", { name: "Skills dùng ở đây" }), { target: { value: "dar" } });
+    fireEvent.change(
+      screen.getByRole("combobox", { name: "Skills dùng ở đây" }),
+      { target: { value: "dar" } },
+    );
     fireEvent.click(screen.getByRole("option", { name: "Dart" }));
-    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Lưu" })));
+    await act(async () =>
+      fireEvent.click(screen.getByRole("button", { name: "Lưu" })),
+    );
     expect(saveResource).toHaveBeenCalledTimes(1);
     const [key, values, isNew] = saveResource.mock.calls[0];
     expect(key).toBe("projects");

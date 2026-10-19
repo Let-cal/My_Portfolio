@@ -26,7 +26,12 @@ import { creatureVisibility, findOpenSpot } from "../environment/legibility";
 import { dampValue, smoothstep } from "../environment/math";
 import { nearestFood } from "../interactions/feed";
 import type { SceneState } from "../store";
-import { SCATTER_SPREAD, varietyForRole, VARIETY_SURFACE, type CreatureQuality } from "./config";
+import {
+  SCATTER_SPREAD,
+  varietyForRole,
+  VARIETY_SURFACE,
+  type CreatureQuality,
+} from "./config";
 import {
   fanGeometry,
   flexFan,
@@ -163,7 +168,10 @@ const UP = new Vector3(0, 1, 0);
  * spikes, horns, whiskers and eyes. Everything is allocated here once; `update` only writes into existing
  * buffers. A glTF creature can replace this module as long as it offers the same `root / update / dispose`.
  */
-export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotropy?: number } = {}): CreatureRig {
+export function createCreatureRig(
+  quality: CreatureQuality,
+  opts: { maxAnisotropy?: number } = {},
+): CreatureRig {
   const N = quality.rings;
   const M = quality.sides;
   const root = new Group();
@@ -182,8 +190,10 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
   // --- textures (patterns are drawn once per variety and cached; textures are per rig) -------------------------
   const koiMaps = new Map<KoiVariety, Texture>();
   const finMaps = new Map<KoiVariety, Texture>();
-  const koiMap = (v: KoiVariety) => koiMaps.get(v) ?? koiMaps.set(v, tex(makeKoiTexture(v))).get(v)!;
-  const finMap = (v: KoiVariety) => finMaps.get(v) ?? finMaps.set(v, tex(makeFinTexture(v))).get(v)!;
+  const koiMap = (v: KoiVariety) =>
+    koiMaps.get(v) ?? koiMaps.set(v, tex(makeKoiTexture(v))).get(v)!;
+  const finMap = (v: KoiVariety) =>
+    finMaps.get(v) ?? finMaps.set(v, tex(makeFinTexture(v))).get(v)!;
 
   let variety: KoiVariety = "kohaku";
   let prevVariety: KoiVariety = variety;
@@ -200,10 +210,18 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
   const accent = own(createAccentMaterial());
   const glowMat = own(createGlowMaterial());
   const hideMat = own(
-    new MeshStandardMaterial({ map: dragonMap, color: GOLD, metalness: 0.7, roughness: 0.3, envMapIntensity: 0.4 }),
+    new MeshStandardMaterial({
+      map: dragonMap,
+      color: GOLD,
+      metalness: 0.7,
+      roughness: 0.3,
+      envMapIntensity: 0.4,
+    }),
   );
   const eyeMat = own(createEyeMaterial());
-  const whiskerMat = own(new LineBasicMaterial({ color: 0xffc27a, transparent: true, opacity: 0.9 }));
+  const whiskerMat = own(
+    new LineBasicMaterial({ color: 0xffc27a, transparent: true, opacity: 0.9 }),
+  );
 
   // --- body ------------------------------------------------------------------------------------------------------
   const bodyGeometry = own(createBodyGeometry(N, M));
@@ -235,8 +253,10 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
   const dorsalCols = dorsalEnd - dorsalStart + 1;
   const dorsalGeo = own(ribbonGeometry(dorsalCols));
   const dorsal = finMesh(dorsalGeo);
-  const dorsalPos = (dorsalGeo.getAttribute("position") as BufferAttribute).array as Float32Array;
-  const dorsalNor = (dorsalGeo.getAttribute("normal") as BufferAttribute).array as Float32Array;
+  const dorsalPos = (dorsalGeo.getAttribute("position") as BufferAttribute)
+    .array as Float32Array;
+  const dorsalNor = (dorsalGeo.getAttribute("normal") as BufferAttribute)
+    .array as Float32Array;
 
   // --- dragon parts ----------------------------------------------------------------------------------------------
   const instanced = (g: BufferGeometry, mat: Material, count: number) => {
@@ -246,12 +266,20 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
     root.add(mesh);
     return mesh;
   };
-  const spikes = instanced(own(new ConeGeometry(0.045, 0.2, 8).translate(0, 0.08, 0)), glowMat, SPIKES);
+  const spikes = instanced(
+    own(new ConeGeometry(0.045, 0.2, 8).translate(0, 0.08, 0)),
+    glowMat,
+    SPIKES,
+  );
   const horns = instanced(own(hornGeometry()), accent, 2);
   // Head plates (snout, jaw, two brows) are scaled spheres; legs carry their claws.
   const plates = instanced(own(new SphereGeometry(1, 24, 16)), hideMat, 4);
   const legs = instanced(own(legGeometry()), hideMat, 4);
-  const flames = instanced(own(new ConeGeometry(0.028, 0.24, 6).translate(0, 0.12, 0)), glowMat, MANE + TUFT);
+  const flames = instanced(
+    own(new ConeGeometry(0.028, 0.24, 6).translate(0, 0.12, 0)),
+    glowMat,
+    MANE + TUFT,
+  );
   const dragonParts = [spikes, horns, plates, legs, flames];
   const eyeGeo = own(new SphereGeometry(0.026, 16, 12));
   const eyes = new InstancedMesh(eyeGeo, eyeMat, 2);
@@ -259,7 +287,10 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
   root.add(eyes);
   const whiskers = [1, -1].map(() => {
     const g = own(new BufferGeometry());
-    g.setAttribute("position", new BufferAttribute(new Float32Array(WHISKER_POINTS * 3), 3));
+    g.setAttribute(
+      "position",
+      new BufferAttribute(new Float32Array(WHISKER_POINTS * 3), 3),
+    );
     const l = new Line(g, whiskerMat);
     l.frustumCulled = false;
     root.add(l);
@@ -267,7 +298,10 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
   });
 
   // --- simulation state -------------------------------------------------------------------------------------------
-  const base = Array.from({ length: N }, (_, i) => new Vector3(-i * 0.015, 0, 0));
+  const base = Array.from(
+    { length: N },
+    (_, i) => new Vector3(-i * 0.015, 0, 0),
+  );
   const P = Array.from({ length: N }, () => new Vector3());
   const baseFrames: Frame[] = buildFrames(base);
   const frames: Frame[] = buildFrames(base);
@@ -301,7 +335,16 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
   const ringAim = { x: 0, y: 0 };
   const ringEnd = { x: 0, y: 0 };
   /** What the ring's centre was last chosen for. */
-  const ringFor = { avoid: null as SceneState["avoid"] | null, x: 0, y: 0, r: 0, rx: 0, ry: 0, w: 0, h: 0 };
+  const ringFor = {
+    avoid: null as SceneState["avoid"] | null,
+    x: 0,
+    y: 0,
+    r: 0,
+    rx: 0,
+    ry: 0,
+    w: 0,
+    h: 0,
+  };
   let ringAt = -Infinity;
   let ringRadius = 0;
   let hasRing = false;
@@ -321,7 +364,13 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
   const dummy = new Object3D();
   const finColorA = new Color();
   const finColorB = new Color();
-  const limits: PondLimits = { idleX: 0, idleZ: 0, pointerX: 0, zMin: 0, zMax: 0 };
+  const limits: PondLimits = {
+    idleX: 0,
+    idleZ: 0,
+    pointerX: 0,
+    zMin: 0,
+    zMax: 0,
+  };
   const samplePx = DIM_SAMPLES.map(() => ({ x: 0, y: 0 }));
   const sampleIndex = DIM_SAMPLES.map((u) => Math.round(u * (N - 1)));
   let prevHeadX = 0;
@@ -335,7 +384,14 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
   };
 
   /** Puts a fin mesh at spine point i (local x = forward, y = up, z = right), offset by (side, up) radii. */
-  const placeFin = (obj: Object3D, i: number, side: number, up: number, back: number, scale: number) => {
+  const placeFin = (
+    obj: Object3D,
+    i: number,
+    side: number,
+    up: number,
+    back: number,
+    scale: number,
+  ) => {
     setFrameVectors(i);
     m4.makeBasis(vT, vU, vS);
     obj.quaternion.setFromRotationMatrix(m4);
@@ -371,7 +427,8 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
   const axesFrom = (dir: Vector3, hint: Vector3) => {
     yAxis.copy(dir).normalize();
     xAxis.copy(hint).addScaledVector(yAxis, -hint.dot(yAxis));
-    if (xAxis.lengthSq() < 1e-8) xAxis.set(1, 0, 0).addScaledVector(yAxis, -yAxis.x);
+    if (xAxis.lengthSq() < 1e-8)
+      xAxis.set(1, 0, 0).addScaledVector(yAxis, -yAxis.x);
     xAxis.normalize();
   };
 
@@ -394,9 +451,16 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
     setFrameVectors(hi);
     for (let q = 0; q < 2; q++) {
       const side = q === 0 ? 1 : -1;
-      tmp2.copy(vT).multiplyScalar(-1).addScaledVector(vU, 0.75).addScaledVector(vS, side * 0.32);
+      tmp2
+        .copy(vT)
+        .multiplyScalar(-1)
+        .addScaledVector(vU, 0.75)
+        .addScaledVector(vS, side * 0.32);
       axesFrom(tmp2, vU);
-      tmp.copy(P[hi]).addScaledVector(vU, RY[hi] * 0.55).addScaledVector(vS, side * RX[hi] * 0.45);
+      tmp
+        .copy(P[hi])
+        .addScaledVector(vU, RY[hi] * 0.55)
+        .addScaledVector(vS, side * RX[hi] * 0.45);
       const sc = grow * 1.35;
       setInstance(horns, q, tmp, xAxis, yAxis, sc, sc, sc);
     }
@@ -405,16 +469,34 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
     // Head plates in the head frame (x forward along T, y up along U); sphere radii per axis.
     setFrameVectors(0);
     const nose = RX[0] * 1.7;
-    tmp.copy(P[0]).addScaledVector(vT, nose * 0.45).addScaledVector(vU, RY[0] * 0.12);
+    tmp
+      .copy(P[0])
+      .addScaledVector(vT, nose * 0.45)
+      .addScaledVector(vU, RY[0] * 0.12);
     setInstance(plates, 0, tmp, vT, vU, 0.22 * grow, 0.085 * grow, 0.11 * grow);
-    tmp.copy(P[0]).addScaledVector(vT, nose * 0.3).addScaledVector(vU, -RY[0] * 0.55);
+    tmp
+      .copy(P[0])
+      .addScaledVector(vT, nose * 0.3)
+      .addScaledVector(vU, -RY[0] * 0.55);
     setInstance(plates, 1, tmp, vT, vU, 0.18 * grow, 0.05 * grow, 0.085 * grow);
     const ei = Math.max(1, Math.round(0.035 * (N - 1)));
     setFrameVectors(ei);
     for (let q = 0; q < 2; q++) {
       const side = q === 0 ? 1 : -1;
-      tmp.copy(P[ei]).addScaledVector(vU, RY[ei] * 0.72).addScaledVector(vS, side * RX[ei] * 0.5);
-      setInstance(plates, 2 + q, tmp, vT, vU, 0.09 * grow, 0.032 * grow, 0.045 * grow);
+      tmp
+        .copy(P[ei])
+        .addScaledVector(vU, RY[ei] * 0.72)
+        .addScaledVector(vS, side * RX[ei] * 0.5);
+      setInstance(
+        plates,
+        2 + q,
+        tmp,
+        vT,
+        vU,
+        0.09 * grow,
+        0.032 * grow,
+        0.045 * grow,
+      );
     }
     plates.instanceMatrix.needsUpdate = true;
 
@@ -423,10 +505,20 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
       const i = Math.round((k < 2 ? 0.17 : 0.45) * (N - 1));
       const side = k % 2 === 0 ? 1 : -1;
       setFrameVectors(i);
-      const swing = Math.sin(t * 2.4 + (k < 2 ? 0 : Math.PI) + (side > 0 ? 0 : Math.PI / 2)) * 0.35;
-      tmp2.copy(vS).multiplyScalar(side * 0.75).addScaledVector(vU, -0.65).addScaledVector(vT, swing);
+      const swing =
+        Math.sin(
+          t * 2.4 + (k < 2 ? 0 : Math.PI) + (side > 0 ? 0 : Math.PI / 2),
+        ) * 0.35;
+      tmp2
+        .copy(vS)
+        .multiplyScalar(side * 0.75)
+        .addScaledVector(vU, -0.65)
+        .addScaledVector(vT, swing);
       axesFrom(tmp2, vT);
-      tmp.copy(P[i]).addScaledVector(vS, side * RX[i] * 0.7).addScaledVector(vU, -RY[i] * 0.35);
+      tmp
+        .copy(P[i])
+        .addScaledVector(vS, side * RX[i] * 0.7)
+        .addScaledVector(vU, -RY[i] * 0.35);
       const sc = grow * 1.25;
       setInstance(legs, k, tmp, xAxis, yAxis, sc, sc, sc);
     }
@@ -438,12 +530,24 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
       const i = Math.round((0.06 + (0.07 * (k % 3)) / 2) * (N - 1));
       const a = (20 + 140 * f) * (Math.PI / 180);
       setFrameVectors(i);
-      tmp2.copy(vS).multiplyScalar(Math.cos(a) * RX[i]).addScaledVector(vU, Math.sin(a) * RY[i]);
+      tmp2
+        .copy(vS)
+        .multiplyScalar(Math.cos(a) * RX[i])
+        .addScaledVector(vU, Math.sin(a) * RY[i]);
       tmp.copy(P[i]).addScaledVector(tmp2, 0.85);
       tmp2.normalize().multiplyScalar(0.8).addScaledVector(vT, -1.2);
       axesFrom(tmp2, vT);
       const sc = grow * (0.9 + 0.25 * Math.sin(t * 6 + k * 1.7));
-      setInstance(flames, k, tmp, xAxis, yAxis, sc, sc * (1.1 - 0.3 * Math.abs(f - 0.5)), sc);
+      setInstance(
+        flames,
+        k,
+        tmp,
+        xAxis,
+        yAxis,
+        sc,
+        sc * (1.1 - 0.3 * Math.abs(f - 0.5)),
+        sc,
+      );
     }
     // Tail tuft.
     setFrameVectors(N - 1);
@@ -455,33 +559,56 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
         .addScaledVector(vS, Math.sin(a) * 0.6)
         .addScaledVector(vU, Math.cos(a) * 0.25);
       axesFrom(tmp2, vU);
-      const sc = grow * (1.4 - 0.4 * Math.abs(a)) * (0.9 + 0.2 * Math.sin(t * 5 + k));
+      const sc =
+        grow * (1.4 - 0.4 * Math.abs(a)) * (0.9 + 0.2 * Math.sin(t * 5 + k));
       setInstance(flames, MANE + k, P[N - 1], xAxis, yAxis, sc, sc * 1.3, sc);
     }
     flames.instanceMatrix.needsUpdate = true;
   }
 
   /** Viewport pixels of the point (x, z) at the dragon's flying height. */
-  function toPixels(camera: Camera, x: number, z: number, w: number, h: number, out: { x: number; y: number }) {
+  function toPixels(
+    camera: Camera,
+    x: number,
+    z: number,
+    w: number,
+    h: number,
+    out: { x: number; y: number },
+  ) {
     ringProbe.set(x, GUARDIAN_HEIGHT, z).project(camera);
     out.x = (ringProbe.x * 0.5 + 0.5) * w;
     out.y = (0.5 - ringProbe.y * 0.5) * h;
   }
 
   /** Looks for where the ring goes: its size on the water and on the screen, then the centre that fits the screen and spares the text. */
-  function refreshRing(state: SceneState, camera: Camera, w: number, h: number, cta: { x: number; y: number; r: number }) {
+  function refreshRing(
+    state: SceneState,
+    camera: Camera,
+    w: number,
+    h: number,
+    cta: { x: number; y: number; r: number },
+  ) {
     ndc.set((cta.x / w) * 2 - 1, -((cta.y / h) * 2 - 1));
     ray.setFromCamera(ndc, camera);
     if (!ray.ray.intersectPlane(flight, center)) return false;
     ndc.set(((cta.x + cta.r) / w) * 2 - 1, -((cta.y / h) * 2 - 1));
     ray.setFromCamera(ndc, camera);
-    const rim = ray.ray.intersectPlane(flight, hit2) ? Math.hypot(hit2.x - center.x, hit2.z - center.z) : 0;
+    const rim = ray.ray.intersectPlane(flight, hit2)
+      ? Math.hypot(hit2.x - center.x, hit2.z - center.z)
+      : 0;
     ringRadius = guardianRadius(rim);
     // The ring's half-axes on the screen, from the point on the water under the button.
     toPixels(camera, center.x, center.z, w, h, ringPx);
     toPixels(camera, center.x + ringRadius, center.z, w, h, ringEnd);
     let rx = Math.abs(ringEnd.x - ringPx.x);
-    toPixels(camera, center.x, center.z + ringRadius * ORBIT_DEPTH, w, h, ringEnd);
+    toPixels(
+      camera,
+      center.x,
+      center.z + ringRadius * ORBIT_DEPTH,
+      w,
+      h,
+      ringEnd,
+    );
     let ry = Math.abs(ringEnd.y - ringPx.y);
     // A narrow screen: the ring is no wider than a share of it, so the head is not off screen for most of a lap.
     const cap = GUARDIAN_HALF_WIDTH * w;
@@ -530,9 +657,14 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
     out: Vector3,
   ): boolean {
     const cta = state.cta;
-    if (!cta || !viewport || !(viewport.width > 0) || !(viewport.height > 0)) return false;
+    if (!cta || !viewport || !(viewport.width > 0) || !(viewport.height > 0))
+      return false;
     const { width: w, height: h } = viewport;
-    if (cta.y + cta.r < h * GUARDIAN_SEEN_TOP || cta.y - cta.r > h * GUARDIAN_SEEN_BOTTOM) return false;
+    if (
+      cta.y + cta.r < h * GUARDIAN_SEEN_TOP ||
+      cta.y - cta.r > h * GUARDIAN_SEEN_BOTTOM
+    )
+      return false;
     if (!hasRing || t - ringAt > GUARDIAN_REFRESH || t < ringAt) {
       ringAt = t;
       if (!refreshRing(state, camera, w, h, cta)) return false;
@@ -552,7 +684,9 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
     center.z = Math.min(center.z, GUARDIAN_Z_MAX);
     // The target runs a little ahead of the head, along the ring: the head follows the path rather than a clock it
     // cannot keep time with (chasing a moving point, a long dragon swings far wide at the ends of the ellipse).
-    const phase = Math.atan2(head.z - center.z, (head.x - center.x) * ORBIT_DEPTH) + GUARDIAN_LEAD;
+    const phase =
+      Math.atan2(head.z - center.z, (head.x - center.x) * ORBIT_DEPTH) +
+      GUARDIAN_LEAD;
     orbitTarget(center, phase / ORBIT_SPEED, ringRadius, out);
     return true;
   }
@@ -563,13 +697,30 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
    * goal glides to it, so the creature takes a graceful turn when the page scrolls a card over it. False when the
    * screen size is unknown.
    */
-  function stageTarget(state: SceneState, camera: Camera, viewport: FrameInput["viewport"], t: number, dt: number, out: Vector3): boolean {
-    if (!viewport || !(viewport.width > 0) || !(viewport.height > 0)) return false;
+  function stageTarget(
+    state: SceneState,
+    camera: Camera,
+    viewport: FrameInput["viewport"],
+    t: number,
+    dt: number,
+    out: Vector3,
+  ): boolean {
+    if (!viewport || !(viewport.width > 0) || !(viewport.height > 0))
+      return false;
     if (t - stageSpotAt > STAGE_REFRESH || t < stageSpotAt) {
       stageSpotAt = t;
-      findOpenSpot(state.avoid, viewport.width, viewport.height, hasStage ? stageSpot : null, stageSpot);
+      findOpenSpot(
+        state.avoid,
+        viewport.width,
+        viewport.height,
+        hasStage ? stageSpot : null,
+        stageSpot,
+      );
     }
-    ndc.set((stageSpot.x / viewport.width) * 2 - 1, -((stageSpot.y / viewport.height) * 2 - 1));
+    ndc.set(
+      (stageSpot.x / viewport.width) * 2 - 1,
+      -((stageSpot.y / viewport.height) * 2 - 1),
+    );
     ray.setFromCamera(ndc, camera);
     if (!ray.ray.intersectPlane(water, hit2)) return false;
     hit2.x = clamp(hit2.x, -limits.pointerX, limits.pointerX);
@@ -582,11 +733,22 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
       stage.set(hit2.x, 0, hit2.z);
       hasStage = true;
     }
-    out.set(stage.x + Math.sin(t * 0.45) * 0.5, 0, stage.z + Math.cos(t * 0.37) * 0.3);
+    out.set(
+      stage.x + Math.sin(t * 0.45) * 0.5,
+      0,
+      stage.z + Math.cos(t * 0.37) * 0.3,
+    );
     return true;
   }
 
-  function update({ dt: rawDt, time: t, camera, state, day: dayInput, viewport }: FrameInput) {
+  function update({
+    dt: rawDt,
+    time: t,
+    camera,
+    state,
+    day: dayInput,
+    viewport,
+  }: FrameInput) {
     const dt = clamp(rawDt, 0, 0.1);
     const frameScale = dt * 60;
 
@@ -648,18 +810,33 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
         ray.setFromCamera(ndc, camera);
         if (ray.ray.intersectPlane(water, hit)) {
           // Keep it in the pond, never right under the camera where it would fill the screen.
-          target.set(clamp(hit.x, -limits.pointerX, limits.pointerX), 0, clamp(hit.z, limits.zMin, limits.zMax));
+          target.set(
+            clamp(hit.x, -limits.pointerX, limits.pointerX),
+            0,
+            clamp(hit.z, limits.zMin, limits.zMax),
+          );
           follow = true;
         }
       }
       if (!follow) {
-        const guarding = state.chapter >= GUARDIAN_CHAPTER && guardianTarget(state, camera, viewport, t, dt, target);
-        const staged = state.chapter >= GUARDIAN_CHAPTER || (state.chapter === DRAGON_CHAPTER && state.t >= STAGE_FROM);
+        const guarding =
+          state.chapter >= GUARDIAN_CHAPTER &&
+          guardianTarget(state, camera, viewport, t, dt, target);
+        const staged =
+          state.chapter >= GUARDIAN_CHAPTER ||
+          (state.chapter === DRAGON_CHAPTER && state.t >= STAGE_FROM);
         // Out of the staged part of the story (scrolled back up): the next visit starts afresh.
         if (!staged) hasStage = false;
         if (state.chapter < GUARDIAN_CHAPTER) hasRing = false;
-        const staging = !guarding && staged && stageTarget(state, camera, viewport, t, dt, target);
-        if (!guarding && !staging) idleTarget(t, m, target, { aspect, mode: idleModeForChapter(state.chapter) });
+        const staging =
+          !guarding &&
+          staged &&
+          stageTarget(state, camera, viewport, t, dt, target);
+        if (!guarding && !staging)
+          idleTarget(t, m, target, {
+            aspect,
+            mode: idleModeForChapter(state.chapter),
+          });
       }
     }
 
@@ -678,7 +855,11 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
       const u = i / (N - 1);
       swimOffset(u, t, m, swim);
       const S = baseFrames[i].S;
-      P[i].set(base[i].x + S.x * swim.lat, base[i].y + swim.lift, base[i].z + S.z * swim.lat);
+      P[i].set(
+        base[i].x + S.x * swim.lat,
+        base[i].y + swim.lift,
+        base[i].z + S.z * swim.lat,
+      );
       ringRadii(u, m, radii);
       // Round the head into an ellipsoid: the profile's steep first rings would otherwise leave a knob at the snout.
       let k = 1;
@@ -711,7 +892,12 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
     for (let c = 0; c < dorsalCols; c++) {
       const i = dorsalStart + c;
       const s = c / (dorsalCols - 1);
-      const h = 0.13 * finScale * Math.sin(Math.min(1, s / 0.18) * (Math.PI / 2)) * (1 - 0.7 * s) + 1e-4;
+      const h =
+        0.13 *
+          finScale *
+          Math.sin(Math.min(1, s / 0.18) * (Math.PI / 2)) *
+          (1 - 0.7 * s) +
+        1e-4;
       setFrameVectors(i);
       for (let r = 0; r < 3; r++) {
         const f = r / 2;
@@ -767,14 +953,19 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
       line.visible = m > 0.05 && solid > 0.003;
       if (!line.visible) continue;
       const side = q === 0 ? 1 : -1;
-      const arr = (line.geometry.getAttribute("position") as BufferAttribute).array as Float32Array;
+      const arr = (line.geometry.getAttribute("position") as BufferAttribute)
+        .array as Float32Array;
       for (let k = 0; k < WHISKER_POINTS; k++) {
         const s = k / (WHISKER_POINTS - 1);
         tmp
           .copy(P[0])
           .addScaledVector(vT, nose * 0.75 + (0.12 * s - 0.95 * s * s) * m)
           .addScaledVector(vS, side * (RX[0] * 0.45 + 0.38 * s * m))
-          .addScaledVector(vU, -RY[0] * 0.15 + (Math.sin(t * 2.6 - s * 6 + q) * 0.06 * s + 0.04 * s) * m);
+          .addScaledVector(
+            vU,
+            -RY[0] * 0.15 +
+              (Math.sin(t * 2.6 - s * 6 + q) * 0.06 * s + 0.04 * s) * m,
+          );
         arr[k * 3] = tmp.x;
         arr[k * 3 + 1] = tmp.y;
         arr[k * 3 + 2] = tmp.z;
@@ -810,8 +1001,17 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
       }
       // A cloud reaches far beyond the body: widen the box by how far it flies, in pixels at the body's distance.
       if (scatter > 0) {
-        const dist = Math.max(0.5, camera.position.distanceTo(P[sampleIndex[2]]));
-        const fly = (scatter * SCATTER_SPREAD * 0.5 * viewport.height * camera.projectionMatrix.elements[5]) / dist;
+        const dist = Math.max(
+          0.5,
+          camera.position.distanceTo(P[sampleIndex[2]]),
+        );
+        const fly =
+          (scatter *
+            SCATTER_SPREAD *
+            0.5 *
+            viewport.height *
+            camera.projectionMatrix.elements[5]) /
+          dist;
         x0 -= fly;
         y0 -= fly;
         x1 += fly;
@@ -822,19 +1022,38 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
       screen.x1 = x1;
       screen.y1 = y1;
       screen.valid = true;
-      if (state.avoid.length) wantVisible = creatureVisibility(state.avoid, samplePx, DIM_FEATHER, lerp(DIM_FLOOR, DIM_FLOOR_DRAGON, m));
+      if (state.avoid.length)
+        wantVisible = creatureVisibility(
+          state.avoid,
+          samplePx,
+          DIM_FEATHER,
+          lerp(DIM_FLOOR, DIM_FLOOR_DRAGON, m),
+        );
     }
     visibility = dampValue(visibility, wantVisible, DIM_RATE, dt);
     const shade = 0.3 + 0.7 * visibility;
     body.uniforms.uTime.value = t;
     body.uniforms.uMorph.value = m;
     body.material.color.copy(WHITE).lerp(GOLD, m).multiplyScalar(shade);
-    body.material.metalness = lerp(lerp(surfA.metalness, surfB.metalness, ease), 0.7, m);
-    body.material.roughness = lerp(lerp(surfA.roughness, surfB.roughness, ease), 0.28, m);
-    body.material.emissiveIntensity = (0.8 + 0.35 * Math.sin(t * 2.2) + 0.4 * m) * glowScale * visibility;
+    body.material.metalness = lerp(
+      lerp(surfA.metalness, surfB.metalness, ease),
+      0.7,
+      m,
+    );
+    body.material.roughness = lerp(
+      lerp(surfA.roughness, surfB.roughness, ease),
+      0.28,
+      m,
+    );
+    body.material.emissiveIntensity =
+      (0.8 + 0.35 * Math.sin(t * 2.2) + 0.4 * m) * glowScale * visibility;
     body.material.envMapIntensity = lerp(0.5, 0.35, m);
-    glowMat.emissiveIntensity = (1.2 + 0.4 * Math.sin(t * 3.1)) * glowScale * visibility;
-    fin.material.color.copy(finColorA.set(surfA.fin)).lerp(finColorB.set(surfB.fin), ease).multiplyScalar(shade);
+    glowMat.emissiveIntensity =
+      (1.2 + 0.4 * Math.sin(t * 3.1)) * glowScale * visibility;
+    fin.material.color
+      .copy(finColorA.set(surfA.fin))
+      .lerp(finColorB.set(surfB.fin), ease)
+      .multiplyScalar(shade);
     eyeMat.emissiveIntensity = m * 3 * glowScale * visibility;
 
     creatureLive.morph = m;
@@ -846,7 +1065,8 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
     creatureLive.tail.y = P[N - 1].y;
     creatureLive.tail.z = P[N - 1].z;
     // How fast the head moves, in pond units per second (wakes and ripples follow it).
-    creatureLive.speed = dt > 0 ? Math.hypot(head.x - prevHeadX, head.z - prevHeadZ) / dt : 0;
+    creatureLive.speed =
+      dt > 0 ? Math.hypot(head.x - prevHeadX, head.z - prevHeadZ) / dt : 0;
     creatureLive.visibility = visibility;
     for (let k = 0; k < BODY_SAMPLES; k++) {
       const i = Math.round((k / (BODY_SAMPLES - 1)) * (N - 1));
@@ -873,7 +1093,8 @@ export function createCreatureRig(quality: CreatureQuality, opts: { maxAnisotrop
     update,
     dispose() {
       for (const d of disposables) d.dispose();
-      for (const mesh of [spikes, horns, plates, legs, flames, eyes]) mesh.dispose();
+      for (const mesh of [spikes, horns, plates, legs, flames, eyes])
+        mesh.dispose();
     },
   };
 }

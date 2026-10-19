@@ -9,8 +9,22 @@ const H = 720;
 const out = new URL("../public/fallback/", import.meta.url);
 
 const themes = {
-  night: { top: "#050b16", bottom: "#0c2a44", glow: "#1d6fa5", koi: "#f97316", dragon: "#e0a84e", opacity: 0.55 },
-  day: { top: "#cfeaf2", bottom: "#7cc4d8", glow: "#ffffff", koi: "#ea580c", dragon: "#b7791f", opacity: 0.7 },
+  night: {
+    top: "#050b16",
+    bottom: "#0c2a44",
+    glow: "#1d6fa5",
+    koi: "#f97316",
+    dragon: "#e0a84e",
+    opacity: 0.55,
+  },
+  day: {
+    top: "#cfeaf2",
+    bottom: "#7cc4d8",
+    glow: "#ffffff",
+    koi: "#ea580c",
+    dragon: "#b7791f",
+    opacity: 0.7,
+  },
 };
 
 const koiShape = (c) => `
@@ -27,7 +41,10 @@ const dragonShape = (c) => `
   </g>`;
 
 for (const [name, c] of Object.entries(themes)) {
-  for (const [kind, shape] of [["koi", koiShape], ["dragon", dragonShape]]) {
+  for (const [kind, shape] of [
+    ["koi", koiShape],
+    ["dragon", dragonShape],
+  ]) {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">
       <defs>
         <linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c.top}"/><stop offset="1" stop-color="${c.bottom}"/></linearGradient>
@@ -38,7 +55,9 @@ for (const [name, c] of Object.entries(themes)) {
       <g filter="url(#b)">${shape(c)}</g>
     </svg>`;
     await mkdir(out, { recursive: true });
-    await sharp(Buffer.from(svg)).jpeg({ quality: 55, mozjpeg: true }).toFile(fileURLToPath(new URL(`${kind}-${name}.jpg`, out)));
+    await sharp(Buffer.from(svg))
+      .jpeg({ quality: 55, mozjpeg: true })
+      .toFile(fileURLToPath(new URL(`${kind}-${name}.jpg`, out)));
   }
 }
 console.log("done");

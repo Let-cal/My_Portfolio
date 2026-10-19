@@ -109,7 +109,12 @@ export type PointCloud = {
   /** Add this to the scene (it lives at the origin: the body's vertices are already in world space). */
   points: Points;
   /** Writes this frame's uniforms from the rig. Call right after `rig.update`. */
-  update(rig: CreatureRig, time: number, day: number, pixelHeight: number): void;
+  update(
+    rig: CreatureRig,
+    time: number,
+    day: number,
+    pixelHeight: number,
+  ): void;
   dispose(): void;
 };
 
@@ -120,17 +125,25 @@ export type PointCloud = {
  * pattern to dragon gold; a bright beam runs head to tail along the body. Hidden while `scatter` is 0, so a koi or a
  * dragon at rest costs nothing here.
  */
-export function createPointCloud(rig: CreatureRig, tier: Exclude<Tier, "off">): PointCloud {
+export function createPointCloud(
+  rig: CreatureRig,
+  tier: Exclude<Tier, "off">,
+): PointCloud {
   const { stride, layers } = cloudQualityForTier(tier);
   const body = rig.bodyGeometry;
   const ring = body.userData.ring as { rings: number; sides: number };
 
   const geometry = new InstancedBufferGeometry();
   // Shared, not copied: one upload per frame serves the mesh and the cloud.
-  geometry.setAttribute("position", body.getAttribute("position") as BufferAttribute);
+  geometry.setAttribute(
+    "position",
+    body.getAttribute("position") as BufferAttribute,
+  );
   geometry.setAttribute("uv", body.getAttribute("uv") as BufferAttribute);
   geometry.setAttribute("aRand", body.getAttribute("aRand") as BufferAttribute);
-  geometry.setIndex(new BufferAttribute(cloudIndices(ring.rings, ring.sides, stride), 1));
+  geometry.setIndex(
+    new BufferAttribute(cloudIndices(ring.rings, ring.sides, stride), 1),
+  );
   geometry.instanceCount = layers;
 
   const material = new ShaderMaterial({

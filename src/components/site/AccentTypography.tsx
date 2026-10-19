@@ -3,7 +3,9 @@
 import dynamic from "next/dynamic";
 import { useMediaQuery } from "@/components/fx/use-media-query";
 
-const MinchoFontFace = dynamic(() => import("./MinchoFontFace"), { ssr: false });
+const MinchoFontFace = dynamic(() => import("./MinchoFontFace"), {
+  ssr: false,
+});
 
 /** Chapter labels are hidden below md; don't fetch their large font stylesheet on phones. */
 export function AccentTypography() {

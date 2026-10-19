@@ -112,11 +112,17 @@ export function RoleStageProvider({ children }: { children: ReactNode }) {
       const start = performance.now();
       // performance.now() rather than the rAF timestamp: same clock as `start`, so the first frame is never negative.
       const step = () => {
-        const k = Math.min(1, Math.max(0, (performance.now() - start) / SWEEP_MS));
+        const k = Math.min(
+          1,
+          Math.max(0, (performance.now() - start) / SWEEP_MS),
+        );
         const sweep = 120 + 240 * easeOutCubic(k);
         setPeekVars(peek, center - sweep / 2, sweep);
         if (k < 1) {
-          sweepRef.current = { target: key, frame: requestAnimationFrame(step) };
+          sweepRef.current = {
+            target: key,
+            frame: requestAnimationFrame(step),
+          };
         } else {
           sweepRef.current = null;
           setBase(key);
@@ -133,7 +139,10 @@ export function RoleStageProvider({ children }: { children: ReactNode }) {
     if (sweeping === null || base !== sweeping || sweepRef.current) return;
     let live = true;
     const img = baseImgRef.current;
-    const ready = img && typeof img.decode === "function" ? img.decode() : Promise.resolve();
+    const ready =
+      img && typeof img.decode === "function"
+        ? img.decode()
+        : Promise.resolve();
     ready
       .catch(() => {})
       .then(() => {

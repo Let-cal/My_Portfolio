@@ -1,8 +1,30 @@
 import { describe, expect, it } from "vitest";
-import { createBodyGeometry, writeBody, bodyVertexCount, CAP_RINGS } from "@/scene/creature/geometry";
-import { bodyLength, dragonRadius, koiRadius, ringRadii } from "@/scene/creature/profiles";
-import { buildFrames, followChain, idleTarget, steer, MAX_TURN, MIN_TURN_RADIUS, type Vec3 } from "@/scene/creature/spine";
-import { circuitLayout, koiPatchLayout, mulberry32 } from "@/scene/creature/textures";
+import {
+  createBodyGeometry,
+  writeBody,
+  bodyVertexCount,
+  CAP_RINGS,
+} from "@/scene/creature/geometry";
+import {
+  bodyLength,
+  dragonRadius,
+  koiRadius,
+  ringRadii,
+} from "@/scene/creature/profiles";
+import {
+  buildFrames,
+  followChain,
+  idleTarget,
+  steer,
+  MAX_TURN,
+  MIN_TURN_RADIUS,
+  type Vec3,
+} from "@/scene/creature/spine";
+import {
+  circuitLayout,
+  koiPatchLayout,
+  mulberry32,
+} from "@/scene/creature/textures";
 import { varietyForRole, qualityForTier } from "@/scene/creature/config";
 
 const v = (x: number, y = 0, z = 0): Vec3 => ({ x, y, z });
@@ -20,12 +42,16 @@ describe("body profiles", () => {
     // u = 0.3: f = 1, sqrt(min(1, 6.2)) = 1.
     expect(koiRadius(0.3)).toBeCloseTo(1.25 * 0.225, 10);
     expect(koiRadius(1)).toBeCloseTo(1.25 * 0.025, 10);
-    expect(dragonRadius(0.04)).toBeCloseTo(0.17 * Math.sqrt(Math.min(1, 0.04 / 0.03 + 0.3)), 10);
+    expect(dragonRadius(0.04)).toBeCloseTo(
+      0.17 * Math.sqrt(Math.min(1, 0.04 / 0.03 + 0.3)),
+      10,
+    );
   });
 
   it("the dragon tapers all the way from the neck to the tail", () => {
     const us = samples(200).filter((u) => u >= 0.1);
-    for (let i = 1; i < us.length; i++) expect(dragonRadius(us[i])).toBeLessThan(dragonRadius(us[i - 1]));
+    for (let i = 1; i < us.length; i++)
+      expect(dragonRadius(us[i])).toBeLessThan(dragonRadius(us[i - 1]));
   });
 
   it("both profiles stay positive over the whole body", () => {
@@ -58,19 +84,22 @@ describe("followChain", () => {
     const head = v(0.3, 0, -0.2);
     followChain(pts, head, 0.02);
     expect(pts[0]).toEqual(head);
-    for (let i = 1; i < pts.length; i++) expect(Math.abs(dist(pts[i], pts[i - 1]) - 0.02)).toBeLessThan(1e-6);
+    for (let i = 1; i < pts.length; i++)
+      expect(Math.abs(dist(pts[i], pts[i - 1]) - 0.02)).toBeLessThan(1e-6);
   });
 
   it("copes with points sitting on top of each other", () => {
     const pts = Array.from({ length: 5 }, () => v(1, 0, 1));
     followChain(pts, v(1, 0, 1), 0.05);
-    for (let i = 1; i < pts.length; i++) expect(Math.abs(dist(pts[i], pts[i - 1]) - 0.05)).toBeLessThan(1e-6);
+    for (let i = 1; i < pts.length; i++)
+      expect(Math.abs(dist(pts[i], pts[i - 1]) - 0.05)).toBeLessThan(1e-6);
   });
 
   it("stretches and shrinks the chain when the segment length changes (koi to dragon)", () => {
     const pts = Array.from({ length: 10 }, (_, i) => v(-i * 0.01));
     followChain(pts, v(0), 0.3);
-    for (let i = 1; i < pts.length; i++) expect(Math.abs(dist(pts[i], pts[i - 1]) - 0.3)).toBeLessThan(1e-6);
+    for (let i = 1; i < pts.length; i++)
+      expect(Math.abs(dist(pts[i], pts[i - 1]) - 0.3)).toBeLessThan(1e-6);
   });
 });
 
@@ -78,10 +107,19 @@ describe("steer", () => {
   it("never turns more than 0.06 rad in a frame, whatever the target", () => {
     let head = v(0);
     let heading = 0;
-    const targets = [v(-3, 0, 0.01), v(0, 0, 5), v(-1, 0, -1), v(2, 0, 2), v(0.001, 0, -0.001)];
+    const targets = [
+      v(-3, 0, 0.01),
+      v(0, 0, 5),
+      v(-1, 0, -1),
+      v(2, 0, 2),
+      v(0.001, 0, -0.001),
+    ];
     for (let f = 0; f < 200; f++) {
       const r = steer(head, heading, targets[f % targets.length], 0.3);
-      const turn = Math.atan2(Math.sin(r.heading - heading), Math.cos(r.heading - heading));
+      const turn = Math.atan2(
+        Math.sin(r.heading - heading),
+        Math.cos(r.heading - heading),
+      );
       expect(Math.abs(turn)).toBeLessThanOrEqual(MAX_TURN + 1e-12);
       head = r.head;
       heading = r.heading;
@@ -123,7 +161,9 @@ describe("steer", () => {
     const r = steer(v(0), 0, v(0.001, 0, 0.05), 0);
     const speed = dist(r.head, v(0));
     expect(speed).toBeCloseTo(0.006, 10);
-    expect(speed / Math.abs(r.heading)).toBeGreaterThanOrEqual(MIN_TURN_RADIUS - 1e-9);
+    expect(speed / Math.abs(r.heading)).toBeGreaterThanOrEqual(
+      MIN_TURN_RADIUS - 1e-9,
+    );
   });
 
   it("swims the head onto the target and keeps it close", () => {
@@ -140,7 +180,13 @@ describe("steer", () => {
 });
 
 describe("buildFrames", () => {
-  const pts = [v(1), v(0.5, 0, 0.1), v(0, 0, 0.3), v(-0.5, 0, 0.2), v(-1, 0, 0)];
+  const pts = [
+    v(1),
+    v(0.5, 0, 0.1),
+    v(0, 0, 0.3),
+    v(-0.5, 0, 0.2),
+    v(-1, 0, 0),
+  ];
 
   it("gives an orthonormal frame per point with T pointing towards the head and U up", () => {
     const frames = buildFrames(pts);
@@ -218,7 +264,9 @@ describe("seeded textures", () => {
     const ogon = koiPatchLayout("ogon");
     expect(kohaku.patches.length).toBeGreaterThanOrEqual(4);
     expect(new Set(kohaku.patches.map((p) => p.tone))).toEqual(new Set(["hi"]));
-    expect(new Set(showa.patches.map((p) => p.tone))).toEqual(new Set(["hi", "sumi"]));
+    expect(new Set(showa.patches.map((p) => p.tone))).toEqual(
+      new Set(["hi", "sumi"]),
+    );
     expect(ogon.patches).toHaveLength(0);
     expect(kohaku.base).not.toBe(ogon.base);
   });
@@ -271,12 +319,13 @@ describe("body geometry", () => {
     const g = createBodyGeometry(N, M);
     const count = bodyVertexCount(N, M);
     expect(count).toBe((N + 2 * CAP_RINGS) * (M + 1));
-    for (const name of ["position", "normal", "uv", "aRand"]) expect(g.getAttribute(name).count).toBe(count);
+    for (const name of ["position", "normal", "uv", "aRand"])
+      expect(g.getAttribute(name).count).toBe(count);
     expect(g.getIndex()!.count).toBe((N + 2 * CAP_RINGS - 1) * M * 6);
     // Deterministic, so the point-cloud dissolve looks the same on every visit.
-    expect(Array.from(createBodyGeometry(N, M).getAttribute("aRand").array)).toEqual(
-      Array.from(g.getAttribute("aRand").array),
-    );
+    expect(
+      Array.from(createBodyGeometry(N, M).getAttribute("aRand").array),
+    ).toEqual(Array.from(g.getAttribute("aRand").array));
     const uv = g.getAttribute("uv");
     expect(uv.getX(CAP_RINGS * (M + 1))).toBe(0);
     expect(uv.getX((CAP_RINGS + N - 1) * (M + 1))).toBe(1);
@@ -293,8 +342,13 @@ describe("body geometry", () => {
     const pos = g.getAttribute("position");
     const nor = g.getAttribute("normal");
     for (let k = 0; k < pos.count; k++) {
-      expect(Number.isFinite(pos.getX(k) + pos.getY(k) + pos.getZ(k))).toBe(true);
-      expect(Math.hypot(nor.getX(k), nor.getY(k), nor.getZ(k))).toBeCloseTo(1, 5);
+      expect(Number.isFinite(pos.getX(k) + pos.getY(k) + pos.getZ(k))).toBe(
+        true,
+      );
+      expect(Math.hypot(nor.getX(k), nor.getY(k), nor.getZ(k))).toBeCloseTo(
+        1,
+        5,
+      );
     }
     // A body ring vertex at angle 0 sits rx out along S (+z here), its normal points out too.
     const k = (CAP_RINGS + 5) * (M + 1);

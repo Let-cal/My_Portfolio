@@ -22,21 +22,30 @@ export function Props() {
     // Effect setup owns resources: Strict Mode may clean up and run setup again on the same component.
     const props = [
       createLotus(),
-      createDeferredProp("waterfall-garden", () => import("./props/waterfall").then((m) => m.createWaterfall), (pos) => pos >= 1 && pos < 4.2),
-      createLanterns(), createGate(),
+      createDeferredProp(
+        "waterfall-garden",
+        () => import("./props/waterfall").then((m) => m.createWaterfall),
+        (pos) => pos >= 1 && pos < 4.2,
+      ),
+      createLanterns(),
+      createGate(),
     ];
     live.current = props;
     for (const prop of props) root.add(prop.root);
     return () => {
       live.current = [];
-      for (const prop of props) { root.remove(prop.root); prop.dispose(); }
+      for (const prop of props) {
+        root.remove(prop.root);
+        prop.dispose();
+      }
     };
   }, [root]);
 
   useFrame(({ clock }) => {
     const t = clock.elapsedTime;
     const props = live.current;
-    for (let i = 0; i < props.length; i++) props[i].update(t, sceneLive.pos, sceneLive.day);
+    for (let i = 0; i < props.length; i++)
+      props[i].update(t, sceneLive.pos, sceneLive.day);
   });
 
   return <primitive object={root} />;

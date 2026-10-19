@@ -2,12 +2,16 @@ import { cacheLife, cacheTag } from "next/cache";
 import { contentSchema, type Content } from "@/content/schema";
 import type { ContentRepository } from "./repository";
 import { SeedRepository } from "./seed-repository";
-import { createPublicSupabase, SupabaseRepository } from "./supabase-repository";
+import {
+  createPublicSupabase,
+  SupabaseRepository,
+} from "./supabase-repository";
 
 type Env = Record<string, string | undefined>;
 export type RepoFactory = (env: Env) => ContentRepository;
 
-const defaultRepoFactory: RepoFactory = (env) => new SupabaseRepository(createPublicSupabase(env));
+const defaultRepoFactory: RepoFactory = (env) =>
+  new SupabaseRepository(createPublicSupabase(env));
 
 export type ContentSource = "supabase" | "seed-unconfigured" | "seed-fallback";
 
@@ -21,16 +25,26 @@ export async function loadContentWithSource(
   repoFactory: RepoFactory = defaultRepoFactory,
 ): Promise<{ content: Content; source: ContentSource }> {
   if (!env.NEXT_PUBLIC_SUPABASE_URL) {
-    return { content: await new SeedRepository().getContent(), source: "seed-unconfigured" };
+    return {
+      content: await new SeedRepository().getContent(),
+      source: "seed-unconfigured",
+    };
   }
   try {
     const raw = await repoFactory(env).getContent();
     const parsed = contentSchema.safeParse(raw);
-    if (!parsed.success) throw new Error(`invalid content: ${parsed.error.message}`);
+    if (!parsed.success)
+      throw new Error(`invalid content: ${parsed.error.message}`);
     return { content: parsed.data, source: "supabase" };
   } catch (err) {
-    console.warn("[content] Supabase unavailable, using seed:", err instanceof Error ? err.message : err);
-    return { content: await new SeedRepository().getContent(), source: "seed-fallback" };
+    console.warn(
+      "[content] Supabase unavailable, using seed:",
+      err instanceof Error ? err.message : err,
+    );
+    return {
+      content: await new SeedRepository().getContent(),
+      source: "seed-fallback",
+    };
   }
 }
 

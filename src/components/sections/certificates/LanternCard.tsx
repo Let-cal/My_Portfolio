@@ -1,7 +1,13 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import {
+  useId,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 import { LanternFrame } from "./LanternFrame";
 
 /** One certificate with every string already picked for the current locale. */
@@ -26,7 +32,17 @@ export type CertificateView = {
  * the button; any other click on the back falls through to it and flips back. Escape also flips back.
  * Rotation lives in CSS (`.lantern-flip`); reduced motion crossfades instead.
  */
-export function LanternCard({ cert, index, front, back }: { cert: CertificateView; index: number; front: ReactNode; back: ReactNode }) {
+export function LanternCard({
+  cert,
+  index,
+  front,
+  back,
+}: {
+  cert: CertificateView;
+  index: number;
+  front: ReactNode;
+  back: ReactNode;
+}) {
   const t = useTranslations("certificates");
   const [flipped, setFlipped] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);

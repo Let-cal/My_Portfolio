@@ -9,7 +9,9 @@ import { contentSchema, type Content, type Locale } from "@/content/schema";
 
 const replace = vi.hoisted(() => vi.fn());
 const search = vi.hoisted(() => ({ value: "" }));
-vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams(search.value) }));
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams(search.value),
+}));
 vi.mock("@/i18n/navigation", () => ({
   useRouter: () => ({ replace }),
   usePathname: () => "/en",
@@ -20,12 +22,20 @@ import { RoleProvider } from "@/components/site/RoleProvider";
 
 const content: Content = contentSchema.parse(seed);
 
-function renderHero(opts: { role?: string; openToWork?: boolean; locale?: Locale } = {}) {
+function renderHero(
+  opts: { role?: string; openToWork?: boolean; locale?: Locale } = {},
+) {
   search.value = opts.role ? `role=${opts.role}` : "";
-  const c: Content = { ...content, profile: { ...content.profile, openToWork: opts.openToWork ?? true } };
+  const c: Content = {
+    ...content,
+    profile: { ...content.profile, openToWork: opts.openToWork ?? true },
+  };
   const locale = opts.locale ?? "en";
   return render(
-    <NextIntlClientProvider locale={locale} messages={locale === "ja" ? ja : en}>
+    <NextIntlClientProvider
+      locale={locale}
+      messages={locale === "ja" ? ja : en}
+    >
       <RoleProvider>
         <Hero content={c} locale={locale} />
       </RoleProvider>
@@ -34,7 +44,8 @@ function renderHero(opts: { role?: string; openToWork?: boolean; locale?: Locale
 }
 
 /** The role title is a TextScramble: its final text lives in an sr-only span. */
-const title = (text: string) => screen.getByText(text, { selector: "#hero-title .sr-only" });
+const title = (text: string) =>
+  screen.getByText(text, { selector: "#hero-title .sr-only" });
 
 describe("Hero", () => {
   beforeEach(() => {
@@ -44,22 +55,38 @@ describe("Hero", () => {
 
   it("renders the name as the only h1 inside the hero section", () => {
     renderHero();
-    expect(screen.getByRole("heading", { level: 1, name: "Le Tran Cat Lam" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Le Tran Cat Lam" }),
+    ).toBeInTheDocument();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-    expect(document.getElementById("hero")).toContainElement(screen.getByRole("heading", { level: 1 }));
+    expect(document.getElementById("hero")).toContainElement(
+      screen.getByRole("heading", { level: 1 }),
+    );
   });
 
   it("shows the title and summary of the default role before ?role= is applied", () => {
     renderHero();
     expect(title("Full-stack Software Engineer")).toBeInTheDocument();
-    expect(screen.getByText(content.profile.summaries.fullstack.en)).toBeInTheDocument();
+    expect(
+      screen.getByText(content.profile.summaries.fullstack.en),
+    ).toBeInTheDocument();
   });
 
   it("shows the pm title and summary and the pm CV when ?role=pm", async () => {
     renderHero({ role: "pm" });
-    await waitFor(() => expect(title("Software Engineer · Technical Project Manager")).toBeInTheDocument());
-    expect(await screen.findByText(content.profile.summaries.pm.en)).toBeInTheDocument();
-    await waitFor(() => expect(screen.queryByText(content.profile.summaries.fullstack.en)).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        title("Software Engineer · Technical Project Manager"),
+      ).toBeInTheDocument(),
+    );
+    expect(
+      await screen.findByText(content.profile.summaries.pm.en),
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.queryByText(content.profile.summaries.fullstack.en),
+      ).not.toBeInTheDocument(),
+    );
     const cvs = screen.getAllByRole("link", { name: "Download CV" });
     expect(cvs.length).toBeGreaterThan(0);
     for (const cv of cvs) {
@@ -71,25 +98,38 @@ describe("Hero", () => {
   it("links the 60-second view to the quick route with the chosen role, and Contact to #contact", async () => {
     renderHero({ role: "techlead", locale: "ja" });
     const quick = await screen.findByRole("link", { name: ja.hero.quickView });
-    await waitFor(() => expect(quick).toHaveAttribute("href", "/ja/quick?role=techlead"));
-    expect(screen.getByRole("link", { name: ja.hero.contact })).toHaveAttribute("href", "#contact");
+    await waitFor(() =>
+      expect(quick).toHaveAttribute("href", "/ja/quick?role=techlead"),
+    );
+    expect(screen.getByRole("link", { name: ja.hero.contact })).toHaveAttribute(
+      "href",
+      "#contact",
+    );
   });
 
   it("has the three CTAs by name", () => {
     renderHero();
-    expect(screen.getAllByRole("link", { name: "Download CV" }).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByRole("link", { name: "Download CV" }).length,
+    ).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: "Contact" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "60-second view" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "60-second view" }),
+    ).toBeInTheDocument();
   });
 
   it("shows the Open to work badge only when openToWork is true", () => {
     const { unmount } = renderHero({ openToWork: true });
     expect(screen.getAllByText("Open to work").length).toBeGreaterThan(0);
-    expect(screen.getAllByText(content.profile.availabilityNote.en).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(content.profile.availabilityNote.en).length,
+    ).toBeGreaterThan(0);
     unmount();
     renderHero({ openToWork: false });
     expect(screen.queryByText("Open to work")).not.toBeInTheDocument();
-    expect(screen.queryByText(content.profile.availabilityNote.en)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(content.profile.availabilityNote.en),
+    ).not.toBeInTheDocument();
   });
 
   it("renders the wheel portrait with sizes and high fetch priority, and an empty water zone for the fish", () => {
@@ -123,25 +163,43 @@ describe("Role wheel in the Hero", () => {
     const groups = screen.getAllByRole("radiogroup");
     expect(groups).toHaveLength(1);
     const radios = within(groups[0]).getAllByRole("radio");
-    expect(radios.map((r) => r.getAttribute("aria-label"))).toEqual(["DEVELOPER", "TECH LEAD", "TECHNICAL PM"]);
-    expect(await within(groups[0]).findByRole("radio", { name: "TECHNICAL PM", checked: true })).toBeInTheDocument();
+    expect(radios.map((r) => r.getAttribute("aria-label"))).toEqual([
+      "DEVELOPER",
+      "TECH LEAD",
+      "TECHNICAL PM",
+    ]);
+    expect(
+      await within(groups[0]).findByRole("radio", {
+        name: "TECHNICAL PM",
+        checked: true,
+      }),
+    ).toBeInTheDocument();
   });
 
   it("clicking a role switches title, summary and the URL", async () => {
     renderHero();
     await userEvent.click(screen.getByRole("radio", { name: "TECH LEAD" }));
     expect(title("Software Engineer · Tech Lead")).toBeInTheDocument();
-    expect(await screen.findByText(content.profile.summaries.techlead.en)).toBeInTheDocument();
-    expect(window.location.pathname + window.location.search).toBe("/en?role=techlead");
+    expect(
+      await screen.findByText(content.profile.summaries.techlead.en),
+    ).toBeInTheDocument();
+    expect(window.location.pathname + window.location.search).toBe(
+      "/en?role=techlead",
+    );
   });
 
   it("arrow keys move between roles (roving tabindex)", async () => {
     renderHero();
     const dev = screen.getByRole("radio", { name: "DEVELOPER" });
     expect(dev).toHaveAttribute("tabindex", "0");
-    expect(screen.getByRole("radio", { name: "TECH LEAD" })).toHaveAttribute("tabindex", "-1");
+    expect(screen.getByRole("radio", { name: "TECH LEAD" })).toHaveAttribute(
+      "tabindex",
+      "-1",
+    );
     act(() => dev.focus());
     await userEvent.keyboard("{ArrowRight}");
-    expect(screen.getByRole("radio", { name: "TECH LEAD", checked: true })).toHaveFocus();
+    expect(
+      screen.getByRole("radio", { name: "TECH LEAD", checked: true }),
+    ).toHaveFocus();
   });
 });

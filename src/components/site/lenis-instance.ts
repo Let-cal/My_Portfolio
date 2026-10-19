@@ -14,8 +14,10 @@ export function getLenis(): Lenis | null {
 
 /** Content above the target can change height while the scroll runs (fonts, images); correct a miss once, quickly. */
 function settle(el: HTMLElement) {
-  const margin = Number.parseFloat(window.getComputedStyle(el).scrollMarginTop) || 0;
-  if (Math.abs(el.getBoundingClientRect().top - margin) > 2) current?.scrollTo(el, { duration: 0.4 });
+  const margin =
+    Number.parseFloat(window.getComputedStyle(el).scrollMarginTop) || 0;
+  if (Math.abs(el.getBoundingClientRect().top - margin) > 2)
+    current?.scrollTo(el, { duration: 0.4 });
 }
 
 /**
@@ -28,5 +30,8 @@ export function scrollToElement(el: HTMLElement) {
     current.scrollTo(el, { onComplete: () => settle(el) });
     return;
   }
-  el.scrollIntoView({ behavior: getMotionReduced() ? "auto" : "smooth", block: "start" });
+  el.scrollIntoView({
+    behavior: getMotionReduced() ? "auto" : "smooth",
+    block: "start",
+  });
 }

@@ -7,14 +7,17 @@ import { vi } from "vitest";
  *
  * `visible: true` reports every observed element as intersecting right away (for components that start on view).
  */
-export function stubIntersectionObserver({ visible = false }: { visible?: boolean } = {}) {
+export function stubIntersectionObserver({
+  visible = false,
+}: { visible?: boolean } = {}) {
   class StubObserver {
     readonly root = null;
     readonly rootMargin = "";
     readonly thresholds = [];
     constructor(private readonly cb: (entries: unknown[]) => void) {}
     observe(target: Element) {
-      if (visible) this.cb([{ isIntersecting: true, intersectionRatio: 1, target }]);
+      if (visible)
+        this.cb([{ isIntersecting: true, intersectionRatio: 1, target }]);
     }
     unobserve() {}
     disconnect() {}

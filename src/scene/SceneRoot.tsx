@@ -52,7 +52,13 @@ type SceneRootProps = {
  * lighting and camera), the koi/dragon, fish food and, on the `high` tier, bloom. (The veil that keeps text readable is a DOM layer, see `TextVeil`.)
  * Rendering stops while the tab is hidden. The canvas is `position: fixed`, so it is never off-screen.
  */
-export default function SceneRoot({ tier, onReadyChange, onDowngrade, capture = false, captureSettled = false }: SceneRootProps) {
+export default function SceneRoot({
+  tier,
+  onReadyChange,
+  onDowngrade,
+  capture = false,
+  captureSettled = false,
+}: SceneRootProps) {
   const [hidden, setHidden] = useState(() => document.hidden);
 
   useEffect(() => {
@@ -69,10 +75,16 @@ export default function SceneRoot({ tier, onReadyChange, onDowngrade, capture = 
       // click over the viewport. The scene reads the pointer from the store instead, so nothing here needs events.
       style={{ pointerEvents: "none" }}
       dpr={[1, tier === "high" ? 1.5 : 1.25]}
-      frameloop={hidden ? "never" : capture && captureSettled ? "demand" : "always"}
+      frameloop={
+        hidden ? "never" : capture && captureSettled ? "demand" : "always"
+      }
       // Opaque: the pond is the background, and bloom needs a canvas without alpha. Always antialiased: a downgrade
       // from high to low unmounts the post-processing, which then relies on the context's own multisampling.
-      gl={{ alpha: false, antialias: true, powerPreference: "high-performance" }}
+      gl={{
+        alpha: false,
+        antialias: true,
+        powerPreference: "high-performance",
+      }}
       camera={{ fov: 40, near: 0.1, far: 80, position: [0, 3.8, 4.2] }}
       onCreated={({ gl }) => {
         gl.toneMappingExposure = 1.05;

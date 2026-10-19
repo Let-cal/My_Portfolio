@@ -24,7 +24,9 @@ export function useRevealOnView<T extends Element>(threshold = 0.2) {
         const visible = entries.some((e) => e.isIntersecting);
         setState((prev) => {
           if (prev.shown) return prev;
-          return visible ? { armed: prev.armed, shown: true } : { armed: true, shown: false };
+          return visible
+            ? { armed: prev.armed, shown: true }
+            : { armed: true, shown: false };
         });
         if (visible) io.disconnect();
       },

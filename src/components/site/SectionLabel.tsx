@@ -3,7 +3,15 @@
  * upper-right chapter seal. Place it as the first child of a `relative` section wrapper; the vertical label is
  * decorative (aria-hidden) and only shown where the margin is wide enough (md and up).
  */
-export function SectionLabel({ index, title, kanji }: { index: string; title: string; kanji: string }) {
+export function SectionLabel({
+  index,
+  title,
+  kanji,
+}: {
+  index: string;
+  title: string;
+  kanji: string;
+}) {
   return (
     <>
       {/* Chapter "00" (the hero) has no numbered line, only the vertical kanji. */}

@@ -14,7 +14,11 @@ export const GARDEN_NIGHT = {
 
 /** GLSL constants are baked at module load; no extra uniforms or work per frame. */
 export const GARDEN_NIGHT_GLSL = Object.fromEntries(
-  Object.entries(GARDEN_NIGHT).map(([key, color]) => [key,
-    `vec3(${color.toArray().map((n) => n.toFixed(7)).join(", ")})`,
+  Object.entries(GARDEN_NIGHT).map(([key, color]) => [
+    key,
+    `vec3(${color
+      .toArray()
+      .map((n) => n.toFixed(7))
+      .join(", ")})`,
   ]),
 ) as Record<keyof typeof GARDEN_NIGHT, string>;

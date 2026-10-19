@@ -7,7 +7,11 @@ import { ROLE_ACCENT, WHEEL_ORDER } from "@/lib/role-accent";
 import { RoleStageProvider, useOptionalStage, useStage } from "./stage-context";
 
 /** Where each panel sits around the wheel on wide screens. */
-export const PANEL_SIDE: Record<RoleKey, "left" | "right" | "bottom"> = { fullstack: "left", techlead: "right", pm: "bottom" };
+export const PANEL_SIDE: Record<RoleKey, "left" | "right" | "bottom"> = {
+  fullstack: "left",
+  techlead: "right",
+  pm: "bottom",
+};
 
 /**
  * The three annotated role panels (prototype variant A). Collapsed: number, role and a big title with one serif
@@ -54,20 +58,36 @@ function Panel({ roleKey, index }: { roleKey: RoleKey; index: number }) {
       onClick={() => select(roleKey)}
     >
       <h2 className="m-0">
-        <button type="button" aria-pressed={role === roleKey} aria-controls={detailsId} className="hero-panel-button">
+        <button
+          type="button"
+          aria-pressed={role === roleKey}
+          aria-controls={detailsId}
+          className="hero-panel-button"
+        >
           <span className="hero-panel-tag">
             <i aria-hidden="true" />
             {String(index + 1).padStart(2, "0")} · {t("eyebrow")}
           </span>
-          <span className="hero-panel-title">{t.rich("title", { accent: () => <em>{t("accent")}</em> })}</span>
+          <span className="hero-panel-title">
+            {t.rich("title", { accent: () => <em>{t("accent")}</em> })}
+          </span>
         </button>
       </h2>
-      <div id={detailsId} data-panel-details="" aria-hidden={!open} className="hero-panel-more">
+      <div
+        id={detailsId}
+        data-panel-details=""
+        aria-hidden={!open}
+        className="hero-panel-more"
+      >
         <div>
           <p className="hero-panel-body">{t("body")}</p>
           <ul className="hero-chips">
             {chips.map((chip, i) => (
-              <li key={chip} className="hero-chip" style={{ "--i": i } as CSSProperties}>
+              <li
+                key={chip}
+                className="hero-chip"
+                style={{ "--i": i } as CSSProperties}
+              >
                 {chip}
               </li>
             ))}

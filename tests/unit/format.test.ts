@@ -3,15 +3,21 @@ import { formatPeriod } from "@/lib/format";
 
 describe("formatPeriod", () => {
   it("formats EN as 'Mon YYYY – Mon YYYY' with a spaced en dash", () => {
-    expect(formatPeriod("2026-04", "2026-09", "en")).toBe("Apr 2026 – Sep 2026");
+    expect(formatPeriod("2026-04", "2026-09", "en")).toBe(
+      "Apr 2026 – Sep 2026",
+    );
   });
 
   it("formats JA as 'YYYY年M月 – YYYY年M月'", () => {
-    expect(formatPeriod("2026-04", "2026-09", "ja")).toBe("2026年4月 – 2026年9月");
+    expect(formatPeriod("2026-04", "2026-09", "ja")).toBe(
+      "2026年4月 – 2026年9月",
+    );
   });
 
   it("formats VI as 'ThM YYYY – ThM YYYY'", () => {
-    expect(formatPeriod("2026-04", "2026-09", "vi")).toBe("Th4 2026 – Th9 2026");
+    expect(formatPeriod("2026-04", "2026-09", "vi")).toBe(
+      "Th4 2026 – Th9 2026",
+    );
   });
 
   it("prints the localized 'present' word when end is null", () => {

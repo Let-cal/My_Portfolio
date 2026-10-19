@@ -9,7 +9,15 @@ import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
  * effective reduced-motion preference it is a plain static wrapper. Server-rendered HTML starts hidden; the
  * pre-paint `data-motion="reduced"` rule in globals.css shows it at once for visitors who reduce motion.
  */
-export function Reveal({ children, className, delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
+export function Reveal({
+  children,
+  className,
+  delay = 0,
+}: {
+  children: ReactNode;
+  className?: string;
+  delay?: number;
+}) {
   const reduced = usePrefersReducedMotion();
   if (reduced) {
     return (

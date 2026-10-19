@@ -11,13 +11,18 @@ describe("seed rows", () => {
   it("covers every table, in the order foreign keys need", () => {
     expect(Object.keys(rows)).toEqual(Object.keys(TABLES));
     const order = Object.keys(rows);
-    expect(order.indexOf("skill_links")).toBeGreaterThan(order.indexOf("projects"));
+    expect(order.indexOf("skill_links")).toBeGreaterThan(
+      order.indexOf("projects"),
+    );
   });
 
   it("keeps one row per content item", () => {
     expect(rows.experiences).toHaveLength(content.experiences.length);
     expect(rows.why_cards).toHaveLength(content.whyCards.length);
-    const linkCount = content.skills.reduce((n, s) => n + s.experienceIds.length + s.projectIds.length, 0);
+    const linkCount = content.skills.reduce(
+      (n, s) => n + s.experienceIds.length + s.projectIds.length,
+      0,
+    );
     expect(rows.skill_links).toHaveLength(linkCount);
   });
 });
@@ -35,7 +40,13 @@ describe("seed SQL", () => {
   it("escapes quotes and casts json and arrays", () => {
     const one = renderSeedSql({
       ...rows,
-      activities: [{ ...rows.activities[0], name: { en: "Cat's talk", ja: "x", vi: "y" }, skills: ["O'Reilly"] }],
+      activities: [
+        {
+          ...rows.activities[0],
+          name: { en: "Cat's talk", ja: "x", vi: "y" },
+          skills: ["O'Reilly"],
+        },
+      ],
     });
     expect(one).toContain(`'{"en":"Cat''s talk","ja":"x","vi":"y"}'::jsonb`);
     expect(one).toContain("array['O''Reilly']::text[]");

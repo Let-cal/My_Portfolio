@@ -23,9 +23,18 @@ type KineticTextProps = {
  * a blank; text without spaces (Japanese) is left flat so it can wrap between any two characters.
  * Reduced motion renders the letters in place without the animation.
  */
-export function KineticText({ as: Tag = "span", text, preparedWords, staggerMs = 35, className }: KineticTextProps) {
+export function KineticText({
+  as: Tag = "span",
+  text,
+  preparedWords,
+  staggerMs = 35,
+  className,
+}: KineticTextProps) {
   const reduced = usePrefersReducedMotion();
-  const words = useMemo(() => preparedWords ?? segmentKineticWords(text), [text, preparedWords]);
+  const words = useMemo(
+    () => preparedWords ?? segmentKineticWords(text),
+    [text, preparedWords],
+  );
   let index = 0;
 
   const charStyle = (i: number): CSSProperties | undefined =>
@@ -50,7 +59,11 @@ export function KineticText({ as: Tag = "span", text, preparedWords, staggerMs =
       <span className="sr-only">{text}</span>
       {hasSpaces
         ? words.map((word, w) => (
-            <span key={w} aria-hidden="true" className="inline-block whitespace-nowrap">
+            <span
+              key={w}
+              aria-hidden="true"
+              className="inline-block whitespace-nowrap"
+            >
               {word.map((ch) => renderChar(ch))}
               {w < words.length - 1 && renderChar(" ", "whitespace-pre")}
             </span>

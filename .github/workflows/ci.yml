@@ -15,8 +15,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CI: 'true'
-  NEXT_TELEMETRY_DISABLED: '1'
+  CI: "true"
+  NEXT_TELEMETRY_DISABLED: "1"
 
 jobs:
   performance:
@@ -33,7 +33,7 @@ jobs:
       - name: Set up Node.js 22
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '22'
+          node-version: "22"
           cache: npm
           package-manager-cache: false
       - name: Install locked dependencies and Chromium
@@ -83,14 +83,14 @@ jobs:
       - name: Set up Node.js 22
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '22'
+          node-version: "22"
           cache: npm
           cache-dependency-path: package-lock.json
           package-manager-cache: false
       - name: Set up pinned font verification tools
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
-          version: '0.13.1'
+          version: "0.13.1"
           enable-cache: false
       - name: Install locked dependencies
         run: npm ci
@@ -133,7 +133,7 @@ jobs:
       - name: Set up Node.js 22
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '22'
+          node-version: "22"
           cache: npm
           cache-dependency-path: package-lock.json
           package-manager-cache: false

@@ -13,12 +13,25 @@ import {
 import type { SoundKind } from "@/components/fx/sound";
 import { creatureLive } from "../creature/live";
 import { clamp } from "../creature/profiles";
-import { minTurnRadius, pondLimits, REF_ASPECT, type PondLimits } from "../creature/spine";
+import {
+  minTurnRadius,
+  pondLimits,
+  REF_ASPECT,
+  type PondLimits,
+} from "../creature/spine";
 import { WATER_Y } from "../environment/constants";
 import { sceneLive } from "../environment/live";
 import { addRipple } from "../environment/ripples";
 import { sceneStore } from "../store";
-import { addFood, EAT_RADIUS, eatFood, FOOD_FALL_SECONDS, FOOD_LIFETIME_SECONDS, MAX_FOOD, pruneFood } from "./feed";
+import {
+  addFood,
+  EAT_RADIUS,
+  eatFood,
+  FOOD_FALL_SECONDS,
+  FOOD_LIFETIME_SECONDS,
+  MAX_FOOD,
+  pruneFood,
+} from "./feed";
 
 /** Pellets dropped by one click (spec 6, item 9: one to three). */
 const PER_CLICK = 3;
@@ -53,7 +66,13 @@ export function createFeeder() {
   const hit = new Vector3();
   const ndc = new Vector2();
   const dummy = new Object3D();
-  const limits: PondLimits = { idleX: 0, idleZ: 0, pointerX: 0, zMin: 0, zMax: 0 };
+  const limits: PondLimits = {
+    idleX: 0,
+    idleZ: 0,
+    pointerX: 0,
+    zMin: 0,
+    zMax: 0,
+  };
   const landed = new Set<number>();
   let lastDrop = 0;
 
@@ -107,19 +126,24 @@ export function createFeeder() {
       }
 
       // The koi eats what its snout reaches (only pellets that have landed), and the uneaten ones sink in time.
-      const reach = Math.max(EAT_RADIUS, 0.5 * minTurnRadius(creatureLive.morph));
+      const reach = Math.max(
+        EAT_RADIUS,
+        0.5 * minTurnRadius(creatureLive.morph),
+      );
       const afterMeal = eatFood(foods, creatureLive.head, reach, now);
       if (afterMeal !== foods) {
         // A small splash where each pellet was.
         for (let i = 0; i < foods.length; i++) {
-          if (!afterMeal.includes(foods[i])) addRipple(sceneLive.ripples, foods[i].x, foods[i].z, now);
+          if (!afterMeal.includes(foods[i]))
+            addRipple(sceneLive.ripples, foods[i].x, foods[i].z, now);
         }
       }
       const left = pruneFood(afterMeal, now);
       if (left !== state.foods) {
         sceneStore.setState({ foods: left });
         // Forget the pellets that are gone, so the set never outgrows the pellets on the water.
-        for (const id of landed) if (!left.some((f) => f.id === id)) landed.delete(id);
+        for (const id of landed)
+          if (!left.some((f) => f.id === id)) landed.delete(id);
       }
       foods = left;
 

@@ -2,7 +2,17 @@
 
 import { useFrame, useThree, type RootState } from "@react-three/fiber";
 import { useEffect, useMemo } from "react";
-import { Color, Fog, PMREMGenerator, Plane, Raycaster, Scene, Vector2, Vector3, type WebGLRenderer } from "three";
+import {
+  Color,
+  Fog,
+  PMREMGenerator,
+  Plane,
+  Raycaster,
+  Scene,
+  Vector2,
+  Vector3,
+  type WebGLRenderer,
+} from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { aspectPullback, cameraAtPosition, chapterPosition } from "../chapters";
 import { creatureLive } from "../creature/live";
@@ -76,7 +86,11 @@ function createDirector() {
       const state = sceneStore.getState();
 
       // Day and night follow the theme live: a 600 ms ramp, eased.
-      sceneLive.dayRaw = stepDay(sceneLive.dayRaw, state.theme === "light" ? 1 : 0, dt);
+      sceneLive.dayRaw = stepDay(
+        sceneLive.dayRaw,
+        state.theme === "light" ? 1 : 0,
+        dt,
+      );
       sceneLive.day = smoothstep(0, 1, sceneLive.dayRaw);
       const day = sceneLive.day;
 
@@ -87,7 +101,11 @@ function createDirector() {
       cameraAtPosition(sceneLive.pos, pose);
       const pull = aspectPullback(size.width / Math.max(1, size.height));
       pose.pos.sub(pose.look).multiplyScalar(pull).add(pose.look);
-      camera.position.set(pose.pos.x + Math.sin(time * 0.1) * 0.35, pose.pos.y + Math.sin(time * 0.13) * 0.06, pose.pos.z);
+      camera.position.set(
+        pose.pos.x + Math.sin(time * 0.1) * 0.35,
+        pose.pos.y + Math.sin(time * 0.13) * 0.06,
+        pose.pos.z,
+      );
       camera.lookAt(pose.look);
       camera.updateMatrixWorld();
 
@@ -106,22 +124,36 @@ function createDirector() {
 
       // The air takes the pond's colour: dark at night, a pale haze by day.
       gardenAir.copy(GARDEN_NIGHT).lerp(GARDEN_DAY, day);
-      if (scene.background instanceof Color) scene.background.copy(NIGHT).lerp(DAY, day).lerp(gardenAir, garden);
-      if (scene.fog) scene.fog.color.copy(NIGHT).lerp(DAY, day).lerp(gardenAir, garden);
-      scene.environmentIntensity = lerp(1, 1.25, day) * lerp(1, 0.65, garden * (1 - day));
+      if (scene.background instanceof Color)
+        scene.background.copy(NIGHT).lerp(DAY, day).lerp(gardenAir, garden);
+      if (scene.fog)
+        scene.fog.color.copy(NIGHT).lerp(DAY, day).lerp(gardenAir, garden);
+      scene.environmentIntensity =
+        lerp(1, 1.25, day) * lerp(1, 0.65, garden * (1 - day));
       gl.toneMappingExposure = lerp(1.05, 1, day);
 
       // Ripples: the tail's wake while the creature swims, and the pointer on the water.
       const onWater = creatureLive.tail.y < WATER_Y + TAIL_WATER_HEIGHT;
       if (onWater && creatureLive.speed > 0.35) {
-        const gap = Math.max(TAIL_RIPPLE_MIN_GAP, Math.min(TAIL_RIPPLE_MAX_GAP, 0.35 / creatureLive.speed));
+        const gap = Math.max(
+          TAIL_RIPPLE_MIN_GAP,
+          Math.min(TAIL_RIPPLE_MAX_GAP, 0.35 / creatureLive.speed),
+        );
         if (time - book.tail > gap) {
           book.tail = time;
-          addRipple(sceneLive.ripples, creatureLive.tail.x, creatureLive.tail.z, time);
+          addRipple(
+            sceneLive.ripples,
+            creatureLive.tail.x,
+            creatureLive.tail.z,
+            time,
+          );
         }
       }
       const pointer = state.pointer;
-      if (pointer && (pointer.x !== book.pointerX || pointer.y !== book.pointerY)) {
+      if (
+        pointer &&
+        (pointer.x !== book.pointerX || pointer.y !== book.pointerY)
+      ) {
         book.pointerX = pointer.x;
         book.pointerY = pointer.y;
         if (time - book.pointer > POINTER_RIPPLE_GAP) {

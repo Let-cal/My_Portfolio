@@ -1,13 +1,39 @@
 import { describe, expect, it } from "vitest";
-import { aspectPullback, cameraAt, chapterPosition, CHAPTER_CAMERA, type CameraPose } from "@/scene/chapters";
-import { creatureVisibility, findOpenSpot, LARGE_DAY_SHARE, MAX_AVOID, mergeRects, rectCoverage, rectsNear, selectRects, veilOpacity, type Rect } from "@/scene/environment/legibility";
+import {
+  aspectPullback,
+  cameraAt,
+  chapterPosition,
+  CHAPTER_CAMERA,
+  type CameraPose,
+} from "@/scene/chapters";
+import {
+  creatureVisibility,
+  findOpenSpot,
+  LARGE_DAY_SHARE,
+  MAX_AVOID,
+  mergeRects,
+  rectCoverage,
+  rectsNear,
+  selectRects,
+  veilOpacity,
+  type Rect,
+} from "@/scene/environment/legibility";
 import { dampValue, propWeight, stepDay } from "@/scene/environment/math";
-import { addRipple, createRipples, MAX_RIPPLES, RIPPLE_IDLE } from "@/scene/environment/ripples";
+import {
+  addRipple,
+  createRipples,
+  MAX_RIPPLES,
+  RIPPLE_IDLE,
+} from "@/scene/environment/ripples";
 
 type V = { x: number; y: number; z: number };
-const pose = (): { pos: V; look: V } => ({ pos: { x: 0, y: 0, z: 0 }, look: { x: 0, y: 0, z: 0 } });
+const pose = (): { pos: V; look: V } => ({
+  pos: { x: 0, y: 0, z: 0 },
+  look: { x: 0, y: 0, z: 0 },
+});
 const arr = (v: V) => [v.x, v.y, v.z];
-const dist = (a: number[], b: number[]) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+const dist = (a: number[], b: number[]) =>
+  Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 
 describe("CHAPTER_CAMERA", () => {
   it("has one pose per chapter and chapter 0 looks down on the pond from above and in front", () => {
@@ -126,8 +152,14 @@ describe("creatureVisibility", () => {
   });
 
   it("falls to the floor when the whole creature is under text, and in between for part of it", () => {
-    const under = [{ x: 100, y: 100 }, { x: 200, y: 200 }];
-    const half = [{ x: 100, y: 100 }, { x: 900, y: 900 }];
+    const under = [
+      { x: 100, y: 100 },
+      { x: 200, y: 200 },
+    ];
+    const half = [
+      { x: 100, y: 100 },
+      { x: 900, y: 900 },
+    ];
     expect(creatureVisibility([box], under, 40, 0.3)).toBeCloseTo(0.3, 10);
     const part = creatureVisibility([box], half, 40, 0.3);
     expect(part).toBeGreaterThan(0.3);
@@ -144,13 +176,16 @@ describe("selectRects", () => {
       { x0: 0, y0: -500, x1: 100, y1: -400 },
       { x0: 0, y0: 900, x1: 100, y1: 1000 },
     ];
-    for (let i = 0; i < 30; i++) rects.push({ x0: 10, y0: 10 + i, x1: 10 + 10 * (i + 1), y1: 40 + i });
+    for (let i = 0; i < 30; i++)
+      rects.push({ x0: 10, y0: 10 + i, x1: 10 + 10 * (i + 1), y1: 40 + i });
     const picked = selectRects(rects, vw, vh);
     expect(picked).toHaveLength(MAX_AVOID);
     expect(picked.every((r) => r.y1 > 0 && r.y0 < vh)).toBe(true);
     // The widest ones survive.
     expect(Math.max(...picked.map((r) => r.x1))).toBe(310);
-    expect(Math.min(...picked.map((r) => r.x1 - r.x0))).toBeGreaterThanOrEqual(70);
+    expect(Math.min(...picked.map((r) => r.x1 - r.x0))).toBeGreaterThanOrEqual(
+      70,
+    );
   });
 
   it("clips what it keeps to the viewport and ignores empty rectangles", () => {
@@ -172,7 +207,9 @@ describe("rectsNear", () => {
     expect(rectsNear(a, { x0: 50, y0: 50, x1: 200, y1: 200 }, 0)).toBe(true);
     expect(rectsNear(a, { x0: 130, y0: 0, x1: 200, y1: 100 }, 40)).toBe(true);
     expect(rectsNear(a, { x0: 130, y0: 0, x1: 200, y1: 100 }, 20)).toBe(false);
-    expect(rectsNear(a, { x0: 0, y0: -200, x1: 100, y1: -150 }, 40)).toBe(false);
+    expect(rectsNear(a, { x0: 0, y0: -200, x1: 100, y1: -150 }, 40)).toBe(
+      false,
+    );
   });
 });
 
@@ -189,7 +226,9 @@ describe("veilOpacity", () => {
 
   it("is full while the creature is under or near the text", () => {
     expect(veilOpacity(rect, near, base)).toBe(1);
-    expect(veilOpacity(rect, { x0: 350, y0: 100, x1: 380, y1: 150 }, base)).toBe(1);
+    expect(
+      veilOpacity(rect, { x0: 350, y0: 100, x1: 380, y1: 150 }, base),
+    ).toBe(1);
   });
 
   it("is full where scenery is on screen, and by day when the whole pond is bright; fades in between", () => {
@@ -213,7 +252,9 @@ describe("veilOpacity for large text", () => {
     expect(calm).toBeLessThan(1);
     expect(veilOpacity(big, near, { ...opts, day: 1 })).toBe(1);
     // Small text gets the full veil by day.
-    expect(veilOpacity({ ...big, large: false }, null, { ...opts, day: 1 })).toBe(1);
+    expect(
+      veilOpacity({ ...big, large: false }, null, { ...opts, day: 1 }),
+    ).toBe(1);
   });
 
   it("at night is treated like any other text, and scenery calls for a veil by day too", () => {
@@ -231,17 +272,33 @@ describe("veilOpacity for large text", () => {
       20,
     );
     expect(merged[0].large).toBe(false);
-    expect(mergeRects([{ x0: 0, y0: 0, x1: 100, y1: 30, large: true }, { x0: 0, y0: 40, x1: 100, y1: 70, large: true }], 20)[0].large).toBe(true);
+    expect(
+      mergeRects(
+        [
+          { x0: 0, y0: 0, x1: 100, y1: 30, large: true },
+          { x0: 0, y0: 40, x1: 100, y1: 70, large: true },
+        ],
+        20,
+      )[0].large,
+    ).toBe(true);
   });
 });
 
 describe("mergeRects", () => {
   it("does not fill an empty courtyard between a sidebar and an offset content card", () => {
-    const blocks = [{ x0: 20, y0: 200, x1: 360, y1: 500 }, { x0: 350, y0: 490, x1: 1000, y1: 700 }];
+    const blocks = [
+      { x0: 20, y0: 200, x1: 360, y1: 500 },
+      { x0: 350, y0: 490, x1: 1000, y1: 700 },
+    ];
     expect(mergeRects(blocks, 28)).toHaveLength(2);
   });
   it("joins rectangles that touch or sit closer than the gap, so a row of chips becomes one block", () => {
-    const chips: Rect[] = [0, 1, 2, 3].map((i) => ({ x0: i * 60, y0: 0, x1: i * 60 + 50, y1: 24 }));
+    const chips: Rect[] = [0, 1, 2, 3].map((i) => ({
+      x0: i * 60,
+      y0: 0,
+      x1: i * 60 + 50,
+      y1: 24,
+    }));
     const merged = mergeRects(chips, 20);
     expect(merged).toEqual([{ x0: 0, y0: 0, x1: 230, y1: 24 }]);
   });
@@ -261,7 +318,10 @@ describe("mergeRects", () => {
   });
 
   it("does not change its input", () => {
-    const a: Rect[] = [{ x0: 0, y0: 0, x1: 10, y1: 10 }, { x0: 12, y0: 0, x1: 20, y1: 10 }];
+    const a: Rect[] = [
+      { x0: 0, y0: 0, x1: 10, y1: 10 },
+      { x0: 12, y0: 0, x1: 20, y1: 10 },
+    ];
     mergeRects(a, 5);
     expect(a[1]).toEqual({ x0: 12, y0: 0, x1: 20, y1: 10 });
   });
@@ -272,7 +332,8 @@ describe("ripples", () => {
     const r = createRipples();
     expect(MAX_RIPPLES).toBe(12);
     expect(r.data).toHaveLength(36);
-    for (let i = 0; i < MAX_RIPPLES; i++) expect(r.data[i * 3 + 2]).toBe(RIPPLE_IDLE);
+    for (let i = 0; i < MAX_RIPPLES; i++)
+      expect(r.data[i * 3 + 2]).toBe(RIPPLE_IDLE);
   });
 
   it("writes {x, z, t0} and reuses the oldest slot once all twelve are used", () => {
@@ -333,7 +394,12 @@ describe("propWeight", () => {
 describe("findOpenSpot", () => {
   const W = 1200;
   const H = 800;
-  const rect = (x0: number, y0: number, x1: number, y1: number): Rect => ({ x0, y0, x1, y1 });
+  const rect = (x0: number, y0: number, x1: number, y1: number): Rect => ({
+    x0,
+    y0,
+    x1,
+    y1,
+  });
 
   it("picks somewhere near the middle of an empty screen, inside it", () => {
     const p = findOpenSpot([], W, H);
@@ -381,11 +447,23 @@ describe("findOpenSpot", () => {
     // Everything is free except a small block in the corner and a card column on the right.
     const icons = rect(30, 700, 180, 760);
     const p = findOpenSpot([icons, rect(700, 0, W, H)], W, H);
-    const clear = Math.hypot(Math.max(icons.x0 - p.x, 0, p.x - icons.x1), Math.max(icons.y0 - p.y, 0, p.y - icons.y1));
+    const clear = Math.hypot(
+      Math.max(icons.x0 - p.x, 0, p.x - icons.x1),
+      Math.max(icons.y0 - p.y, 0, p.y - icons.y1),
+    );
     expect(clear).toBeGreaterThan(120);
     // And with the whole left column covered except that corner's neighbourhood, it still does not pick the corner.
-    const q = findOpenSpot([icons, rect(0, 0, 400, 690), rect(700, 0, W, H)], W, H);
-    expect(Math.hypot(Math.max(icons.x0 - q.x, 0, q.x - icons.x1), Math.max(icons.y0 - q.y, 0, q.y - icons.y1))).toBeGreaterThan(60);
+    const q = findOpenSpot(
+      [icons, rect(0, 0, 400, 690), rect(700, 0, W, H)],
+      W,
+      H,
+    );
+    expect(
+      Math.hypot(
+        Math.max(icons.x0 - q.x, 0, q.x - icons.x1),
+        Math.max(icons.y0 - q.y, 0, q.y - icons.y1),
+      ),
+    ).toBeGreaterThan(60);
   });
 
   it("writes into the object it is given", () => {

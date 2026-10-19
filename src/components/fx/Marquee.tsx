@@ -21,7 +21,14 @@ type MarqueeProps = {
  * by one copy width; the duration is derived from the measured width so `speed` is real px/s.
  * Under reduced motion only one copy is shown and the row scrolls by hand.
  */
-export function Marquee({ speed = 40, reverse = false, pauseOnHover = true, decorative = false, className, children }: MarqueeProps) {
+export function Marquee({
+  speed = 40,
+  reverse = false,
+  pauseOnHover = true,
+  decorative = false,
+  className,
+  children,
+}: MarqueeProps) {
   const reduced = usePrefersReducedMotion();
   const rootRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -34,22 +41,31 @@ export function Marquee({ speed = 40, reverse = false, pauseOnHover = true, deco
     let disposed = false;
     const apply = (width: number) => {
       if (disposed) return;
-      if (width > 0) track.style.setProperty("--fx-marquee-duration", `${width / speed}s`);
+      if (width > 0)
+        track.style.setProperty("--fx-marquee-duration", `${width / speed}s`);
     };
     if (typeof ResizeObserver !== "undefined") {
       const observer = new ResizeObserver((entries) => {
         if (disposed) return;
         for (const entry of entries) {
           if (entry.target !== copy) continue;
-          const size = Array.isArray(entry.borderBoxSize) ? entry.borderBoxSize[0] : entry.borderBoxSize as unknown as ResizeObserverSize | undefined;
+          const size = Array.isArray(entry.borderBoxSize)
+            ? entry.borderBoxSize[0]
+            : (entry.borderBoxSize as unknown as
+                ResizeObserverSize | undefined);
           // Older RO implementations lack borderBoxSize; only that fallback needs a layout read.
           apply(size?.inlineSize ?? copy.getBoundingClientRect().width);
         }
       });
       observer.observe(copy, { box: "border-box" });
-      return () => { disposed = true; observer.disconnect(); };
+      return () => {
+        disposed = true;
+        observer.disconnect();
+      };
     }
-    const measure = () => { if (!disposed) apply(copy.getBoundingClientRect().width); };
+    const measure = () => {
+      if (!disposed) apply(copy.getBoundingClientRect().width);
+    };
     measure();
     window.addEventListener("resize", measure);
     document.fonts?.addEventListener("loadingdone", measure);
@@ -65,7 +81,11 @@ export function Marquee({ speed = 40, reverse = false, pauseOnHover = true, deco
   return (
     <div
       ref={rootRef}
-      className={cn("fx-marquee flex w-full rounded-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50", reduced ? "overflow-x-auto" : "overflow-hidden", className)}
+      className={cn(
+        "fx-marquee flex w-full rounded-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+        reduced ? "overflow-x-auto" : "overflow-hidden",
+        className,
+      )}
       tabIndex={decorative ? -1 : reduced ? 0 : undefined}
       data-pause-on-hover={pauseOnHover ? "" : undefined}
     >
@@ -79,7 +99,10 @@ export function Marquee({ speed = 40, reverse = false, pauseOnHover = true, deco
           {children}
         </div>
         {!reduced && (
-          <div aria-hidden="true" className="flex flex-none items-center gap-8 pr-8">
+          <div
+            aria-hidden="true"
+            className="flex flex-none items-center gap-8 pr-8"
+          >
             {children}
           </div>
         )}

@@ -4,11 +4,14 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Le Tran Cat Lam · Software Engineer Portfolio",
     short_name: "LETCAL",
-    description: "Software engineering, technical leadership and project delivery — the portfolio of Le Tran Cat Lam.",
+    description:
+      "Software engineering, technical leadership and project delivery — the portfolio of Le Tran Cat Lam.",
     start_url: "/en",
     display: "browser",
     background_color: "#0a0a0b",
     theme_color: "#0a0a0b",
-    icons: [{ src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" }],
+    icons: [
+      { src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
+    ],
   };
 }

@@ -34,7 +34,13 @@ describe("proxy", () => {
 
   it("skips api, _next, _vercel and files with an extension", () => {
     const re = new RegExp(`^${config.matcher[0]}$`);
-    for (const skipped of ["/api/x", "/_next/static/a.js", "/_vercel/x", "/cv/file.pdf", "/favicon.ico"]) {
+    for (const skipped of [
+      "/api/x",
+      "/_next/static/a.js",
+      "/_vercel/x",
+      "/cv/file.pdf",
+      "/favicon.ico",
+    ]) {
       expect(re.test(skipped), skipped).toBe(false);
     }
     for (const matched of ["/", "/en", "/ja/quick", "/admin"]) {

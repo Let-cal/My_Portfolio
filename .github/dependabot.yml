@@ -5,7 +5,7 @@ updates:
     schedule:
       interval: weekly
       day: monday
-      time: '06:30'
+      time: "06:30"
       timezone: Asia/Ho_Chi_Minh
     open-pull-requests-limit: 3
     groups:
@@ -16,20 +16,20 @@ updates:
     ignore:
       - dependency-name: eslint
         update-types: [version-update:semver-major]
-      - dependency-name: '@types/node'
-        versions: ['>=23']
+      - dependency-name: "@types/node"
+        versions: [">=23"]
     commit-message:
-      prefix: 'deps'
+      prefix: "deps"
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
       day: monday
-      time: '06:45'
+      time: "06:45"
       timezone: Asia/Ho_Chi_Minh
     open-pull-requests-limit: 2
     groups:
       actions:
-        patterns: ['*']
+        patterns: ["*"]
     commit-message:
-      prefix: 'ci'
+      prefix: "ci"

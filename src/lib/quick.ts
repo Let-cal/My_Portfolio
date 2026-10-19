@@ -1,4 +1,10 @@
-import type { Certificate, Content, Locale, RoleKey, SkillGroup } from "@/content/schema";
+import type {
+  Certificate,
+  Content,
+  Locale,
+  RoleKey,
+  SkillGroup,
+} from "@/content/schema";
 import { formatPeriod } from "./format";
 import { pickLocale } from "./i18n-text";
 import { orderExperiences, orderSkillGroups } from "./roles";
@@ -11,10 +17,20 @@ export const QUICK_CERTIFICATE_COUNT = 4;
  * Certificates a recruiter reads first: the Japanese level, then project management, the software lifecycle
  * and UX. Ids that are missing or unpublished are skipped and the rest is filled in `sortIndex` order.
  */
-const FEATURED_CERTIFICATE_IDS = ["jlpt-n3", "coursera-pm-principles", "coursera-sdlc", "coursera-ux-research-design"];
+const FEATURED_CERTIFICATE_IDS = [
+  "jlpt-n3",
+  "coursera-pm-principles",
+  "coursera-sdlc",
+  "coursera-ux-research-design",
+];
 
-export function featuredCertificates(certificates: Certificate[], count = QUICK_CERTIFICATE_COUNT): Certificate[] {
-  const published = certificates.filter((c) => c.published).sort((a, b) => a.sortIndex - b.sortIndex);
+export function featuredCertificates(
+  certificates: Certificate[],
+  count = QUICK_CERTIFICATE_COUNT,
+): Certificate[] {
+  const published = certificates
+    .filter((c) => c.published)
+    .sort((a, b) => a.sortIndex - b.sortIndex);
   const byId = new Map(published.map((c) => [c.id, c]));
   const picked: Certificate[] = [];
   for (const id of FEATURED_CERTIFICATE_IDS) {
@@ -30,7 +46,10 @@ export function featuredCertificates(certificates: Certificate[], count = QUICK_
 
 /** `https://www.linkedin.com/in/letcal/` becomes `linkedin.com/in/letcal`. */
 export function displayUrl(url: string): string {
-  return url.replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/$/, "");
+  return url
+    .replace(/^https?:\/\//, "")
+    .replace(/^www\./, "")
+    .replace(/\/$/, "");
 }
 
 export type QuickData = {
@@ -46,18 +65,50 @@ export type QuickData = {
   cvFileUrl: string;
   /** The employer when every listed experience shares one (it is then printed once, not on every line). */
   employer: string | null;
-  experiences: { id: string; company: string; parentCompany: string | null; position: string; period: string }[];
+  experiences: {
+    id: string;
+    company: string;
+    parentCompany: string | null;
+    position: string;
+    period: string;
+  }[];
   skillGroups: { group: SkillGroup; names: string[] }[];
-  certificates: { id: string; name: string; organization: string; year: string }[];
-  education: { school: string; degree: string; major: string; gpa: string | null; period: string; notes: string } | null;
+  certificates: {
+    id: string;
+    name: string;
+    organization: string;
+    year: string;
+  }[];
+  education: {
+    school: string;
+    degree: string;
+    major: string;
+    gpa: string | null;
+    period: string;
+    notes: string;
+  } | null;
 };
 
 /** Everything the 60-second view prints, picked and localized for one role. No phone number exists in the content. */
-export function buildQuickData(content: Content, locale: Locale, roleKey: RoleKey): QuickData {
-  const { profile, roles, experiences, skills, certificates, education } = content;
+export function buildQuickData(
+  content: Content,
+  locale: Locale,
+  roleKey: RoleKey,
+): QuickData {
+  const { profile, roles, experiences, skills, certificates, education } =
+    content;
   const role = roles.find((r) => r.key === roleKey) ?? roles[0];
-  const listed = orderExperiences(experiences, role).slice(0, QUICK_EXPERIENCE_COUNT);
-  const employer = listed.length > 0 && listed.every((e) => e.parentCompany && e.parentCompany === listed[0].parentCompany) ? listed[0].parentCompany : null;
+  const listed = orderExperiences(experiences, role).slice(
+    0,
+    QUICK_EXPERIENCE_COUNT,
+  );
+  const employer =
+    listed.length > 0 &&
+    listed.every(
+      (e) => e.parentCompany && e.parentCompany === listed[0].parentCompany,
+    )
+      ? listed[0].parentCompany
+      : null;
   const school = [...education].sort((a, b) => a.sortIndex - b.sortIndex)[0];
 
   return {

@@ -52,7 +52,9 @@ export function Header({ cvUrls }: { cvUrls: Record<RoleKey, string> }) {
             onClick={openCommand}
             className="hidden sm:inline-flex"
           >
-            <kbd className="font-sans text-xs text-muted-foreground">{shortcut}</kbd>
+            <kbd className="font-sans text-xs text-muted-foreground">
+              {shortcut}
+            </kbd>
           </Button>
           {cvUrls[role] && (
             <MagneticButton asChild>

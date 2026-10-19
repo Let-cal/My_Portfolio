@@ -10,7 +10,8 @@ const STATS = [
   { value: 2, label: "parallel" },
 ] as const;
 
-const CELL = "flex flex-col-reverse justify-end gap-1 rounded-2xl border border-border bg-card/50 px-4 py-3 backdrop-blur-md";
+const CELL =
+  "flex flex-col-reverse justify-end gap-1 rounded-2xl border border-border bg-card/50 px-4 py-3 backdrop-blur-md";
 const NUMBER = "font-heading text-3xl font-bold tracking-tight sm:text-4xl";
 const LABEL = "text-xs text-muted-foreground sm:text-sm";
 
@@ -18,12 +19,18 @@ const LABEL = "text-xs text-muted-foreground sm:text-sm";
 export function HeroStats() {
   const t = useTranslations("hero.stats");
   return (
-    <dl aria-label={t("label")} className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <dl
+      aria-label={t("label")}
+      className="grid grid-cols-2 gap-3 sm:grid-cols-4"
+    >
       {STATS.map((s) => (
         <div key={s.label} className={CELL}>
           <dt className={LABEL}>{t(s.label)}</dt>
           <dd className={NUMBER}>
-            <NumberTicker value={s.value} formattedValue={formatTickerValue(s.value)} />
+            <NumberTicker
+              value={s.value}
+              formattedValue={formatTickerValue(s.value)}
+            />
           </dd>
         </div>
       ))}

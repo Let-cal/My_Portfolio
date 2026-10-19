@@ -4,7 +4,13 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { a11yProps, FieldError, RequiredMark } from "./FieldShell";
-import { bucketFor, storagePath, UPLOAD_RULES, validateUpload, type UploadKind } from "@/lib/admin/upload";
+import {
+  bucketFor,
+  storagePath,
+  UPLOAD_RULES,
+  validateUpload,
+  type UploadKind,
+} from "@/lib/admin/upload";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
 
 /**
@@ -41,7 +47,9 @@ export function UploadField({
     const supabase = createBrowserSupabase();
     const bucket = bucketFor(kind);
     const path = storagePath(kind, file.name, crypto.randomUUID().slice(0, 8));
-    const { error } = await supabase.storage.from(bucket).upload(path, file, { contentType: file.type });
+    const { error } = await supabase.storage
+      .from(bucket)
+      .upload(path, file, { contentType: file.type });
     setBusy(false);
     if (error) {
       toast.error(`Tải lên thất bại: ${error.message}`);
@@ -62,12 +70,26 @@ export function UploadField({
           {kind === "image" && (
             // Admin-only thumbnail of an uploaded file; next/image would need the storage host configured.
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={value} alt="" className="h-16 w-auto rounded border object-cover" />
+            <img
+              src={value}
+              alt=""
+              className="h-16 w-auto rounded border object-cover"
+            />
           )}
-          <a href={value} target="_blank" rel="noreferrer" className="max-w-full truncate text-sm underline">
+          <a
+            href={value}
+            target="_blank"
+            rel="noreferrer"
+            className="max-w-full truncate text-sm underline"
+          >
             {value}
           </a>
-          <Button type="button" variant="ghost" size="sm" onClick={() => onChange(null)}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => onChange(null)}
+          >
             Gỡ
           </Button>
         </div>
@@ -87,7 +109,9 @@ export function UploadField({
           if (file) void upload(file);
         }}
       />
-      {busy && <span className="text-xs text-muted-foreground">Đang tải lên…</span>}
+      {busy && (
+        <span className="text-xs text-muted-foreground">Đang tải lên…</span>
+      )}
       {id && <FieldError id={id} message={error} />}
     </div>
   );

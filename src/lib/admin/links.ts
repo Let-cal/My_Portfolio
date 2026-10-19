@@ -2,7 +2,10 @@
 export type LinkTarget = { experienceId: string } | { projectId: string };
 
 /** What to insert and delete to turn the `current` set of ids into `next`. */
-export function diffLinks(current: string[], next: string[]): { add: string[]; remove: string[] } {
+export function diffLinks(
+  current: string[],
+  next: string[],
+): { add: string[]; remove: string[] } {
   const now = new Set(current);
   const want = new Set(next);
   return {

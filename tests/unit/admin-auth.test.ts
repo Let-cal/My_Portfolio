@@ -20,7 +20,15 @@ describe("safeNextPath", () => {
     expect(safeNextPath("/admin/projects")).toBe("/admin/projects");
   });
   it("falls back to /admin for anything that could leave the admin area", () => {
-    for (const bad of [null, "", "https://evil.test", "//evil.test", "/en", "/admin/../en", "/adminx"]) {
+    for (const bad of [
+      null,
+      "",
+      "https://evil.test",
+      "//evil.test",
+      "/en",
+      "/admin/../en",
+      "/adminx",
+    ]) {
       expect(safeNextPath(bad)).toBe("/admin");
     }
   });
@@ -28,7 +36,9 @@ describe("safeNextPath", () => {
 
 describe("safeNextPath with a query", () => {
   it("keeps a query string on admin paths", () => {
-    expect(safeNextPath("/admin/skills?filter=orphan")).toBe("/admin/skills?filter=orphan");
+    expect(safeNextPath("/admin/skills?filter=orphan")).toBe(
+      "/admin/skills?filter=orphan",
+    );
   });
   it("still rejects off-site paths that carry a query", () => {
     expect(safeNextPath("/en?x=/admin")).toBe("/admin");

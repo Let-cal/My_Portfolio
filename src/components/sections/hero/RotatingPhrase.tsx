@@ -21,7 +21,10 @@ export function RotatingPhrase({ className }: { className?: string }) {
 
   useEffect(() => {
     if (reduced || items.length < 2) return;
-    const timer = setInterval(() => setIndex((i) => (i + 1) % items.length), INTERVAL_MS);
+    const timer = setInterval(
+      () => setIndex((i) => (i + 1) % items.length),
+      INTERVAL_MS,
+    );
     return () => clearInterval(timer);
   }, [reduced, items.length]);
 
@@ -35,8 +38,23 @@ export function RotatingPhrase({ className }: { className?: string }) {
             </span>
           ) : (
             <span className="hero-phrase-word relative inline-flex overflow-hidden pb-[0.12em] align-bottom">
-              {leaving.map((frame) => <span key={frame.key} aria-hidden="true" className="hero-word-exit absolute top-0 left-0 inline-block whitespace-nowrap" onAnimationEnd={() => finish(frame.key)}>{items[frame.value]}</span>)}
-              <span key={current.key} data-phrase-current="" className={`inline-block whitespace-nowrap${current.key > 0 ? " hero-word-enter" : ""}`}>{items[index]}</span>
+              {leaving.map((frame) => (
+                <span
+                  key={frame.key}
+                  aria-hidden="true"
+                  className="hero-word-exit absolute top-0 left-0 inline-block whitespace-nowrap"
+                  onAnimationEnd={() => finish(frame.key)}
+                >
+                  {items[frame.value]}
+                </span>
+              ))}
+              <span
+                key={current.key}
+                data-phrase-current=""
+                className={`inline-block whitespace-nowrap${current.key > 0 ? " hero-word-enter" : ""}`}
+              >
+                {items[index]}
+              </span>
             </span>
           ),
       })}

@@ -29,7 +29,10 @@ describe("SkillPicker", () => {
   it("finds skills by name, grouped, and adds the chosen one as a chip", () => {
     const onChange = vi.fn();
     render(<Picker initial={["ts"]} onChange={onChange} />);
-    fireEvent.change(screen.getByRole("combobox", { name: "Skills dùng ở đây" }), { target: { value: "rea" } });
+    fireEvent.change(
+      screen.getByRole("combobox", { name: "Skills dùng ở đây" }),
+      { target: { value: "rea" } },
+    );
     const list = screen.getByRole("listbox");
     expect(within(list).getByText("frameworks")).toBeTruthy();
     expect(within(list).getByText("testing")).toBeTruthy();
@@ -47,8 +50,15 @@ describe("SkillPicker", () => {
 
   it("does not offer skills already chosen", () => {
     render(<Picker initial={["react"]} />);
-    fireEvent.change(screen.getByRole("combobox", { name: "Skills dùng ở đây" }), { target: { value: "rea" } });
-    expect(within(screen.getByRole("listbox")).queryByRole("option", { name: "React" })).toBeNull();
+    fireEvent.change(
+      screen.getByRole("combobox", { name: "Skills dùng ở đây" }),
+      { target: { value: "rea" } },
+    );
+    expect(
+      within(screen.getByRole("listbox")).queryByRole("option", {
+        name: "React",
+      }),
+    ).toBeNull();
   });
 });
 
@@ -71,7 +81,10 @@ describe("TagCombobox", () => {
   it("suggests existing skill names", () => {
     const onChange = vi.fn();
     render(<Tags onChange={onChange} />);
-    fireEvent.change(screen.getByRole("combobox", { name: "Kỹ năng liên quan" }), { target: { value: "type" } });
+    fireEvent.change(
+      screen.getByRole("combobox", { name: "Kỹ năng liên quan" }),
+      { target: { value: "type" } },
+    );
     fireEvent.click(screen.getByRole("option", { name: "TypeScript" }));
     expect(onChange).toHaveBeenLastCalledWith(["TypeScript"]);
   });

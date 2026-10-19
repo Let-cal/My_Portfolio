@@ -15,7 +15,10 @@ import { createCreatureRig } from "./rig";
 export function Creature() {
   const tier = useSceneStore((s) => (s.tier === "low" ? "low" : "high"));
   const maxAnisotropy = useThree((s) => s.gl.capabilities.getMaxAnisotropy());
-  const rig = useMemo(() => createCreatureRig(qualityForTier(tier), { maxAnisotropy }), [tier, maxAnisotropy]);
+  const rig = useMemo(
+    () => createCreatureRig(qualityForTier(tier), { maxAnisotropy }),
+    [tier, maxAnisotropy],
+  );
   const cloud = useMemo(() => createPointCloud(rig, tier), [rig, tier]);
 
   useEffect(() => () => cloud.dispose(), [cloud]);
@@ -30,7 +33,12 @@ export function Creature() {
       day: sceneLive.day,
       viewport: state.size,
     });
-    cloud.update(rig, state.clock.elapsedTime, sceneLive.day, state.size.height * state.gl.getPixelRatio());
+    cloud.update(
+      rig,
+      state.clock.elapsedTime,
+      sceneLive.day,
+      state.size.height * state.gl.getPixelRatio(),
+    );
   });
 
   return (

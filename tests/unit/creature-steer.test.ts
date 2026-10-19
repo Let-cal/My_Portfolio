@@ -20,7 +20,10 @@ const dist = (a: Vec3, b: Vec3) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 describe("minTurnRadius", () => {
   it("is the koi radius for a koi and grows with the body length", () => {
     expect(minTurnRadius(0)).toBeCloseTo(MIN_TURN_RADIUS, 10);
-    expect(minTurnRadius(1)).toBeCloseTo((MIN_TURN_RADIUS * bodyLength(1)) / KOI_LENGTH, 10);
+    expect(minTurnRadius(1)).toBeCloseTo(
+      (MIN_TURN_RADIUS * bodyLength(1)) / KOI_LENGTH,
+      10,
+    );
     expect(minTurnRadius(0.5)).toBeGreaterThan(minTurnRadius(0));
     expect(minTurnRadius(1)).toBeGreaterThan(minTurnRadius(0.5));
   });
@@ -31,7 +34,9 @@ describe("steer with a morph-scaled turning circle", () => {
     for (const morph of [0, 0.5, 1]) {
       const r = steer(v(0), 0, v(0.001, 0, 0.05), morph);
       const speed = dist(r.head, v(0));
-      expect(speed / Math.abs(r.heading)).toBeGreaterThanOrEqual(minTurnRadius(morph) - 1e-9);
+      expect(speed / Math.abs(r.heading)).toBeGreaterThanOrEqual(
+        minTurnRadius(morph) - 1e-9,
+      );
     }
   });
 
@@ -47,7 +52,8 @@ describe("steer with a morph-scaled turning circle", () => {
       followChain(chain, s.head, seg);
       if (f < 1500) continue;
       // Body points more than 2 units of arc length behind the head must stay clear of the head.
-      for (let i = Math.ceil(2 / seg); i < N; i++) closest = Math.min(closest, dist(chain[0], chain[i]));
+      for (let i = Math.ceil(2 / seg); i < N; i++)
+        closest = Math.min(closest, dist(chain[0], chain[i]));
     }
     // The dragon head is about 0.17 wide and its tail tip 0.02: the head must clear the rest of the body by more.
     expect(closest).toBeGreaterThan(0.25);
@@ -156,7 +162,12 @@ describe("idle modes per chapter", () => {
     const limits = pondLimits(REF_ASPECT, 1);
     for (let t = 0; t < 60; t += 0.5) {
       idleTarget(t, 1, out, { mode: "orbit" });
-      radii.push(Math.hypot(out.x - limits.idleX * ORBIT_CENTRE_X, (out.z - ORBIT_Z) / 0.55));
+      radii.push(
+        Math.hypot(
+          out.x - limits.idleX * ORBIT_CENTRE_X,
+          (out.z - ORBIT_Z) / 0.55,
+        ),
+      );
     }
     expect(Math.max(...radii) - Math.min(...radii)).toBeLessThan(1e-6);
   });

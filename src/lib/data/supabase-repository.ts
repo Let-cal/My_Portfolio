@@ -32,8 +32,11 @@ type Env = Record<string, string | undefined>;
 export function createPublicSupabase(env: Env = process.env): SupabaseClient {
   const url = env.NEXT_PUBLIC_SUPABASE_URL;
   const key = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) throw new Error("Supabase URL or anon key is not configured");
-  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  if (!url || !key)
+    throw new Error("Supabase URL or anon key is not configured");
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 }
 
 export class SupabaseRepository implements ContentRepository {
@@ -41,28 +44,42 @@ export class SupabaseRepository implements ContentRepository {
 
   private async rows<T>(table: string, orderBy?: string): Promise<T[]> {
     const query = this.client.from(table).select("*");
-    const { data, error } = await (orderBy ? query.order(orderBy, { ascending: true }) : query);
+    const { data, error } = await (orderBy
+      ? query.order(orderBy, { ascending: true })
+      : query);
     if (error) throw new Error(`Supabase ${table}: ${error.message}`);
     return (data ?? []) as T[];
   }
 
   async getContent(): Promise<Content> {
-    const [profile, roles, experiences, projects, skills, links, certificates, activities, education, whyCards] =
-      await Promise.all([
-        this.rows<ProfileRow>("profile"),
-        this.rows<RoleRow>("roles"),
-        this.rows<ExperienceRow>("experiences", "sort_index"),
-        this.rows<ProjectRow>("projects", "sort_index"),
-        this.rows<SkillRow>("skills", "sort_index"),
-        this.rows<SkillLinkRow>("skill_links"),
-        this.rows<CertificateRow>("certificates", "sort_index"),
-        this.rows<ActivityRow>("activities", "sort_index"),
-        this.rows<EducationRow>("education", "sort_index"),
-        this.rows<WhyCardRow>("why_cards", "sort_index"),
-      ]);
+    const [
+      profile,
+      roles,
+      experiences,
+      projects,
+      skills,
+      links,
+      certificates,
+      activities,
+      education,
+      whyCards,
+    ] = await Promise.all([
+      this.rows<ProfileRow>("profile"),
+      this.rows<RoleRow>("roles"),
+      this.rows<ExperienceRow>("experiences", "sort_index"),
+      this.rows<ProjectRow>("projects", "sort_index"),
+      this.rows<SkillRow>("skills", "sort_index"),
+      this.rows<SkillLinkRow>("skill_links"),
+      this.rows<CertificateRow>("certificates", "sort_index"),
+      this.rows<ActivityRow>("activities", "sort_index"),
+      this.rows<EducationRow>("education", "sort_index"),
+      this.rows<WhyCardRow>("why_cards", "sort_index"),
+    ]);
 
     if (profile.length !== 1) {
-      throw new Error(`Supabase profile: expected 1 row, got ${profile.length}`);
+      throw new Error(
+        `Supabase profile: expected 1 row, got ${profile.length}`,
+      );
     }
 
     return {
@@ -73,7 +90,11 @@ export class SupabaseRepository implements ContentRepository {
       // sort_index counts within a group, so order by group first to keep each group together.
       skills: skills
         .map((s) => rowToSkill(s, links))
-        .sort((a, b) => SKILL_GROUPS.indexOf(a.group) - SKILL_GROUPS.indexOf(b.group) || a.sortIndex - b.sortIndex),
+        .sort(
+          (a, b) =>
+            SKILL_GROUPS.indexOf(a.group) - SKILL_GROUPS.indexOf(b.group) ||
+            a.sortIndex - b.sortIndex,
+        ),
       certificates: certificates.map(rowToCertificate),
       activities: activities.map(rowToActivity),
       education: education.map(rowToEducation),

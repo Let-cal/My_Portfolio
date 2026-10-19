@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type RefObject,
+} from "react";
 import { beamPath } from "./beam-geometry";
 
 type Beam = { id: string; d: string };
@@ -29,9 +35,20 @@ type SkillBeamsProps = {
  * the path strings are written straight to the SVG elements, so scrolling does not re-render the component.
  * Under reduced motion the beams are drawn at once and nothing travels along them.
  */
-export function SkillBeams({ containerRef, skillId, getChip, cardIds, getCard, activeCardId, layoutKey, reduced }: SkillBeamsProps) {
+export function SkillBeams({
+  containerRef,
+  skillId,
+  getChip,
+  cardIds,
+  getCard,
+  activeCardId,
+  layoutKey,
+  reduced,
+}: SkillBeamsProps) {
   /** The beams currently drawn; `d` here is only the first geometry, later ones go to the DOM directly. */
-  const [shown, setShown] = useState<{ skillId: string; beams: Beam[] } | null>(null);
+  const [shown, setShown] = useState<{ skillId: string; beams: Beam[] } | null>(
+    null,
+  );
   const pathRefs = useRef(new Map<string, SVGPathElement>());
   const motionRefs = useRef(new Map<string, SVGElement>());
   const cardKey = cardIds.join("|");
@@ -53,7 +70,11 @@ export function SkillBeams({ containerRef, skillId, getChip, cardIds, getCard, a
       const beams: Beam[] = [];
       for (const id of ids) {
         const card = getCard(id);
-        if (card) beams.push({ id, d: beamPath(from, card.getBoundingClientRect(), origin) });
+        if (card)
+          beams.push({
+            id,
+            d: beamPath(from, card.getBoundingClientRect(), origin),
+          });
       }
       for (const { id, d } of beams) {
         pathRefs.current.get(id)?.setAttribute("d", d);
@@ -61,7 +82,11 @@ export function SkillBeams({ containerRef, skillId, getChip, cardIds, getCard, a
       }
       const key = beams.map((b) => b.id).join("|");
       setShown((prev) =>
-        prev && prev.skillId === skillId && prev.beams.map((b) => b.id).join("|") === key ? prev : { skillId, beams },
+        prev &&
+        prev.skillId === skillId &&
+        prev.beams.map((b) => b.id).join("|") === key
+          ? prev
+          : { skillId, beams },
       );
     };
     const schedule = () => {
@@ -72,10 +97,16 @@ export function SkillBeams({ containerRef, skillId, getChip, cardIds, getCard, a
     // Cards fade in and the panel may reflow right after a selection: measure once more when things settle.
     settle = window.setTimeout(schedule, 350);
     // Capture: also hears the evidence panel (and any other box) scrolling inside itself.
-    window.addEventListener("scroll", schedule, { passive: true, capture: true });
+    window.addEventListener("scroll", schedule, {
+      passive: true,
+      capture: true,
+    });
     window.addEventListener("resize", schedule);
     void document.fonts?.ready.then(schedule);
-    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(schedule);
+    const observer =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(schedule);
     if (observer) {
       observer.observe(container);
       const chipEl = getChip(skillId);
@@ -95,7 +126,13 @@ export function SkillBeams({ containerRef, skillId, getChip, cardIds, getCard, a
     };
   }, [containerRef, skillId, cardKey, getChip, getCard, layoutKey]);
 
-  if (!skillId || !shown || shown.skillId !== skillId || shown.beams.length === 0) return null;
+  if (
+    !skillId ||
+    !shown ||
+    shown.skillId !== skillId ||
+    shown.beams.length === 0
+  )
+    return null;
 
   return (
     <svg
@@ -106,9 +143,18 @@ export function SkillBeams({ containerRef, skillId, getChip, cardIds, getCard, a
       className="skill-beams pointer-events-none absolute inset-0 z-30 size-full overflow-visible"
     >
       {shown.beams.map(({ id, d }, i) => {
-        const state = activeCardId === null ? undefined : activeCardId === id ? "active" : "dim";
+        const state =
+          activeCardId === null
+            ? undefined
+            : activeCardId === id
+              ? "active"
+              : "dim";
         return (
-          <g key={id} data-state={state} style={{ "--beam-delay": `${i * 90}ms` } as CSSProperties}>
+          <g
+            key={id}
+            data-state={state}
+            style={{ "--beam-delay": `${i * 90}ms` } as CSSProperties}
+          >
             <path
               d={d}
               pathLength={1}
@@ -130,7 +176,14 @@ export function SkillBeams({ containerRef, skillId, getChip, cardIds, getCard, a
                     else motionRefs.current.delete(id);
                   }}
                 />
-                <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.12;0.88;1" dur="2.4s" begin={`${0.9 + i * 0.2}s`} repeatCount="indefinite" />
+                <animate
+                  attributeName="opacity"
+                  values="0;1;1;0"
+                  keyTimes="0;0.12;0.88;1"
+                  dur="2.4s"
+                  begin={`${0.9 + i * 0.2}s`}
+                  repeatCount="indefinite"
+                />
               </circle>
             )}
           </g>

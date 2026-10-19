@@ -1,24 +1,55 @@
-import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactElement } from "react";
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
-const { replace, gsapTicker, scrollTriggerUpdate, lenisInstances } = vi.hoisted(() => ({
-  replace: vi.fn(),
-  gsapTicker: { add: vi.fn(), remove: vi.fn(), lagSmoothing: vi.fn() },
-  scrollTriggerUpdate: vi.fn(),
-  lenisInstances: [] as { options: Record<string, unknown>; scrollTo: ReturnType<typeof vi.fn>; on: ReturnType<typeof vi.fn>; stop: ReturnType<typeof vi.fn>; start: ReturnType<typeof vi.fn>; destroy: ReturnType<typeof vi.fn> }[],
+const { replace, gsapTicker, scrollTriggerUpdate, lenisInstances } = vi.hoisted(
+  () => ({
+    replace: vi.fn(),
+    gsapTicker: { add: vi.fn(), remove: vi.fn(), lagSmoothing: vi.fn() },
+    scrollTriggerUpdate: vi.fn(),
+    lenisInstances: [] as {
+      options: Record<string, unknown>;
+      scrollTo: ReturnType<typeof vi.fn>;
+      on: ReturnType<typeof vi.fn>;
+      stop: ReturnType<typeof vi.fn>;
+      start: ReturnType<typeof vi.fn>;
+      destroy: ReturnType<typeof vi.fn>;
+    }[],
+  }),
+);
+
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams(""),
 }));
-
-vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams("") }));
 vi.mock("@/i18n/navigation", () => ({
   useRouter: () => ({ replace }),
   usePathname: () => "/en",
   getPathname: ({ locale }: { locale: string }) => `/${locale}`,
 }));
-vi.mock("gsap", () => ({ default: { ticker: gsapTicker, registerPlugin: vi.fn() }, gsap: { ticker: gsapTicker, registerPlugin: vi.fn() } }));
-vi.mock("gsap/ScrollTrigger", () => ({ ScrollTrigger: { update: scrollTriggerUpdate } }));
+vi.mock("gsap", () => ({
+  default: { ticker: gsapTicker, registerPlugin: vi.fn() },
+  gsap: { ticker: gsapTicker, registerPlugin: vi.fn() },
+}));
+vi.mock("gsap/ScrollTrigger", () => ({
+  ScrollTrigger: { update: scrollTriggerUpdate },
+}));
 vi.mock("lenis", () => ({
   default: class FakeLenis {
     options: Record<string, unknown>;
@@ -54,7 +85,11 @@ class FakeObserver {
   disconnect() {}
 }
 const assign = vi.fn();
-const CV = { fullstack: "https://cv.test/fs.pdf", techlead: "https://cv.test/tl.pdf", pm: "https://cv.test/pm.pdf" };
+const CV = {
+  fullstack: "https://cv.test/fs.pdf",
+  techlead: "https://cv.test/tl.pdf",
+  pm: "https://cv.test/pm.pdf",
+};
 
 function stubOs(osReduce: boolean) {
   vi.stubGlobal("matchMedia", (query: string) => ({
@@ -71,7 +106,10 @@ function stubOs(osReduce: boolean) {
 
 function withIntl(ui: ReactElement, locale: "en" | "ja" = "en") {
   return (
-    <NextIntlClientProvider locale={locale} messages={locale === "ja" ? ja : en}>
+    <NextIntlClientProvider
+      locale={locale}
+      messages={locale === "ja" ? ja : en}
+    >
       {ui}
     </NextIntlClientProvider>
   );
@@ -132,7 +170,12 @@ beforeEach(() => {
   vi.stubGlobal("ResizeObserver", FakeObserver);
   vi.stubGlobal("IntersectionObserver", FakeObserver);
   Element.prototype.scrollIntoView = vi.fn();
-  vi.stubGlobal("location", { ...window.location, assign, search: "?role=pm", hash: "#skills" });
+  vi.stubGlobal("location", {
+    ...window.location,
+    assign,
+    search: "?role=pm",
+    hash: "#skills",
+  });
 });
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -144,7 +187,9 @@ describe("CommandPalette", () => {
     render(palette());
     expect(screen.queryByRole("dialog")).toBeNull();
     fireEvent.keyDown(window, { key: "k", ctrlKey: true });
-    expect(await screen.findByRole("dialog", { name: "Command palette" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("dialog", { name: "Command palette" }),
+    ).toBeInTheDocument();
     fireEvent.keyDown(screen.getByRole("combobox"), { key: "Escape" });
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   });
@@ -163,11 +208,22 @@ describe("CommandPalette", () => {
     render(palette());
     openPalette();
     const dialog = await screen.findByRole("dialog");
-    for (const name of ["Go to", "Role", "Language", "Theme", "Motion", "Actions"]) {
+    for (const name of [
+      "Go to",
+      "Role",
+      "Language",
+      "Theme",
+      "Motion",
+      "Actions",
+    ]) {
       expect(within(dialog).getByRole("group", { name })).toBeInTheDocument();
     }
-    expect(within(dialog).getAllByRole("option")).toHaveLength(7 + 3 + 3 + 2 + 3 + 3);
-    expect(within(dialog).getByRole("combobox")).toHaveAccessibleName("Search commands");
+    expect(within(dialog).getAllByRole("option")).toHaveLength(
+      7 + 3 + 3 + 2 + 3 + 3,
+    );
+    expect(within(dialog).getByRole("combobox")).toHaveAccessibleName(
+      "Search commands",
+    );
   });
 
   it("filters the commands while typing", async () => {
@@ -175,7 +231,9 @@ describe("CommandPalette", () => {
     render(palette());
     openPalette();
     await user.type(await screen.findByRole("combobox"), "proj");
-    expect(screen.getByRole("option", { name: "Projects" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: "Projects" }),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("option", { name: "Experience" })).toBeNull();
   });
 
@@ -204,7 +262,11 @@ describe("CommandPalette", () => {
     openPalette();
     await user.click(await screen.findByRole("option", { name: "Tech Lead" }));
     // This suite stubs location for full-navigation commands, so observe the actual history write.
-    expect(history).toHaveBeenCalledWith(null, "", expect.stringContaining("?role=techlead#skills"));
+    expect(history).toHaveBeenCalledWith(
+      null,
+      "",
+      expect.stringContaining("?role=techlead#skills"),
+    );
     history.mockRestore();
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   });
@@ -213,7 +275,9 @@ describe("CommandPalette", () => {
     const user = userEvent.setup();
     render(palette());
     openPalette();
-    await user.click(await screen.findByRole("option", { name: "Theme: Light" }));
+    await user.click(
+      await screen.findByRole("option", { name: "Theme: Light" }),
+    );
     expect(html.classList.contains("light")).toBe(true);
     expect(localStorage.getItem("theme")).toBe("light");
   });
@@ -222,7 +286,9 @@ describe("CommandPalette", () => {
     const user = userEvent.setup();
     render(palette());
     openPalette();
-    await user.click(await screen.findByRole("option", { name: "Motion: Off" }));
+    await user.click(
+      await screen.findByRole("option", { name: "Motion: Off" }),
+    );
     expect(localStorage.getItem("motion")).toBe("off");
     expect(html.dataset.motion).toBe("reduced");
   });
@@ -239,7 +305,9 @@ describe("CommandPalette", () => {
     await waitFor(() => expect(lenis.start).toHaveBeenCalledTimes(1));
 
     openPalette();
-    await user.click(await screen.findByRole("option", { name: "Motion: Off" }));
+    await user.click(
+      await screen.findByRole("option", { name: "Motion: Off" }),
+    );
     await waitFor(() => expect(lenis.destroy).toHaveBeenCalledTimes(1));
     expect(lenis.start).toHaveBeenCalledTimes(1);
   });
@@ -248,7 +316,9 @@ describe("CommandPalette", () => {
     const user = userEvent.setup();
     render(palette());
     openPalette();
-    await user.click(await screen.findByRole("option", { name: "60-second view" }));
+    await user.click(
+      await screen.findByRole("option", { name: "60-second view" }),
+    );
     expect(assign).toHaveBeenCalledWith("/en/quick?role=fullstack");
   });
 
@@ -260,7 +330,12 @@ describe("CommandPalette", () => {
     openPalette();
     await user.click(await screen.findByRole("option", { name: "Projects" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    await waitFor(() => expect(lenisInstances[0].scrollTo).toHaveBeenCalledWith(section, expect.anything()));
+    await waitFor(() =>
+      expect(lenisInstances[0].scrollTo).toHaveBeenCalledWith(
+        section,
+        expect.anything(),
+      ),
+    );
     await waitFor(() => expect(document.activeElement).toBe(heading));
   });
 
@@ -278,14 +353,21 @@ describe("CommandPalette", () => {
   it("copies the email and downloads the CV of the current role", async () => {
     const user = userEvent.setup();
     const writeText = vi.fn().mockResolvedValue(undefined);
-    Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
-    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText },
+      configurable: true,
+    });
+    const click = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => {});
     render(palette());
     openPalette();
     await user.click(await screen.findByRole("option", { name: "Copy email" }));
     expect(writeText).toHaveBeenCalledWith("me@example.com");
     openPalette();
-    await user.click(await screen.findByRole("option", { name: "Download CV" }));
+    await user.click(
+      await screen.findByRole("option", { name: "Download CV" }),
+    );
     expect(click).toHaveBeenCalledTimes(1);
     click.mockRestore();
   });
@@ -294,13 +376,20 @@ describe("CommandPalette", () => {
     render(palette("ja"));
     openPalette();
     const dialog = await screen.findByRole("dialog");
-    expect(within(dialog).getByRole("group", { name: ja.command.groups.goTo })).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("group", { name: ja.command.groups.goTo }),
+    ).toBeInTheDocument();
   });
 });
 
 describe("SmoothScroll", () => {
   it("uses native mobile scrolling without starting Lenis or the GSAP ticker", async () => {
-    vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("max-width: 767px"), media: query, addEventListener() {}, removeEventListener() {} }));
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: query.includes("max-width: 767px"),
+      media: query,
+      addEventListener() {},
+      removeEventListener() {},
+    }));
     render(<SmoothScroll />);
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(lenisInstances).toHaveLength(0);
@@ -311,9 +400,15 @@ describe("SmoothScroll", () => {
     await waitFor(() => expect(lenisInstances).toHaveLength(1));
     expect(lenisInstances[0].options.autoRaf).toBe(false);
     // The Motion toggle (not Lenis's own OS check) decides, and nested scrollers keep their wheel.
-    expect(lenisInstances[0].options).toMatchObject({ respectReducedMotion: false, allowNestedScroll: true });
+    expect(lenisInstances[0].options).toMatchObject({
+      respectReducedMotion: false,
+      allowNestedScroll: true,
+    });
     expect(gsapTicker.add).toHaveBeenCalledTimes(1);
-    expect(lenisInstances[0].on).toHaveBeenCalledWith("scroll", scrollTriggerUpdate);
+    expect(lenisInstances[0].on).toHaveBeenCalledWith(
+      "scroll",
+      scrollTriggerUpdate,
+    );
   });
 
   it("does not start under reduced motion", async () => {
@@ -353,7 +448,10 @@ describe("SmoothScroll", () => {
     const click = new MouseEvent("click", { bubbles: true, cancelable: true });
     link.dispatchEvent(click);
     expect(click.defaultPrevented).toBe(true);
-    expect(lenisInstances[0].scrollTo).toHaveBeenCalledWith(section, expect.anything());
+    expect(lenisInstances[0].scrollTo).toHaveBeenCalledWith(
+      section,
+      expect.anything(),
+    );
   });
 
   it("corrects a landing that missed because the page shifted while scrolling", async () => {
@@ -364,7 +462,9 @@ describe("SmoothScroll", () => {
     mount(link);
     render(<SmoothScroll />);
     await waitFor(() => expect(lenisInstances).toHaveLength(1));
-    link.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    link.dispatchEvent(
+      new MouseEvent("click", { bubbles: true, cancelable: true }),
+    );
     const { scrollTo } = lenisInstances[0];
     scrollTo.mock.calls[0][1].onComplete();
     expect(scrollTo).toHaveBeenCalledTimes(2);
@@ -396,7 +496,11 @@ describe("SmoothScroll", () => {
     mount(other);
     render(<SmoothScroll />);
     await waitFor(() => expect(lenisInstances).toHaveLength(1));
-    const modified = new MouseEvent("click", { bubbles: true, cancelable: true, ctrlKey: true });
+    const modified = new MouseEvent("click", {
+      bubbles: true,
+      cancelable: true,
+      ctrlKey: true,
+    });
     link.dispatchEvent(modified);
     // Read the flag once the event has bubbled past SmoothScroll, then cancel it so jsdom does not try to navigate.
     let plainWasPrevented: boolean | undefined;
@@ -408,7 +512,9 @@ describe("SmoothScroll", () => {
       },
       { once: true },
     );
-    other.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    other.dispatchEvent(
+      new MouseEvent("click", { bubbles: true, cancelable: true }),
+    );
     expect(modified.defaultPrevented).toBe(false);
     expect(plainWasPrevented).toBe(false);
     expect(lenisInstances[0].scrollTo).not.toHaveBeenCalled();
@@ -424,7 +530,9 @@ describe("Reveal", () => {
         </Reveal>
       </MotionProvider>,
     );
-    const wrapper = screen.getByRole("heading", { name: "Hello" }).parentElement!;
+    const wrapper = screen.getByRole("heading", {
+      name: "Hello",
+    }).parentElement!;
     expect(wrapper).toHaveAttribute("data-reveal");
     expect(wrapper).toHaveClass("x");
     expect(wrapper.style.opacity).toBe("0");
@@ -439,7 +547,9 @@ describe("Reveal", () => {
         </Reveal>
       </MotionProvider>,
     );
-    const wrapper = screen.getByRole("heading", { name: "Hello" }).parentElement!;
+    const wrapper = screen.getByRole("heading", {
+      name: "Hello",
+    }).parentElement!;
     expect(wrapper.style.opacity).toBe("");
     expect(wrapper.style.transform).toBe("");
   });

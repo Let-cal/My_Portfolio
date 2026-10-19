@@ -3,11 +3,16 @@
 import { useEffect, type RefObject } from "react";
 
 /** Attach geometry-dependent work on approach, keeping SSR markup and native layout untouched. */
-export function useNearViewportEffect(ref: RefObject<HTMLElement | null>, setup: () => void | VoidFunction, contentKey?: number | string) {
+export function useNearViewportEffect(
+  ref: RefObject<HTMLElement | null>,
+  setup: () => void | VoidFunction,
+  contentKey?: number | string,
+) {
   useEffect(() => {
     const element = ref.current;
     if (!element) return;
-    let disposed = false, started = false;
+    let disposed = false,
+      started = false;
     let observer: IntersectionObserver | undefined;
     let stop: VoidFunction | undefined;
     const removeListeners = () => {
@@ -27,9 +32,12 @@ export function useNearViewportEffect(ref: RefObject<HTMLElement | null>, setup:
     element.addEventListener("pointerdown", start, true);
     if (typeof IntersectionObserver === "undefined") start();
     else {
-      observer = new IntersectionObserver((entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) start();
-      }, { rootMargin: "600px" });
+      observer = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((entry) => entry.isIntersecting)) start();
+        },
+        { rootMargin: "600px" },
+      );
       observer.observe(element);
     }
     return () => {

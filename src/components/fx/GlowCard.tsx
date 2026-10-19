@@ -1,6 +1,11 @@
 "use client";
 
-import { useEffect, useRef, type ComponentProps, type PointerEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  type ComponentProps,
+  type PointerEvent,
+} from "react";
 import { cn } from "@/lib/utils";
 import { usePrefersReducedMotion } from "./use-media-query";
 import { usePointerFine } from "./use-pointer-fine";
@@ -16,7 +21,17 @@ type GlowCardProps = ComponentProps<"div"> & {
  * selected by `data-glow-card`) and an optional 3D tilt. Pointer coordinates go to CSS variables from a
  * requestAnimationFrame callback, never into React state. Touch devices and reduced motion get a plain card.
  */
-export function GlowCard({ tilt = false, maxTiltDeg = 6, className, style, children, ref, onPointerMove, onPointerLeave, ...rest }: GlowCardProps) {
+export function GlowCard({
+  tilt = false,
+  maxTiltDeg = 6,
+  className,
+  style,
+  children,
+  ref,
+  onPointerMove,
+  onPointerLeave,
+  ...rest
+}: GlowCardProps) {
   const fine = usePointerFine();
   const reduced = usePrefersReducedMotion();
   const active = fine && !reduced;
@@ -44,8 +59,14 @@ export function GlowCard({ tilt = false, maxTiltDeg = 6, className, style, child
       el.style.setProperty("--gx", `${x}px`);
       el.style.setProperty("--gy", `${y}px`);
       if (tilt && rect.width > 0 && rect.height > 0) {
-        el.style.setProperty("--tilt-y", `${((x / rect.width - 0.5) * 2 * maxTiltDeg).toFixed(2)}deg`);
-        el.style.setProperty("--tilt-x", `${(-(y / rect.height - 0.5) * 2 * maxTiltDeg).toFixed(2)}deg`);
+        el.style.setProperty(
+          "--tilt-y",
+          `${((x / rect.width - 0.5) * 2 * maxTiltDeg).toFixed(2)}deg`,
+        );
+        el.style.setProperty(
+          "--tilt-x",
+          `${(-(y / rect.height - 0.5) * 2 * maxTiltDeg).toFixed(2)}deg`,
+        );
       }
     });
   }
@@ -67,7 +88,12 @@ export function GlowCard({ tilt = false, maxTiltDeg = 6, className, style, child
       className={cn(className)}
       style={
         active && tilt
-          ? { ...style, transform: "perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg))", transition: "transform 200ms ease-out" }
+          ? {
+              ...style,
+              transform:
+                "perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg))",
+              transition: "transform 200ms ease-out",
+            }
           : style
       }
       onPointerMove={handleMove}

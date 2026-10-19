@@ -9,7 +9,9 @@ vi.mock("@/components/site/CommandPaletteDialog", () => {
   chunk.attempts += 1;
   if (chunk.fail) throw new Error("Loading chunk failed");
   return {
-    CommandPaletteDialog: ({ initialOpen }: { initialOpen?: boolean }) => <div role="dialog" data-open={String(initialOpen)} />,
+    CommandPaletteDialog: ({ initialOpen }: { initialOpen?: boolean }) => (
+      <div role="dialog" data-open={String(initialOpen)} />
+    ),
   };
 });
 
@@ -29,7 +31,8 @@ afterEach(() => {
   process.off("unhandledRejection", onUnhandled);
 });
 
-const settle = () => act(() => new Promise<void>((resolve) => setTimeout(resolve, 50)));
+const settle = () =>
+  act(() => new Promise<void>((resolve) => setTimeout(resolve, 50)));
 
 describe("CommandPalette when its chunk fails to load", () => {
   it("does not crash the page, and the next open tries again", async () => {
@@ -50,7 +53,10 @@ describe("CommandPalette when its chunk fails to load", () => {
 
     chunk.fail = false;
     fireEvent.keyDown(window, { key: "k", ctrlKey: true });
-    expect(await screen.findByRole("dialog")).toHaveAttribute("data-open", "true");
+    expect(await screen.findByRole("dialog")).toHaveAttribute(
+      "data-open",
+      "true",
+    );
     expect(screen.getByText("page content")).toBeInTheDocument();
     expect(unhandled).toEqual([]);
   });

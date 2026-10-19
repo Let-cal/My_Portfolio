@@ -41,8 +41,24 @@
       },
       "koiVariety": "kohaku",
       "cvFileUrl": "/cv/LeTranCatLam_CV_TechLead.pdf",
-      "experienceOrder": ["skg-flexybox-p1", "skg-coa", "skg-flexybox-p2", "skg-ai-agent", "skg-intern", "fpt-japan"],
-      "skillGroupOrder": ["languages", "frameworks", "cloud", "databases", "ai", "testing", "delivery", "design"]
+      "experienceOrder": [
+        "skg-flexybox-p1",
+        "skg-coa",
+        "skg-flexybox-p2",
+        "skg-ai-agent",
+        "skg-intern",
+        "fpt-japan"
+      ],
+      "skillGroupOrder": [
+        "languages",
+        "frameworks",
+        "cloud",
+        "databases",
+        "ai",
+        "testing",
+        "delivery",
+        "design"
+      ]
     },
     {
       "key": "techlead",
@@ -53,8 +69,24 @@
       },
       "koiVariety": "showa",
       "cvFileUrl": "/cv/LeTranCatLam_CV_TechLead.pdf",
-      "experienceOrder": ["skg-flexybox-p1", "skg-coa", "skg-flexybox-p2", "skg-ai-agent", "skg-intern", "fpt-japan"],
-      "skillGroupOrder": ["languages", "frameworks", "cloud", "databases", "ai", "testing", "delivery", "design"]
+      "experienceOrder": [
+        "skg-flexybox-p1",
+        "skg-coa",
+        "skg-flexybox-p2",
+        "skg-ai-agent",
+        "skg-intern",
+        "fpt-japan"
+      ],
+      "skillGroupOrder": [
+        "languages",
+        "frameworks",
+        "cloud",
+        "databases",
+        "ai",
+        "testing",
+        "delivery",
+        "design"
+      ]
     },
     {
       "key": "pm",
@@ -65,8 +97,24 @@
       },
       "koiVariety": "ogon",
       "cvFileUrl": "/cv/LeTranCatLam_CV_TechnicalPM.pdf",
-      "experienceOrder": ["skg-ai-agent", "skg-flexybox-p2", "skg-coa", "skg-flexybox-p1", "skg-intern", "fpt-japan"],
-      "skillGroupOrder": ["delivery", "cloud", "languages", "frameworks", "ai", "databases", "testing", "design"]
+      "experienceOrder": [
+        "skg-ai-agent",
+        "skg-flexybox-p2",
+        "skg-coa",
+        "skg-flexybox-p1",
+        "skg-intern",
+        "fpt-japan"
+      ],
+      "skillGroupOrder": [
+        "delivery",
+        "cloud",
+        "languages",
+        "frameworks",
+        "ai",
+        "databases",
+        "testing",
+        "design"
+      ]
     }
   ],
   "experiences": [
@@ -111,7 +159,29 @@
         }
       },
       "teamSize": "3 → 6",
-      "tech": ["Python", "FastAPI", "TypeScript", "React", "Vite", "Tailwind CSS", "OpenAI Agents SDK", "LiteLLM", "MCP", "Ollama", "vLLM", "PostgreSQL", "AWS Lambda", "Amazon RDS", "Amazon S3", "CloudFront", "AWS WAF", "Terraform", "Docker", "GitLab", "Redmine"],
+      "tech": [
+        "Python",
+        "FastAPI",
+        "TypeScript",
+        "React",
+        "Vite",
+        "Tailwind CSS",
+        "OpenAI Agents SDK",
+        "LiteLLM",
+        "MCP",
+        "Ollama",
+        "vLLM",
+        "PostgreSQL",
+        "AWS Lambda",
+        "Amazon RDS",
+        "Amazon S3",
+        "CloudFront",
+        "AWS WAF",
+        "Terraform",
+        "Docker",
+        "GitLab",
+        "Redmine"
+      ],
       "links": [],
       "published": true,
       "sortIndex": 0
@@ -157,7 +227,27 @@
         }
       },
       "teamSize": "8 → 5",
-      "tech": ["TypeScript", "Node.js", "Next.js", "React", "Tailwind CSS", "shadcn/ui", "DynamoDB", "AWS Lambda", "API Gateway", "Amazon S3", "AWS IoT Core", "Amazon SES", "AWS Amplify", "AWS SAM", "fincode", "LINE LIFF", "GitLab", "Backlog", "Redmine"],
+      "tech": [
+        "TypeScript",
+        "Node.js",
+        "Next.js",
+        "React",
+        "Tailwind CSS",
+        "shadcn/ui",
+        "DynamoDB",
+        "AWS Lambda",
+        "API Gateway",
+        "Amazon S3",
+        "AWS IoT Core",
+        "Amazon SES",
+        "AWS Amplify",
+        "AWS SAM",
+        "fincode",
+        "LINE LIFF",
+        "GitLab",
+        "Backlog",
+        "Redmine"
+      ],
       "links": [],
       "published": true,
       "sortIndex": 1
@@ -203,7 +293,15 @@
         }
       },
       "teamSize": "4",
-      "tech": ["C#", ".NET 8", "ASP.NET Core Web API", "Dapper", "Oracle", "Biz/Designer DT", "AWS WorkSpaces"],
+      "tech": [
+        "C#",
+        ".NET 8",
+        "ASP.NET Core Web API",
+        "Dapper",
+        "Oracle",
+        "Biz/Designer DT",
+        "AWS WorkSpaces"
+      ],
       "links": [],
       "published": true,
       "sortIndex": 2
@@ -249,7 +347,15 @@
         }
       },
       "teamSize": "2",
-      "tech": ["TypeScript", "Next.js", "AWS SAM", "AWS Lambda", "API Gateway", "DynamoDB", "fincode"],
+      "tech": [
+        "TypeScript",
+        "Next.js",
+        "AWS SAM",
+        "AWS Lambda",
+        "API Gateway",
+        "DynamoDB",
+        "fincode"
+      ],
       "links": [],
       "published": true,
       "sortIndex": 3
@@ -295,7 +401,17 @@
         }
       },
       "teamSize": "4",
-      "tech": ["TypeScript", "PHP", "Next.js", "Laravel", "SQL Server", "MySQL", "Docker", "Swagger", "Jira"],
+      "tech": [
+        "TypeScript",
+        "PHP",
+        "Next.js",
+        "Laravel",
+        "SQL Server",
+        "MySQL",
+        "Docker",
+        "Swagger",
+        "Jira"
+      ],
       "links": [],
       "published": true,
       "sortIndex": 4
@@ -364,9 +480,24 @@
           "vi": "Bản demo web chạy trên Vercel; source code web và mobile có trên GitHub."
         }
       },
-      "tech": ["React", "TypeScript", "Tailwind CSS", "Flutter", "Dart", "Node.js", "Express", "SQL Server", "Qdrant", "Cohere", "Figma"],
+      "tech": [
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "Flutter",
+        "Dart",
+        "Node.js",
+        "Express",
+        "SQL Server",
+        "Qdrant",
+        "Cohere",
+        "Figma"
+      ],
       "demoUrl": "https://site-plus-15hdsvfpr-let-cals-projects.vercel.app/",
-      "repoUrls": ["https://github.com/Let-cal/SitePlus-FE", "https://github.com/Let-cal/SitePlus-MB"],
+      "repoUrls": [
+        "https://github.com/Let-cal/SitePlus-FE",
+        "https://github.com/Let-cal/SitePlus-MB"
+      ],
       "posterUrl": null,
       "videoUrl": null,
       "published": true,
@@ -388,9 +519,20 @@
         "vi": "Dự án đại học: website và app thương mại điện tử bán trang sức, gợi ý sản phẩm theo cung hoàng đạo của khách hàng."
       },
       "caseStudy": null,
-      "tech": ["React", "JavaScript", "Tailwind CSS", "Flutter", "Dart", "SQL Server", "Figma"],
+      "tech": [
+        "React",
+        "JavaScript",
+        "Tailwind CSS",
+        "Flutter",
+        "Dart",
+        "SQL Server",
+        "Figma"
+      ],
       "demoUrl": "https://swd-392-rfr4ctba8-let-cals-projects.vercel.app/customer-page",
-      "repoUrls": ["https://github.com/Let-cal/SWD392", "https://github.com/Let-cal/ZodiacGems-MobileApp"],
+      "repoUrls": [
+        "https://github.com/Let-cal/SWD392",
+        "https://github.com/Let-cal/ZodiacGems-MobileApp"
+      ],
       "posterUrl": null,
       "videoUrl": null,
       "published": true,
@@ -412,7 +554,15 @@
         "vi": "Dự án đại học: web app đặt lịch gặp giảng viên, liên kết với Google Calendar và Google Meet, thông báo real-time qua Socket.io."
       },
       "caseStudy": null,
-      "tech": ["Java Servlet", "JSP", "SQL Server", "Socket.io", "Google Calendar API", "Google Meet API", "Figma"],
+      "tech": [
+        "Java Servlet",
+        "JSP",
+        "SQL Server",
+        "Socket.io",
+        "Google Calendar API",
+        "Google Meet API",
+        "Figma"
+      ],
       "demoUrl": null,
       "repoUrls": ["https://github.com/Let-cal/meet-my-lecturers"],
       "posterUrl": null,
@@ -422,80 +572,569 @@
     }
   ],
   "skills": [
-    { "id": "typescript", "name": "TypeScript", "group": "languages", "sortIndex": 0, "experienceIds": ["skg-ai-agent", "skg-flexybox-p2", "skg-flexybox-p1", "skg-intern"], "projectIds": ["siteplus"] },
-    { "id": "javascript", "name": "JavaScript", "group": "languages", "sortIndex": 1, "experienceIds": [], "projectIds": ["zodiacgems"] },
-    { "id": "csharp", "name": "C#", "group": "languages", "sortIndex": 2, "experienceIds": ["skg-coa"], "projectIds": [] },
-    { "id": "python", "name": "Python", "group": "languages", "sortIndex": 3, "experienceIds": ["skg-ai-agent"], "projectIds": [] },
-    { "id": "java", "name": "Java", "group": "languages", "sortIndex": 4, "experienceIds": [], "projectIds": ["meet-my-lecturer"] },
-    { "id": "dart", "name": "Dart", "group": "languages", "sortIndex": 5, "experienceIds": [], "projectIds": ["siteplus", "zodiacgems"] },
-    { "id": "php", "name": "PHP", "group": "languages", "sortIndex": 6, "experienceIds": ["skg-intern"], "projectIds": [] },
-    { "id": "sql", "name": "SQL", "group": "languages", "sortIndex": 7, "experienceIds": ["skg-ai-agent", "skg-coa", "skg-intern"], "projectIds": ["siteplus", "meet-my-lecturer"] },
+    {
+      "id": "typescript",
+      "name": "TypeScript",
+      "group": "languages",
+      "sortIndex": 0,
+      "experienceIds": [
+        "skg-ai-agent",
+        "skg-flexybox-p2",
+        "skg-flexybox-p1",
+        "skg-intern"
+      ],
+      "projectIds": ["siteplus"]
+    },
+    {
+      "id": "javascript",
+      "name": "JavaScript",
+      "group": "languages",
+      "sortIndex": 1,
+      "experienceIds": [],
+      "projectIds": ["zodiacgems"]
+    },
+    {
+      "id": "csharp",
+      "name": "C#",
+      "group": "languages",
+      "sortIndex": 2,
+      "experienceIds": ["skg-coa"],
+      "projectIds": []
+    },
+    {
+      "id": "python",
+      "name": "Python",
+      "group": "languages",
+      "sortIndex": 3,
+      "experienceIds": ["skg-ai-agent"],
+      "projectIds": []
+    },
+    {
+      "id": "java",
+      "name": "Java",
+      "group": "languages",
+      "sortIndex": 4,
+      "experienceIds": [],
+      "projectIds": ["meet-my-lecturer"]
+    },
+    {
+      "id": "dart",
+      "name": "Dart",
+      "group": "languages",
+      "sortIndex": 5,
+      "experienceIds": [],
+      "projectIds": ["siteplus", "zodiacgems"]
+    },
+    {
+      "id": "php",
+      "name": "PHP",
+      "group": "languages",
+      "sortIndex": 6,
+      "experienceIds": ["skg-intern"],
+      "projectIds": []
+    },
+    {
+      "id": "sql",
+      "name": "SQL",
+      "group": "languages",
+      "sortIndex": 7,
+      "experienceIds": ["skg-ai-agent", "skg-coa", "skg-intern"],
+      "projectIds": ["siteplus", "meet-my-lecturer"]
+    },
 
-    { "id": "nextjs", "name": "Next.js", "group": "frameworks", "sortIndex": 0, "experienceIds": ["skg-flexybox-p2", "skg-flexybox-p1", "skg-intern"], "projectIds": [] },
-    { "id": "react", "name": "React", "group": "frameworks", "sortIndex": 1, "experienceIds": ["skg-ai-agent", "skg-flexybox-p2"], "projectIds": ["siteplus", "zodiacgems"] },
-    { "id": "nodejs", "name": "Node.js", "group": "frameworks", "sortIndex": 2, "experienceIds": ["skg-flexybox-p2"], "projectIds": ["siteplus"] },
-    { "id": "aspnet-core", "name": "ASP.NET Core (.NET 8)", "group": "frameworks", "sortIndex": 3, "experienceIds": ["skg-coa"], "projectIds": [] },
-    { "id": "fastapi", "name": "FastAPI", "group": "frameworks", "sortIndex": 4, "experienceIds": ["skg-ai-agent"], "projectIds": [] },
-    { "id": "flutter", "name": "Flutter", "group": "frameworks", "sortIndex": 5, "experienceIds": [], "projectIds": ["siteplus", "zodiacgems"] },
-    { "id": "laravel", "name": "Laravel", "group": "frameworks", "sortIndex": 6, "experienceIds": ["skg-intern"], "projectIds": [] },
-    { "id": "tailwind-css", "name": "Tailwind CSS", "group": "frameworks", "sortIndex": 7, "experienceIds": ["skg-ai-agent", "skg-flexybox-p2"], "projectIds": ["siteplus", "zodiacgems"] },
-    { "id": "shadcn-ui", "name": "shadcn/ui", "group": "frameworks", "sortIndex": 8, "experienceIds": ["skg-flexybox-p2"], "projectIds": [] },
-    { "id": "dapper", "name": "Dapper", "group": "frameworks", "sortIndex": 9, "experienceIds": ["skg-coa"], "projectIds": [] },
-    { "id": "biz-designer-dt", "name": "Biz/Designer DT", "group": "frameworks", "sortIndex": 10, "experienceIds": ["skg-coa"], "projectIds": [] },
-    { "id": "framer-motion", "name": "Framer Motion", "group": "frameworks", "sortIndex": 11, "experienceIds": [], "projectIds": [] },
-    { "id": "gsap", "name": "GSAP", "group": "frameworks", "sortIndex": 12, "experienceIds": [], "projectIds": [] },
-    { "id": "sass", "name": "Sass/SCSS", "group": "frameworks", "sortIndex": 13, "experienceIds": [], "projectIds": [] },
-    { "id": "mui", "name": "MUI", "group": "frameworks", "sortIndex": 14, "experienceIds": [], "projectIds": [] },
+    {
+      "id": "nextjs",
+      "name": "Next.js",
+      "group": "frameworks",
+      "sortIndex": 0,
+      "experienceIds": ["skg-flexybox-p2", "skg-flexybox-p1", "skg-intern"],
+      "projectIds": []
+    },
+    {
+      "id": "react",
+      "name": "React",
+      "group": "frameworks",
+      "sortIndex": 1,
+      "experienceIds": ["skg-ai-agent", "skg-flexybox-p2"],
+      "projectIds": ["siteplus", "zodiacgems"]
+    },
+    {
+      "id": "nodejs",
+      "name": "Node.js",
+      "group": "frameworks",
+      "sortIndex": 2,
+      "experienceIds": ["skg-flexybox-p2"],
+      "projectIds": ["siteplus"]
+    },
+    {
+      "id": "aspnet-core",
+      "name": "ASP.NET Core (.NET 8)",
+      "group": "frameworks",
+      "sortIndex": 3,
+      "experienceIds": ["skg-coa"],
+      "projectIds": []
+    },
+    {
+      "id": "fastapi",
+      "name": "FastAPI",
+      "group": "frameworks",
+      "sortIndex": 4,
+      "experienceIds": ["skg-ai-agent"],
+      "projectIds": []
+    },
+    {
+      "id": "flutter",
+      "name": "Flutter",
+      "group": "frameworks",
+      "sortIndex": 5,
+      "experienceIds": [],
+      "projectIds": ["siteplus", "zodiacgems"]
+    },
+    {
+      "id": "laravel",
+      "name": "Laravel",
+      "group": "frameworks",
+      "sortIndex": 6,
+      "experienceIds": ["skg-intern"],
+      "projectIds": []
+    },
+    {
+      "id": "tailwind-css",
+      "name": "Tailwind CSS",
+      "group": "frameworks",
+      "sortIndex": 7,
+      "experienceIds": ["skg-ai-agent", "skg-flexybox-p2"],
+      "projectIds": ["siteplus", "zodiacgems"]
+    },
+    {
+      "id": "shadcn-ui",
+      "name": "shadcn/ui",
+      "group": "frameworks",
+      "sortIndex": 8,
+      "experienceIds": ["skg-flexybox-p2"],
+      "projectIds": []
+    },
+    {
+      "id": "dapper",
+      "name": "Dapper",
+      "group": "frameworks",
+      "sortIndex": 9,
+      "experienceIds": ["skg-coa"],
+      "projectIds": []
+    },
+    {
+      "id": "biz-designer-dt",
+      "name": "Biz/Designer DT",
+      "group": "frameworks",
+      "sortIndex": 10,
+      "experienceIds": ["skg-coa"],
+      "projectIds": []
+    },
+    {
+      "id": "framer-motion",
+      "name": "Framer Motion",
+      "group": "frameworks",
+      "sortIndex": 11,
+      "experienceIds": [],
+      "projectIds": []
+    },
+    {
+      "id": "gsap",
+      "name": "GSAP",
+      "group": "frameworks",
+      "sortIndex": 12,
+      "experienceIds": [],
+      "projectIds": []
+    },
+    {
+      "id": "sass",
+      "name": "Sass/SCSS",
+      "group": "frameworks",
+      "sortIndex": 13,
+      "experienceIds": [],
+      "projectIds": []
+    },
+    {
+      "id": "mui",
+      "name": "MUI",
+      "group": "frameworks",
+      "sortIndex": 14,
+      "experienceIds": [],
+      "projectIds": []
+    },
 
-    { "id": "aws-lambda", "name": "AWS Lambda", "group": "cloud", "sortIndex": 0, "experienceIds": ["skg-ai-agent", "skg-flexybox-p2", "skg-flexybox-p1"], "projectIds": [] },
-    { "id": "aws-api-gateway", "name": "API Gateway", "group": "cloud", "sortIndex": 1, "experienceIds": ["skg-flexybox-p2", "skg-flexybox-p1"], "projectIds": [] },
-    { "id": "aws-sam", "name": "AWS SAM", "group": "cloud", "sortIndex": 2, "experienceIds": ["skg-flexybox-p2", "skg-flexybox-p1"], "projectIds": [] },
-    { "id": "aws-iot-core", "name": "AWS IoT Core", "group": "cloud", "sortIndex": 3, "experienceIds": ["skg-flexybox-p2"], "projectIds": [] },
-    { "id": "aws-s3", "name": "Amazon S3", "group": "cloud", "sortIndex": 4, "experienceIds": ["skg-ai-agent", "skg-flexybox-p2"], "projectIds": [] },
-    { "id": "aws-ses", "name": "Amazon SES", "group": "cloud", "sortIndex": 5, "experienceIds": ["skg-flexybox-p2"], "projectIds": [] },
-    { "id": "aws-amplify", "name": "AWS Amplify", "group": "cloud", "sortIndex": 6, "experienceIds": ["skg-flexybox-p2"], "projectIds": [] },
-    { "id": "aws-rds", "name": "Amazon RDS", "group": "cloud", "sortIndex": 7, "experienceIds": ["skg-ai-agent"], "projectIds": [] },
-    { "id": "aws-cloudfront", "name": "CloudFront", "group": "cloud", "sortIndex": 8, "experienceIds": ["skg-ai-agent"], "projectIds": [] },
-    { "id": "aws-waf", "name": "AWS WAF", "group": "cloud", "sortIndex": 9, "experienceIds": ["skg-ai-agent"], "projectIds": [] },
-    { "id": "terraform", "name": "Terraform", "group": "cloud", "sortIndex": 10, "experienceIds": ["skg-ai-agent"], "projectIds": [] },
-    { "id": "docker", "name": "Docker", "group": "cloud", "sortIndex": 11, "experienceIds": ["skg-ai-agent", "skg-intern"], "projectIds": [] },
-    { "id": "gitlab", "name": "GitLab", "group": "cloud", "sortIndex": 12, "experienceIds": ["skg-ai-agent", "skg-flexybox-p2"], "projectIds": [] },
-    { "id": "github", "name": "GitHub", "group": "cloud", "sortIndex": 13, "experienceIds": [], "projectIds": ["siteplus", "zodiacgems", "meet-my-lecturer"] },
+    {
+      "id": "aws-lambda",
+      "name": "AWS Lambda",
+      "group": "cloud",
+      "sortIndex": 0,
+      "experienceIds": ["skg-ai-agent", "skg-flexybox-p2", "skg-flexybox-p1"],
+      "projectIds": []
+    },
+    {
+      "id": "aws-api-gateway",
+      "name": "API Gateway",
+      "group": "cloud",
+      "sortIndex": 1,
+      "experienceIds": ["skg-flexybox-p2", "skg-flexybox-p1"],
+      "projectIds": []
+    },
+    {
+      "id": "aws-sam",
+      "name": "AWS SAM",
+      "group": "cloud",
+      "sortIndex": 2,
+      "experienceIds": ["skg-flexybox-p2", "skg-flexybox-p1"],
+      "projectIds": []
+    },
+    {
+      "id": "aws-iot-core",
+      "name": "AWS IoT Core",
+      "group": "cloud",
+      "sortIndex": 3,
+      "experienceIds": ["skg-flexybox-p2"],
+      "projectIds": []
+    },
+    {
+      "id": "aws-s3",
+      "name": "Amazon S3",
+      "group": "cloud",
+      "sortIndex": 4,
+      "experienceIds": ["skg-ai-agent", "skg-flexybox-p2"],
+      "projectIds": []
+    },
+    {
+      "id": "aws-ses",
+      "name": "Amazon SES",
+      "group": "cloud",
+      "sortIndex": 5,
+      "experienceIds": ["skg-flexybox-p2"],
+      "projectIds": []
+    },
+    {
+      "id": "aws-amplify",
+      "name": "AWS Amplify",
+      "group": "cloud",
+      "sortIndex": 6,
+      "experienceIds": ["skg-flexybox-p2"],
+      "projectIds": []
+    },
+    {
+      "id": "aws-rds",
+      "name": "Amazon RDS",
+      "group": "cloud",
+      "sortIndex": 7,
+      "experienceIds": ["skg-ai-agent"],
+      "projectIds": []
+    },
+    {
+      "id": "aws-cloudfront",
+      "name": "CloudFront",
+      "group": "cloud",
+      "sortIndex": 8,
+      "experienceIds": ["skg-ai-agent"],
+      "projectIds": []
+    },
+    {
+      "id": "aws-waf",
+      "name": "AWS WAF",
+      "group": "cloud",
+      "sortIndex": 9,
+      "experienceIds": ["skg-ai-agent"],
+      "projectIds": []
+    },
+    {
+      "id": "terraform",
+      "name": "Terraform",
+      "group": "cloud",
+      "sortIndex": 10,
+      "experienceIds": ["skg-ai-agent"],
+      "projectIds": []
+    },
+    {
+      "id": "docker",
+      "name": "Docker",
+      "group": "cloud",
+      "sortIndex": 11,
+      "experienceIds": ["skg-ai-agent", "skg-intern"],
+      "projectIds": []
+    },
+    {
+      "id": "gitlab",
+      "name": "GitLab",
+      "group": "cloud",
+      "sortIndex": 12,
+      "experienceIds": ["skg-ai-agent", "skg-flexybox-p2"],
+      "projectIds": []
+    },
+    {
+      "id": "github",
+      "name": "GitHub",
+      "group": "cloud",
+      "sortIndex": 13,
+      "experienceIds": [],
+      "projectIds": ["siteplus", "zodiacgems", "meet-my-lecturer"]
+    },
 
-    { "id": "openai-agents-sdk", "name": "OpenAI Agents SDK", "group": "ai", "sortIndex": 0, "experienceIds": ["skg-ai-agent"], "projectIds": [] },
-    { "id": "litellm", "name": "LiteLLM", "group": "ai", "sortIndex": 1, "experienceIds": ["skg-ai-agent"], "projectIds": [] },
-    { "id": "mcp", "name": "MCP", "group": "ai", "sortIndex": 2, "experienceIds": ["skg-ai-agent"], "projectIds": [] },
-    { "id": "ollama", "name": "Ollama", "group": "ai", "sortIndex": 3, "experienceIds": ["skg-ai-agent"], "projectIds": [] },
-    { "id": "vllm", "name": "vLLM", "group": "ai", "sortIndex": 4, "experienceIds": ["skg-ai-agent"], "projectIds": [] },
+    {
+      "id": "openai-agents-sdk",
+      "name": "OpenAI Agents SDK",
+      "group": "ai",
+      "sortIndex": 0,
+      "experienceIds": ["skg-ai-agent"],
+      "projectIds": []
+    },
+    {
+      "id": "litellm",
+      "name": "LiteLLM",
+      "group": "ai",
+      "sortIndex": 1,
+      "experienceIds": ["skg-ai-agent"],
+      "projectIds": []
+    },
+    {
+      "id": "mcp",
+      "name": "MCP",
+      "group": "ai",
+      "sortIndex": 2,
+      "experienceIds": ["skg-ai-agent"],
+      "projectIds": []
+    },
+    {
+      "id": "ollama",
+      "name": "Ollama",
+      "group": "ai",
+      "sortIndex": 3,
+      "experienceIds": ["skg-ai-agent"],
+      "projectIds": []
+    },
+    {
+      "id": "vllm",
+      "name": "vLLM",
+      "group": "ai",
+      "sortIndex": 4,
+      "experienceIds": ["skg-ai-agent"],
+      "projectIds": []
+    },
 
-    { "id": "postgresql", "name": "PostgreSQL", "group": "databases", "sortIndex": 0, "experienceIds": ["skg-ai-agent"], "projectIds": [] },
-    { "id": "oracle", "name": "Oracle", "group": "databases", "sortIndex": 1, "experienceIds": ["skg-coa"], "projectIds": [] },
-    { "id": "sql-server", "name": "SQL Server", "group": "databases", "sortIndex": 2, "experienceIds": ["skg-intern"], "projectIds": ["siteplus", "zodiacgems", "meet-my-lecturer"] },
-    { "id": "mysql", "name": "MySQL", "group": "databases", "sortIndex": 3, "experienceIds": ["skg-intern"], "projectIds": [] },
-    { "id": "mongodb", "name": "MongoDB", "group": "databases", "sortIndex": 4, "experienceIds": [], "projectIds": [] },
-    { "id": "dynamodb", "name": "DynamoDB", "group": "databases", "sortIndex": 5, "experienceIds": ["skg-flexybox-p2", "skg-flexybox-p1"], "projectIds": [] },
+    {
+      "id": "postgresql",
+      "name": "PostgreSQL",
+      "group": "databases",
+      "sortIndex": 0,
+      "experienceIds": ["skg-ai-agent"],
+      "projectIds": []
+    },
+    {
+      "id": "oracle",
+      "name": "Oracle",
+      "group": "databases",
+      "sortIndex": 1,
+      "experienceIds": ["skg-coa"],
+      "projectIds": []
+    },
+    {
+      "id": "sql-server",
+      "name": "SQL Server",
+      "group": "databases",
+      "sortIndex": 2,
+      "experienceIds": ["skg-intern"],
+      "projectIds": ["siteplus", "zodiacgems", "meet-my-lecturer"]
+    },
+    {
+      "id": "mysql",
+      "name": "MySQL",
+      "group": "databases",
+      "sortIndex": 3,
+      "experienceIds": ["skg-intern"],
+      "projectIds": []
+    },
+    {
+      "id": "mongodb",
+      "name": "MongoDB",
+      "group": "databases",
+      "sortIndex": 4,
+      "experienceIds": [],
+      "projectIds": []
+    },
+    {
+      "id": "dynamodb",
+      "name": "DynamoDB",
+      "group": "databases",
+      "sortIndex": 5,
+      "experienceIds": ["skg-flexybox-p2", "skg-flexybox-p1"],
+      "projectIds": []
+    },
 
-    { "id": "estimation", "name": "Estimation", "group": "delivery", "sortIndex": 0, "experienceIds": ["skg-ai-agent", "skg-flexybox-p2", "skg-coa", "skg-flexybox-p1"], "projectIds": [] },
-    { "id": "scheduling", "name": "Scheduling", "group": "delivery", "sortIndex": 1, "experienceIds": ["skg-ai-agent", "skg-flexybox-p1"], "projectIds": [] },
-    { "id": "risk-release-management", "name": "Risk and release management", "group": "delivery", "sortIndex": 2, "experienceIds": ["skg-flexybox-p2"], "projectIds": [] },
-    { "id": "requirements-definition", "name": "Requirements definition", "group": "delivery", "sortIndex": 3, "experienceIds": ["skg-ai-agent", "skg-flexybox-p2", "skg-intern", "fpt-japan"], "projectIds": [] },
-    { "id": "design-documents", "name": "Basic and detailed design documents", "group": "delivery", "sortIndex": 4, "experienceIds": ["skg-ai-agent", "skg-flexybox-p2", "skg-flexybox-p1"], "projectIds": [] },
-    { "id": "proposals", "name": "Proposals", "group": "delivery", "sortIndex": 5, "experienceIds": ["skg-ai-agent", "skg-flexybox-p2", "skg-coa", "skg-flexybox-p1"], "projectIds": [] },
-    { "id": "uat-review", "name": "UAT review", "group": "delivery", "sortIndex": 6, "experienceIds": ["skg-ai-agent"], "projectIds": [] },
-    { "id": "redmine", "name": "Redmine", "group": "delivery", "sortIndex": 7, "experienceIds": ["skg-ai-agent", "skg-flexybox-p2"], "projectIds": [] },
-    { "id": "backlog", "name": "Backlog", "group": "delivery", "sortIndex": 8, "experienceIds": ["skg-flexybox-p2"], "projectIds": [] },
-    { "id": "jira", "name": "Jira", "group": "delivery", "sortIndex": 9, "experienceIds": ["skg-intern"], "projectIds": [] },
+    {
+      "id": "estimation",
+      "name": "Estimation",
+      "group": "delivery",
+      "sortIndex": 0,
+      "experienceIds": [
+        "skg-ai-agent",
+        "skg-flexybox-p2",
+        "skg-coa",
+        "skg-flexybox-p1"
+      ],
+      "projectIds": []
+    },
+    {
+      "id": "scheduling",
+      "name": "Scheduling",
+      "group": "delivery",
+      "sortIndex": 1,
+      "experienceIds": ["skg-ai-agent", "skg-flexybox-p1"],
+      "projectIds": []
+    },
+    {
+      "id": "risk-release-management",
+      "name": "Risk and release management",
+      "group": "delivery",
+      "sortIndex": 2,
+      "experienceIds": ["skg-flexybox-p2"],
+      "projectIds": []
+    },
+    {
+      "id": "requirements-definition",
+      "name": "Requirements definition",
+      "group": "delivery",
+      "sortIndex": 3,
+      "experienceIds": [
+        "skg-ai-agent",
+        "skg-flexybox-p2",
+        "skg-intern",
+        "fpt-japan"
+      ],
+      "projectIds": []
+    },
+    {
+      "id": "design-documents",
+      "name": "Basic and detailed design documents",
+      "group": "delivery",
+      "sortIndex": 4,
+      "experienceIds": ["skg-ai-agent", "skg-flexybox-p2", "skg-flexybox-p1"],
+      "projectIds": []
+    },
+    {
+      "id": "proposals",
+      "name": "Proposals",
+      "group": "delivery",
+      "sortIndex": 5,
+      "experienceIds": [
+        "skg-ai-agent",
+        "skg-flexybox-p2",
+        "skg-coa",
+        "skg-flexybox-p1"
+      ],
+      "projectIds": []
+    },
+    {
+      "id": "uat-review",
+      "name": "UAT review",
+      "group": "delivery",
+      "sortIndex": 6,
+      "experienceIds": ["skg-ai-agent"],
+      "projectIds": []
+    },
+    {
+      "id": "redmine",
+      "name": "Redmine",
+      "group": "delivery",
+      "sortIndex": 7,
+      "experienceIds": ["skg-ai-agent", "skg-flexybox-p2"],
+      "projectIds": []
+    },
+    {
+      "id": "backlog",
+      "name": "Backlog",
+      "group": "delivery",
+      "sortIndex": 8,
+      "experienceIds": ["skg-flexybox-p2"],
+      "projectIds": []
+    },
+    {
+      "id": "jira",
+      "name": "Jira",
+      "group": "delivery",
+      "sortIndex": 9,
+      "experienceIds": ["skg-intern"],
+      "projectIds": []
+    },
 
-    { "id": "unit-testing", "name": "Unit test specs and execution", "group": "testing", "sortIndex": 0, "experienceIds": ["skg-coa"], "projectIds": [] },
-    { "id": "jest", "name": "Jest", "group": "testing", "sortIndex": 1, "experienceIds": [], "projectIds": [] },
-    { "id": "react-testing-library", "name": "React Testing Library", "group": "testing", "sortIndex": 2, "experienceIds": [], "projectIds": [] },
-    { "id": "playwright", "name": "Playwright", "group": "testing", "sortIndex": 3, "experienceIds": [], "projectIds": [] },
-    { "id": "cypress", "name": "Cypress", "group": "testing", "sortIndex": 4, "experienceIds": [], "projectIds": [] },
-    { "id": "github-actions", "name": "GitHub Actions", "group": "testing", "sortIndex": 5, "experienceIds": [], "projectIds": [] },
+    {
+      "id": "unit-testing",
+      "name": "Unit test specs and execution",
+      "group": "testing",
+      "sortIndex": 0,
+      "experienceIds": ["skg-coa"],
+      "projectIds": []
+    },
+    {
+      "id": "jest",
+      "name": "Jest",
+      "group": "testing",
+      "sortIndex": 1,
+      "experienceIds": [],
+      "projectIds": []
+    },
+    {
+      "id": "react-testing-library",
+      "name": "React Testing Library",
+      "group": "testing",
+      "sortIndex": 2,
+      "experienceIds": [],
+      "projectIds": []
+    },
+    {
+      "id": "playwright",
+      "name": "Playwright",
+      "group": "testing",
+      "sortIndex": 3,
+      "experienceIds": [],
+      "projectIds": []
+    },
+    {
+      "id": "cypress",
+      "name": "Cypress",
+      "group": "testing",
+      "sortIndex": 4,
+      "experienceIds": [],
+      "projectIds": []
+    },
+    {
+      "id": "github-actions",
+      "name": "GitHub Actions",
+      "group": "testing",
+      "sortIndex": 5,
+      "experienceIds": [],
+      "projectIds": []
+    },
 
-    { "id": "figma", "name": "Figma", "group": "design", "sortIndex": 0, "experienceIds": [], "projectIds": ["siteplus", "zodiacgems", "meet-my-lecturer"] },
-    { "id": "drawio", "name": "draw.io", "group": "design", "sortIndex": 1, "experienceIds": [], "projectIds": [] },
-    { "id": "staruml", "name": "StarUML", "group": "design", "sortIndex": 2, "experienceIds": [], "projectIds": [] }
+    {
+      "id": "figma",
+      "name": "Figma",
+      "group": "design",
+      "sortIndex": 0,
+      "experienceIds": [],
+      "projectIds": ["siteplus", "zodiacgems", "meet-my-lecturer"]
+    },
+    {
+      "id": "drawio",
+      "name": "draw.io",
+      "group": "design",
+      "sortIndex": 1,
+      "experienceIds": [],
+      "projectIds": []
+    },
+    {
+      "id": "staruml",
+      "name": "StarUML",
+      "group": "design",
+      "sortIndex": 2,
+      "experienceIds": [],
+      "projectIds": []
+    }
   ],
   "certificates": [
     {
@@ -525,7 +1164,12 @@
       "credentialUrl": "https://www.coursera.org/account/accomplishments/specialization/I03NH1TMEVV8",
       "fileUrl": null,
       "topic": "design",
-      "skills": ["User Research", "Wireframing & Prototyping", "Usability Testing", "Interaction Design"],
+      "skills": [
+        "User Research",
+        "Wireframing & Prototyping",
+        "Usability Testing",
+        "Interaction Design"
+      ],
       "description": {
         "en": "Coursera specialization on user research, wireframes and prototypes, and usability testing.",
         "ja": "ユーザーリサーチ、ワイヤーフレームとプロトタイプ、ユーザビリティテストを学ぶCourseraの専門講座です。",
@@ -543,7 +1187,12 @@
       "credentialUrl": "https://www.coursera.org/account/accomplishments/specialization/QFF6J76HEPZF",
       "fileUrl": null,
       "topic": "other",
-      "skills": ["Opportunity Identification", "Business Model Creation", "Pitch Development", "Startup Financing"],
+      "skills": [
+        "Opportunity Identification",
+        "Business Model Creation",
+        "Pitch Development",
+        "Startup Financing"
+      ],
       "description": {
         "en": "Coursera specialization on finding business opportunities, designing a business model, pitching and startup financing.",
         "ja": "事業機会の発見、ビジネスモデルの設計、ピッチ、スタートアップの資金調達を学ぶCourseraの専門講座です。",
@@ -561,7 +1210,12 @@
       "credentialUrl": "https://www.coursera.org/account/accomplishments/specialization/LUYMLLYA474P",
       "fileUrl": null,
       "topic": "pm",
-      "skills": ["Project Initiation", "Project Planning", "Project Execution", "Project Closure"],
+      "skills": [
+        "Project Initiation",
+        "Project Planning",
+        "Project Execution",
+        "Project Closure"
+      ],
       "description": {
         "en": "Coursera specialization covering project initiation, planning, execution, monitoring and closure.",
         "ja": "プロジェクトの立ち上げ、計画、実行、監視、終結を学ぶCourseraの専門講座です。",
@@ -579,7 +1233,12 @@
       "credentialUrl": "https://www.coursera.org/account/accomplishments/specialization/QKRJRFHFT8ZA",
       "fileUrl": null,
       "topic": "language",
-      "skills": ["Academic Essay Writing", "Research Documentation", "Argument Development", "Editing & Proofreading"],
+      "skills": [
+        "Academic Essay Writing",
+        "Research Documentation",
+        "Argument Development",
+        "Editing & Proofreading"
+      ],
       "description": {
         "en": "Coursera specialization on writing structured academic essays and research papers in English, including editing.",
         "ja": "英語で構成のしっかりした論文やレポートを書く方法と推敲を学ぶCourseraの専門講座です。",
@@ -615,7 +1274,11 @@
       "credentialUrl": "https://coursera.org/share/1a913ee30f90b25413e36ddd02f06db9",
       "fileUrl": null,
       "topic": "engineering",
-      "skills": ["Software Development", "Agile Methodologies", "Project Management"],
+      "skills": [
+        "Software Development",
+        "Agile Methodologies",
+        "Project Management"
+      ],
       "description": {
         "en": "Coursera specialization covering the software development lifecycle from requirements to deployment, with a focus on agile methods.",
         "ja": "要件定義からデプロイまでのソフトウェア開発ライフサイクルを、アジャイル手法を中心に学ぶCourseraの専門講座です。",
@@ -651,7 +1314,13 @@
       "credentialUrl": "https://coursera.org/share/09e0cf48c02eac4d8b02617da51689cf",
       "fileUrl": null,
       "topic": "engineering",
-      "skills": ["Network Communication", "Peer-to-Peer Protocols", "Local Area Networks", "Packet Switching", "TCP/IP"],
+      "skills": [
+        "Network Communication",
+        "Peer-to-Peer Protocols",
+        "Local Area Networks",
+        "Packet Switching",
+        "TCP/IP"
+      ],
       "description": {
         "en": "Coursera specialization on computer networking fundamentals: protocols, local area networks, packet switching and TCP/IP.",
         "ja": "プロトコル、LAN、パケット交換、TCP/IPなど、コンピュータネットワークの基礎を学ぶCourseraの専門講座です。",
@@ -669,7 +1338,12 @@
       "credentialUrl": "https://www.coursera.org/account/accomplishments/specialization/DVP6AL4ME98",
       "fileUrl": null,
       "topic": "other",
-      "skills": ["Time Management", "Critical Thinking", "Academic Research", "Collaborative Learning"],
+      "skills": [
+        "Time Management",
+        "Critical Thinking",
+        "Academic Research",
+        "Collaborative Learning"
+      ],
       "description": {
         "en": "Coursera specialization on study skills for university: time management, critical thinking, research and group work.",
         "ja": "時間管理、批判的思考、リサーチ、グループワークなど、大学で必要な学習スキルを学ぶCourseraの専門講座です。",

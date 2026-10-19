@@ -4,12 +4,21 @@ import { NextIntlClientProvider } from "next-intl";
 import type { ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // RoleProvider (used by the side rail) pulls in the routing helpers; a plain stub keeps the test free of the Next runtime.
-vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams("") }));
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams(""),
+}));
 vi.mock("@/i18n/navigation", () => ({
   useRouter: () => ({ replace: vi.fn() }),
   usePathname: () => "/en",
   getPathname: ({ locale }: { locale: string }) => `/${locale}`,
-  Link: ({ href, children, ...rest }: { href: string; children: React.ReactNode }) => (
+  Link: ({
+    href,
+    children,
+    ...rest
+  }: {
+    href: string;
+    children: React.ReactNode;
+  }) => (
     <a href={href} {...rest}>
       {children}
     </a>
@@ -17,7 +26,12 @@ vi.mock("@/i18n/navigation", () => ({
 }));
 
 import { LanguageSwitch } from "@/components/site/LanguageSwitch";
-import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Header } from "@/components/site/Header";
 import { HelloIntro } from "@/components/site/HelloIntro";
 import { PillNav } from "@/components/site/PillNav";
@@ -31,7 +45,11 @@ import ja from "@/messages/ja.json";
 import vi_ from "@/messages/vi.json";
 import { ROLE_KEYS } from "@/content/schema";
 
-type Entry = { isIntersecting: boolean; target: Element; boundingClientRect?: { top: number } };
+type Entry = {
+  isIntersecting: boolean;
+  target: Element;
+  boundingClientRect?: { top: number };
+};
 type Callback = (entries: Entry[]) => void;
 
 /** IntersectionObserver stub: remembers the callback + options and lets a test fire entries by hand. */
@@ -68,7 +86,11 @@ function stubMedia(matches: (query: string) => boolean) {
 
 function withIntl(ui: ReactElement, locale: "en" | "ja" | "vi" = "en") {
   const messages = { en, ja, vi: vi_ }[locale];
-  return <NextIntlClientProvider locale={locale} messages={messages}>{ui}</NextIntlClientProvider>;
+  return (
+    <NextIntlClientProvider locale={locale} messages={messages}>
+      {ui}
+    </NextIntlClientProvider>
+  );
 }
 
 function mountSections() {
@@ -79,12 +101,21 @@ function mountSections() {
   }
 }
 
-const titles = Object.fromEntries(ROLE_KEYS.map((k) => [k, `Title ${k}`])) as Record<(typeof ROLE_KEYS)[number], string>;
+const titles = Object.fromEntries(
+  ROLE_KEYS.map((k) => [k, `Title ${k}`]),
+) as Record<(typeof ROLE_KEYS)[number], string>;
 const railProps = {
-  icons: { github: <svg aria-hidden="true" />, linkedin: <svg aria-hidden="true" /> },
+  icons: {
+    github: <svg aria-hidden="true" />,
+    linkedin: <svg aria-hidden="true" />,
+  },
   name: "Le Tran Cat Lam",
   titles,
-  links: { github: "https://github.com/Let-cal", linkedin: "https://www.linkedin.com/in/letcal", email: "letcal2003@gmail.com" },
+  links: {
+    github: "https://github.com/Let-cal",
+    linkedin: "https://www.linkedin.com/in/letcal",
+    email: "letcal2003@gmail.com",
+  },
 };
 
 beforeEach(() => {
@@ -109,7 +140,9 @@ describe("SideRail", () => {
     expect(within(nav).getAllByRole("link")).toHaveLength(SECTION_IDS.length);
     expect(nav.querySelector("[aria-current]")).toBeNull();
 
-    io.fire([{ isIntersecting: true, target: document.getElementById("projects")! }]);
+    io.fire([
+      { isIntersecting: true, target: document.getElementById("projects")! },
+    ]);
 
     const active = within(nav).getByRole("link", { name: en.nav.projects });
     expect(active).toHaveAttribute("aria-current", "true");
@@ -136,11 +169,15 @@ describe("SideRail", () => {
     mountSections();
     render(withIntl(<SideRail {...railProps} />));
     const nav = screen.getByRole("navigation", { name: en.header.primaryNav });
-    vi.spyOn(document.documentElement, "scrollHeight", "get").mockReturnValue(3000);
+    vi.spyOn(document.documentElement, "scrollHeight", "get").mockReturnValue(
+      3000,
+    );
     vi.stubGlobal("scrollY", 2200);
     vi.stubGlobal("innerHeight", 800);
     act(() => void window.dispatchEvent(new Event("scroll")));
-    expect(within(nav).getByRole("link", { name: en.nav.contact })).toHaveAttribute("aria-current", "true");
+    expect(
+      within(nav).getByRole("link", { name: en.nav.contact }),
+    ).toHaveAttribute("aria-current", "true");
     vi.restoreAllMocks();
   });
 
@@ -149,9 +186,18 @@ describe("SideRail", () => {
     expect(screen.getByText("Le Tran Cat Lam")).toBeInTheDocument();
     // TextScramble renders the final text twice (screen reader copy + visual copy).
     expect(screen.getAllByText("Title fullstack").length).toBeGreaterThan(0);
-    expect(screen.getByRole("link", { name: "GitHub" })).toHaveAttribute("href", "https://github.com/Let-cal");
-    expect(screen.getByRole("link", { name: "LinkedIn" })).toHaveAttribute("href", "https://www.linkedin.com/in/letcal");
-    expect(screen.getByRole("link", { name: "Email" })).toHaveAttribute("href", "mailto:letcal2003@gmail.com");
+    expect(screen.getByRole("link", { name: "GitHub" })).toHaveAttribute(
+      "href",
+      "https://github.com/Let-cal",
+    );
+    expect(screen.getByRole("link", { name: "LinkedIn" })).toHaveAttribute(
+      "href",
+      "https://www.linkedin.com/in/letcal",
+    );
+    expect(screen.getByRole("link", { name: "Email" })).toHaveAttribute(
+      "href",
+      "mailto:letcal2003@gmail.com",
+    );
   });
 });
 
@@ -161,10 +207,20 @@ describe("PillNav", () => {
     render(withIntl(<PillNav />));
     const nav = screen.getByRole("navigation", { name: en.header.primaryNav });
     expect(within(nav).getAllByRole("link")).toHaveLength(SECTION_IDS.length);
-    io.fire([{ isIntersecting: true, target: document.getElementById("skills")! }]);
-    expect(within(nav).getByRole("link", { name: /Skills/ })).toHaveAttribute("aria-current", "true");
-    io.fire([{ isIntersecting: true, target: document.getElementById("contact")! }]);
-    expect(within(nav).getByRole("link", { name: /Contact/ })).toHaveAttribute("aria-current", "true");
+    io.fire([
+      { isIntersecting: true, target: document.getElementById("skills")! },
+    ]);
+    expect(within(nav).getByRole("link", { name: /Skills/ })).toHaveAttribute(
+      "aria-current",
+      "true",
+    );
+    io.fire([
+      { isIntersecting: true, target: document.getElementById("contact")! },
+    ]);
+    expect(within(nav).getByRole("link", { name: /Contact/ })).toHaveAttribute(
+      "aria-current",
+      "true",
+    );
     expect(nav.querySelectorAll("[aria-current]")).toHaveLength(1);
   });
 });
@@ -252,7 +308,9 @@ describe("SectionLabel", () => {
   });
 
   it("shows only the kanji for chapter 00 and hides the decorative eyebrow from assistive tech", () => {
-    const { container } = render(<SectionLabel index="00" title="Home" kanji="序章" />);
+    const { container } = render(
+      <SectionLabel index="00" title="Home" kanji="序章" />,
+    );
     expect(screen.getByText("序章")).toBeInTheDocument();
     expect(container.textContent).not.toContain("00");
     render(<SectionLabel index="01" title="Experience" kanji="第一章 経歴" />);
@@ -264,7 +322,14 @@ describe("SectionLabel", () => {
 
 describe("SECTION_CHAPTERS", () => {
   it("pins the seven chapter labels of spec 13.3 E3", () => {
-    expect(Object.fromEntries(SECTION_IDS.map((id) => [id, [SECTION_CHAPTERS[id].index, SECTION_CHAPTERS[id].kanji]]))).toEqual({
+    expect(
+      Object.fromEntries(
+        SECTION_IDS.map((id) => [
+          id,
+          [SECTION_CHAPTERS[id].index, SECTION_CHAPTERS[id].kanji],
+        ]),
+      ),
+    ).toEqual({
       hero: ["00", "序章"],
       experience: ["01", "第一章 経歴"],
       projects: ["02", "第二章 作品"],
@@ -280,7 +345,9 @@ describe("Header", () => {
   const urls = { fullstack: "/cv/a.pdf", techlead: "/cv/b.pdf", pm: "" };
   it("shows the CV download of the current role and hides it when the URL is empty", () => {
     const { rerender } = render(withIntl(<Header cvUrls={urls} />));
-    expect(screen.getByRole("link", { name: en.hero.downloadCv })).toHaveAttribute("href", "/cv/a.pdf");
+    expect(
+      screen.getByRole("link", { name: en.hero.downloadCv }),
+    ).toHaveAttribute("href", "/cv/a.pdf");
     rerender(withIntl(<Header cvUrls={{ ...urls, fullstack: "" }} />));
     expect(screen.queryByRole("link", { name: en.hero.downloadCv })).toBeNull();
   });
@@ -292,7 +359,9 @@ describe("ScrollProgressKoi", () => {
     const { container } = render(<ScrollProgressKoi />);
     expect(container.querySelector("[data-icon='koi']")).not.toBeNull();
     expect(container.querySelector("[data-icon='dragon']")).toBeNull();
-    io.fire([{ isIntersecting: true, target: document.getElementById("why")! }]);
+    io.fire([
+      { isIntersecting: true, target: document.getElementById("why")! },
+    ]);
     expect(container.querySelector("[data-icon='dragon']")).not.toBeNull();
     expect(container.querySelector("[data-icon='koi']")).toBeNull();
   });
@@ -308,9 +377,15 @@ describe("ScrollProgressKoi", () => {
 describe("LanguageSwitch", () => {
   it("names each button with the language and its visible code", () => {
     render(withIntl(<LanguageSwitch />));
-    expect(screen.getByRole("button", { name: "EN · English" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "JA · 日本語" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "VI · Tiếng Việt" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "EN · English" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "JA · 日本語" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "VI · Tiếng Việt" }),
+    ).toBeInTheDocument();
   });
 });
 

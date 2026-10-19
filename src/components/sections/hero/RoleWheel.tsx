@@ -2,11 +2,28 @@
 
 import { useTranslations } from "next-intl";
 import { ROLE_PORTRAIT_SIZES, type RolePortraits } from "@/lib/role-portraits";
-import { useId, useRef, type CSSProperties, type KeyboardEvent, type PointerEvent } from "react";
+import {
+  useId,
+  useRef,
+  type CSSProperties,
+  type KeyboardEvent,
+  type PointerEvent,
+} from "react";
 import type { RoleKey } from "@/content/schema";
-import { ROLE_ACCENT, SECTOR_FROM, WHEEL_ORDER, angleFromPoint, sectorForAngle } from "@/lib/role-accent";
+import {
+  ROLE_ACCENT,
+  SECTOR_FROM,
+  WHEEL_ORDER,
+  angleFromPoint,
+  sectorForAngle,
+} from "@/lib/role-accent";
 import { cn } from "@/lib/utils";
-import { ROLE_IMAGE, RoleStageProvider, useOptionalStage, useStage } from "./stage-context";
+import {
+  ROLE_IMAGE,
+  RoleStageProvider,
+  useOptionalStage,
+  useStage,
+} from "./stage-context";
 
 /** Ring geometry in the 440×440 viewBox: arc radius, gap at each arc end (degrees). */
 export const WHEEL_VIEWBOX = 440;
@@ -27,15 +44,29 @@ function arcPath(a0: number, a1: number, r = ARC_RADIUS, sweepFlag = 1) {
   return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 0 ${sweepFlag} ${x1.toFixed(2)} ${y1.toFixed(2)}`;
 }
 
-const step = (key: RoleKey, by: number) => WHEEL_ORDER[(WHEEL_ORDER.indexOf(key) + by + WHEEL_ORDER.length) % WHEEL_ORDER.length];
+const step = (key: RoleKey, by: number) =>
+  WHEEL_ORDER[
+    (WHEEL_ORDER.indexOf(key) + by + WHEEL_ORDER.length) % WHEEL_ORDER.length
+  ];
 
-const ARROWS: Record<string, number> = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
+const ARROWS: Record<string, number> = {
+  ArrowRight: 1,
+  ArrowDown: 1,
+  ArrowLeft: -1,
+  ArrowUp: -1,
+};
 
 /**
  * Circular portrait split into the three role slices, with an SVG ring of three arcs (the radiogroup).
  * Works on its own (it then creates its own stage) or inside RoleStage next to RolePanels.
  */
-export function RoleWheel({ className, portraits }: { className?: string; portraits?: RolePortraits }) {
+export function RoleWheel({
+  className,
+  portraits,
+}: {
+  className?: string;
+  portraits?: RolePortraits;
+}) {
   return useOptionalStage() ? (
     <WheelView className={className} portraits={portraits} />
   ) : (
@@ -45,13 +76,33 @@ export function RoleWheel({ className, portraits }: { className?: string; portra
   );
 }
 
-function WheelView({ className, portraits }: { className?: string; portraits?: RolePortraits }) {
+function WheelView({
+  className,
+  portraits,
+}: {
+  className?: string;
+  portraits?: RolePortraits;
+}) {
   const t = useTranslations("hero");
-  const { role, base, active, peekRole, reduced, setHover, select, peekRef, baseImgRef } = useStage();
+  const {
+    role,
+    base,
+    active,
+    peekRole,
+    reduced,
+    setHover,
+    select,
+    peekRef,
+    baseImgRef,
+  } = useStage();
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const radios = useRef<Partial<Record<RoleKey, SVGGElement | null>>>({});
   const discRef = useRef<HTMLDivElement | null>(null);
-  const pointer = useRef<{ type: string; x: number; swiped: boolean }>({ type: "mouse", x: 0, swiped: false });
+  const pointer = useRef<{ type: string; x: number; swiped: boolean }>({
+    type: "mouse",
+    x: 0,
+    swiped: false,
+  });
 
   function choose(key: RoleKey, focus = false) {
     select(key);
@@ -70,7 +121,14 @@ function WheelView({ className, portraits }: { className?: string; portraits?: R
     if (!el) return null;
     const r = el.getBoundingClientRect();
     if (r.width === 0) return null;
-    return sectorForAngle(angleFromPoint(clientX, clientY, r.left + r.width / 2, r.top + r.height / 2));
+    return sectorForAngle(
+      angleFromPoint(
+        clientX,
+        clientY,
+        r.left + r.width / 2,
+        r.top + r.height / 2,
+      ),
+    );
   }
 
   function onDiscMove(e: PointerEvent<HTMLDivElement>) {
@@ -132,7 +190,12 @@ function WheelView({ className, portraits }: { className?: string; portraits?: R
             draggable={false}
           />
         </div>
-        <div ref={peekRef} data-layer="peek" aria-hidden="true" className="hero-layer hero-peek">
+        <div
+          ref={peekRef}
+          data-layer="peek"
+          aria-hidden="true"
+          className="hero-layer hero-peek"
+        >
           {/* eslint-disable-next-line @next/next/no-img-element -- uses the same server-computed responsive URLs as the base */}
           <img
             {...portraits?.[peekRole]}
@@ -160,11 +223,24 @@ function WheelView({ className, portraits }: { className?: string; portraits?: R
             const mid = (a0 + a1) / 2;
             // The bottom label runs right to left along the circle, so it reads left to right on screen.
             const bottom = mid > 90 && mid < 270;
-            return <path key={key} id={`${uid}-${key}`} d={bottom ? arcPath(a1, a0, ARC_RADIUS + 16, 0) : arcPath(a0, a1, ARC_RADIUS - 14)} />;
+            return (
+              <path
+                key={key}
+                id={`${uid}-${key}`}
+                d={
+                  bottom
+                    ? arcPath(a1, a0, ARC_RADIUS + 16, 0)
+                    : arcPath(a0, a1, ARC_RADIUS - 14)
+                }
+              />
+            );
           })}
         </defs>
         {WHEEL_ORDER.map((key) => {
-          const d = arcPath(SECTOR_FROM[key] + GAP, SECTOR_FROM[key] + 120 - GAP);
+          const d = arcPath(
+            SECTOR_FROM[key] + GAP,
+            SECTOR_FROM[key] + 120 - GAP,
+          );
           const checked = key === role;
           const label = t(`roles.${key}.arc`);
           return (
@@ -192,7 +268,11 @@ function WheelView({ className, portraits }: { className?: string; portraits?: R
               <path className="hero-arc-hit" d={d} />
               <path className="hero-arc-line" d={d} />
               <text className="hero-arc-label">
-                <textPath href={`#${uid}-${key}`} startOffset="50%" textAnchor="middle">
+                <textPath
+                  href={`#${uid}-${key}`}
+                  startOffset="50%"
+                  textAnchor="middle"
+                >
                   {label}
                 </textPath>
               </text>

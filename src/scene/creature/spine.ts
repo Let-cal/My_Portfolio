@@ -76,8 +76,10 @@ export function steer(
   const dist = Math.hypot(dx, dz);
   let da = Math.atan2(dz, dx) - heading;
   da = Math.atan2(Math.sin(da), Math.cos(da));
-  const step = clamp(dist * SPEED_GAIN, MIN_SPEED, MAX_SPEED) * (1 + 0.8 * morph);
-  const maxTurn = Math.min(MAX_TURN, step / (minTurnRadius(morph) * radiusScale)) * scale;
+  const step =
+    clamp(dist * SPEED_GAIN, MIN_SPEED, MAX_SPEED) * (1 + 0.8 * morph);
+  const maxTurn =
+    Math.min(MAX_TURN, step / (minTurnRadius(morph) * radiusScale)) * scale;
   const nextHeading = heading + clamp(da, -maxTurn, maxTurn);
   const speed = step * scale;
   const res = out ?? { head: { x: 0, y: 0, z: 0 }, heading: 0 };
@@ -136,13 +138,24 @@ export function idleModeForChapter(chapter: number): IdleMode {
   return "eight";
 }
 
-const limitsScratch: PondLimits = { idleX: 0, idleZ: 0, pointerX: 0, zMin: 0, zMax: 0 };
+const limitsScratch: PondLimits = {
+  idleX: 0,
+  idleZ: 0,
+  pointerX: 0,
+  zMin: 0,
+  zMax: 0,
+};
 
 /**
  * Where the creature wanders while nobody points at the water. By default a slow figure of eight, wider for the dragon
  * and narrower on a portrait screen (`opts.aspect`); `opts.mode` picks the chapter's variation. No allocation.
  */
-export function idleTarget(t: number, morph: number, out: Vec3, opts: { aspect?: number; mode?: IdleMode } = {}): Vec3 {
+export function idleTarget(
+  t: number,
+  morph: number,
+  out: Vec3,
+  opts: { aspect?: number; mode?: IdleMode } = {},
+): Vec3 {
   const limits = pondLimits(opts.aspect ?? REF_ASPECT, morph, limitsScratch);
   out.y = 0;
   switch (opts.mode) {
@@ -174,7 +187,12 @@ export const ORBIT_DEPTH = 0.6;
  * centre's height, going once round every `2pi / ORBIT_SPEED` seconds. The dragon's head chases it. Writes into `out`
  * when given (no allocation).
  */
-export function orbitTarget(center: Vec3, time: number, radius: number, out: Vec3 = { x: 0, y: 0, z: 0 }): Vec3 {
+export function orbitTarget(
+  center: Vec3,
+  time: number,
+  radius: number,
+  out: Vec3 = { x: 0, y: 0, z: 0 },
+): Vec3 {
   const a = time * ORBIT_SPEED;
   out.x = center.x + Math.cos(a) * radius;
   out.y = center.y;
@@ -196,7 +214,11 @@ export function guardianRadius(ctaRadius: number): number {
   return clamp(r * 2 + 0.35, GUARDIAN_MIN, GUARDIAN_MAX);
 }
 
-const newFrame = (): Frame => ({ T: { x: 1, y: 0, z: 0 }, S: { x: 0, y: 0, z: 1 }, U: { x: 0, y: 1, z: 0 } });
+const newFrame = (): Frame => ({
+  T: { x: 1, y: 0, z: 0 },
+  S: { x: 0, y: 0, z: 1 },
+  U: { x: 0, y: 1, z: 0 },
+});
 
 /**
  * A frame per spine point, with world up (0, 1, 0) as the reference so the back always faces the sky:

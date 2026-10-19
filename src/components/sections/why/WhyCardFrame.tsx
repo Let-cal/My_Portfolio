@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useRef, type PointerEvent, type ReactNode } from "react";
-import { useMediaQuery, usePrefersReducedMotion } from "@/components/fx/use-media-query";
+import {
+  useMediaQuery,
+  usePrefersReducedMotion,
+} from "@/components/fx/use-media-query";
 import { usePointerFine } from "@/components/fx/use-pointer-fine";
 
 /** Greatest tilt in either axis, in degrees. */
@@ -22,7 +25,9 @@ export function WhyCardFrame({ children }: { children: ReactNode }) {
   const tiltOn = fine && !reduced && !narrow;
   const ref = useRef<HTMLElement>(null);
   const frame = useRef(0);
-  const touchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const touchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
 
   useEffect(
     () => () => {

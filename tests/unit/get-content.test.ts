@@ -32,7 +32,9 @@ describe("loadContent", () => {
 
   it("falls back to the seed and warns when the repository returns invalid data", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const invalid = { getContent: async () => ({ nope: true }) } as unknown as ContentRepository;
+    const invalid = {
+      getContent: async () => ({ nope: true }),
+    } as unknown as ContentRepository;
     const result = await loadContent(withUrl, () => invalid);
     expect(result).toEqual(seedContent);
     expect(warn).toHaveBeenCalledTimes(1);
@@ -69,17 +71,25 @@ describe("loadContentWithSource", () => {
         throw new Error("paused");
       },
     };
-    expect((await loadContentWithSource(withUrl, () => failing)).source).toBe("seed-fallback");
+    expect((await loadContentWithSource(withUrl, () => failing)).source).toBe(
+      "seed-fallback",
+    );
   });
 
   it("reports seed-fallback when the repository returns invalid data", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => {});
-    const invalid = { getContent: async () => ({ nope: true }) } as unknown as ContentRepository;
-    expect((await loadContentWithSource(withUrl, () => invalid)).source).toBe("seed-fallback");
+    const invalid = {
+      getContent: async () => ({ nope: true }),
+    } as unknown as ContentRepository;
+    expect((await loadContentWithSource(withUrl, () => invalid)).source).toBe(
+      "seed-fallback",
+    );
   });
 
   it("reports supabase when the repository returns valid data", async () => {
     const repo: ContentRepository = { getContent: async () => seedContent };
-    expect((await loadContentWithSource(withUrl, () => repo)).source).toBe("supabase");
+    expect((await loadContentWithSource(withUrl, () => repo)).source).toBe(
+      "supabase",
+    );
   });
 });

@@ -14,7 +14,11 @@ const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
  * "Why me" never reached the end of its morph.) The first chapter begins at the top of the page. The last has no
  * next section, so one viewport height stands in for its length.
  */
-export function getChapterProgress(scrollY: number, sectionTops: number[], viewportH: number): ChapterProgress {
+export function getChapterProgress(
+  scrollY: number,
+  sectionTops: number[],
+  viewportH: number,
+): ChapterProgress {
   const half = viewportH * 0.5;
   const line = scrollY + half;
   let chapter = 0;
@@ -25,7 +29,10 @@ export function getChapterProgress(scrollY: number, sectionTops: number[], viewp
   if (top === undefined) return { chapter: 0, t: 0 };
   const next = sectionTops[chapter + 1];
   const start = Math.max(0, top - half);
-  const end = next === undefined || !Number.isFinite(next) ? start + viewportH : next - half;
+  const end =
+    next === undefined || !Number.isFinite(next)
+      ? start + viewportH
+      : next - half;
   const span = end - start;
   if (!(span > 0)) return { chapter, t: 0 };
   return { chapter, t: clamp01((scrollY - start) / span) };
@@ -59,7 +66,10 @@ export function transformState(chapter: number, t: number): TransformState {
 
 // --- Camera per chapter ------------------------------------------------------------------------------------------
 
-export type CameraPose = { pos: [number, number, number]; look: [number, number, number] };
+export type CameraPose = {
+  pos: [number, number, number];
+  look: [number, number, number];
+};
 
 /**
  * One camera per chapter, in pond units (water at y = -0.3, the koi swims around the origin, the camera sits at +z).
@@ -90,7 +100,10 @@ const smooth01 = (a: number, b: number, x: number) => {
  * `c` with `t` up to 0.5 is exactly `c`; at `t = 1` it is `c + 1`. The last chapter has nothing to move on to.
  */
 export function chapterPosition(chapter: number, t: number): number {
-  const c = Math.min(CHAPTER_CAMERA.length - 1, Math.max(0, Math.floor(chapter)));
+  const c = Math.min(
+    CHAPTER_CAMERA.length - 1,
+    Math.max(0, Math.floor(chapter)),
+  );
   if (c >= CHAPTER_CAMERA.length - 1) return c;
   return c + smooth01(CAMERA_HOLD, 1, t);
 }
@@ -98,7 +111,10 @@ export function chapterPosition(chapter: number, t: number): number {
 type Vec3Like = { x: number; y: number; z: number };
 
 /** Garden transitions follow a bowed, eased path through the same pond. Other chapter paths stay linear. */
-export function cameraAtPosition(position: number, out: { pos: Vec3Like; look: Vec3Like }): void {
+export function cameraAtPosition(
+  position: number,
+  out: { pos: Vec3Like; look: Vec3Like },
+): void {
   const last = CHAPTER_CAMERA.length - 1;
   const p = Math.min(last, Math.max(0, position));
   const i = Math.min(last - 1, Math.floor(p));
@@ -123,7 +139,11 @@ export function cameraAtPosition(position: number, out: { pos: Vec3Like; look: V
 }
 
 /** The camera for a scroll state: `cameraAtPosition(chapterPosition(chapter, t))`. */
-export function cameraAt(chapter: number, t: number, out: { pos: Vec3Like; look: Vec3Like }): void {
+export function cameraAt(
+  chapter: number,
+  t: number,
+  out: { pos: Vec3Like; look: Vec3Like },
+): void {
   cameraAtPosition(chapterPosition(chapter, t), out);
 }
 
@@ -136,5 +156,8 @@ const MAX_PULLBACK = 2.2;
  */
 export function aspectPullback(aspect: number): number {
   if (!(aspect < REF_ASPECT)) return 1;
-  return Math.min(MAX_PULLBACK, Math.pow(REF_ASPECT / Math.max(aspect, 0.01), 0.55));
+  return Math.min(
+    MAX_PULLBACK,
+    Math.pow(REF_ASPECT / Math.max(aspect, 0.01), 0.55),
+  );
 }

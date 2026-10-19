@@ -14,7 +14,13 @@ import {
   UserIcon,
 } from "@/components/site/icons";
 import { useLocale, useTranslations } from "next-intl";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   Command,
   CommandEmpty,
@@ -23,13 +29,22 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ROLE_KEYS } from "@/content/constants";
 import type { RoleKey } from "@/content/schema";
 import { getPathname, usePathname } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { getLenis, scrollToElement } from "./lenis-instance";
-import { useMotionPreference, type MotionPreference } from "./motion-preference";
+import {
+  useMotionPreference,
+  type MotionPreference,
+} from "./motion-preference";
 import { useRole } from "./RoleProvider";
 import { SECTION_IDS, type SectionId } from "./sections";
 import { useTheme, type Theme } from "./theme";
@@ -149,7 +164,9 @@ export function CommandPaletteDialog({
     setOpen(false);
     if (next === locale) return;
     // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- deliberate full page load, see LanguageSwitch
-    window.location.assign(`${getPathname({ href: pathname, locale: next as (typeof routing.locales)[number] })}${window.location.search}${window.location.hash}`);
+    window.location.assign(
+      `${getPathname({ href: pathname, locale: next as (typeof routing.locales)[number] })}${window.location.search}${window.location.hash}`,
+    );
   };
 
   const groupLabels = {
@@ -185,12 +202,20 @@ export function CommandPaletteDialog({
         </DialogHeader>
         <Command label={t("inputLabel")}>
           <CommandInput placeholder={t("placeholder")} />
-          <CommandList label={t("inputLabel")} className="max-h-[min(24rem,60svh)]">
+          <CommandList
+            label={t("inputLabel")}
+            className="max-h-[min(24rem,60svh)]"
+          >
             <CommandEmpty>{t("empty")}</CommandEmpty>
 
             <CommandGroup heading={groupLabels.goTo}>
               {SECTION_IDS.map((id) => (
-                <CommandItem key={id} value={`goto-${id}`} keywords={[tNav(id), groupLabels.goTo]} onSelect={() => goTo(id)}>
+                <CommandItem
+                  key={id}
+                  value={`goto-${id}`}
+                  keywords={[tNav(id), groupLabels.goTo]}
+                  onSelect={() => goTo(id)}
+                >
                   <HashIcon aria-hidden />
                   {tNav(id)}
                 </CommandItem>
@@ -259,12 +284,20 @@ export function CommandPaletteDialog({
 
             <CommandGroup heading={groupLabels.actions}>
               {cvUrls[role] && (
-                <CommandItem value="action-cv" keywords={[t("actions.downloadCv"), groupLabels.actions]} onSelect={() => run(() => downloadFile(cvUrls[role]))}>
+                <CommandItem
+                  value="action-cv"
+                  keywords={[t("actions.downloadCv"), groupLabels.actions]}
+                  onSelect={() => run(() => downloadFile(cvUrls[role]))}
+                >
                   <DownloadIcon aria-hidden />
                   {t("actions.downloadCv")}
                 </CommandItem>
               )}
-              <CommandItem value="action-email" keywords={[t("actions.copyEmail"), groupLabels.actions]} onSelect={() => run(() => void copy())}>
+              <CommandItem
+                value="action-email"
+                keywords={[t("actions.copyEmail"), groupLabels.actions]}
+                onSelect={() => run(() => void copy())}
+              >
                 <CopyIcon aria-hidden />
                 {t("actions.copyEmail")}
               </CommandItem>
@@ -285,7 +318,9 @@ export function CommandPaletteDialog({
           </CommandList>
           <div className="flex items-center justify-between gap-3 border-t border-border px-3 py-2 text-xs text-muted-foreground">
             <span>{t("hint")}</span>
-            <kbd className="rounded border border-border px-1.5 py-0.5 font-sans">{shortcut}</kbd>
+            <kbd className="rounded border border-border px-1.5 py-0.5 font-sans">
+              {shortcut}
+            </kbd>
           </div>
         </Command>
       </DialogContent>

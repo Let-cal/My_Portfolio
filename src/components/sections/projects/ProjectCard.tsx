@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent,
+  type ReactNode,
+} from "react";
 import type { CaseStudyView } from "@/components/sections/experience/CaseStudySheet";
 import { GlowCard } from "@/components/fx/GlowCard";
 import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
@@ -46,7 +52,13 @@ type ProjectCardProps = {
  * One bento tile: media on top (hover/in-view video preview, poster, or a brand-colour placeholder with the project
  * initials), then an "NN · KIND" label, title, role, summary, Demo/Code links and a tech-name marquee along the bottom. With a case study the whole card opens it.
  */
-export function ProjectCard({ project, featured = false, wide = false, onOpenCaseStudy, children }: ProjectCardProps) {
+export function ProjectCard({
+  project,
+  featured = false,
+  wide = false,
+  onOpenCaseStudy,
+  children,
+}: ProjectCardProps) {
   const reduced = usePrefersReducedMotion();
   const cardRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(false);
@@ -56,7 +68,10 @@ export function ProjectCard({ project, featured = false, wide = false, onOpenCas
   function play() {
     if (reduced) return;
     // play() rejects when interrupted by a quick pause() or blocked by the browser; the poster stays, which is fine.
-    cardRef.current?.querySelector("video")?.play()?.catch(() => {});
+    cardRef.current
+      ?.querySelector("video")
+      ?.play()
+      ?.catch(() => {});
   }
   function pause() {
     cardRef.current?.querySelector("video")?.pause();
@@ -65,12 +80,26 @@ export function ProjectCard({ project, featured = false, wide = false, onOpenCas
   // Touch devices have no hover: play while at least 60% of the card is on screen.
   useEffect(() => {
     const card = cardRef.current;
-    if (!videoUrl || !card || reduced || typeof IntersectionObserver === "undefined") return;
-    if (typeof window.matchMedia === "function" && window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    if (
+      !videoUrl ||
+      !card ||
+      reduced ||
+      typeof IntersectionObserver === "undefined"
+    )
+      return;
+    if (
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(hover: hover) and (pointer: fine)").matches
+    )
+      return;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry) return;
-        if (entry.intersectionRatio >= VISIBLE_RATIO) cardRef.current?.querySelector("video")?.play()?.catch(() => {});
+        if (entry.intersectionRatio >= VISIBLE_RATIO)
+          cardRef.current
+            ?.querySelector("video")
+            ?.play()
+            ?.catch(() => {});
         else cardRef.current?.querySelector("video")?.pause();
       },
       { threshold: VISIBLE_RATIO },
@@ -98,8 +127,12 @@ export function ProjectCard({ project, featured = false, wide = false, onOpenCas
       data-highlight={lit ? "true" : undefined}
       data-active={active ? "true" : undefined}
       onClick={(event) => {
-        const trigger = event.target instanceof Element ? event.target.closest<HTMLElement>("[data-case-study-trigger]") : null;
-        if (trigger && event.currentTarget.contains(trigger)) onOpenCaseStudy(project.id, trigger);
+        const trigger =
+          event.target instanceof Element
+            ? event.target.closest<HTMLElement>("[data-case-study-trigger]")
+            : null;
+        if (trigger && event.currentTarget.contains(trigger))
+          onOpenCaseStudy(project.id, trigger);
       }}
       onPointerEnter={onPointerEnter}
       onPointerLeave={onPointerLeave}
@@ -108,8 +141,10 @@ export function ProjectCard({ project, featured = false, wide = false, onOpenCas
         (featured || wide) && "md:col-span-2",
         featured && "md:grid md:grid-cols-2",
         active && "border-brand-400/60 bg-card/80",
-        lit && "border-(--role-accent) bg-card/80 shadow-[0_0_30px_-8px_var(--role-accent)]",
-        cs && "has-[button:focus-visible]:ring-2 has-[button:focus-visible]:ring-ring",
+        lit &&
+          "border-(--role-accent) bg-card/80 shadow-[0_0_30px_-8px_var(--role-accent)]",
+        cs &&
+          "has-[button:focus-visible]:ring-2 has-[button:focus-visible]:ring-ring",
       )}
     >
       {children}

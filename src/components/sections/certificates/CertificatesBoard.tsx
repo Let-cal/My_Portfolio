@@ -2,7 +2,13 @@
 
 import * as motion from "motion/react-m";
 import { useTranslations } from "next-intl";
-import { useId, useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
+import {
+  useId,
+  useMemo,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
 import { CERT_TOPICS } from "@/content/constants";
 import type { CertTopic } from "@/content/schema";
@@ -13,7 +19,12 @@ type Pane = "certificates" | "activities";
 type Filter = "all" | CertTopic;
 
 const PANES: Pane[] = ["certificates", "activities"];
-const ARROW_STEP: Record<string, number> = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
+const ARROW_STEP: Record<string, number> = {
+  ArrowRight: 1,
+  ArrowDown: 1,
+  ArrowLeft: -1,
+  ArrowUp: -1,
+};
 
 /** Moves through `list` from `current` for an arrow/Home/End key; null for any other key. */
 function nextIn<T>(list: T[], current: T, key: string): T | null {
@@ -24,7 +35,8 @@ function nextIn<T>(list: T[], current: T, key: string): T | null {
   return step ? list[(at + step + list.length) % list.length] : null;
 }
 
-const GRID = "grid grid-cols-1 justify-items-center gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3";
+const GRID =
+  "grid grid-cols-1 justify-items-center gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3";
 
 /**
  * Certificates and activities. Two tabs; the certificates tab has a topic filter (radiogroup with a count per topic)
@@ -32,7 +44,15 @@ const GRID = "grid grid-cols-1 justify-items-center gap-x-6 gap-y-10 sm:grid-col
  * layout animation (position only, so the lanterns never stretch). Both panels stay mounted so a flipped card keeps
  * its state.
  */
-export function CertificatesBoard({ certificates, activities, faces }: { certificates: CertificateView[]; activities: { id: string; content: ReactNode }[]; faces: Record<string, { front: ReactNode; back: ReactNode }> }) {
+export function CertificatesBoard({
+  certificates,
+  activities,
+  faces,
+}: {
+  certificates: CertificateView[];
+  activities: { id: string; content: ReactNode }[];
+  faces: Record<string, { front: ReactNode; back: ReactNode }>;
+}) {
   const t = useTranslations("certificates");
   const reduced = usePrefersReducedMotion();
   const uid = useId();
@@ -44,15 +64,23 @@ export function CertificatesBoard({ certificates, activities, faces }: { certifi
     for (const c of certificates) map.set(c.topic, (map.get(c.topic) ?? 0) + 1);
     return map;
   }, [certificates]);
-  const topics: Filter[] = ["all", ...CERT_TOPICS.filter((topic) => (counts.get(topic) ?? 0) > 0)];
+  const topics: Filter[] = [
+    "all",
+    ...CERT_TOPICS.filter((topic) => (counts.get(topic) ?? 0) > 0),
+  ];
   // A filter that no longer has any certificate behaves like "all".
   const active: Filter = topics.includes(filter) ? filter : "all";
-  const shown = active === "all" ? certificates : certificates.filter((c) => c.topic === active);
+  const shown =
+    active === "all"
+      ? certificates
+      : certificates.filter((c) => c.topic === active);
 
   const tabId = (p: Pane) => `${uid}-tab-${p}`;
   const panelId = (p: Pane) => `${uid}-panel-${p}`;
   const filterId = (f: Filter) => `${uid}-filter-${f}`;
-  const transition = reduced ? { duration: 0 } : { type: "spring" as const, stiffness: 420, damping: 36 };
+  const transition = reduced
+    ? { duration: 0 }
+    : { type: "spring" as const, stiffness: 420, damping: 36 };
 
   function onTabKey(e: KeyboardEvent) {
     const next = nextIn(PANES, pane, e.key);
@@ -92,7 +120,9 @@ export function CertificatesBoard({ certificates, activities, faces }: { certifi
               onClick={() => setPane(p)}
               className={clsx(
                 "relative rounded-full px-4 py-1.5 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-                selected ? "text-(--role-accent-contrast)" : "text-muted-foreground hover:text-foreground",
+                selected
+                  ? "text-(--role-accent-contrast)"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               {selected ? (
@@ -103,7 +133,11 @@ export function CertificatesBoard({ certificates, activities, faces }: { certifi
                   aria-hidden="true"
                 />
               ) : null}
-              <span className="relative">{p === "certificates" ? t("tabCertificates") : t("tabActivities")}</span>
+              <span className="relative">
+                {p === "certificates"
+                  ? t("tabCertificates")
+                  : t("tabActivities")}
+              </span>
             </button>
           );
         })}
@@ -116,10 +150,16 @@ export function CertificatesBoard({ certificates, activities, faces }: { certifi
         hidden={pane !== "certificates"}
         className="mt-8"
       >
-        <div role="radiogroup" aria-label={t("filterLabel")} onKeyDown={onFilterKey} className="flex flex-wrap gap-2">
+        <div
+          role="radiogroup"
+          aria-label={t("filterLabel")}
+          onKeyDown={onFilterKey}
+          className="flex flex-wrap gap-2"
+        >
           {topics.map((topic) => {
             const checked = active === topic;
-            const count = topic === "all" ? certificates.length : (counts.get(topic) ?? 0);
+            const count =
+              topic === "all" ? certificates.length : (counts.get(topic) ?? 0);
             return (
               <button
                 key={topic}
@@ -137,7 +177,16 @@ export function CertificatesBoard({ certificates, activities, faces }: { certifi
                 )}
               >
                 {t(`topics.${topic}`)}
-                <span className={clsx("text-xs tabular-nums", checked ? "text-(--role-accent-text)" : "text-muted-foreground")}>{count}</span>
+                <span
+                  className={clsx(
+                    "text-xs tabular-nums",
+                    checked
+                      ? "text-(--role-accent-text)"
+                      : "text-muted-foreground",
+                  )}
+                >
+                  {count}
+                </span>
               </button>
             );
           })}
@@ -146,7 +195,11 @@ export function CertificatesBoard({ certificates, activities, faces }: { certifi
           {t("showing", { count: shown.length, total: certificates.length })}
         </p>
 
-        <motion.ul layout={!reduced} transition={transition} className={clsx(GRID, "mt-8")}>
+        <motion.ul
+          layout={!reduced}
+          transition={transition}
+          className={clsx(GRID, "mt-8")}
+        >
           {shown.map((cert, i) => (
             <motion.li
               key={cert.id}
@@ -154,7 +207,12 @@ export function CertificatesBoard({ certificates, activities, faces }: { certifi
               transition={transition}
               className="w-full max-w-[19rem] list-none"
             >
-              <LanternCard cert={cert} index={i} front={faces[cert.id].front} back={faces[cert.id].back} />
+              <LanternCard
+                cert={cert}
+                index={i}
+                front={faces[cert.id].front}
+                back={faces[cert.id].back}
+              />
             </motion.li>
           ))}
         </motion.ul>

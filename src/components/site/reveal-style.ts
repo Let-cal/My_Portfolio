@@ -3,7 +3,8 @@
  * whileInView animation, so this rule is the fallback wherever that animation will not run: it goes into a
  * `<noscript>` in the locale layout's head (no JavaScript). globals.css has the same rule for printing.
  */
-export const REVEAL_SHOW_CSS = "[data-reveal]{opacity:1!important;transform:none!important}";
+export const REVEAL_SHOW_CSS =
+  "[data-reveal]{opacity:1!important;transform:none!important}";
 
 /** Only used inside noscript: honor the OS when the pre-paint preference script cannot run. */
 export const NO_SCRIPT_REDUCED_MOTION_CSS = `

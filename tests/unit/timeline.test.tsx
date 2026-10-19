@@ -10,7 +10,9 @@ import { stubIntersectionObserver } from "../helpers/io-stub";
 
 const replace = vi.hoisted(() => vi.fn());
 const search = vi.hoisted(() => ({ value: "" }));
-vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams(search.value) }));
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams(search.value),
+}));
 vi.mock("@/i18n/navigation", () => ({
   useRouter: () => ({ replace }),
   usePathname: () => "/en",
@@ -22,11 +24,21 @@ import { RoleSwitcher } from "@/components/site/RoleSwitcher";
 
 const base: Content = contentSchema.parse(seed);
 
-function renderExperience(opts: { role?: string; locale?: Locale; content?: Content; withSwitcher?: boolean } = {}) {
+function renderExperience(
+  opts: {
+    role?: string;
+    locale?: Locale;
+    content?: Content;
+    withSwitcher?: boolean;
+  } = {},
+) {
   search.value = opts.role ? `role=${opts.role}` : "";
   const locale = opts.locale ?? "en";
   return render(
-    <NextIntlClientProvider locale={locale} messages={locale === "ja" ? ja : en}>
+    <NextIntlClientProvider
+      locale={locale}
+      messages={locale === "ja" ? ja : en}
+    >
       <RoleProvider>
         {opts.withSwitcher && <RoleSwitcher />}
         <Experience content={opts.content ?? base} locale={locale} />
@@ -40,7 +52,8 @@ const el = (id: string) => {
   if (!node) throw new Error(`#exp-${id} not found`);
   return node;
 };
-const before = (a: HTMLElement, b: HTMLElement) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+const before = (a: HTMLElement, b: HTMLElement) =>
+  Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
 
 // These tests render sections that contain <Reveal>, whose whileInView needs an IntersectionObserver.
 beforeEach(() => stubIntersectionObserver());
@@ -56,16 +69,24 @@ describe("Experience river", () => {
     renderExperience();
     const section = document.getElementById("experience");
     expect(section).not.toBeNull();
-    expect(within(section as HTMLElement).getByRole("heading", { level: 2, name: "Experience" })).toBeInTheDocument();
+    expect(
+      within(section as HTMLElement).getByRole("heading", {
+        level: 2,
+        name: "Experience",
+      }),
+    ).toBeInTheDocument();
   });
 
   it("gives every published experience an #exp-<id> element and skips unpublished ones", () => {
     const content: Content = {
       ...base,
-      experiences: base.experiences.map((e) => (e.id === "fpt-japan" ? { ...e, published: false } : e)),
+      experiences: base.experiences.map((e) =>
+        e.id === "fpt-japan" ? { ...e, published: false } : e,
+      ),
     };
     renderExperience({ content });
-    for (const e of base.experiences.filter((x) => x.id !== "fpt-japan")) expect(el(e.id)).toBeInTheDocument();
+    for (const e of base.experiences.filter((x) => x.id !== "fpt-japan"))
+      expect(el(e.id)).toBeInTheDocument();
     expect(document.getElementById("exp-fpt-japan")).toBeNull();
   });
 
@@ -76,46 +97,69 @@ describe("Experience river", () => {
 
   it("orders by role pm: AI Agent before FlexyBox Phase 1", async () => {
     renderExperience({ role: "pm" });
-    await waitFor(() => expect(before(el("skg-ai-agent"), el("skg-flexybox-p1"))).toBe(true));
+    await waitFor(() =>
+      expect(before(el("skg-ai-agent"), el("skg-flexybox-p1"))).toBe(true),
+    );
   });
 
   it("reorders when the role is switched on the page", async () => {
     renderExperience({ withSwitcher: true });
     expect(before(el("skg-flexybox-p1"), el("skg-ai-agent"))).toBe(true);
-    await userEvent.click(screen.getByRole("radio", { name: "Project Manager" }));
+    await userEvent.click(
+      screen.getByRole("radio", { name: "Project Manager" }),
+    );
     expect(before(el("skg-ai-agent"), el("skg-flexybox-p1"))).toBe(true);
   });
 
   it("shows periods as 'Apr 2026 – Sep 2026' in EN", () => {
     renderExperience();
-    expect(within(el("skg-ai-agent")).getByText("Apr 2026 – Sep 2026")).toBeInTheDocument();
+    expect(
+      within(el("skg-ai-agent")).getByText("Apr 2026 – Sep 2026"),
+    ).toBeInTheDocument();
   });
 
   it("shows periods as '2026年4月 – 2026年9月' in JA", () => {
     renderExperience({ locale: "ja" });
-    expect(within(el("skg-ai-agent")).getByText("2026年4月 – 2026年9月")).toBeInTheDocument();
+    expect(
+      within(el("skg-ai-agent")).getByText("2026年4月 – 2026年9月"),
+    ).toBeInTheDocument();
   });
 
   it("prints 'Present' for a non-SKG experience that has no end date", () => {
     const content: Content = {
       ...base,
-      experiences: base.experiences.map((e) => (e.id === "fpt-japan" ? { ...e, start: "2024-01", end: null } : e)),
+      experiences: base.experiences.map((e) =>
+        e.id === "fpt-japan" ? { ...e, start: "2024-01", end: null } : e,
+      ),
     };
     renderExperience({ content });
-    expect(within(el("fpt-japan")).getByText("Jan 2024 – Present")).toBeInTheDocument();
+    expect(
+      within(el("fpt-japan")).getByText("Jan 2024 – Present"),
+    ).toBeInTheDocument();
   });
 
   it("groups the SKG experiences under one company header with its two position lines", () => {
     renderExperience({ role: "pm" });
-    const header = screen.getByRole("heading", { level: 3, name: "SKG Software (Splus) · Aug 2025 – Sep 2026" });
+    const header = screen.getByRole("heading", {
+      level: 3,
+      name: "SKG Software (Splus) · Aug 2025 – Sep 2026",
+    });
     const group = header.closest("li") as HTMLElement;
     expect(group).not.toBeNull();
     const lines = within(header.nextElementSibling as HTMLElement);
     expect(lines.getByText("Software Engineer Intern")).toBeInTheDocument();
     expect(lines.getByText("Aug 2025 – Oct 2025")).toBeInTheDocument();
-    expect(lines.getByText("Software Engineer — acting Project Manager / Tech Lead")).toBeInTheDocument();
+    expect(
+      lines.getByText("Software Engineer — acting Project Manager / Tech Lead"),
+    ).toBeInTheDocument();
     expect(lines.getByText("Oct 2025 – Sep 2026")).toBeInTheDocument();
-    for (const id of ["skg-ai-agent", "skg-flexybox-p2", "skg-coa", "skg-flexybox-p1", "skg-intern"]) {
+    for (const id of [
+      "skg-ai-agent",
+      "skg-flexybox-p2",
+      "skg-coa",
+      "skg-flexybox-p1",
+      "skg-intern",
+    ]) {
       expect(group).toContainElement(el(id));
     }
     expect(group).not.toContainElement(el("fpt-japan"));
@@ -124,9 +168,13 @@ describe("Experience river", () => {
 
   it("puts FPT Japan after the SKG group and Education last", () => {
     renderExperience();
-    const edu = screen.getByRole("heading", { level: 3, name: /FPT University/ }).closest("li") as HTMLElement;
+    const edu = screen
+      .getByRole("heading", { level: 3, name: /FPT University/ })
+      .closest("li") as HTMLElement;
     expect(within(edu).getByText("Education")).toBeInTheDocument();
-    expect(within(edu).getByText("Bachelor of Information Technology")).toBeInTheDocument();
+    expect(
+      within(edu).getByText("Bachelor of Information Technology"),
+    ).toBeInTheDocument();
     expect(before(el("fpt-japan"), edu)).toBe(true);
     expect(before(el("skg-intern"), el("fpt-japan"))).toBe(true);
     expect(edu.nextElementSibling).toBeNull();
@@ -181,19 +229,27 @@ describe("Case study sheet", () => {
 
   it("opens from the item, shows the four headings and the text, and Esc closes it", async () => {
     renderExperience({ role: "pm" });
-    const trigger = within(el("skg-ai-agent")).getByRole("button", { name: /AI Agent/ });
+    const trigger = within(el("skg-ai-agent")).getByRole("button", {
+      name: /AI Agent/,
+    });
     await userEvent.click(trigger);
     const dialog = await screen.findByRole("dialog", {}, { timeout: 5000 });
-    expect(within(dialog).getByText(/Software Engineer, acting Project Manager/)).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(/Software Engineer, acting Project Manager/),
+    ).toBeInTheDocument();
     for (const name of ["Problem", "Role", "Decisions", "Result"]) {
       expect(within(dialog).getByRole("heading", { name })).toBeInTheDocument();
     }
-    const cs = base.experiences.find((e) => e.id === "skg-ai-agent")!.caseStudy!;
+    const cs = base.experiences.find(
+      (e) => e.id === "skg-ai-agent",
+    )!.caseStudy!;
     expect(within(dialog).getByText(cs.problem.en)).toBeInTheDocument();
     expect(within(dialog).getByText(cs.result.en)).toBeInTheDocument();
 
     await userEvent.keyboard("{Escape}");
-    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
     expect(trigger).toHaveFocus();
   });
 
@@ -201,10 +257,17 @@ describe("Case study sheet", () => {
     renderExperience({ locale: "ja", role: "pm" });
     await userEvent.click(within(el("skg-ai-agent")).getByRole("button"));
     const dialog = await screen.findByRole("dialog");
-    for (const name of [ja.caseStudy.problem, ja.caseStudy.role, ja.caseStudy.decisions, ja.caseStudy.result]) {
+    for (const name of [
+      ja.caseStudy.problem,
+      ja.caseStudy.role,
+      ja.caseStudy.decisions,
+      ja.caseStudy.result,
+    ]) {
       expect(within(dialog).getByRole("heading", { name })).toBeInTheDocument();
     }
-    const cs = base.experiences.find((e) => e.id === "skg-ai-agent")!.caseStudy!;
+    const cs = base.experiences.find(
+      (e) => e.id === "skg-ai-agent",
+    )!.caseStudy!;
     expect(within(dialog).getByText(cs.problem.ja!)).toBeInTheDocument();
   });
 

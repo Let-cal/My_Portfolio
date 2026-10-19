@@ -18,14 +18,19 @@ export function SkillPicker({
   options: SkillOption[];
 }) {
   const byId = new Map(options.map((o) => [o.id, o]));
-  const available = options.filter((o) => !value.includes(o.id)).map((o) => ({ value: o.id, label: o.label, group: o.group }));
+  const available = options
+    .filter((o) => !value.includes(o.id))
+    .map((o) => ({ value: o.id, label: o.label, group: o.group }));
   return (
     <fieldset className="flex flex-col gap-2">
       <legend className="mb-1 text-sm font-medium">{label}</legend>
       {value.length > 0 && (
         <ul className="flex flex-wrap gap-1.5">
           {value.map((id) => (
-            <li key={id} className="flex items-center gap-1 rounded-full border bg-muted/50 py-0.5 pr-1 pl-2.5 text-xs">
+            <li
+              key={id}
+              className="flex items-center gap-1 rounded-full border bg-muted/50 py-0.5 pr-1 pl-2.5 text-xs"
+            >
               {byId.get(id)?.label ?? id}
               <button
                 type="button"
@@ -39,7 +44,12 @@ export function SkillPicker({
           ))}
         </ul>
       )}
-      <Combobox label={label} placeholder="Tìm skill để gắn…" options={available} onPick={(id) => onChange([...value, id])} />
+      <Combobox
+        label={label}
+        placeholder="Tìm skill để gắn…"
+        options={available}
+        onPick={(id) => onChange([...value, id])}
+      />
     </fieldset>
   );
 }

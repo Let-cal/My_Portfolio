@@ -28,11 +28,19 @@ const RANK = { error: 0, warning: 1, info: 2 } as const;
 function isI18nLeaf(v: unknown): v is { en: string; ja: string; vi: string } {
   if (!v || typeof v !== "object") return false;
   const o = v as Record<string, unknown>;
-  return typeof o.en === "string" && typeof o.ja === "string" && typeof o.vi === "string";
+  return (
+    typeof o.en === "string" &&
+    typeof o.ja === "string" &&
+    typeof o.vi === "string"
+  );
 }
 
 /** Counts translated texts that have English, and how many of those also have JA / VI. */
-export function translationStats(value: unknown): { total: number; ja: number; vi: number } {
+export function translationStats(value: unknown): {
+  total: number;
+  ja: number;
+  vi: number;
+} {
   const acc = { total: 0, ja: 0, vi: 0 };
   const walk = (v: unknown) => {
     if (isI18nLeaf(v)) {
@@ -50,7 +58,10 @@ export function translationStats(value: unknown): { total: number; ja: number; v
 }
 
 /** Evidence items behind a skill, split by whether visitors can see them. */
-export function evidenceOf(skill: Skill, c: AdminContent): { visible: number; hidden: number } {
+export function evidenceOf(
+  skill: Skill,
+  c: AdminContent,
+): { visible: number; hidden: number } {
   const items = [
     ...skill.experienceIds.map((id) => c.experiences.find((e) => e.id === id)),
     ...skill.projectIds.map((id) => c.projects.find((p) => p.id === id)),
@@ -64,13 +75,41 @@ type Labeled = { href: string; label: string; value: unknown };
 function translatableItems(c: AdminContent): Labeled[] {
   return [
     { href: "/admin/profile", label: "Hồ sơ", value: c.profile },
-    ...c.roles.map((r) => ({ href: "/admin/roles", label: `Vai trò ${r.title.en}`, value: r })),
-    ...c.experiences.map((e) => ({ href: `/admin/experiences/${e.id}`, label: `Kinh nghiệm ${e.company}`, value: e })),
-    ...c.projects.map((p) => ({ href: `/admin/projects/${p.id}`, label: `Dự án ${p.title}`, value: p })),
-    ...c.certificates.map((x) => ({ href: `/admin/certificates/${x.id}`, label: `Chứng chỉ ${x.name}`, value: x })),
-    ...c.activities.map((a) => ({ href: `/admin/activities/${a.id}`, label: `Hoạt động ${a.name.en}`, value: a })),
-    ...c.education.map((e) => ({ href: `/admin/education/${e.id}`, label: `Học vấn ${e.school}`, value: e })),
-    ...c.whyCards.map((w) => ({ href: `/admin/why_cards/${w.id}`, label: `Why card ${w.title.en}`, value: w })),
+    ...c.roles.map((r) => ({
+      href: "/admin/roles",
+      label: `Vai trò ${r.title.en}`,
+      value: r,
+    })),
+    ...c.experiences.map((e) => ({
+      href: `/admin/experiences/${e.id}`,
+      label: `Kinh nghiệm ${e.company}`,
+      value: e,
+    })),
+    ...c.projects.map((p) => ({
+      href: `/admin/projects/${p.id}`,
+      label: `Dự án ${p.title}`,
+      value: p,
+    })),
+    ...c.certificates.map((x) => ({
+      href: `/admin/certificates/${x.id}`,
+      label: `Chứng chỉ ${x.name}`,
+      value: x,
+    })),
+    ...c.activities.map((a) => ({
+      href: `/admin/activities/${a.id}`,
+      label: `Hoạt động ${a.name.en}`,
+      value: a,
+    })),
+    ...c.education.map((e) => ({
+      href: `/admin/education/${e.id}`,
+      label: `Học vấn ${e.school}`,
+      value: e,
+    })),
+    ...c.whyCards.map((w) => ({
+      href: `/admin/why_cards/${w.id}`,
+      label: `Why card ${w.title.en}`,
+      value: w,
+    })),
   ];
 }
 
@@ -106,7 +145,9 @@ export function checkContentHealth(c: AdminContent): HealthIssue[] {
     const ja = s.total - s.ja;
     const vi = s.total - s.vi;
     if (!ja && !vi) continue;
-    const parts = [ja && `JA (${ja})`, vi && `VI (${vi})`].filter(Boolean).join(", ");
+    const parts = [ja && `JA (${ja})`, vi && `VI (${vi})`]
+      .filter(Boolean)
+      .join(", ");
     issues.push({
       id: `missing-translation:${item.href}:${item.label}`,
       severity: "warning",
@@ -156,8 +197,16 @@ export function checkContentHealth(c: AdminContent): HealthIssue[] {
   }
 
   const caseStudies = [
-    ...c.experiences.map((e) => ({ href: `/admin/experiences/${e.id}`, label: e.company, cs: e.caseStudy })),
-    ...c.projects.map((p) => ({ href: `/admin/projects/${p.id}`, label: p.title, cs: p.caseStudy })),
+    ...c.experiences.map((e) => ({
+      href: `/admin/experiences/${e.id}`,
+      label: e.company,
+      cs: e.caseStudy,
+    })),
+    ...c.projects.map((p) => ({
+      href: `/admin/projects/${p.id}`,
+      label: p.title,
+      cs: p.caseStudy,
+    })),
   ];
   for (const { href, label, cs } of caseStudies) {
     if (cs && Object.values(cs).some((part) => !part.en.trim())) {
@@ -192,6 +241,9 @@ export function checkContentHealth(c: AdminContent): HealthIssue[] {
 
   return issues
     .map((issue, index) => ({ issue, index }))
-    .sort((a, b) => RANK[a.issue.severity] - RANK[b.issue.severity] || a.index - b.index)
+    .sort(
+      (a, b) =>
+        RANK[a.issue.severity] - RANK[b.issue.severity] || a.index - b.index,
+    )
     .map(({ issue }) => issue);
 }

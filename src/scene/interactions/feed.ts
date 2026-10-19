@@ -16,7 +16,11 @@ let lastId = 0;
  * The pellets with one more at `p`, dropped at `now`. At most `MAX_FOOD` stay: the oldest one is dropped first.
  * Returns a new array; ids are never reused, so an eaten pellet can not be mistaken for a later one.
  */
-export function addFood(foods: Food[], p: { x: number; z: number }, now: number): Food[] {
+export function addFood(
+  foods: Food[],
+  p: { x: number; z: number },
+  now: number,
+): Food[] {
   const next = [...foods, { id: ++lastId, x: p.x, z: p.z, t0: now }];
   return next.length > MAX_FOOD ? next.slice(next.length - MAX_FOOD) : next;
 }
@@ -25,7 +29,11 @@ export function addFood(foods: Food[], p: { x: number; z: number }, now: number)
  * The pellet closest to `head` on the water plane, or null when there is none. With `now`, pellets still in the air
  * are ignored. No allocation.
  */
-export function nearestFood(foods: readonly Food[], head: { x: number; z: number }, now?: number): Food | null {
+export function nearestFood(
+  foods: readonly Food[],
+  head: { x: number; z: number },
+  now?: number,
+): Food | null {
   let best: Food | null = null;
   let bestD = Infinity;
   for (const f of foods) {
@@ -43,10 +51,16 @@ export function nearestFood(foods: readonly Food[], head: { x: number; z: number
  * The pellets left after the koi at `head` eats every one within `radius`. The same array when none was eaten.
  * With `now`, a pellet still in the air is out of reach.
  */
-export function eatFood(foods: Food[], head: { x: number; z: number }, radius = EAT_RADIUS, now?: number): Food[] {
+export function eatFood(
+  foods: Food[],
+  head: { x: number; z: number },
+  radius = EAT_RADIUS,
+  now?: number,
+): Food[] {
   const r2 = radius * radius;
   const inReach = (f: Food) =>
-    (now === undefined || now - f.t0 >= FOOD_FALL_SECONDS) && (f.x - head.x) ** 2 + (f.z - head.z) ** 2 <= r2;
+    (now === undefined || now - f.t0 >= FOOD_FALL_SECONDS) &&
+    (f.x - head.x) ** 2 + (f.z - head.z) ** 2 <= r2;
   return foods.some(inReach) ? foods.filter((f) => !inReach(f)) : foods;
 }
 
@@ -65,5 +79,7 @@ export function pruneFood(foods: Food[], now: number): Food[] {
       break;
     }
   }
-  return expired ? foods.filter((f) => now - f.t0 < FOOD_LIFETIME_SECONDS) : foods;
+  return expired
+    ? foods.filter((f) => now - f.t0 < FOOD_LIFETIME_SECONDS)
+    : foods;
 }

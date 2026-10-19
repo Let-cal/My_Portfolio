@@ -1,22 +1,26 @@
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
-import { readFileSync, existsSync, statSync, readdirSync } from 'node:fs';
-import { createHash } from 'node:crypto';
-import { spawnSync } from 'node:child_process';
-import { unicodePoints } from '../../scripts/font-ranges.mjs';
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync, existsSync, statSync, readdirSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { spawnSync } from "node:child_process";
+import { unicodePoints } from "../../scripts/font-ranges.mjs";
 
-const manifestPath = 'src/app/fonts/site-subsets.json';
-const hash = data => createHash('sha256').update(data).digest('hex');
+const manifestPath = "src/app/fonts/site-subsets.json";
+const hash = (data) => createHash("sha256").update(data).digest("hex");
 
 function requestedPoints() {
-  const requested = new Set([...Array.from({ length: 95 }, (_, i) => i + 32), 0xa0,
-    ...Array.from({ length: 112 }, (_, i) => i + 0x2000)]);
-  for (const path of readdirSync('src', { recursive: true }).sort()) {
-    const file = `src/${path.replaceAll('\\', '/')}`;
+  const requested = new Set([
+    ...Array.from({ length: 95 }, (_, i) => i + 32),
+    0xa0,
+    ...Array.from({ length: 112 }, (_, i) => i + 0x2000),
+  ]);
+  for (const path of readdirSync("src", { recursive: true }).sort()) {
+    const file = `src/${path.replaceAll("\\", "/")}`;
     if (/\.(ts|tsx|json)$/.test(file) && file !== manifestPath) {
       // Match Python's universal-newline decoding so CRLF does not select the
       // Space Grotesk CR glyph on Windows only.
-      for (const char of readFileSync(file, 'utf8').replace(/\r\n?/g, '\n')) requested.add(char.codePointAt(0));
+      for (const char of readFileSync(file, "utf8").replace(/\r\n?/g, "\n"))
+        requested.add(char.codePointAt(0));
     }
   }
   for (const point of [...requested]) {
@@ -27,65 +31,124 @@ function requestedPoints() {
   }
   // Independently derive canonical intermediates, including non-prefix mark subsets.
   for (const point of [...requested]) {
-    const parts = [...String.fromCodePoint(point).normalize('NFD')];
-    const addForms = text => {
-      for (const form of [text.normalize('NFC'), text.normalize('NFD')]) {
+    const parts = [...String.fromCodePoint(point).normalize("NFD")];
+    const addForms = (text) => {
+      for (const form of [text.normalize("NFC"), text.normalize("NFD")]) {
         for (const char of form) requested.add(char.codePointAt(0));
       }
     };
-    addForms(parts.join(''));
-    if (parts.slice(1).every(char => /\p{Mark}/u.test(char))) {
+    addForms(parts.join(""));
+    if (parts.slice(1).every((char) => /\p{Mark}/u.test(char))) {
       for (let mask = 0; mask < 2 ** (parts.length - 1); mask++) {
-        addForms(parts[0] + parts.slice(1).filter((_, i) => mask & (1 << i)).join(''));
+        addForms(
+          parts[0] +
+            parts
+              .slice(1)
+              .filter((_, i) => mask & (1 << i))
+              .join(""),
+        );
       }
     }
   }
   return requested;
 }
 
-test('bounded Latin assets have exact ranges, hashes and priority without replacing originals', () => {
-  assert.ok(existsSync(manifestPath), 'generated site subset manifest must exist');
-  const rows = JSON.parse(readFileSync(manifestPath, 'utf8'));
-  const originals = JSON.parse(readFileSync('src/app/fonts/manifest.json', 'utf8'));
-  const css = readFileSync('src/app/fonts/vietnamese.css', 'utf8');
-  const faces = [...css.matchAll(/@font-face\s*\{([^}]+)\}/g)].map(m => m[1]);
-  assert.deepEqual(rows.map(row => row.family), ['Inter', 'Space Grotesk']);
+test("bounded Latin assets have exact ranges, hashes and priority without replacing originals", () => {
+  assert.ok(
+    existsSync(manifestPath),
+    "generated site subset manifest must exist",
+  );
+  const rows = JSON.parse(readFileSync(manifestPath, "utf8"));
+  const originals = JSON.parse(
+    readFileSync("src/app/fonts/manifest.json", "utf8"),
+  );
+  const css = readFileSync("src/app/fonts/vietnamese.css", "utf8");
+  const faces = [...css.matchAll(/@font-face\s*\{([^}]+)\}/g)].map((m) => m[1]);
+  assert.deepEqual(
+    rows.map((row) => row.family),
+    ["Inter", "Space Grotesk"],
+  );
   for (const original of originals) {
     const data = readFileSync(`public/fonts/${original.file}`);
     assert.equal(hash(data), original.sha256, original.file);
     assert.equal(data.length, original.bytes);
-    const face = faces.find(face => face.includes(`/fonts/${original.file})`));
+    const face = faces.find((face) =>
+      face.includes(`/fonts/${original.file})`),
+    );
     assert.ok(face);
-    assert.ok(face.includes(`unicode-range:${original.effectiveUnicodeRange ?? original.unicodeRange}`));
+    assert.ok(
+      face.includes(
+        `unicode-range:${original.effectiveUnicodeRange ?? original.unicodeRange}`,
+      ),
+    );
   }
   for (const row of rows) {
-    assert.deepEqual(Object.keys(row).sort(), ['family', 'file', 'sourceFile', 'sha256', 'bytes', 'unicodeRange', 'codepoints', 'weights'].sort());
+    assert.deepEqual(
+      Object.keys(row).sort(),
+      [
+        "family",
+        "file",
+        "sourceFile",
+        "sha256",
+        "bytes",
+        "unicodeRange",
+        "codepoints",
+        "weights",
+      ].sort(),
+    );
     const data = readFileSync(`public/fonts/${row.file}`);
-    const source = originals.find(original => original.file === row.sourceFile);
+    const source = originals.find(
+      (original) => original.file === row.sourceFile,
+    );
     assert.equal(source.family, row.family);
     assert.equal(hash(data), row.sha256);
     assert.equal(data.length, row.bytes);
     assert.ok(row.bytes < source.bytes);
     assert.ok(row.file.includes(row.sha256.slice(0, 8)));
-    assert.deepEqual(row.codepoints, [...new Set(row.codepoints)].sort((a, b) => a - b));
-    assert.deepEqual([...unicodePoints(row.unicodeRange)].sort((a, b) => a - b), row.codepoints);
-    for (let point = 32; point <= 126; point++) assert.ok(row.codepoints.includes(point));
-    assert.ok(row.codepoints.includes(0xa0), 'NBSP must cover runtime spacing');
-    for (const point of [0xC0, 0xC2, 0xC8, 0xCA, 0xCC, 0xD2, 0xD4, 0xD9]) {
-      assert.ok(row.codepoints.includes(point), `${row.family}: CSS uppercase Vietnamese Latin U+${point.toString(16)} must be covered`);
+    assert.deepEqual(
+      row.codepoints,
+      [...new Set(row.codepoints)].sort((a, b) => a - b),
+    );
+    assert.deepEqual(
+      [...unicodePoints(row.unicodeRange)].sort((a, b) => a - b),
+      row.codepoints,
+    );
+    for (let point = 32; point <= 126; point++)
+      assert.ok(row.codepoints.includes(point));
+    assert.ok(row.codepoints.includes(0xa0), "NBSP must cover runtime spacing");
+    for (const point of [0xc0, 0xc2, 0xc8, 0xca, 0xcc, 0xd2, 0xd4, 0xd9]) {
+      assert.ok(
+        row.codepoints.includes(point),
+        `${row.family}: CSS uppercase Vietnamese Latin U+${point.toString(16)} must be covered`,
+      );
     }
-    assert.deepEqual(row.weights, row.family === 'Inter' ? [100, 900] : [300, 700]);
-    const own = faces.filter(face => face.includes(`font-family:${row.family};`));
+    assert.deepEqual(
+      row.weights,
+      row.family === "Inter" ? [100, 900] : [300, 700],
+    );
+    const own = faces.filter((face) =>
+      face.includes(`font-family:${row.family};`),
+    );
     assert.ok(own.at(-3).includes(`/fonts/${row.sourceFile})`));
     assert.ok(own.at(-2).includes(`/fonts/${row.file})`));
     assert.ok(own.at(-2).includes(`unicode-range:${row.unicodeRange}`));
-    assert.ok(own.at(-2).includes('font-display:optional'));
-    assert.ok(own.at(-1).includes('1ea0-1ef9'));
+    assert.ok(own.at(-2).includes("font-display:optional"));
+    assert.ok(own.at(-1).includes("1ea0-1ef9"));
   }
 });
 
-test('assets retain exactly standard shaping closure and every source cmap alias of those glyphs', () => {
-  const result = spawnSync('uv', ['run', '--with', 'fonttools==4.67.0', '--with', 'brotli==1.2.0', 'python', '-c', `
+test("assets retain exactly standard shaping closure and every source cmap alias of those glyphs", () => {
+  const result = spawnSync(
+    "uv",
+    [
+      "run",
+      "--with",
+      "fonttools==4.67.0",
+      "--with",
+      "brotli==1.2.0",
+      "python",
+      "-c",
+      `
 import json, sys
 from fontTools import subset
 from fontTools.ttLib import TTFont
@@ -111,12 +174,26 @@ for row in json.load(open('src/app/fonts/site-subsets.json')):
             return {r.FeatureTag for r in font[tag].table.FeatureList.FeatureRecord} if tag in font and font[tag].table.FeatureList else set()
         assert tags(actual) == tags(source), row['family'] + ': applicable feature tags differ'
 print('Standard shaping closure verified for both assets')
-`, JSON.stringify([...requestedPoints()])], { encoding: 'utf8' });
+`,
+      JSON.stringify([...requestedPoints()]),
+    ],
+    { encoding: "utf8" },
+  );
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
 });
 
-test('canonical closure includes non-prefix compositions and LF/CRLF preserve the cmap repertoire', () => {
-  const result = spawnSync('uv', ['run', '--with', 'fonttools==4.67.0', '--with', 'brotli==1.2.0', 'python', '-c', `
+test("canonical closure includes non-prefix compositions and LF/CRLF preserve the cmap repertoire", () => {
+  const result = spawnSync(
+    "uv",
+    [
+      "run",
+      "--with",
+      "fonttools==4.67.0",
+      "--with",
+      "brotli==1.2.0",
+      "python",
+      "-c",
+      `
 import json
 from pathlib import Path
 import runpy
@@ -162,18 +239,45 @@ with TemporaryDirectory(prefix='site-font-line-endings-') as directory:
         assert sorted(points) == row['codepoints'], row['family'] + ': cmap repertoire changed'
         assert not points.intersection(range(32)), 'line-ending/control codepoints advertised'
 print('LF/CRLF repertoire matches both manifests; controls excluded by source cmap')
-`], { encoding: 'utf8' });
-  assert.equal(result.status, 0, `${result.error ?? ''}\n${result.stdout}\n${result.stderr}`);
+`,
+    ],
+    { encoding: "utf8" },
+  );
+  assert.equal(
+    result.status,
+    0,
+    `${result.error ?? ""}\n${result.stdout}\n${result.stderr}`,
+  );
 });
 
-test('read-only regeneration verifies exact cmap, outlines, metrics, variation and layout retention', () => {
-  assert.ok(existsSync(manifestPath), 'generated site subset manifest must exist');
-  const files = [manifestPath, 'src/app/fonts/manifest.json', 'src/app/fonts/vietnamese.css',
-    ...readdirSync('public/fonts').map(file => `public/fonts/${file}`)];
-  const snapshot = () => files.map(file => [file, hash(readFileSync(file)), statSync(file).mtimeMs]);
+test("read-only regeneration verifies exact cmap, outlines, metrics, variation and layout retention", () => {
+  assert.ok(
+    existsSync(manifestPath),
+    "generated site subset manifest must exist",
+  );
+  const files = [
+    manifestPath,
+    "src/app/fonts/manifest.json",
+    "src/app/fonts/vietnamese.css",
+    ...readdirSync("public/fonts").map((file) => `public/fonts/${file}`),
+  ];
+  const snapshot = () =>
+    files.map((file) => [
+      file,
+      hash(readFileSync(file)),
+      statSync(file).mtimeMs,
+    ]);
   const before = snapshot();
-  const result = spawnSync('uv', ['run', 'scripts/generate-site-fonts.py', '--check'], { encoding: 'utf8' });
+  const result = spawnSync(
+    "uv",
+    ["run", "scripts/generate-site-fonts.py", "--check"],
+    { encoding: "utf8" },
+  );
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
   assert.match(result.stdout, /Verified 2 site subsets/);
-  assert.deepEqual(snapshot(), before, '--check must not rewrite even identical files');
+  assert.deepEqual(
+    snapshot(),
+    before,
+    "--check must not rewrite even identical files",
+  );
 });

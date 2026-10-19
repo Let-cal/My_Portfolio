@@ -3,7 +3,10 @@
 import dynamic from "next/dynamic";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { usePrefersReducedMotion, useMediaQuery } from "@/components/fx/use-media-query";
+import {
+  usePrefersReducedMotion,
+  useMediaQuery,
+} from "@/components/fx/use-media-query";
 import { useRole } from "@/components/site/RoleProvider";
 import { useTheme } from "@/components/site/theme";
 import { DRAGON_CHAPTER } from "./chapters";
@@ -16,19 +19,35 @@ import { useStaticChapterTracking } from "./use-static-chapter";
 
 // three and @react-three/fiber live behind this import: the chunk is fetched only once the scene may load.
 const SceneRoot = dynamic(() => import("./SceneRoot"), { ssr: false });
-const LiveSceneInput = dynamic(() => import("./LiveSceneInput"), { ssr: false });
+const LiveSceneInput = dynamic(() => import("./LiveSceneInput"), {
+  ssr: false,
+});
 
 const noSubscription = () => () => {};
 const FADE_MS = 700;
 
 /** Client-only facts, read without an effect: null / 4 on the server so hydration matches. */
 function useBrowserFacts(skipWebGL: boolean) {
-  const body = useSyncExternalStore(noSubscription, () => document.body, () => null);
-  const webgl = useSyncExternalStore<boolean | null>(noSubscription, () => {
-    const mobileNow = typeof window.matchMedia === "function" && window.matchMedia(MOBILE_QUERY).matches;
-    return skipWebGL || mobileNow ? false : detectWebGL();
-  }, () => null);
-  const cores = useSyncExternalStore(noSubscription, () => navigator.hardwareConcurrency || 4, () => 4);
+  const body = useSyncExternalStore(
+    noSubscription,
+    () => document.body,
+    () => null,
+  );
+  const webgl = useSyncExternalStore<boolean | null>(
+    noSubscription,
+    () => {
+      const mobileNow =
+        typeof window.matchMedia === "function" &&
+        window.matchMedia(MOBILE_QUERY).matches;
+      return skipWebGL || mobileNow ? false : detectWebGL();
+    },
+    () => null,
+  );
+  const cores = useSyncExternalStore(
+    noSubscription,
+    () => navigator.hardwareConcurrency || 4,
+    () => 4,
+  );
   return { body, webgl, cores };
 }
 
@@ -47,7 +66,10 @@ export function KoiCanvas() {
   const { theme } = useTheme();
   const { role } = useRole();
   const gate = useLoadGate();
-  const [capture, setCapture] = useState<null | { creature: "koi" | "dragon"; theme: "light" | "dark" }>(null);
+  const [capture, setCapture] = useState<null | {
+    creature: "koi" | "dragon";
+    theme: "light" | "dark";
+  }>(null);
   const [captureConfigured, setCaptureConfigured] = useState(false);
   const [captureSettled, setCaptureSettled] = useState(false);
   const [downgraded, setDowngraded] = useState(false);
@@ -62,7 +84,9 @@ export function KoiCanvas() {
     if (creature !== "koi" && creature !== "dragon") return;
     const capturedTheme = params.get("theme") === "day" ? "light" : "dark";
     document.documentElement.setAttribute("data-scene-capture", "");
-    const frame = requestAnimationFrame(() => setCapture({ creature, theme: capturedTheme }));
+    const frame = requestAnimationFrame(() =>
+      setCapture({ creature, theme: capturedTheme }),
+    );
     return () => {
       cancelAnimationFrame(frame);
       document.documentElement.removeAttribute("data-scene-capture");
@@ -70,13 +94,31 @@ export function KoiCanvas() {
   }, []);
 
   // Until WebGL has been probed the tier is `off`, so nothing loads and the image shows.
-  const detected: Tier = webgl !== true || failed ? "off" : capture ? "high" : detectTier({ webgl, reducedMotion, isMobile, cores });
+  const detected: Tier =
+    webgl !== true || failed
+      ? "off"
+      : capture
+        ? "high"
+        : detectTier({ webgl, reducedMotion, isMobile, cores });
   const tier: Tier = detected === "high" && downgraded ? "low" : detected;
-  const load = capture ? captureConfigured : shouldLoadScene({ tier, isMobile, ...gate });
+  const load = capture
+    ? captureConfigured
+    : shouldLoadScene({ tier, isMobile, ...gate });
 
   useStaticChapterTracking(capture === null && (!load || tier === "off"));
   useEffect(() => {
-    sceneStore.setState({ tier, theme: capture?.theme ?? theme, role, ...(capture ? { chapter: capture.creature === "dragon" ? 6 : 0, t: 0, pointer: null } : {}) });
+    sceneStore.setState({
+      tier,
+      theme: capture?.theme ?? theme,
+      role,
+      ...(capture
+        ? {
+            chapter: capture.creature === "dragon" ? 6 : 0,
+            t: 0,
+            pointer: null,
+          }
+        : {}),
+    });
     if (!capture) return;
     const frame = requestAnimationFrame(() => setCaptureConfigured(true));
     return () => cancelAnimationFrame(frame);
@@ -85,7 +127,9 @@ export function KoiCanvas() {
     if (!capture || !ready) return;
     const timer = window.setTimeout(() => {
       setCaptureSettled(true);
-      (window as Window & { __sceneCaptureReady?: boolean }).__sceneCaptureReady = true;
+      (
+        window as Window & { __sceneCaptureReady?: boolean }
+      ).__sceneCaptureReady = true;
     }, 3200);
     return () => window.clearTimeout(timer);
   }, [capture, ready]);
@@ -96,7 +140,10 @@ export function KoiCanvas() {
   const src = `/fallback/${dragon ? "dragon" : "koi"}-${activeTheme === "light" ? "day" : "night"}.jpg`;
   const onSceneError = (error: unknown) => {
     // Once is enough: `failed` keeps the tier off, so the scene is not mounted (and cannot throw) again.
-    console.warn("3D scene failed to start; showing the static image instead.", error);
+    console.warn(
+      "3D scene failed to start; showing the static image instead.",
+      error,
+    );
     setFailed(true);
   };
   const sceneVisible = load && ready && tier !== "off";

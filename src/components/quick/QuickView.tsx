@@ -25,16 +25,32 @@ const LINK =
  * QuickViewMarker (client navigations) mark `<html data-quick>`, which globals.css uses to hide the site chrome
  * around it. Do not import anything from src/scene here.
  */
-export function QuickView({ content, locale, role }: { content: Content; locale: Locale; role: RoleKey }) {
+export function QuickView({
+  content,
+  locale,
+  role,
+}: {
+  content: Content;
+  locale: Locale;
+  role: RoleKey;
+}) {
   const t = useTranslations();
   const d = buildQuickData(content, locale, role);
   const home = `/${locale}${role === DEFAULT_ROLE ? "" : `?role=${role}`}`;
 
   return (
-    <main id="main" data-quick-view="" className="mx-auto w-full max-w-4xl flex-1 px-4 py-6 sm:px-6 sm:py-10 print:max-w-none print:p-0">
+    <main
+      id="main"
+      data-quick-view=""
+      className="mx-auto w-full max-w-4xl flex-1 px-4 py-6 sm:px-6 sm:py-10 print:max-w-none print:p-0"
+    >
       <QuickMarkScript />
       <QuickViewMarker />
-      <div role="toolbar" aria-label={t("quick.toolsLabel")} className="mb-5 flex flex-wrap items-center justify-between gap-3 print:hidden">
+      <div
+        role="toolbar"
+        aria-label={t("quick.toolsLabel")}
+        className="mb-5 flex flex-wrap items-center justify-between gap-3 print:hidden"
+      >
         {/* A plain link on purpose: a full page load brings the site chrome back (see globals.css). */}
         <Button asChild variant="ghost">
           <a href={home}>
@@ -63,25 +79,39 @@ export function QuickView({ content, locale, role }: { content: Content; locale:
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 id="quick-name" className="font-heading text-3xl leading-tight font-extrabold tracking-tight sm:text-4xl print:text-[24pt]">
+            <h1
+              id="quick-name"
+              className="font-heading text-3xl leading-tight font-extrabold tracking-tight sm:text-4xl print:text-[24pt]"
+            >
               {d.name}
             </h1>
-            <p id="quick-title" className="mt-1 font-mono text-sm text-brand-text sm:text-base print:text-[10pt]">
+            <p
+              id="quick-title"
+              className="mt-1 font-mono text-sm text-brand-text sm:text-base print:text-[10pt]"
+            >
               {d.roleTitle}
             </p>
           </div>
           {d.openToWork && (
             <p className="inline-flex max-w-xs items-start gap-2 self-start rounded-xl border border-border px-3 py-2 text-sm text-muted-foreground print:max-w-[60mm] print:px-2 print:py-1 print:text-[8pt]">
-              <span aria-hidden="true" className="mt-1.5 size-2 shrink-0 rounded-full bg-[var(--role-accent)]" />
+              <span
+                aria-hidden="true"
+                className="mt-1.5 size-2 shrink-0 rounded-full bg-[var(--role-accent)]"
+              />
               <span>
-                <span className="block font-medium text-foreground">{t("hero.openToWork")}</span>
+                <span className="block font-medium text-foreground">
+                  {t("hero.openToWork")}
+                </span>
                 {d.availabilityNote}
               </span>
             </p>
           )}
         </div>
 
-        <ul aria-label={t("quick.contactLabel")} className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground print:text-[9pt]">
+        <ul
+          aria-label={t("quick.contactLabel")}
+          className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground print:text-[9pt]"
+        >
           <li>{d.location}</li>
           <li>
             <a className={LINK} href={`mailto:${d.email}`}>
@@ -100,16 +130,32 @@ export function QuickView({ content, locale, role }: { content: Content; locale:
           </li>
         </ul>
 
-        <p className="text-base leading-relaxed text-pretty print:text-[10.5pt]">{d.summary}</p>
+        <p className="text-base leading-relaxed text-pretty print:text-[10.5pt]">
+          {d.summary}
+        </p>
 
-        <section aria-labelledby="quick-experience" className="flex flex-col gap-2">
-          <h2 id="quick-experience" className={`${SECTION_HEADING} flex flex-wrap justify-between gap-x-4`}>
+        <section
+          aria-labelledby="quick-experience"
+          className="flex flex-col gap-2"
+        >
+          <h2
+            id="quick-experience"
+            className={`${SECTION_HEADING} flex flex-wrap justify-between gap-x-4`}
+          >
             {t("quick.keyExperience")}
-            {d.employer && <span className="font-sans tracking-normal text-muted-foreground normal-case">{d.employer}</span>}
+            {d.employer && (
+              <span className="font-sans tracking-normal text-muted-foreground normal-case">
+                {d.employer}
+              </span>
+            )}
           </h2>
           <ol className="flex flex-col gap-1.5">
             {d.experiences.map((e) => (
-              <li key={e.id} data-quick-experience="" className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
+              <li
+                key={e.id}
+                data-quick-experience=""
+                className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5"
+              >
                 <p className="min-w-0 flex-1">
                   <span className="font-semibold">{e.company}</span>
                   <span className="text-muted-foreground">
@@ -118,7 +164,9 @@ export function QuickView({ content, locale, role }: { content: Content; locale:
                     {e.parentCompany ? ` · ${e.parentCompany}` : ""}
                   </span>
                 </p>
-                <span className="shrink-0 text-muted-foreground tabular-nums">{e.period}</span>
+                <span className="shrink-0 text-muted-foreground tabular-nums">
+                  {e.period}
+                </span>
               </li>
             ))}
           </ol>
@@ -131,15 +179,22 @@ export function QuickView({ content, locale, role }: { content: Content; locale:
           <dl className="grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-[8.5rem_minmax(0,1fr)] print:grid-cols-[26mm_minmax(0,1fr)] print:gap-y-0.5">
             {d.skillGroups.map((g) => (
               <div key={g.group} className="contents">
-                <dt className="font-semibold">{t(`skills.groups.${g.group}`)}</dt>
-                <dd className="mb-1.5 text-muted-foreground sm:mb-0">{g.names.join(" · ")}</dd>
+                <dt className="font-semibold">
+                  {t(`skills.groups.${g.group}`)}
+                </dt>
+                <dd className="mb-1.5 text-muted-foreground sm:mb-0">
+                  {g.names.join(" · ")}
+                </dd>
               </div>
             ))}
           </dl>
         </section>
 
         <div className="grid gap-6 sm:grid-cols-2 print:grid-cols-2 print:gap-5">
-          <section aria-labelledby="quick-certificates" className="flex flex-col gap-2">
+          <section
+            aria-labelledby="quick-certificates"
+            className="flex flex-col gap-2"
+          >
             <h2 id="quick-certificates" className={SECTION_HEADING}>
               {t("sections.certificates")}
             </h2>
@@ -156,15 +211,28 @@ export function QuickView({ content, locale, role }: { content: Content; locale:
           </section>
 
           {d.education && (
-            <section aria-labelledby="quick-education" className="flex flex-col gap-2">
+            <section
+              aria-labelledby="quick-education"
+              className="flex flex-col gap-2"
+            >
               <h2 id="quick-education" className={SECTION_HEADING}>
                 {t("experience.education")}
               </h2>
               <p>
                 <span className="font-semibold">{d.education.school}</span>
-                <span className="block text-muted-foreground">{[d.education.degree, d.education.major].filter(Boolean).join(" · ")}</span>
                 <span className="block text-muted-foreground">
-                  {[d.education.period, d.education.gpa ? t("experience.gpa", { gpa: d.education.gpa }) : "", d.education.notes]
+                  {[d.education.degree, d.education.major]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </span>
+                <span className="block text-muted-foreground">
+                  {[
+                    d.education.period,
+                    d.education.gpa
+                      ? t("experience.gpa", { gpa: d.education.gpa })
+                      : "",
+                    d.education.notes,
+                  ]
                     .filter(Boolean)
                     .join(" · ")}
                 </span>

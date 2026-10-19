@@ -12,7 +12,12 @@ export type AvailabilityStatusProps = {
  * Open-to-work badge (hidden when false, with the pulsing dot only under no-preference motion) and the city
  * with the live local time. Shared by the hero status card and the contact section. Server-compatible.
  */
-export function AvailabilityStatus({ openToWork, availabilityNote, location, labels }: AvailabilityStatusProps) {
+export function AvailabilityStatus({
+  openToWork,
+  availabilityNote,
+  location,
+  labels,
+}: AvailabilityStatusProps) {
   return (
     <div className="flex min-w-0 flex-col gap-2">
       {openToWork && (

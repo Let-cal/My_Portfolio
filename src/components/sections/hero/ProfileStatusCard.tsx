@@ -21,7 +21,13 @@ export type ProfileStatusCardProps = {
  * ID-card style status: open-to-work badge (hidden when false), city with the live local time, Copy email
  * (confirmed inline and by a toast) and the CV of the chosen role. Never shows a phone number.
  */
-export function ProfileStatusCard({ openToWork, availabilityNote, location, email, cvUrls }: ProfileStatusCardProps) {
+export function ProfileStatusCard({
+  openToWork,
+  availabilityNote,
+  location,
+  email,
+  cvUrls,
+}: ProfileStatusCardProps) {
   const t = useTranslations("hero");
   const { role } = useRole();
   const { copied, copy } = useCopyEmail(email, t("status.copied"));
@@ -35,12 +41,26 @@ export function ProfileStatusCard({ openToWork, availabilityNote, location, emai
         openToWork={openToWork}
         availabilityNote={availabilityNote}
         location={location}
-        labels={{ openToWork: t("openToWork"), localTime: t("status.localTime") }}
+        labels={{
+          openToWork: t("openToWork"),
+          localTime: t("status.localTime"),
+        }}
       />
       <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="outline" className="h-10 px-4" onClick={copy}>
-          {copied ? <CheckIcon aria-hidden="true" /> : <CopyIcon aria-hidden="true" />}
-          <span aria-live="polite">{copied ? t("status.copied") : t("status.copyEmail")}</span>
+        <Button
+          type="button"
+          variant="outline"
+          className="h-10 px-4"
+          onClick={copy}
+        >
+          {copied ? (
+            <CheckIcon aria-hidden="true" />
+          ) : (
+            <CopyIcon aria-hidden="true" />
+          )}
+          <span aria-live="polite">
+            {copied ? t("status.copied") : t("status.copyEmail")}
+          </span>
         </Button>
         {cvUrls[role] && (
           <MagneticButton asChild>

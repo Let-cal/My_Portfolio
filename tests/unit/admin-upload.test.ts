@@ -5,22 +5,37 @@ const MB = 1024 * 1024;
 
 describe("validateUpload", () => {
   it("rejects a 9 MB video", () => {
-    expect(validateUpload({ size: 9 * MB, type: "video/mp4" }, "video").ok).toBe(false);
+    expect(
+      validateUpload({ size: 9 * MB, type: "video/mp4" }, "video").ok,
+    ).toBe(false);
   });
   it("rejects a GIF image", () => {
     const result = validateUpload({ size: 1 * MB, type: "image/gif" }, "image");
-    expect(result).toEqual({ ok: false, reason: expect.stringContaining("image/gif") });
+    expect(result).toEqual({
+      ok: false,
+      reason: expect.stringContaining("image/gif"),
+    });
   });
   it("accepts a 1 MB PDF", () => {
-    expect(validateUpload({ size: 1 * MB, type: "application/pdf" }, "pdf")).toEqual({ ok: true });
+    expect(
+      validateUpload({ size: 1 * MB, type: "application/pdf" }, "pdf"),
+    ).toEqual({ ok: true });
   });
   it("accepts each size limit exactly and rejects one byte more", () => {
-    expect(validateUpload({ size: 5 * MB, type: "image/webp" }, "image").ok).toBe(true);
-    expect(validateUpload({ size: 5 * MB + 1, type: "image/webp" }, "image").ok).toBe(false);
-    expect(validateUpload({ size: 10 * MB, type: "application/pdf" }, "pdf").ok).toBe(true);
+    expect(
+      validateUpload({ size: 5 * MB, type: "image/webp" }, "image").ok,
+    ).toBe(true);
+    expect(
+      validateUpload({ size: 5 * MB + 1, type: "image/webp" }, "image").ok,
+    ).toBe(false);
+    expect(
+      validateUpload({ size: 10 * MB, type: "application/pdf" }, "pdf").ok,
+    ).toBe(true);
   });
   it("rejects empty files", () => {
-    expect(validateUpload({ size: 0, type: "application/pdf" }, "pdf").ok).toBe(false);
+    expect(validateUpload({ size: 0, type: "application/pdf" }, "pdf").ok).toBe(
+      false,
+    );
   });
 });
 

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { ROLE_ACCENT, SECTOR_FROM, angleFromPoint, sectorForAngle } from "@/lib/role-accent";
+import {
+  ROLE_ACCENT,
+  SECTOR_FROM,
+  angleFromPoint,
+  sectorForAngle,
+} from "@/lib/role-accent";
 
 describe("ROLE_ACCENT", () => {
   it("uses the approved prototype colours", () => {

@@ -14,7 +14,10 @@ import type { RoleKey } from "@/content/schema";
 import { cn } from "@/lib/utils";
 import type { CaseStudyView } from "./CaseStudySheet";
 
-const CaseStudySheet = dynamic(() => import("./CaseStudySheet").then((module) => module.CaseStudySheet), { ssr: false });
+const CaseStudySheet = dynamic(
+  () => import("./CaseStudySheet").then((module) => module.CaseStudySheet),
+  { ssr: false },
+);
 
 /** One experience with every string already picked for the current locale. */
 export type TimelineItem = {
@@ -56,7 +59,11 @@ export type TimelineData = {
   education: EducationView[];
 };
 
-type Group = { key: string; company: CompanyView | null; items: TimelineItem[] };
+type Group = {
+  key: string;
+  company: CompanyView | null;
+  items: TimelineItem[];
+};
 
 /** Groups the ordered items by parent company; a group sits where its first item sits. */
 function buildGroups(ids: string[], data: TimelineData): Group[] {
@@ -65,7 +72,9 @@ function buildGroups(ids: string[], data: TimelineData): Group[] {
   for (const id of ids) {
     const item = data.items[id];
     if (!item) continue;
-    const company = item.parentCompany ? data.companies[item.parentCompany] : undefined;
+    const company = item.parentCompany
+      ? data.companies[item.parentCompany]
+      : undefined;
     if (!company || !item.parentCompany) {
       groups.push({ key: item.id, company: null, items: [item] });
       continue;
@@ -84,9 +93,12 @@ function buildGroups(ids: string[], data: TimelineData): Group[] {
 const MAX_CHIPS = 8;
 
 /* Columns: [river] [content] on phones; [dates] [river] [content] from md up. */
-const ROW = "grid grid-cols-[2rem_minmax(0,1fr)] md:grid-cols-[9.5rem_3rem_minmax(0,1fr)]";
-const DATE = "col-start-2 row-start-1 pb-2 text-sm font-medium tabular-nums text-brand-text md:col-start-1 md:pt-5 md:pb-0 md:text-right";
-const NODE = "col-start-1 row-start-1 row-span-2 justify-self-center rounded-full md:col-start-2 md:row-span-1";
+const ROW =
+  "grid grid-cols-[2rem_minmax(0,1fr)] md:grid-cols-[9.5rem_3rem_minmax(0,1fr)]";
+const DATE =
+  "col-start-2 row-start-1 pb-2 text-sm font-medium tabular-nums text-brand-text md:col-start-1 md:pt-5 md:pb-0 md:text-right";
+const NODE =
+  "col-start-1 row-start-1 row-span-2 justify-self-center rounded-full md:col-start-2 md:row-span-1";
 
 /**
  * The experience list as a river: a tracing beam runs down behind it and fills as the visitor scrolls, dates sit on the left (above the card on
@@ -103,9 +115,14 @@ export function Timeline({ data }: { data: TimelineData }) {
   const [shownId, setShownId] = useState<string | null>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
 
-  const groups = useMemo(() => buildGroups(data.orders[role], data), [data, role]);
+  const groups = useMemo(
+    () => buildGroups(data.orders[role], data),
+    [data, role],
+  );
   const shown = shownId ? data.items[shownId] : null;
-  const shownCompany = shown?.parentCompany ? data.companies[shown.parentCompany] : undefined;
+  const shownCompany = shown?.parentCompany
+    ? data.companies[shown.parentCompany]
+    : undefined;
 
   function openCaseStudy(id: string, trigger: HTMLElement) {
     returnFocusRef.current = trigger;
@@ -115,10 +132,12 @@ export function Timeline({ data }: { data: TimelineData }) {
 
   const hoverProps = (id: string) => ({
     onMouseEnter: () => setHoveredId(id),
-    onMouseLeave: () => setHoveredId((current) => (current === id ? null : current)),
+    onMouseLeave: () =>
+      setHoveredId((current) => (current === id ? null : current)),
     onFocus: () => setHoveredId(id),
     onBlur: (e: FocusEvent<HTMLElement>) => {
-      if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setHoveredId((current) => (current === id ? null : current));
+      if (!e.currentTarget.contains(e.relatedTarget as Node | null))
+        setHoveredId((current) => (current === id ? null : current));
     },
   });
   const dimmed = (id: string) => hoveredId !== null && hoveredId !== id;
@@ -136,7 +155,10 @@ export function Timeline({ data }: { data: TimelineData }) {
         data-highlight={lit ? "true" : undefined}
         layout={reduced ? false : "position"}
         transition={{ type: "spring", stiffness: 380, damping: 38 }}
-        className={cn("scroll-mt-24 py-3 transition-opacity duration-200", dimmed(item.id) && "opacity-50")}
+        className={cn(
+          "scroll-mt-24 py-3 transition-opacity duration-200",
+          dimmed(item.id) && "opacity-50",
+        )}
         {...hoverProps(item.id)}
       >
         <div className={ROW}>
@@ -146,16 +168,20 @@ export function Timeline({ data }: { data: TimelineData }) {
             className={cn(
               NODE,
               "mt-1.5 size-3 border-2 border-brand-400 bg-background transition-all duration-200 md:mt-6",
-              active && "scale-125 bg-brand-400 shadow-[0_0_14px_2px_var(--brand-500)]",
-              lit && "border-(--role-accent) shadow-[0_0_14px_2px_var(--role-accent)]",
+              active &&
+                "scale-125 bg-brand-400 shadow-[0_0_14px_2px_var(--brand-500)]",
+              lit &&
+                "border-(--role-accent) shadow-[0_0_14px_2px_var(--role-accent)]",
             )}
           />
           <GlowCard
             className={cn(
               "relative col-start-2 row-start-2 min-w-0 rounded-xl border border-border bg-card/60 p-4 backdrop-blur-md transition-colors duration-200 sm:p-5 md:col-start-3 md:row-start-1",
               active && "border-brand-400/60 bg-card/80",
-              lit && "border-(--role-accent) bg-card/80 shadow-[0_0_30px_-8px_var(--role-accent)]",
-              cs && "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
+              lit &&
+                "border-(--role-accent) bg-card/80 shadow-[0_0_30px_-8px_var(--role-accent)]",
+              cs &&
+                "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
             )}
           >
             <Heading className="font-heading text-lg leading-snug font-semibold">
@@ -173,18 +199,34 @@ export function Timeline({ data }: { data: TimelineData }) {
                 item.company
               )}
             </Heading>
-            <p className="mt-0.5 text-sm font-medium text-brand-text">{item.position}</p>
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{item.summary}</p>
-            {item.teamSize ? <p className="mt-3 text-xs text-muted-foreground">{t("teamSize", { size: item.teamSize })}</p> : null}
+            <p className="mt-0.5 text-sm font-medium text-brand-text">
+              {item.position}
+            </p>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              {item.summary}
+            </p>
+            {item.teamSize ? (
+              <p className="mt-3 text-xs text-muted-foreground">
+                {t("teamSize", { size: item.teamSize })}
+              </p>
+            ) : null}
             {item.tech.length > 0 ? (
-              <ul aria-label={t("techLabel")} className="mt-3 flex flex-wrap gap-1.5">
+              <ul
+                aria-label={t("techLabel")}
+                className="mt-3 flex flex-wrap gap-1.5"
+              >
                 {item.tech.slice(0, MAX_CHIPS).map((name) => (
-                  <li key={name} className="rounded-md border border-border bg-muted/60 px-2 py-0.5 text-xs text-foreground/90">
+                  <li
+                    key={name}
+                    className="rounded-md border border-border bg-muted/60 px-2 py-0.5 text-xs text-foreground/90"
+                  >
                     {name}
                   </li>
                 ))}
                 {extra > 0 ? (
-                  <li className="rounded-md px-1.5 py-0.5 text-xs text-muted-foreground">{t("moreTech", { count: extra })}</li>
+                  <li className="rounded-md px-1.5 py-0.5 text-xs text-muted-foreground">
+                    {t("moreTech", { count: extra })}
+                  </li>
                 ) : null}
               </ul>
             ) : null}
@@ -205,9 +247,17 @@ export function Timeline({ data }: { data: TimelineData }) {
               </ul>
             ) : null}
             {cs ? (
-              <span aria-hidden className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-brand-text">
+              <span
+                aria-hidden
+                className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-brand-text"
+              >
                 {t("viewCaseStudy")}
-                <ChevronRightIcon className={cn("size-4 transition-transform", active && "translate-x-0.5")} />
+                <ChevronRightIcon
+                  className={cn(
+                    "size-4 transition-transform",
+                    active && "translate-x-0.5",
+                  )}
+                />
               </span>
             ) : null}
           </GlowCard>
@@ -226,18 +276,31 @@ export function Timeline({ data }: { data: TimelineData }) {
                 <div className={cn(ROW, "pt-2 pb-1")}>
                   <span
                     aria-hidden
-                    className={cn(NODE, "mt-1 size-4 bg-brand-500 ring-4 ring-background md:mt-1.5")}
+                    className={cn(
+                      NODE,
+                      "mt-1 size-4 bg-brand-500 ring-4 ring-background md:mt-1.5",
+                    )}
                   />
                   <div className="col-start-2 row-start-1 min-w-0 md:col-start-3">
                     <h3 className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">
-                      {group.company.name} · <span className="font-normal text-muted-foreground">{group.company.period}</span>
+                      {group.company.name} ·{" "}
+                      <span className="font-normal text-muted-foreground">
+                        {group.company.period}
+                      </span>
                     </h3>
                     {group.company.lines.length > 0 ? (
                       <ul className="mt-2 flex flex-col gap-1">
                         {group.company.lines.map((line) => (
-                          <li key={line.title} className="flex flex-wrap items-baseline gap-x-3 text-sm">
-                            <span className="font-medium text-foreground/90">{line.title}</span>
-                            <span className="tabular-nums text-muted-foreground">{line.period}</span>
+                          <li
+                            key={line.title}
+                            className="flex flex-wrap items-baseline gap-x-3 text-sm"
+                          >
+                            <span className="font-medium text-foreground/90">
+                              {line.title}
+                            </span>
+                            <span className="tabular-nums text-muted-foreground">
+                              {line.period}
+                            </span>
                           </li>
                         ))}
                       </ul>
@@ -245,7 +308,11 @@ export function Timeline({ data }: { data: TimelineData }) {
                   </div>
                 </div>
               ) : null}
-              <ol>{group.items.map((item) => renderItem(item, group.company !== null))}</ol>
+              <ol>
+                {group.items.map((item) =>
+                  renderItem(item, group.company !== null),
+                )}
+              </ol>
             </li>
           ))}
 
@@ -253,7 +320,10 @@ export function Timeline({ data }: { data: TimelineData }) {
             <li
               key={edu.id}
               id={`edu-${edu.id}`}
-              className={cn("scroll-mt-24 py-3 transition-opacity duration-200", dimmed(edu.id) && "opacity-50")}
+              className={cn(
+                "scroll-mt-24 py-3 transition-opacity duration-200",
+                dimmed(edu.id) && "opacity-50",
+              )}
               {...hoverProps(edu.id)}
             >
               <div className={ROW}>
@@ -272,12 +342,28 @@ export function Timeline({ data }: { data: TimelineData }) {
                     hoveredId === edu.id && "border-teal-400/60 bg-card/80",
                   )}
                 >
-                  <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{t("education")}</p>
-                  <h3 className="mt-1 font-heading text-lg leading-snug font-semibold">{edu.school}</h3>
-                  <p className="mt-0.5 text-sm font-medium text-brand-text">{edu.degree}</p>
-                  <p className="mt-0.5 text-sm text-muted-foreground">{edu.major}</p>
-                  {edu.gpa ? <p className="mt-3 text-sm text-muted-foreground">{t("gpa", { gpa: edu.gpa })}</p> : null}
-                  {edu.notes ? <p className="mt-1 text-sm text-muted-foreground">{edu.notes}</p> : null}
+                  <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                    {t("education")}
+                  </p>
+                  <h3 className="mt-1 font-heading text-lg leading-snug font-semibold">
+                    {edu.school}
+                  </h3>
+                  <p className="mt-0.5 text-sm font-medium text-brand-text">
+                    {edu.degree}
+                  </p>
+                  <p className="mt-0.5 text-sm text-muted-foreground">
+                    {edu.major}
+                  </p>
+                  {edu.gpa ? (
+                    <p className="mt-3 text-sm text-muted-foreground">
+                      {t("gpa", { gpa: edu.gpa })}
+                    </p>
+                  ) : null}
+                  {edu.notes ? (
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {edu.notes}
+                    </p>
+                  ) : null}
                 </GlowCard>
               </div>
             </li>
@@ -292,7 +378,9 @@ export function Timeline({ data }: { data: TimelineData }) {
             if (!next) setOpenId(null);
           }}
           title={`${shown.position} · ${shown.company}`}
-          description={[shownCompany?.name, shown.period].filter(Boolean).join(" · ")}
+          description={[shownCompany?.name, shown.period]
+            .filter(Boolean)
+            .join(" · ")}
           caseStudy={shown.caseStudy}
           teamSize={shown.teamSize}
           tech={shown.tech}
