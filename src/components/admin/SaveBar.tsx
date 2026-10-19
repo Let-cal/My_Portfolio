@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "motion/react";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -11,8 +12,17 @@ export function useUnsavedGuard(dirty: boolean) {
     const onLeave = (e: BeforeUnloadEvent) => e.preventDefault();
     const onClick = (e: MouseEvent) => {
       const link = (e.target as Element | null)?.closest?.("a[href]");
-      if (!link || link.getAttribute("target") === "_blank" || link.getAttribute("href")?.startsWith("#")) return;
-      if (!window.confirm("Bạn có thay đổi chưa lưu. Rời trang và bỏ các thay đổi này?")) {
+      if (
+        !link ||
+        link.getAttribute("target") === "_blank" ||
+        link.getAttribute("href")?.startsWith("#")
+      )
+        return;
+      if (
+        !window.confirm(
+          "Bạn có thay đổi chưa lưu. Rời trang và bỏ các thay đổi này?",
+        )
+      ) {
         e.preventDefault();
         e.stopPropagation();
       }
@@ -71,20 +81,43 @@ export function SaveBar({
         dirty && "shadow-[0_-8px_24px_-12px_rgb(0_0_0/0.35)]",
       )}
     >
-      <div aria-live="polite" className="flex min-h-8 items-center gap-2 text-sm">
+      <div
+        aria-live="polite"
+        className="flex min-h-8 items-center gap-2 text-sm"
+      >
         {errorCount > 0 ? (
-          <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={onShowErrors}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-destructive"
+            onClick={onShowErrors}
+          >
             {errorCount} lỗi · Xem
           </Button>
         ) : dirty ? (
-          <span className="flex items-center gap-2 text-muted-foreground">
+          <motion.span
+            key="dirty"
+            initial={{ opacity: 0, x: -4 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-2 text-muted-foreground"
+          >
             <span aria-hidden className="size-2 rounded-full bg-amber-500" />
             Có thay đổi chưa lưu
-          </span>
+          </motion.span>
         ) : saved ? (
-          <span className="text-emerald-600 dark:text-emerald-400">Đã lưu ✓</span>
+          <motion.span
+            key="saved"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-emerald-600 dark:text-emerald-400"
+          >
+            Đã lưu ✓
+          </motion.span>
         ) : null}
-        <span className="hidden text-xs text-muted-foreground sm:inline">Ctrl/⌘+S để lưu</span>
+        <span className="hidden text-xs text-muted-foreground sm:inline">
+          Ctrl/⌘+S để lưu
+        </span>
       </div>
       <div className="flex gap-2">
         {onCancel && (

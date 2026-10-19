@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "motion/react";
 import { useEffect, useId, useRef } from "react";
 import type { FieldError } from "@/lib/admin/validation";
 
@@ -7,7 +8,9 @@ import type { FieldError } from "@/lib/admin/validation";
 export function focusField(id: string) {
   const el = document.getElementById(id);
   if (!el) return;
-  const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const reduce = window.matchMedia?.(
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
   el.scrollIntoView({ block: "center", behavior: reduce ? "auto" : "smooth" });
   el.focus({ preventScroll: true });
 }
@@ -39,7 +42,9 @@ export function ErrorSummary({
   }, [focusKey, visible]);
   if (!errors.length) return null;
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0 }}
       ref={ref}
       tabIndex={-1}
       role="alert"
@@ -65,6 +70,6 @@ export function ErrorSummary({
           </li>
         ))}
       </ul>
-    </div>
+    </motion.div>
   );
 }

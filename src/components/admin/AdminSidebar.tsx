@@ -18,8 +18,9 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { LayoutGroup, motion } from "motion/react";
 import { usePathname } from "next/navigation";
-import { useState, useSyncExternalStore } from "react";
+import { useId, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -27,7 +28,10 @@ import { cn } from "@/lib/utils";
 type NavItem = { href: string; label: string; icon: LucideIcon };
 
 export const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
-  { title: "Tổng quan", items: [{ href: "/admin", label: "Tổng quan", icon: LayoutDashboard }] },
+  {
+    title: "Tổng quan",
+    items: [{ href: "/admin", label: "Tổng quan", icon: LayoutDashboard }],
+  },
   {
     title: "Nội dung",
     items: [
@@ -76,55 +80,95 @@ const subscribe = (l: () => void) => {
 function activeHref(pathname: string): string | undefined {
   const all = NAV_GROUPS.flatMap((g) => g.items.map((i) => i.href));
   return all
-    .filter((href) => (href === "/admin" ? pathname === "/admin" : pathname === href || pathname.startsWith(`${href}/`)))
+    .filter((href) =>
+      href === "/admin"
+        ? pathname === "/admin"
+        : pathname === href || pathname.startsWith(`${href}/`),
+    )
     .sort((a, b) => b.length - a.length)[0];
 }
 
-function NavLinks({ collapsed, badge, onNavigate }: { collapsed?: boolean; badge?: React.ReactNode; onNavigate?: () => void }) {
+function NavLinks({
+  collapsed,
+  badge,
+  onNavigate,
+}: {
+  collapsed?: boolean;
+  badge?: React.ReactNode;
+  onNavigate?: () => void;
+}) {
   const active = activeHref(usePathname());
+  // The desktop sidebar and the mobile sheet each get their own sliding highlight.
+  const layoutId = useId();
   return (
-    <nav aria-label="Quản trị" className="flex flex-col gap-5">
-      {NAV_GROUPS.map((group) => (
-        <div key={group.title} className="flex flex-col gap-1">
-          {!collapsed && group.items.length > 1 && (
-            <p className="px-2 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">{group.title}</p>
+    <LayoutGroup id={layoutId}>
+      <nav aria-label="Quản trị" className="isolate flex flex-col gap-5">
+        {NAV_GROUPS.map((group) => (
+          <div key={group.title} className="flex flex-col gap-1">
+            {!collapsed && group.items.length > 1 && (
+              <p className="px-2 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                {group.title}
+              </p>
+            )}
+            <ul className="flex flex-col gap-0.5">
+              {group.items.map(({ href, label, icon: Icon }) => {
+                const current = href === active;
+                return (
+                  <li key={href}>
+                    <Link
+                      href={href}
+                      onClick={onNavigate}
+                      aria-current={current ? "page" : undefined}
+                      title={collapsed ? label : undefined}
+                      className={cn(
+                        "relative flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors",
+                        current
+                          ? "font-medium text-foreground"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                        collapsed && "justify-center px-0",
+                      )}
+                    >
+                      {current && (
+                        <motion.span
+                          layoutId="admin-nav-active"
+                          aria-hidden
+                          className="absolute inset-0 -z-10 rounded-md bg-primary/12"
+                        />
+                      )}
+                      <Icon
+                        aria-hidden
+                        className={cn(
+                          "size-4 shrink-0",
+                          current && "text-primary",
+                        )}
+                      />
+                      <span className={cn(collapsed && "sr-only")}>
+                        {label}
+                      </span>
+                      {href === "/admin" && !collapsed && badge}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+        <Link
+          href="/en"
+          target="_blank"
+          title={collapsed ? "Xem trang" : undefined}
+          className={cn(
+            "flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground",
+            collapsed && "justify-center px-0",
           )}
-          <ul className="flex flex-col gap-0.5">
-            {group.items.map(({ href, label, icon: Icon }) => {
-              const current = href === active;
-              return (
-                <li key={href}>
-                  <Link
-                    href={href}
-                    onClick={onNavigate}
-                    aria-current={current ? "page" : undefined}
-                    title={collapsed ? label : undefined}
-                    className={cn(
-                      "flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors",
-                      current ? "bg-primary/12 font-medium text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                      collapsed && "justify-center px-0",
-                    )}
-                  >
-                    <Icon aria-hidden className={cn("size-4 shrink-0", current && "text-primary")} />
-                    <span className={cn(collapsed && "sr-only")}>{label}</span>
-                    {href === "/admin" && !collapsed && badge}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      ))}
-      <Link
-        href="/en"
-        target="_blank"
-        title={collapsed ? "Xem trang" : undefined}
-        className={cn("flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground", collapsed && "justify-center px-0")}
-      >
-        <ExternalLink aria-hidden className="size-4" />
-        <span className={cn(collapsed && "sr-only")}>Xem trang công khai</span>
-      </Link>
-    </nav>
+        >
+          <ExternalLink aria-hidden className="size-4" />
+          <span className={cn(collapsed && "sr-only")}>
+            Xem trang công khai
+          </span>
+        </Link>
+      </nav>
+    </LayoutGroup>
   );
 }
 
@@ -138,7 +182,13 @@ export function AdminSidebar({ badge }: { badge?: React.ReactNode }) {
         <Link href="/admin" className="text-base font-semibold">
           Letcal admin
         </Link>
-        <Button type="button" variant="outline" size="icon" aria-label="Mở menu" onClick={() => setOpen(true)}>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          aria-label="Mở menu"
+          onClick={() => setOpen(true)}
+        >
           <Menu aria-hidden className="size-4" />
         </Button>
         <Sheet open={open} onOpenChange={setOpen}>
@@ -148,8 +198,18 @@ export function AdminSidebar({ badge }: { badge?: React.ReactNode }) {
           </SheetContent>
         </Sheet>
       </div>
-      <aside className={cn("sticky top-6 hidden shrink-0 flex-col gap-5 self-start md:flex", collapsed ? "w-10" : "w-52")}>
-        <div className={cn("flex items-center gap-2", collapsed ? "justify-center" : "justify-between")}>
+      <aside
+        className={cn(
+          "sticky top-6 hidden shrink-0 flex-col gap-5 self-start md:flex",
+          collapsed ? "w-10" : "w-52",
+        )}
+      >
+        <div
+          className={cn(
+            "flex items-center gap-2",
+            collapsed ? "justify-center" : "justify-between",
+          )}
+        >
           {!collapsed && (
             <Link href="/admin" className="text-base font-semibold">
               Letcal admin
@@ -162,7 +222,11 @@ export function AdminSidebar({ badge }: { badge?: React.ReactNode }) {
             aria-label={collapsed ? "Mở rộng menu" : "Thu gọn menu"}
             onClick={() => setCollapsed(!collapsed)}
           >
-            {collapsed ? <PanelLeftOpen aria-hidden className="size-4" /> : <PanelLeftClose aria-hidden className="size-4" />}
+            {collapsed ? (
+              <PanelLeftOpen aria-hidden className="size-4" />
+            ) : (
+              <PanelLeftClose aria-hidden className="size-4" />
+            )}
           </Button>
         </div>
         <NavLinks collapsed={collapsed} badge={badge} />
