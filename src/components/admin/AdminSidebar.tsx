@@ -20,7 +20,7 @@ import {
 import Link from "next/link";
 import { LayoutGroup, motion } from "motion/react";
 import { usePathname } from "next/navigation";
-import { useId, useState, useSyncExternalStore } from "react";
+import { Suspense, useId, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -88,16 +88,34 @@ function activeHref(pathname: string): string | undefined {
     .sort((a, b) => b.length - a.length)[0];
 }
 
-function NavLinks({
-  collapsed,
-  badge,
-  onNavigate,
-}: {
+type NavProps = {
   collapsed?: boolean;
   badge?: React.ReactNode;
   onNavigate?: () => void;
-}) {
-  const active = activeHref(usePathname());
+};
+
+/**
+ * The current path is request data, so with Cache Components it must be read inside Suspense;
+ * the prerendered shell shows the same links without a highlight.
+ */
+function NavLinks(props: NavProps) {
+  return (
+    <Suspense fallback={<NavList {...props} />}>
+      <CurrentNavList {...props} />
+    </Suspense>
+  );
+}
+
+function CurrentNavList(props: NavProps) {
+  return <NavList {...props} active={activeHref(usePathname())} />;
+}
+
+function NavList({
+  collapsed,
+  badge,
+  onNavigate,
+  active,
+}: NavProps & { active?: string }) {
   // The desktop sidebar and the mobile sheet each get their own sliding highlight.
   const layoutId = useId();
   return (
