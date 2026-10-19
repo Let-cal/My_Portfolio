@@ -1,8 +1,11 @@
 import { Suspense } from "react";
+import { AdminCommand } from "@/components/admin/AdminCommand";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminThemeToggle } from "@/components/admin/AdminThemeToggle";
 import { HealthBadge } from "@/components/admin/HealthBadge";
 import { SignOutButton } from "@/components/admin/SignOutButton";
+import { buildCommandItems } from "@/lib/admin/command-items";
+import { getAdminContent } from "@/lib/admin/data";
 import { getAdminEmail } from "@/lib/admin/session";
 
 async function SignedInAs() {
@@ -12,6 +15,12 @@ async function SignedInAs() {
       {email}
     </span>
   );
+}
+
+/** The ⌘K palette needs every item's name; it degrades to an empty list if content fails. */
+async function CommandLoader() {
+  const content = await getAdminContent().catch(() => null);
+  return <AdminCommand items={content ? buildCommandItems(content) : []} />;
 }
 
 export default function AdminPanelLayout({
@@ -30,6 +39,10 @@ export default function AdminPanelLayout({
       />
       <div className="flex min-w-0 flex-1 flex-col gap-6">
         <header className="flex items-center justify-end gap-2">
+          <Suspense fallback={<AdminCommand items={[]} />}>
+            <CommandLoader />
+          </Suspense>
+          <span className="flex-1" />
           <Suspense>
             <SignedInAs />
           </Suspense>
