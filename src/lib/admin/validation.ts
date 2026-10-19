@@ -132,3 +132,30 @@ export function adminResolver(schema: ZodObject, fields: FieldSpec[]): Resolver<
     return { values: {}, errors: errors as FieldErrors<Record<string, unknown>> };
   };
 }
+
+/** Errors currently held by react-hook-form, flattened to paths, in the form's field order. */
+export function flattenErrors(errors: FieldErrors, fields: FieldSpec[]): FieldError[] {
+  const out: FieldError[] = [];
+  const walk = (node: unknown, path: string[]) => {
+    if (!node || typeof node !== "object") return;
+    const message = (node as { message?: unknown }).message;
+    if (typeof message === "string" && message) {
+      const f = ownerOf(path, fields);
+      const last = path.at(-1);
+      out.push({
+        path: path.join("."),
+        field: f?.name ?? path[0],
+        locale: last && LOCALES.has(last) ? (last as Locale) : undefined,
+        message,
+      });
+      return;
+    }
+    for (const [k, v] of Object.entries(node)) if (k !== "ref" && k !== "type") walk(v, [...path, k]);
+  };
+  walk(errors, []);
+  const order = (e: FieldError) => {
+    const i = fields.findIndex((f) => f.name === e.field);
+    return i < 0 ? Number.MAX_SAFE_INTEGER : i;
+  };
+  return out.sort((a, b) => order(a) - order(b));
+}

@@ -4,17 +4,44 @@ import { updateTag } from "next/cache";
 import { z } from "zod";
 import { profileToRow, roleToRow, skillToLinkRows } from "@/lib/data/mappers";
 import { diffLinks, linkMatch, linkRow, type LinkTarget } from "@/lib/admin/links";
-import { isResourceKey, resources, type ResourceKey } from "@/lib/admin/resources";
+import { isResourceKey, resources, type FieldSpec, type ResourceKey } from "@/lib/admin/resources";
+import { PROFILE_FIELDS, ROLE_FIELDS } from "@/lib/admin/singletons";
+import { describeIssues } from "@/lib/admin/validation";
 import { requireAdmin } from "@/lib/admin/session";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { profileSchema, roleSchema, type Skill } from "@/content/schema";
 
-export type ActionResult = { ok: true } | { ok: false; error: string };
+/** `fieldErrors` maps a form path (e.g. "description.en") to the message shown under that input. */
+export type ActionResult = { ok: true } | { ok: false; error: string; fieldErrors?: Record<string, string> };
 
-const fail = (error: unknown): ActionResult => ({
-  ok: false,
-  error: error instanceof Error ? error.message : String(error),
-});
+/** A failure that belongs to specific inputs; the form shows each message on its field. */
+class FormError extends Error {
+  constructor(
+    message: string,
+    readonly fieldErrors: Record<string, string>,
+  ) {
+    super(message);
+  }
+}
+
+const fail = (error: unknown): ActionResult =>
+  error instanceof FormError
+    ? { ok: false, error: error.message, fieldErrors: error.fieldErrors }
+    : { ok: false, error: error instanceof Error ? error.message : String(error) };
+
+type ParseResult<T> =
+  | { success: true; data: T }
+  | { success: false; error: { issues: { path: PropertyKey[]; code: string; message: string }[] } };
+
+/** The parsed data, or a FormError with one Vietnamese message per failing input. */
+function parsedOrFieldErrors<T>(result: ParseResult<T>, fields: FieldSpec[], values: unknown): T {
+  if (result.success) return result.data;
+  const errors = describeIssues(result.error.issues, fields, values);
+  throw new FormError(
+    `Có ${errors.length} mục cần sửa`,
+    Object.fromEntries(errors.map((e) => [e.path, e.message])),
+  );
+}
 
 /** Every action: admin check first, then the write (still checked by RLS), then a fresh site cache. */
 async function adminWrite(key: string, write: (k: ResourceKey) => Promise<void>): Promise<ActionResult> {
@@ -47,13 +74,17 @@ export async function saveResource(key: string, data: Record<string, unknown>, i
       .order("sort_index", { ascending: false });
     check(error);
     const current = existing?.find((row) => row.id === id);
-    if (isNew && current) throw new Error(`ID "${id}" đã tồn tại.`);
+    if (isNew && current) {
+      throw new FormError("ID đã được dùng", { id: `ID "${id}" đã được dùng, chọn ID khác` });
+    }
     if (!isNew && !current) throw new Error(`Không tìm thấy "${id}".`);
     const sortIndex = current ? current.sort_index : (existing?.[0]?.sort_index ?? -1) + 1;
 
-    const parsed = resource.schema.safeParse({ ...data, sortIndex });
-    if (!parsed.success) throw new Error(parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; "));
-    const item = parsed.data as Record<string, unknown>;
+    const item = parsedOrFieldErrors(
+      resource.schema.safeParse({ ...data, sortIndex }) as ParseResult<Record<string, unknown>>,
+      resource.fields,
+      data,
+    );
 
     const { error: upsertError } = await supabase.from(resource.table).upsert(resource.toRow(item), { onConflict: "id" });
     check(upsertError);
@@ -156,14 +187,9 @@ async function adminSave(write: () => Promise<void>): Promise<ActionResult> {
   }
 }
 
-function parsed<T>(result: { success: true; data: T } | { success: false; error: { issues: { path: PropertyKey[]; message: string }[] } }): T {
-  if (!result.success) throw new Error(result.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; "));
-  return result.data;
-}
-
 export async function saveProfile(data: Record<string, unknown>) {
   return adminSave(async () => {
-    const profile = parsed(profileSchema.safeParse(data));
+    const profile = parsedOrFieldErrors(profileSchema.safeParse(data) as ParseResult<z.infer<typeof profileSchema>>, PROFILE_FIELDS, data);
     const supabase = await createServerSupabase();
     check((await supabase.from("profile").upsert({ id: "me", ...profileToRow(profile) }, { onConflict: "id" })).error);
   });
@@ -178,7 +204,7 @@ export async function setOpenToWork(value: boolean) {
 
 export async function saveRole(data: Record<string, unknown>) {
   return adminSave(async () => {
-    const role = parsed(roleSchema.safeParse(data));
+    const role = parsedOrFieldErrors(roleSchema.safeParse(data) as ParseResult<z.infer<typeof roleSchema>>, ROLE_FIELDS, data);
     const supabase = await createServerSupabase();
     check((await supabase.from("roles").upsert(roleToRow(role), { onConflict: "key" })).error);
   });

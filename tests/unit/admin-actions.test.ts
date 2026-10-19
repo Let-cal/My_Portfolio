@@ -83,12 +83,24 @@ describe("admin actions", () => {
   it("refuse a new item whose id is taken", async () => {
     existing.push({ id: content.certificates[0].id, sort_index: 1 });
     const result = await saveResource("certificates", content.certificates[0], true);
-    expect(result.ok).toBe(false);
+    expect(result).toMatchObject({
+      ok: false,
+      fieldErrors: { id: `ID "${content.certificates[0].id}" đã được dùng, chọn ID khác` },
+    });
   });
 
   it("report validation problems instead of writing", async () => {
-    const result = await saveResource("certificates", { ...content.certificates[0], id: "a", issueDate: "soon" }, false);
-    expect(result).toMatchObject({ ok: false, error: expect.stringContaining("issueDate") });
+    const cert = content.certificates[0];
+    const result = await saveResource(
+      "certificates",
+      { ...cert, id: "a", issueDate: "soon", description: { en: "", ja: "", vi: "" } },
+      false,
+    );
+    expect(result).toMatchObject({
+      ok: false,
+      error: "Có 2 mục cần sửa",
+      fieldErrors: { issueDate: "Ngày cấp phải có dạng ngày/tháng/năm", "description.en": "Nhập mô tả (EN)" },
+    });
     expect(calls.some((c) => c.op === "upsert")).toBe(false);
   });
 
