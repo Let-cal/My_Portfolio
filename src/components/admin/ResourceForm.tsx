@@ -191,6 +191,8 @@ export function FieldsForm({
               className={invalid(shownError)}
               type={f.kind === "text" ? "text" : f.kind}
               disabled={f.name === "id" && !isNew}
+              // Server HTML shows the value before hydration (register only fills it in the browser).
+              defaultValue={(initial[f.name] as string | null | undefined) ?? ""}
               {...reg}
               onChange={(e) => {
                 if (f.name === "id") idEdited.current = true;
