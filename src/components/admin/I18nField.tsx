@@ -119,8 +119,16 @@ export function I18nField({
 }) {
   const { mode } = useContext(ModeContext);
   const shown = mode === "all" ? LOCALES : [mode];
-  // An error in a hidden language must still be visible: show that box too.
-  const visible = LOCALES.filter((l) => shown.includes(l) || errors[l]);
+  // A hidden language with an error is shown, and stays shown while it is being fixed (until
+  // the mode changes), so the box does not vanish after the first keystroke.
+  const [revealed, setRevealed] = useState<{ mode: LocaleMode; locales: Locale[] }>({ mode, locales: [] });
+  const erroring = LOCALES.filter((l) => errors[l]);
+  if (revealed.mode !== mode) {
+    setRevealed({ mode, locales: erroring });
+  } else if (erroring.some((l) => !revealed.locales.includes(l))) {
+    setRevealed({ mode, locales: [...new Set([...revealed.locales, ...erroring])] });
+  }
+  const visible = LOCALES.filter((l) => shown.includes(l) || errors[l] || (revealed.mode === mode && revealed.locales.includes(l)));
   const missing = LOCALES.filter((l) => !value[l]?.trim());
 
   return (

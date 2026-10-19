@@ -12,6 +12,7 @@ const OPTIONAL_KINDS = new Set(["upload", "boolean", "tags", "links", "relations
 
 /** Whether the form must mark this field with `*`. */
 export function isRequired(f: FieldSpec): boolean {
+  if (f.required) return true;
   if (f.virtual || OPTIONAL_KINDS.has(f.kind)) return false;
   return !("nullable" in f && f.nullable);
 }
@@ -28,9 +29,11 @@ const LOCALES = new Set<string>(["en", "ja", "vi"]);
 function clean(label: string): string {
   return label.replace(/\s*\(.*\)\s*$/, "").trim();
 }
+/** Lowercases the first letter for use mid-sentence, unless the first word is an acronym or brand ("ID", "GitHub"). */
 function lower(label: string): string {
   const s = clean(label);
-  return s.length > 1 && s[1] === s[1].toLowerCase() ? s[0].toLowerCase() + s.slice(1) : s;
+  const rest = (s.split(" ")[0] ?? "").slice(1);
+  return rest && rest === rest.toLowerCase() ? s[0].toLowerCase() + s.slice(1) : s;
 }
 
 function get(values: unknown, path: readonly PropertyKey[]): unknown {
@@ -48,7 +51,7 @@ function ownerOf(path: string[], fields: FieldSpec[]): FieldSpec | undefined {
   return undefined;
 }
 
-function message(f: FieldSpec, rest: string[], blank: boolean): string {
+function message(f: FieldSpec, rest: string[], blank: boolean, value: unknown): string {
   const locale = rest.at(-1) && LOCALES.has(rest.at(-1)!) ? ` (${rest.at(-1)!.toUpperCase()})` : "";
   const label = clean(f.label);
 
@@ -77,7 +80,11 @@ function message(f: FieldSpec, rest: string[], blank: boolean): string {
     case "order":
       return `Chọn ${lower(f.label)}`;
     case "tags":
-      return rest.length ? `Mỗi mục trong ${lower(f.label)} phải là đường dẫn đầy đủ, bắt đầu bằng https://` : `${label} chưa hợp lệ`;
+      return rest.length
+        ? `"${String(value ?? "")}" trong ${lower(f.label)} phải là đường dẫn đầy đủ, bắt đầu bằng https://`
+        : `${label} chưa hợp lệ`;
+    case "upload":
+      return `Tải lên ${lower(f.label)}`;
     case "text":
       if (blank) return `Nhập ${lower(f.label)}`;
       if (/email/i.test(f.name)) return `${label} phải là địa chỉ email hợp lệ`;
@@ -108,7 +115,7 @@ export function describeIssues(issues: readonly Issue[], fields: FieldSpec[], va
       path,
       field: f.name,
       locale: last && LOCALES.has(last) ? (last as Locale) : undefined,
-      message: message(f, rest, isBlank(get(values, issue.path))),
+      message: message(f, rest, isBlank(get(values, issue.path)), get(values, issue.path)),
       order: fields.indexOf(f),
     });
   }

@@ -79,7 +79,10 @@ export function FieldsForm({
   doneHref,
   sections,
   idScope,
+  active = true,
 }: {
+  /** False for forms on hidden tabs: they keep their state but ignore Ctrl/⌘+S. */
+  active?: boolean;
   sections?: FormSection[];
   /** Prefix for input ids when several forms share a page (e.g. one per role). */
   idScope?: string;
@@ -108,6 +111,10 @@ export function FieldsForm({
   const isNew = !lockId;
   const scoped = (path: string) => (idScope ? `${idScope}-${path}` : path);
   const fid = (path: string) => `field-${scoped(path)}`;
+  // Chips have one input for the whole list, so their item errors point at that input.
+  const kindOf = new Map(fields.map((f) => [f.name, f.kind]));
+  const errorTarget = (e: { path: string; field: string }) =>
+    kindOf.get(e.field) === "tags" || kindOf.get(e.field) === "upload" ? fid(e.field) : fid(e.path);
 
   // New items: the ID follows the name/title until the user edits the ID field.
   const idEdited = useRef(false);
@@ -323,7 +330,9 @@ export function FieldsForm({
           />
         );
       case "tags": {
-        const tagError = errors.find((e) => e.field === f.name)?.message;
+        const tagErrors = errors.filter((e) => e.field === f.name);
+        const tagError = tagErrors.map((e) => e.message).join(" · ") || undefined;
+        const invalidIndexes = new Set(tagErrors.map((e) => Number(e.path.split(".").at(-1))));
         return (
           <Controller
             key={f.name}
@@ -334,6 +343,7 @@ export function FieldsForm({
                 id={id}
                 label={f.label}
                 error={tagError}
+                invalidIndexes={invalidIndexes}
                 value={(field.value as string[]) ?? []}
                 onChange={field.onChange}
                 suggestions={f.suggest === "skills" ? (options.skillNames ?? []) : []}
@@ -350,7 +360,10 @@ export function FieldsForm({
             name={f.name}
             render={({ field }) => (
               <UploadField
+                id={id}
                 label={f.label}
+                required={required}
+                error={error}
                 kind={f.upload}
                 value={(field.value as string) ?? null}
                 onChange={field.onChange}
@@ -768,7 +781,7 @@ export function FieldsForm({
           <p className="text-xs text-muted-foreground">Mục có * là bắt buộc</p>
           {translated && <LocaleModeSwitch errorLocales={errorLocales} />}
         </div>
-        <ErrorSummary errors={shownErrors} focusKey={focusKey} idFor={fid} />
+        <ErrorSummary errors={shownErrors} focusKey={focusKey} idFor={errorTarget} />
         {sections?.length ? (
           <div className="grid gap-6 lg:grid-cols-[11rem_minmax(0,1fr)]">
             <FormSectionNav sections={sections} errorsByField={errorsByField} />
@@ -783,7 +796,8 @@ export function FieldsForm({
           saved={saved}
           errorCount={shownErrors.length}
           onSave={() => void onSubmit()}
-          onShowErrors={() => shownErrors[0] && focusField(fid(shownErrors[0].path))}
+          onShowErrors={() => shownErrors[0] && focusField(errorTarget(shownErrors[0]))}
+          active={active}
           onCancel={doneHref ? () => router.push(doneHref) : undefined}
         />
       </form>

@@ -38,7 +38,10 @@ export function SaveBar({
   onSave,
   onShowErrors,
   onCancel,
+  active = true,
 }: {
+  /** Only the form on screen answers Ctrl/⌘+S (several forms can share a page). */
+  active?: boolean;
   dirty: boolean;
   pending: boolean;
   saved: boolean;
@@ -48,15 +51,16 @@ export function SaveBar({
   onCancel?: () => void;
 }) {
   useEffect(() => {
+    if (!active) return;
     const onKey = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
         e.preventDefault();
-        onSave();
+        if (!pending && !e.repeat) onSave();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onSave]);
+  }, [onSave, active, pending]);
 
   return (
     <div

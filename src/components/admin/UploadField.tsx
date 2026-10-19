@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { a11yProps, FieldError, RequiredMark } from "./FieldShell";
 import { bucketFor, storagePath, UPLOAD_RULES, validateUpload, type UploadKind } from "@/lib/admin/upload";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
 
@@ -12,11 +13,17 @@ import { createBrowserSupabase } from "@/lib/supabase/browser";
  * Storage policies only accept uploads from admins.
  */
 export function UploadField({
+  id,
   label,
+  required,
+  error,
   kind,
   value,
   onChange,
 }: {
+  id?: string;
+  required?: boolean;
+  error?: string;
   label: string;
   kind: UploadKind;
   value: string | null;
@@ -46,7 +53,10 @@ export function UploadField({
 
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-sm font-medium">{label}</span>
+      <label htmlFor={id} className="text-sm font-medium">
+        {label}
+        {required && <RequiredMark />}
+      </label>
       {value ? (
         <div className="flex flex-wrap items-center gap-3">
           {kind === "image" && (
@@ -65,6 +75,7 @@ export function UploadField({
         <span className="text-sm text-muted-foreground">Chưa có tệp</span>
       )}
       <input
+        {...(id ? a11yProps(id, error) : {})}
         type="file"
         accept={UPLOAD_RULES[kind].types.join(",")}
         disabled={busy}
@@ -77,6 +88,7 @@ export function UploadField({
         }}
       />
       {busy && <span className="text-xs text-muted-foreground">Đang tải lên…</span>}
+      {id && <FieldError id={id} message={error} />}
     </div>
   );
 }

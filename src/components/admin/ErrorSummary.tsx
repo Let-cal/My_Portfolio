@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import type { FieldError } from "@/lib/admin/validation";
 
 /** Focuses the input with `id` and scrolls it into view (instantly when motion is reduced). */
@@ -19,13 +19,14 @@ export function focusField(id: string) {
 export function ErrorSummary({
   errors,
   focusKey,
-  idFor = (path) => `field-${path}`,
+  idFor = (e) => `field-${e.path}`,
 }: {
   errors: FieldError[];
   focusKey: number;
-  /** Input id for an error path (forms that share a page prefix their ids). */
-  idFor?: (path: string) => string;
+  /** Input id for an error (forms that share a page prefix their ids; chips share one input). */
+  idFor?: (e: FieldError) => string;
 }) {
+  const titleId = useId();
   const ref = useRef<HTMLDivElement>(null);
   // A failed save may render the errors a moment after `focusKey` changes; focus once both exist.
   const wantFocus = useRef(0);
@@ -42,21 +43,21 @@ export function ErrorSummary({
       ref={ref}
       tabIndex={-1}
       role="alert"
-      aria-labelledby="error-summary-title"
+      aria-labelledby={titleId}
       className="rounded-lg border-2 border-destructive/60 bg-destructive/5 p-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-destructive"
     >
-      <h2 id="error-summary-title" className="text-base font-semibold">
+      <h2 id={titleId} className="text-base font-semibold">
         Có {errors.length} mục cần sửa
       </h2>
       <ul className="mt-2 flex flex-col gap-1 text-sm">
         {errors.map((e) => (
           <li key={e.path}>
             <a
-              href={`#${idFor(e.path)}`}
+              href={`#${idFor(e)}`}
               className="text-destructive underline underline-offset-2 hover:no-underline"
               onClick={(ev) => {
                 ev.preventDefault();
-                focusField(idFor(e.path));
+                focusField(idFor(e));
               }}
             >
               {e.message}

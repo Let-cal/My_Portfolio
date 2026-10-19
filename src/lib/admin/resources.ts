@@ -49,7 +49,14 @@ export function isResourceKey(value: string): value is ResourceKey {
 }
 
 /** `virtual` fields are edited in the form but stored elsewhere (e.g. skill_links), not in the item. */
-type Base = { name: string; label: string; hint?: string; virtual?: true };
+type Base = {
+  name: string;
+  label: string;
+  hint?: string;
+  virtual?: true;
+  /** Forces the * marker when the kind is optional by default (e.g. a required upload). */
+  required?: true;
+};
 export type FieldSpec = Base &
   (
     | { kind: "text" | "url" | "month" | "date"; nullable?: boolean }
@@ -147,7 +154,7 @@ export const resources: Record<ResourceKey, Resource> = {
       { name: "caseStudy", label: "Case study", kind: "caseStudy" },
       { name: "tech", label: "Công nghệ", kind: "tags", suggest: "skills" },
       { name: "demoUrl", label: "Link demo", kind: "url", nullable: true },
-      { name: "repoUrls", label: "Link repo (mỗi dòng một link)", kind: "tags" },
+      { name: "repoUrls", label: "Link repo", kind: "tags" },
       { name: "posterUrl", label: "Ảnh poster", kind: "upload", upload: "image" },
       { name: "videoUrl", label: "Video khi rê chuột", kind: "upload", upload: "video" },
       { name: "skillIds", label: "Skills dùng ở đây", kind: "skills", virtual: true },

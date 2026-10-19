@@ -13,7 +13,15 @@ export function ProfileForm({ initial }: { initial: Record<string, unknown> }) {
 }
 
 /** The role key is fixed; it is merged back in on save. */
-export function RoleForm({ initial, options }: { initial: Record<string, unknown>; options: Options }) {
+export function RoleForm({
+  initial,
+  options,
+  active = true,
+}: {
+  initial: Record<string, unknown>;
+  options: Options;
+  active?: boolean;
+}) {
   const { key, ...rest } = initial;
   return (
     <FieldsForm
@@ -23,6 +31,7 @@ export function RoleForm({ initial, options }: { initial: Record<string, unknown
       options={options}
       lockId
       idScope={String(key)}
+      active={active}
       onSave={(values) => saveRole({ ...values, key })}
     />
   );
@@ -58,7 +67,7 @@ export function RoleTabs({ roles, options }: { roles: Role[]; options: Options }
       </div>
       {roles.map((role) => (
         <div key={role.key} id={`panel-${role.key}`} role="tabpanel" aria-labelledby={`tab-${role.key}`} hidden={active !== role.key}>
-          <RoleForm initial={role} options={options} />
+          <RoleForm initial={role} options={options} active={active === role.key} />
         </div>
       ))}
     </div>
