@@ -49,7 +49,14 @@ export function isResourceKey(value: string): value is ResourceKey {
 }
 
 /** `virtual` fields are edited in the form but stored elsewhere (e.g. skill_links), not in the item. */
-type Base = { name: string; label: string; hint?: string; virtual?: true };
+type Base = {
+  name: string;
+  label: string;
+  hint?: string;
+  virtual?: true;
+  /** Forces the * marker when the kind is optional by default (e.g. a required upload). */
+  required?: true;
+};
 export type FieldSpec = Base &
   (
     | { kind: "text" | "url" | "month" | "date"; nullable?: boolean }
@@ -62,6 +69,7 @@ export type FieldSpec = Base &
     | { kind: "relations"; source: "experiences" | "projects" }
     | { kind: "order"; source: "experiences" | "skillGroups" }
     | { kind: "skills" }
+    | { kind: "evidence"; nullable: true }
   );
 
 type AnyRow = Record<string, unknown>;
@@ -73,6 +81,8 @@ export type Resource = {
   /** Item fields shown as columns in the list. */
   listColumns: string[];
   fields: FieldSpec[];
+  /** Long forms are split into titled sections (fields not listed go to the end). */
+  sections?: { id: string; title: string; fields: string[] }[];
   hasPublished: boolean;
   toRow: (item: AnyRow) => AnyRow;
   fromRow: (row: AnyRow, links: SkillLinkRow[]) => AnyRow;
@@ -93,6 +103,13 @@ export const resources: Record<ResourceKey, Resource> = {
     listColumns: ["company", "start", "end"],
     hasPublished: true,
     toRow: toRows(experienceToRow),
+    sections: [
+      { id: "info", title: "Thông tin", fields: ["id", "company", "parentCompany", "location", "position", "start", "end", "employmentType", "teamSize"] },
+      { id: "content", title: "Nội dung", fields: ["summary", "tech"] },
+      { id: "case-study", title: "Case study", fields: ["caseStudy"] },
+      { id: "links", title: "Liên kết & skills", fields: ["links", "skillIds"] },
+      { id: "visibility", title: "Hiển thị", fields: ["published"] },
+    ],
     fromRow: fromRows(rowToExperience),
     fields: [
       idField,
@@ -106,7 +123,7 @@ export const resources: Record<ResourceKey, Resource> = {
       { name: "summary", label: "Tóm tắt", kind: "i18n", multiline: true },
       { name: "caseStudy", label: "Case study", kind: "caseStudy" },
       { name: "teamSize", label: "Quy mô team", kind: "text", nullable: true },
-      { name: "tech", label: "Công nghệ", kind: "tags" },
+      { name: "tech", label: "Công nghệ", kind: "tags", suggest: "skills" },
       { name: "links", label: "Liên kết", kind: "links" },
       { name: "skillIds", label: "Skills dùng ở đây", kind: "skills", virtual: true },
       published,
@@ -119,6 +136,13 @@ export const resources: Record<ResourceKey, Resource> = {
     listColumns: ["title", "start", "end"],
     hasPublished: true,
     toRow: toRows(projectToRow),
+    sections: [
+      { id: "info", title: "Thông tin", fields: ["id", "title", "role", "start", "end"] },
+      { id: "content", title: "Nội dung", fields: ["summary", "tech", "posterUrl", "videoUrl"] },
+      { id: "case-study", title: "Case study", fields: ["caseStudy"] },
+      { id: "links", title: "Liên kết & skills", fields: ["demoUrl", "repoUrls", "skillIds"] },
+      { id: "visibility", title: "Hiển thị", fields: ["published"] },
+    ],
     fromRow: fromRows(rowToProject),
     fields: [
       idField,
@@ -128,9 +152,9 @@ export const resources: Record<ResourceKey, Resource> = {
       { name: "end", label: "Kết thúc (trống = đang làm)", kind: "month", nullable: true },
       { name: "summary", label: "Tóm tắt", kind: "i18n", multiline: true },
       { name: "caseStudy", label: "Case study", kind: "caseStudy" },
-      { name: "tech", label: "Công nghệ", kind: "tags" },
+      { name: "tech", label: "Công nghệ", kind: "tags", suggest: "skills" },
       { name: "demoUrl", label: "Link demo", kind: "url", nullable: true },
-      { name: "repoUrls", label: "Link repo (mỗi dòng một link)", kind: "tags" },
+      { name: "repoUrls", label: "Link repo", kind: "tags" },
       { name: "posterUrl", label: "Ảnh poster", kind: "upload", upload: "image" },
       { name: "videoUrl", label: "Video khi rê chuột", kind: "upload", upload: "video" },
       { name: "skillIds", label: "Skills dùng ở đây", kind: "skills", virtual: true },
@@ -225,13 +249,7 @@ export const resources: Record<ResourceKey, Resource> = {
       { name: "tag", label: "Nhãn", kind: "i18n" },
       { name: "body", label: "Nội dung", kind: "i18n", multiline: true },
       { name: "colors", label: "Màu gradient", kind: "colors" },
-      {
-        name: "evidenceLink",
-        label: "Liên kết bằng chứng",
-        kind: "text",
-        nullable: true,
-        hint: "#exp-<id> hoặc #proj-<id>",
-      },
+      { name: "evidenceLink", label: "Liên kết bằng chứng", kind: "evidence", nullable: true },
       { name: "stat", label: "Con số nổi bật", kind: "stat" },
     ],
   },

@@ -1,14 +1,22 @@
 "use client";
 
 import { Combobox } from "./Combobox";
+import { FieldError } from "./FieldShell";
 
 /** Free-text tags with suggestions (e.g. skill names for certificates). Enter keeps any text. */
 export function TagCombobox({
+  id,
   label,
   value,
   onChange,
   suggestions,
+  error,
+  invalidIndexes,
 }: {
+  /** Positions of chips that failed validation, outlined in red. */
+  invalidIndexes?: ReadonlySet<number>;
+  id?: string;
+  error?: string;
   label: string;
   value: string[];
   onChange: (tags: string[]) => void;
@@ -22,8 +30,15 @@ export function TagCombobox({
       <legend className="mb-1 text-sm font-medium">{label}</legend>
       {value.length > 0 && (
         <ul className="flex flex-wrap gap-1.5">
-          {value.map((tag) => (
-            <li key={tag} className="flex items-center gap-1 rounded-full border bg-muted/50 py-0.5 pr-1 pl-2.5 text-xs">
+          {value.map((tag, i) => (
+            <li
+              key={tag}
+              className={
+                invalidIndexes?.has(i)
+                  ? "flex items-center gap-1 rounded-full border border-destructive bg-destructive/10 py-0.5 pr-1 pl-2.5 text-xs"
+                  : "flex items-center gap-1 rounded-full border bg-muted/50 py-0.5 pr-1 pl-2.5 text-xs"
+              }
+            >
               {tag}
               <button
                 type="button"
@@ -38,12 +53,15 @@ export function TagCombobox({
         </ul>
       )}
       <Combobox
+        id={id}
+        error={error}
         label={label}
         placeholder="Gõ để tìm, Enter để thêm"
         options={suggestions.filter((s) => !value.includes(s)).map((s) => ({ value: s, label: s }))}
         onPick={add}
         onEnterText={add}
       />
+      {id && <FieldError id={id} message={error} />}
     </fieldset>
   );
 }

@@ -20,7 +20,7 @@ export const PROFILE_FIELDS: FieldSpec[] = [
 export const ROLE_FIELDS: FieldSpec[] = [
   { name: "title", label: "Chức danh", kind: "i18n" },
   { name: "koiVariety", label: "Giống cá koi", kind: "select", options: KOI_VARIETIES },
-  { name: "cvFileUrl", label: "CV (PDF)", kind: "upload", upload: "pdf" },
+  { name: "cvFileUrl", label: "CV (PDF)", kind: "upload", upload: "pdf", required: true },
   { name: "experienceOrder", label: "Thứ tự kinh nghiệm", kind: "order", source: "experiences" },
   { name: "skillGroupOrder", label: "Thứ tự nhóm kỹ năng", kind: "order", source: "skillGroups" },
 ];

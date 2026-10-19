@@ -1,0 +1,101 @@
+"use client";
+
+import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+/** Asks before the tab closes, and before following an in-app link, while there are unsaved edits. */
+export function useUnsavedGuard(dirty: boolean) {
+  useEffect(() => {
+    if (!dirty) return;
+    const onLeave = (e: BeforeUnloadEvent) => e.preventDefault();
+    const onClick = (e: MouseEvent) => {
+      const link = (e.target as Element | null)?.closest?.("a[href]");
+      if (!link || link.getAttribute("target") === "_blank" || link.getAttribute("href")?.startsWith("#")) return;
+      if (!window.confirm("Bạn có thay đổi chưa lưu. Rời trang và bỏ các thay đổi này?")) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+    window.addEventListener("beforeunload", onLeave);
+    document.addEventListener("click", onClick, true);
+    return () => {
+      window.removeEventListener("beforeunload", onLeave);
+      document.removeEventListener("click", onClick, true);
+    };
+  }, [dirty]);
+}
+
+/**
+ * Bottom bar of every admin form: status on the left (unsaved, errors, saved), actions on the
+ * right. Ctrl/⌘+S triggers `onSave` from anywhere on the page.
+ */
+export function SaveBar({
+  dirty,
+  pending,
+  saved,
+  errorCount,
+  onSave,
+  onShowErrors,
+  onCancel,
+  active = true,
+}: {
+  /** Only the form on screen answers Ctrl/⌘+S (several forms can share a page). */
+  active?: boolean;
+  dirty: boolean;
+  pending: boolean;
+  saved: boolean;
+  errorCount: number;
+  onSave: () => void;
+  onShowErrors: () => void;
+  onCancel?: () => void;
+}) {
+  useEffect(() => {
+    if (!active) return;
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (!pending && !e.repeat) onSave();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onSave, active, pending]);
+
+  return (
+    <div
+      role="region"
+      aria-label="Lưu thay đổi"
+      className={cn(
+        "sticky bottom-0 z-30 -mx-4 flex flex-wrap items-center justify-between gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur",
+        dirty && "shadow-[0_-8px_24px_-12px_rgb(0_0_0/0.35)]",
+      )}
+    >
+      <div aria-live="polite" className="flex min-h-8 items-center gap-2 text-sm">
+        {errorCount > 0 ? (
+          <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={onShowErrors}>
+            {errorCount} lỗi · Xem
+          </Button>
+        ) : dirty ? (
+          <span className="flex items-center gap-2 text-muted-foreground">
+            <span aria-hidden className="size-2 rounded-full bg-amber-500" />
+            Có thay đổi chưa lưu
+          </span>
+        ) : saved ? (
+          <span className="text-emerald-600 dark:text-emerald-400">Đã lưu ✓</span>
+        ) : null}
+        <span className="hidden text-xs text-muted-foreground sm:inline">Ctrl/⌘+S để lưu</span>
+      </div>
+      <div className="flex gap-2">
+        {onCancel && (
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Hủy
+          </Button>
+        )}
+        <Button type="submit" disabled={pending}>
+          {pending ? "Đang lưu…" : "Lưu"}
+        </Button>
+      </div>
+    </div>
+  );
+}
