@@ -154,5 +154,5 @@ docs/              設計判断、リリースの確認記録
 
 メンテナーはLê Trần Cát Lâmです。変更提案と検証の進め方は [CONTRIBUTING.md](CONTRIBUTING.md)、脆弱性の非公開報告は [SECURITY.md](SECURITY.md)、確認済みのリポジトリ設定は [運用記録](docs/repository-maintenance.md) を参照してください。Issueは英語・日本語のどちらでも受け付けます。
 
-現時点では、リポジトリ全体に適用するライセンスを設けていません。この文書によって追加の利用許諾を与えるものではありません。第三者のコンポーネントやアセットには、それぞれの利用条件が適用されます。[shadcnのライセンス表記](src/app/vendor/SHADCN-LICENSE.txt)、[アイコンの表記](src/components/site/icons.tsx)、上記の滝の出典を確認してください。個人の写真、CV、ブランド素材は、再利用可能なテンプレート素材として提供していません。
+ソースコードは[MITライセンス](LICENSE)で公開しています。個人のコンテンツ（ポートフォリオの文章とデータ、CV、写真、スクリーンショット、LETCALブランド）は © Lê Trần Cát Lâm, all rights reserved とし、再利用は許諾していません。詳しくは [CONTENT-LICENSE.md](CONTENT-LICENSE.md) をご覧ください。第三者のコンポーネントやアセットには、それぞれの利用条件が適用されます。[shadcnのライセンス表記](src/app/vendor/SHADCN-LICENSE.txt)、[アイコンの表記](src/components/site/icons.tsx)、上記の滝の出典を確認してください。
 フォントの出典とSIL Open Font Licenseの表記は、[フォント管理資料](src/app/fonts/README.md)に記載しています。

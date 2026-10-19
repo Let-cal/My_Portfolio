@@ -154,5 +154,5 @@ The koi-to-dragon story connects the sections through a shared environment. Role
 
 Maintained by Lê Trần Cát Lâm. See [CONTRIBUTING.md](CONTRIBUTING.md) for scoped changes and validation, [SECURITY.md](SECURITY.md) for private vulnerability reporting, and the [maintenance record](docs/repository-maintenance.md) for verified repository settings. Issues may be written in English or Japanese.
 
-No repository-wide license is currently supplied. This documentation grants no additional reuse rights. Third-party components and assets retain their own terms: see the [vendored shadcn notice](src/app/vendor/SHADCN-LICENSE.txt), [icon notices](src/components/site/icons.tsx), and waterfall provenance above. Personal portraits, CVs, and brand assets are not offered as reusable template content.
+The source code is available under the [MIT License](LICENSE). Personal content (portfolio text and data, CVs, portraits, screenshots and the LETCAL brand) is © Lê Trần Cát Lâm, all rights reserved: see [CONTENT-LICENSE.md](CONTENT-LICENSE.md). Third-party components and assets retain their own terms: see the [vendored shadcn notice](src/app/vendor/SHADCN-LICENSE.txt), [icon notices](src/components/site/icons.tsx), and waterfall provenance above.
 Font assets and their SIL Open Font License notices are documented in [font provenance](src/app/fonts/README.md).
