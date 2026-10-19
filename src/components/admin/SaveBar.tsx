@@ -12,6 +12,16 @@ function onBeforeUnload(e: BeforeUnloadEvent) {
   e.preventDefault();
 }
 
+/** True when it is fine to leave: nothing unsaved, or the user agreed to drop it. Asks at most once. */
+export function confirmLeave(): boolean {
+  return (
+    dirtyForms.size === 0 ||
+    window.confirm(
+      "Bạn có thay đổi chưa lưu. Rời trang và bỏ các thay đổi này?",
+    )
+  );
+}
+
 function onLinkClick(e: MouseEvent) {
   const link = (e.target as Element | null)?.closest?.("a[href]");
   if (
@@ -20,11 +30,7 @@ function onLinkClick(e: MouseEvent) {
     link.getAttribute("href")?.startsWith("#")
   )
     return;
-  if (
-    !window.confirm(
-      "Bạn có thay đổi chưa lưu. Rời trang và bỏ các thay đổi này?",
-    )
-  ) {
+  if (!confirmLeave()) {
     e.preventDefault();
     e.stopPropagation();
   }

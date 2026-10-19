@@ -335,23 +335,12 @@ describe("admin actions", () => {
     expect(updateTag).toHaveBeenCalledWith("content");
   });
 
-  it("duplicate a skill together with its evidence links", async () => {
+  it("duplicate refuses lists whose copies cannot start hidden", async () => {
     tableRows.skills = [
       { id: "react", name: "React", skill_group: "frameworks", sort_index: 0 },
     ];
-    links = [
-      { skill_id: "react", experience_id: null, project_id: "siteplus" },
-    ];
-    expect(await duplicateResource("skills", "react")).toEqual({
-      ok: true,
-      id: "react-copy",
-    });
-    expect(
-      calls.find((c) => c.op === "insert" && c.table === "skill_links")!
-        .args[0],
-    ).toEqual([
-      { skill_id: "react-copy", experience_id: null, project_id: "siteplus" },
-    ]);
+    expect((await duplicateResource("skills", "react")).ok).toBe(false);
+    expect(calls.filter((c) => c.op === "insert")).toEqual([]);
   });
 
   it("duplicate refuses non-admins", async () => {

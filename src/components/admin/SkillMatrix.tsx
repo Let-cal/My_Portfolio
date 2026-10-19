@@ -25,6 +25,7 @@ import {
 } from "@/lib/admin/matrix";
 import { slugify } from "@/lib/admin/slug";
 import { cn } from "@/lib/utils";
+import { useUnsavedGuard } from "./SaveBar";
 
 const cellId = (skillId: string, colKey: string) => `${skillId}|${colKey}`;
 
@@ -116,7 +117,8 @@ export function SkillMatrix({
     router.refresh();
   }, [draft, saving, columns, router]);
 
-  // Ctrl/⌘+S saves; leaving with unsaved changes asks first.
+  // Ctrl/⌘+S saves; leaving (tab close, links, ⌘K) with unsaved changes asks first.
+  useUnsavedGuard(draft.size > 0);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
@@ -124,16 +126,9 @@ export function SkillMatrix({
         void save();
       }
     };
-    const onLeave = (e: BeforeUnloadEvent) => {
-      if (draft.size) e.preventDefault();
-    };
     window.addEventListener("keydown", onKey);
-    window.addEventListener("beforeunload", onLeave);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      window.removeEventListener("beforeunload", onLeave);
-    };
-  }, [save, draft.size]);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [save]);
 
   // Roving focus over the visible checkboxes.
   const rows = view.groups.flatMap((g) => g.rows);
@@ -497,13 +492,24 @@ function AddSkillRow({
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const errorId = `add-skill-${group}-error`;
+  const close = () => {
+    setOpen(false);
+    setError(null);
+    requestAnimationFrame(() => triggerRef.current?.focus());
+  };
 
   async function submit() {
     const trimmed = name.trim();
     const id = slugify(trimmed);
-    if (!trimmed) return setError("Nhập tên skill");
-    if (!id) return setError("Tên cần có ít nhất một chữ cái hoặc chữ số");
+    const fail = (message: string) => {
+      setError(message);
+      inputRef.current?.focus();
+    };
+    if (!trimmed) return fail("Nhập tên skill");
+    if (!id) return fail("Tên cần có ít nhất một chữ cái hoặc chữ số");
     setBusy(true);
     let result: Awaited<ReturnType<typeof saveResource>>;
     try {
@@ -517,14 +523,20 @@ function AddSkillRow({
     }
     setBusy(false);
     if (!result.ok) {
-      setError(Object.values(result.fieldErrors ?? {})[0] ?? result.error);
+      // The row has no ID field: a clashing id means the skill (or one with the same id) exists.
+      fail(
+        result.fieldErrors?.id
+          ? `Đã có skill với ID "${id}" (${result.fieldErrors.id.split(",")[0]}). Đổi tên hoặc sửa skill đó.`
+          : (Object.values(result.fieldErrors ?? {})[0] ?? result.error),
+      );
       return;
     }
     toast.success(`Đã thêm ${trimmed} vào nhóm ${group}`);
+    // Stay open, empty and focused so several skills can be added in a row.
     setName("");
     setError(null);
-    setOpen(false);
     onAdded();
+    requestAnimationFrame(() => inputRef.current?.focus());
   }
 
   return (
@@ -534,14 +546,16 @@ function AddSkillRow({
           {open ? (
             <>
               <Input
+                ref={inputRef}
                 autoFocus
                 aria-label={`Tên skill mới (${group})`}
+                aria-busy={busy || undefined}
                 aria-invalid={error ? true : undefined}
                 aria-describedby={error ? errorId : undefined}
                 placeholder="Tên skill, ví dụ LangGraph"
                 className="h-8 w-56"
                 value={name}
-                disabled={busy}
+                readOnly={busy}
                 onChange={(e) => {
                   setName(e.target.value);
                   setError(null);
@@ -551,8 +565,7 @@ function AddSkillRow({
                     e.preventDefault();
                     void submit();
                   } else if (e.key === "Escape") {
-                    setOpen(false);
-                    setError(null);
+                    close();
                   }
                 }}
               />
@@ -569,7 +582,7 @@ function AddSkillRow({
                 variant="ghost"
                 size="sm"
                 disabled={busy}
-                onClick={() => (setOpen(false), setError(null))}
+                onClick={close}
               >
                 Hủy
               </Button>
@@ -589,6 +602,7 @@ function AddSkillRow({
               variant="ghost"
               size="sm"
               className="h-7 text-xs text-muted-foreground"
+              ref={triggerRef}
               aria-label={`Thêm skill vào nhóm ${group}`}
               onClick={() => setOpen(true)}
             >

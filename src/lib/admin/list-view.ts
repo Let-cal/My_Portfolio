@@ -114,6 +114,15 @@ export function listRows(key: ResourceKey, c: AdminContent): ListRow[] {
 const fold = (s: string) =>
   s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[đĐ]/g, "d").toLowerCase();
 
+/** The first free id among `<id>-copy`, `<id>-copy-2`, `<id>-copy-3`… */
+export function copyId(id: string, taken: string[]): string {
+  const used = new Set(taken);
+  if (!used.has(`${id}-copy`)) return `${id}-copy`;
+  let n = 2;
+  while (used.has(`${id}-copy-${n}`)) n++;
+  return `${id}-copy-${n}`;
+}
+
 /** The ids before and after `id` in list order, for the editor's previous/next links. */
 export function neighbours(
   ids: string[],

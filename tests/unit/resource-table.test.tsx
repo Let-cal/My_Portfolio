@@ -93,4 +93,14 @@ describe("ResourceTable", () => {
     expect(duplicateResource).toHaveBeenCalledWith("certificates", rows[0].id);
     expect(push).toHaveBeenCalledWith("/admin/certificates/ielts-copy");
   });
+
+  it("copies a skill into the new-item form instead of publishing a copy", async () => {
+    const rows = listRows("skills", content);
+    render(<ResourceTable resourceKey="skills" initialRows={rows} />);
+    await act(async () =>
+      fireEvent.click(screen.getAllByRole("button", { name: /Nhân bản/ })[0]),
+    );
+    expect(duplicateResource).not.toHaveBeenCalled();
+    expect(push).toHaveBeenCalledWith(`/admin/skills/new?from=${rows[0].id}`);
+  });
 });

@@ -16,6 +16,7 @@ import {
   type ResourceKey,
 } from "@/lib/admin/resources";
 import { PROFILE_FIELDS, ROLE_FIELDS } from "@/lib/admin/singletons";
+import { copyId } from "@/lib/admin/list-view";
 import { describeIssues } from "@/lib/admin/validation";
 import { requireAdmin } from "@/lib/admin/session";
 import { createServerSupabase } from "@/lib/supabase/server";
@@ -206,12 +207,10 @@ export async function saveSkillLinks(
     if (add.length) {
       check(
         (
-          await supabase
-            .from("skill_links")
-            .upsert(add, {
-              onConflict: "skill_id,experience_id,project_id",
-              ignoreDuplicates: true,
-            })
+          await supabase.from("skill_links").upsert(add, {
+            onConflict: "skill_id,experience_id,project_id",
+            ignoreDuplicates: true,
+          })
         ).error,
       );
     }
@@ -244,18 +243,10 @@ export async function deleteResource(key: string, id: string) {
   });
 }
 
-/** The first free id among `<id>-copy`, `<id>-copy-2`, `<id>-copy-3`… */
-function copyId(id: string, taken: string[]): string {
-  const used = new Set(taken);
-  if (!used.has(`${id}-copy`)) return `${id}-copy`;
-  let n = 2;
-  while (used.has(`${id}-copy-${n}`)) n++;
-  return `${id}-copy-${n}`;
-}
-
 /**
- * Copies one item to a new id at the end of the list. The copy starts hidden (where the list can
- * hide items) so it never shows on the public site before it is edited; a skill keeps its evidence.
+ * Copies one item to a new id at the end of the list. The copy starts hidden, so it never shows
+ * on the public site before it is edited. Lists that cannot hide items copy through the new-item
+ * form instead (`/admin/<key>/new?from=<id>`), which writes nothing until Save.
  */
 export async function duplicateResource(
   key: string,
@@ -264,6 +255,8 @@ export async function duplicateResource(
   let newId = "";
   const result = await adminWrite(key, async (k) => {
     const resource = resources[k];
+    if (!resource.hasPublished)
+      throw new Error("Mục này nhân bản qua form tạo mới.");
     const supabase = await createServerSupabase();
     const { data: all, error } = await supabase
       .from(resource.table)
@@ -286,22 +279,8 @@ export async function duplicateResource(
     );
     copy.id = newId;
     copy.sort_index = (all?.[0]?.sort_index ?? -1) + 1;
-    if (resource.hasPublished) copy.published = false;
+    copy.published = false;
     check((await supabase.from(resource.table).insert(copy)).error);
-    if (k === "skills") {
-      const { data: links, error: linkError } = await supabase
-        .from("skill_links")
-        .select("*")
-        .eq("skill_id", id);
-      check(linkError);
-      const copies = (links ?? []).map((l) => ({
-        skill_id: newId,
-        experience_id: l.experience_id,
-        project_id: l.project_id,
-      }));
-      if (copies.length)
-        check((await supabase.from("skill_links").insert(copies)).error);
-    }
   });
   return result.ok
     ? { ok: true, id: newId }

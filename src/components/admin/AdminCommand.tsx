@@ -14,6 +14,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import type { CommandItem as Item } from "@/lib/admin/command-items";
+import { confirmLeave } from "./SaveBar";
 
 /** ⌘/Ctrl+K palette: jump to any screen or item, create, or open the public site. */
 export function AdminCommand({ items }: { items: Item[] }) {
@@ -34,8 +35,9 @@ export function AdminCommand({ items }: { items: Item[] }) {
   const groups = [...new Set(items.map((i) => i.group))];
   const go = (href: string) => {
     setOpen(false);
-    if (href.startsWith("/admin")) router.push(href);
-    else window.open(href, "_blank", "noopener");
+    if (href.startsWith("/admin")) {
+      if (confirmLeave()) router.push(href);
+    } else window.open(href, "_blank", "noopener");
   };
 
   return (

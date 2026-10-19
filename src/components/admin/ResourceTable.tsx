@@ -120,12 +120,17 @@ export function ResourceTable({
   }
 
   function duplicate(row: ListRow) {
+    // A copy that cannot start hidden would go public at once: open it as a new, unsaved item.
+    if (!row.canHide) {
+      router.push(
+        `/admin/${resourceKey}/new?from=${encodeURIComponent(row.id)}`,
+      );
+      return;
+    }
     startTransition(async () => {
       const result = await duplicateResource(resourceKey, row.id);
       if (result.ok) {
-        toast.success(
-          `Đã tạo bản sao ${result.id}${row.canHide ? " (đang ẩn)" : ""}`,
-        );
+        toast.success(`Đã tạo bản sao ${result.id} (đang ẩn)`);
         router.push(`/admin/${resourceKey}/${result.id}`);
       } else {
         toast.error(result.error);

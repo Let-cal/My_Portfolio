@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { contentSchema } from "@/content/schema";
 import seed from "@/content/seed.json";
 import {
+  copyId,
   filterRows,
   formatDate,
   formatPeriod,
@@ -73,5 +74,14 @@ describe("neighbours", () => {
     expect(neighbours(["a", "b", "c"], "a")).toEqual({ prev: null, next: "b" });
     expect(neighbours(["a", "b", "c"], "c")).toEqual({ prev: "b", next: null });
     expect(neighbours(["a"], "x")).toEqual({ prev: null, next: null });
+  });
+});
+
+describe("copyId", () => {
+  it("picks the first free -copy id", () => {
+    expect(copyId("react", ["react"])).toBe("react-copy");
+    expect(copyId("react", ["react", "react-copy", "react-copy-2"])).toBe(
+      "react-copy-3",
+    );
   });
 });

@@ -160,6 +160,12 @@ describe("SkillMatrix (add skills, headers)", () => {
       true,
     );
     expect(refresh).toHaveBeenCalled();
+    // Ready for the next one: the row stays open, empty and focused.
+    const again = screen.getByRole("textbox", {
+      name: "Tên skill mới (ai)",
+    }) as HTMLInputElement;
+    expect(again.value).toBe("");
+    expect(document.activeElement).toBe(again);
   });
 
   it("shows why a new skill was not added", async () => {
@@ -183,6 +189,7 @@ describe("SkillMatrix (add skills, headers)", () => {
     await act(async () => fireEvent.keyDown(input, { key: "Enter" }));
     expect(screen.getByText(/ID "react" đã được dùng/)).toBeTruthy();
     expect(input.getAttribute("aria-invalid")).toBe("true");
+    expect(document.activeElement).toBe(input);
   });
 
   it("gives every column header its full name as a tooltip", () => {
@@ -193,5 +200,17 @@ describe("SkillMatrix (add skills, headers)", () => {
     expect(headers.length).toBeGreaterThan(0);
     for (const h of headers)
       expect(h.querySelector("a")!.getAttribute("title")).toBeTruthy();
+  });
+
+  it("asks before an in-app link drops unsaved matrix changes", async () => {
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    render(<SkillMatrix content={content} initialFilter={all} />);
+    fireEvent.click(cell("C#", "SitePlus"));
+    const link = screen.getByRole("link", { name: "C#" });
+    const event = new MouseEvent("click", { bubbles: true, cancelable: true });
+    link.dispatchEvent(event);
+    expect(confirm).toHaveBeenCalledTimes(1);
+    expect(event.defaultPrevented).toBe(true);
+    confirm.mockRestore();
   });
 });

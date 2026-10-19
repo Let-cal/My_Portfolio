@@ -7,22 +7,35 @@ import { emptyItem } from "@/lib/admin/empty-item";
 import type { Options } from "@/components/admin/ResourceForm";
 import type { Skill } from "@/content/schema";
 import { getItem, listItems, relationOptions } from "@/lib/admin/data";
-import { neighbours } from "@/lib/admin/list-view";
+import { copyId, neighbours } from "@/lib/admin/list-view";
 import { isResourceKey, resources } from "@/lib/admin/resources";
 
 type Params = Promise<{ resource: string; id: string }>;
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
-async function Editor({ params }: { params: Params }) {
-  const { resource: key, id } = await params;
+async function Editor({
+  params,
+  searchParams,
+}: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const [{ resource: key, id }, sp] = await Promise.all([params, searchParams]);
   if (!isResourceKey(key)) notFound();
   const isNew = id === "new";
+  // "Nhân bản" for lists that cannot hide items: a new, unsaved item pre-filled from `from`.
+  const from = isNew && typeof sp.from === "string" ? sp.from : null;
   const needsSkills =
     key === "experiences" ||
     key === "projects" ||
     key === "certificates" ||
     key === "activities";
   const [found, relations, skills] = await Promise.all([
-    isNew ? Promise.resolve(emptyItem(key)) : getItem(key, id),
+    from
+      ? getItem(key, from)
+      : isNew
+        ? Promise.resolve(emptyItem(key))
+        : getItem(key, id),
     key === "skills"
       ? relationOptions()
       : Promise.resolve({ experiences: [], projects: [] }),
@@ -36,6 +49,18 @@ async function Editor({ params }: { params: Params }) {
     key === "why_cards" ? listItems("experiences") : Promise.resolve([]),
     key === "why_cards" ? listItems("projects") : Promise.resolve([]),
   ]);
+  let source: Record<string, unknown> = found;
+  if (from) {
+    const { sortIndex: _s, ...copy } = found as Record<string, unknown>;
+    void _s;
+    source = {
+      ...copy,
+      id: copyId(
+        from,
+        ownList.map((i) => i.id),
+      ),
+    };
+  }
   const hiddenMark = (item: Record<string, unknown>) =>
     item.published === false ? " (đang ẩn)" : "";
   const options: Options = {
@@ -61,12 +86,15 @@ async function Editor({ params }: { params: Params }) {
   const item =
     key === "experiences" || key === "projects"
       ? {
-          ...found,
-          skillIds: isNew
-            ? []
-            : skills.filter((s) => linkIds(s).includes(id)).map((s) => s.id),
+          ...source,
+          skillIds:
+            isNew && !from
+              ? []
+              : skills
+                  .filter((s) => linkIds(s).includes(from ?? id))
+                  .map((s) => s.id),
         }
-      : found;
+      : source;
   const nav = isNew
     ? null
     : neighbours(
@@ -114,7 +142,7 @@ async function Editor({ params }: { params: Params }) {
           )}
         </div>
         <h1 className="text-2xl font-semibold">
-          {isNew ? "Thêm mới" : `Sửa ${id}`}
+          {from ? `Nhân bản ${from}` : isNew ? "Thêm mới" : `Sửa ${id}`}
         </h1>
       </header>
       <ResourceForm
@@ -127,11 +155,17 @@ async function Editor({ params }: { params: Params }) {
   );
 }
 
-export default function EditResourcePage({ params }: { params: Params }) {
+export default function EditResourcePage({
+  params,
+  searchParams,
+}: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
   return (
     <main className="flex flex-col gap-4">
       <Suspense fallback={<FormSkeleton />}>
-        <Editor params={params} />
+        <Editor params={params} searchParams={searchParams} />
       </Suspense>
     </main>
   );
