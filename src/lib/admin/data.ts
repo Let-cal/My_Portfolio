@@ -72,14 +72,17 @@ export async function countRows(): Promise<{ key: ResourceKey; count: number; hi
   );
 }
 
-/** Everything, hidden items included, in the public content shape (for health checks and the matrix). */
-export async function getAdminContent(): Promise<AdminContent> {
+/**
+ * Everything, hidden items included, in the public content shape (for health checks and the
+ * matrix). Null while the database has no profile row yet (run `npm run db:seed`).
+ */
+export async function getAdminContent(): Promise<AdminContent | null> {
   const [lists, { profile, roles }] = await Promise.all([
     Promise.all(RESOURCE_KEYS.map(async (key) => [key, await listItems(key)] as const)),
     getProfileAndRoles(),
   ]);
   const byKey = Object.fromEntries(lists) as Record<ResourceKey, Item[]>;
-  if (!profile) throw new Error("profile: no row");
+  if (!profile) return null;
   return {
     profile,
     roles,

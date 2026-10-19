@@ -44,7 +44,9 @@ export function SkillMatrix({ content, initialFilter }: { content: AdminContent;
   const wanted = useRef(new Map<string, boolean>());
   const inflight = useRef(new Set<string>());
   const flushTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => void (flushTimer.current && clearTimeout(flushTimer.current)), []);
+  // Writes not yet followed by a cache refresh, and the requests still in flight.
+  const dirty = useRef(false);
+  const pending = useRef(new Set<Promise<void>>());
 
   const serverLinked = (skillId: string, colKey: string) =>
     base.groups.some((g) => g.rows.some((r) => r.skill.id === skillId && r.linked.has(colKey)));
@@ -55,19 +57,50 @@ export function SkillMatrix({ content, initialFilter }: { content: AdminContent;
     router.replace(`${pathname}${matrixQuery(next)}`, { scroll: false });
   }
 
+  /** Refreshes the public cache once every write has landed (never before the last one). */
+  function flushWhenSettled() {
+    if (!dirty.current) return;
+    dirty.current = false;
+    void Promise.allSettled([...pending.current]).then(() => flushContent());
+  }
+
   function scheduleFlush() {
     if (flushTimer.current) clearTimeout(flushTimer.current);
     flushTimer.current = setTimeout(() => {
       flushTimer.current = null;
-      void flushContent();
+      if (inflight.current.size) scheduleFlush();
+      else flushWhenSettled();
     }, FLUSH_DELAY_MS);
+  }
+
+  // Leaving the page (navigation or closing the tab) must not drop the refresh.
+  useEffect(() => {
+    const onHide = () => flushWhenSettled();
+    window.addEventListener("pagehide", onHide);
+    return () => {
+      window.removeEventListener("pagehide", onHide);
+      if (flushTimer.current) clearTimeout(flushTimer.current);
+      flushWhenSettled();
+    };
+  }, []);
+
+  async function request(skillId: string, col: MatrixColumn, value: boolean) {
+    try {
+      return await setSkillLink(skillId, targetOf(col), value);
+    } catch (error) {
+      return { ok: false as const, error: error instanceof Error ? error.message : String(error) };
+    }
   }
 
   async function send(skillId: string, col: MatrixColumn) {
     const id = cellId(skillId, columnKey(col));
     const value = wanted.current.get(id)!;
     inflight.current.add(id);
-    const result = await setSkillLink(skillId, targetOf(col), value);
+    const call = request(skillId, col, value);
+    const tracked = call.then(() => undefined);
+    pending.current.add(tracked);
+    const result = await call;
+    pending.current.delete(tracked);
     inflight.current.delete(id);
     if (!result.ok) {
       const back = confirmed.current.get(id) ?? serverLinked(skillId, columnKey(col));
@@ -77,6 +110,7 @@ export function SkillMatrix({ content, initialFilter }: { content: AdminContent;
       return;
     }
     confirmed.current.set(id, value);
+    dirty.current = true;
     if (wanted.current.get(id) !== value) await send(skillId, col);
   }
 
@@ -86,6 +120,7 @@ export function SkillMatrix({ content, initialFilter }: { content: AdminContent;
     const next = !isLinked(skillId, key);
     wanted.current.set(id, next);
     setShown((m) => new Map(m).set(id, next));
+    dirty.current = true; // set now, so leaving mid-request still refreshes once it lands
     scheduleFlush();
     if (!inflight.current.has(id)) void send(skillId, col);
   }

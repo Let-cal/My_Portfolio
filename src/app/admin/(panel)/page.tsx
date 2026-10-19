@@ -24,8 +24,17 @@ function Card({ label, children, hint }: { label: string; children: React.ReactN
   );
 }
 
+function NoProfile() {
+  return (
+    <p role="alert" className="rounded-md border p-3 text-sm">
+      Chưa có hồ sơ trong database. Chạy npm run db:seed.
+    </p>
+  );
+}
+
 async function Overview() {
   const [content, counts, last] = await Promise.all([getAdminContent(), countRows(), lastEdited()]);
+  if (!content) return <NoProfile />;
   const issues = checkContentHealth(content);
   const t = translationStats(content);
   const translated = t.total ? Math.round((100 * (t.ja + t.vi)) / (2 * t.total)) : 100;

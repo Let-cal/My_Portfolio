@@ -15,6 +15,7 @@ async function ResourceList({ params, searchParams }: { params: Params; searchPa
   const [{ resource: key }, sp] = await Promise.all([params, searchParams]);
   if (!isResourceKey(key)) notFound();
   const matrix = key === "skills" && sp.view !== "list";
+  const content = matrix ? await getAdminContent() : null;
   return (
     <>
       <header className="flex flex-wrap items-center justify-between gap-4">
@@ -31,7 +32,11 @@ async function ResourceList({ params, searchParams }: { params: Params; searchPa
         </div>
       </header>
       {matrix ? (
-        <SkillMatrix content={await getAdminContent()} initialFilter={parseMatrixFilter(sp)} />
+        content ? (
+          <SkillMatrix content={content} initialFilter={parseMatrixFilter(sp)} />
+        ) : (
+          <p role="alert" className="rounded-md border p-3 text-sm">Chưa có hồ sơ trong database. Chạy npm run db:seed.</p>
+        )
       ) : (
         <>
           <p className="text-sm text-muted-foreground">Kéo biểu tượng ⠿ để đổi thứ tự hiển thị trên trang.</p>

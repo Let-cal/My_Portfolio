@@ -81,4 +81,52 @@ describe("SkillMatrix", () => {
     expect(setSkillLink).toHaveBeenLastCalledWith("csharp", { projectId: "siteplus" }, false);
     expect(target.getAttribute("aria-checked")).toBe("false");
   });
+
+  it("still refreshes the site when the page is left before the pause ends", async () => {
+    const { unmount } = render(<SkillMatrix content={content} initialFilter={filter} />);
+    await act(async () => fireEvent.click(cell("C#", "SitePlus")));
+    unmount();
+    await act(async () => {});
+    expect(flushContent).toHaveBeenCalledTimes(1);
+  });
+
+  it("refreshes the site only after the last write has landed", async () => {
+    let resolveFirst!: (v: { ok: true }) => void;
+    setSkillLink.mockImplementationOnce(() => new Promise((r) => (resolveFirst = r)));
+    render(<SkillMatrix content={content} initialFilter={filter} />);
+    const target = cell("C#", "SitePlus");
+    await act(async () => fireEvent.click(target));
+    await act(async () => fireEvent.click(target));
+    await act(async () => vi.advanceTimersByTime(800));
+    expect(flushContent).not.toHaveBeenCalled();
+    await act(async () => resolveFirst({ ok: true }));
+    await act(async () => vi.advanceTimersByTime(800));
+    expect(setSkillLink).toHaveBeenLastCalledWith("csharp", { projectId: "siteplus" }, false);
+    expect(flushContent).toHaveBeenCalledTimes(1);
+    expect(flushContent.mock.invocationCallOrder[0]).toBeGreaterThan(setSkillLink.mock.invocationCallOrder[1]);
+  });
+
+  it("rolls back and frees the cell when the request itself fails", async () => {
+    setSkillLink.mockRejectedValueOnce(new Error("Failed to find Server Action"));
+    render(<SkillMatrix content={content} initialFilter={filter} />);
+    const target = cell("C#", "SitePlus");
+    await act(async () => fireEvent.click(target));
+    await act(async () => {});
+    expect(target.getAttribute("aria-checked")).toBe("false");
+    await act(async () => fireEvent.click(target));
+    expect(setSkillLink).toHaveBeenCalledTimes(2);
+    expect(target.getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("refreshes the site after a request that was still running when the page was left", async () => {
+    let resolveFirst!: (v: { ok: true }) => void;
+    setSkillLink.mockImplementationOnce(() => new Promise((r) => (resolveFirst = r)));
+    const { unmount } = render(<SkillMatrix content={content} initialFilter={filter} />);
+    await act(async () => fireEvent.click(cell("C#", "SitePlus")));
+    unmount();
+    await act(async () => {});
+    expect(flushContent).not.toHaveBeenCalled();
+    await act(async () => resolveFirst({ ok: true }));
+    expect(flushContent).toHaveBeenCalledTimes(1);
+  });
 });
