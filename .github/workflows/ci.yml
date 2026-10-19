@@ -94,8 +94,12 @@ jobs:
           enable-cache: false
       - name: Install locked dependencies
         run: npm ci
+      - name: Formatting
+        run: npm run format:check
       - name: Lint
         run: npm run lint
+      - name: Generated files are current
+        run: npm run check:generated
       - name: Unit tests
         run: npm test -- --reporter=default --reporter=junit --outputFile=reports/unit.xml
       - name: Production build and generated Next.js types

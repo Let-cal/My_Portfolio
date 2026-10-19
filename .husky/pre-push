@@ -1,0 +1,3 @@
+# Fast checks before code leaves this machine (about 30 s). The full suite runs in CI;
+# run `npm run verify` locally for the same checks CI runs.
+npm run verify:quick

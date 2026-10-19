@@ -1,0 +1,22 @@
+# Generated files that build checks compare byte for byte
+src/components/site/icons.tsx
+src/app/fonts/
+src/content/role-portraits.json
+public/
+supabase/
+
+# Lockfile and prose keep their own layout
+package-lock.json
+*.md
+docs/
+
+# Local output (also in .gitignore)
+.next/
+.superpowers/
+.lighthouseci/
+test-results/
+playwright-report/
+reports/
+coverage/
+next-env.d.ts
+*.tmp.mjs

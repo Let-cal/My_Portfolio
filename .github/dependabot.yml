@@ -11,6 +11,13 @@ updates:
     groups:
       npm-patch-and-minor:
         update-types: [minor, patch]
+    # Majors that need a planned migration: ESLint 10 (eslint-config-next support) and
+    # @types/node beyond the Node 22 runtime pinned in engines and .nvmrc.
+    ignore:
+      - dependency-name: eslint
+        update-types: [version-update:semver-major]
+      - dependency-name: '@types/node'
+        versions: ['>=23']
     commit-message:
       prefix: 'deps'
   - package-ecosystem: github-actions
