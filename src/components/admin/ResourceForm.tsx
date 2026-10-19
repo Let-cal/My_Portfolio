@@ -14,7 +14,9 @@ import type { Option } from "@/lib/admin/data";
 import { resources, type FieldSpec, type ResourceKey } from "@/lib/admin/resources";
 import { adminResolver, flattenErrors, isRequired } from "@/lib/admin/validation";
 import { cn } from "@/lib/utils";
-import { ErrorSummary } from "./ErrorSummary";
+import { ErrorSummary, focusField } from "./ErrorSummary";
+import { FormSectionBlock, FormSectionNav, type FormSection } from "./FormSections";
+import { SaveBar, useUnsavedGuard } from "./SaveBar";
 import { a11yProps, FieldError, FieldShell } from "./FieldShell";
 import { EMPTY_I18N, I18nField, type I18nErrors, type I18nValue } from "./I18nField";
 import { SkillPicker, type SkillOption } from "./SkillPicker";
@@ -47,7 +49,9 @@ export function FieldsForm({
   lockId = false,
   onSave,
   doneHref,
+  sections,
 }: {
+  sections?: FormSection[];
   fields: FieldSpec[];
   schema: ZodObject;
   initial: Values;
@@ -60,6 +64,7 @@ export function FieldsForm({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [focusKey, setFocusKey] = useState(0);
+  const [saved, setSaved] = useState(false);
   const form = useForm<Values>({
     defaultValues: initial,
     mode: "onSubmit",
@@ -95,6 +100,10 @@ export function FieldsForm({
           }
           return;
         }
+        // Mark the current values as saved so the unsaved-changes guard lets go.
+        form.reset(raw);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
         toast.success("Đã lưu");
         if (doneHref) router.push(doneHref);
         router.refresh();
@@ -441,21 +450,48 @@ export function FieldsForm({
     }
   }
 
+  const dirty = formState.isDirty;
+  useUnsavedGuard(dirty);
+  const shownErrors = formState.submitCount > 0 ? errors : [];
+  const errorsByField = new Map<string, number>();
+  for (const e of shownErrors) errorsByField.set(e.field, (errorsByField.get(e.field) ?? 0) + 1);
+
+  const placed = new Set(sections?.flatMap((s) => s.fields));
+  const byName = new Map(fields.map((f) => [f.name, f]));
+  const body = sections?.length ? (
+    <>
+      {sections.map((section) => (
+        <FormSectionBlock key={section.id} section={section}>
+          {section.fields.map((name) => byName.get(name)).filter((f) => f !== undefined).map(renderField)}
+        </FormSectionBlock>
+      ))}
+      {fields.filter((f) => !placed.has(f.name)).map(renderField)}
+    </>
+  ) : (
+    fields.map(renderField)
+  );
+
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
       <p className="text-xs text-muted-foreground">Mục có * là bắt buộc</p>
-      <ErrorSummary errors={formState.submitCount > 0 ? errors : []} focusKey={focusKey} />
-      {fields.map(renderField)}
-      <div className="sticky bottom-0 flex gap-2 border-t bg-background py-3">
-        <Button type="submit" disabled={pending}>
-          {pending ? "Đang lưu…" : "Lưu"}
-        </Button>
-        {doneHref && (
-          <Button type="button" variant="outline" onClick={() => router.push(doneHref)}>
-            Hủy
-          </Button>
-        )}
-      </div>
+      <ErrorSummary errors={shownErrors} focusKey={focusKey} />
+      {sections?.length ? (
+        <div className="grid gap-6 lg:grid-cols-[11rem_minmax(0,1fr)]">
+          <FormSectionNav sections={sections} errorsByField={errorsByField} />
+          <div className="flex min-w-0 flex-col gap-6">{body}</div>
+        </div>
+      ) : (
+        body
+      )}
+      <SaveBar
+        dirty={dirty}
+        pending={pending}
+        saved={saved}
+        errorCount={shownErrors.length}
+        onSave={() => void onSubmit()}
+        onShowErrors={() => shownErrors[0] && focusField(shownErrors[0].path)}
+        onCancel={doneHref ? () => router.push(doneHref) : undefined}
+      />
     </form>
   );
 }
@@ -483,6 +519,7 @@ export function ResourceForm({
       lockId={!isNew}
       onSave={(values) => saveResource(resourceKey, values, isNew)}
       doneHref={`/admin/${resourceKey}`}
+      sections={resource.sections}
     />
   );
 }

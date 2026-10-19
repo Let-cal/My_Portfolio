@@ -73,6 +73,8 @@ export type Resource = {
   /** Item fields shown as columns in the list. */
   listColumns: string[];
   fields: FieldSpec[];
+  /** Long forms are split into titled sections (fields not listed go to the end). */
+  sections?: { id: string; title: string; fields: string[] }[];
   hasPublished: boolean;
   toRow: (item: AnyRow) => AnyRow;
   fromRow: (row: AnyRow, links: SkillLinkRow[]) => AnyRow;
@@ -93,6 +95,13 @@ export const resources: Record<ResourceKey, Resource> = {
     listColumns: ["company", "start", "end"],
     hasPublished: true,
     toRow: toRows(experienceToRow),
+    sections: [
+      { id: "info", title: "Thông tin", fields: ["id", "company", "parentCompany", "location", "position", "start", "end", "employmentType", "teamSize"] },
+      { id: "content", title: "Nội dung", fields: ["summary", "tech"] },
+      { id: "case-study", title: "Case study", fields: ["caseStudy"] },
+      { id: "links", title: "Liên kết & skills", fields: ["links", "skillIds"] },
+      { id: "visibility", title: "Hiển thị", fields: ["published"] },
+    ],
     fromRow: fromRows(rowToExperience),
     fields: [
       idField,
@@ -119,6 +128,13 @@ export const resources: Record<ResourceKey, Resource> = {
     listColumns: ["title", "start", "end"],
     hasPublished: true,
     toRow: toRows(projectToRow),
+    sections: [
+      { id: "info", title: "Thông tin", fields: ["id", "title", "role", "start", "end"] },
+      { id: "content", title: "Nội dung", fields: ["summary", "tech", "posterUrl", "videoUrl"] },
+      { id: "case-study", title: "Case study", fields: ["caseStudy"] },
+      { id: "links", title: "Liên kết & skills", fields: ["demoUrl", "repoUrls", "skillIds"] },
+      { id: "visibility", title: "Hiển thị", fields: ["published"] },
+    ],
     fromRow: fromRows(rowToProject),
     fields: [
       idField,
