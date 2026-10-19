@@ -8,7 +8,7 @@ export function isAdminEmail(email: string | null | undefined, adminEmail: strin
 
 /** Where to go after signing in. Only admin paths are allowed, so `next` cannot send anyone off-site. */
 export function safeNextPath(next: string | null | undefined): string {
-  if (!next || !/^\/admin(\/[\w-]*)*$/.test(next)) return "/admin";
+  if (!next || !/^\/admin(\/[\w-]+)*(\?[\w=&%.,+-]*)?$/.test(next)) return "/admin";
   return next;
 }
 

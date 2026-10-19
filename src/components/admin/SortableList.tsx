@@ -3,6 +3,7 @@
 import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useId } from "react";
 
 /** A vertical list reordered by dragging the handle, or with Space + arrow keys on it. */
 export function SortableList<T extends { id: string }>({
@@ -14,6 +15,8 @@ export function SortableList<T extends { id: string }>({
   onReorder: (items: T[]) => void;
   renderItem: (item: T, handle: React.ReactNode) => React.ReactNode;
 }) {
+  // A stable id keeps dnd-kit's aria-describedby the same on the server and in the browser.
+  const id = useId();
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -27,7 +30,7 @@ export function SortableList<T extends { id: string }>({
   }
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+    <DndContext id={id} sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
       <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
         <ul className="flex flex-col divide-y rounded-md border">
           {items.map((item) => (

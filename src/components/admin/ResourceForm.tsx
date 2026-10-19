@@ -14,26 +14,12 @@ import type { ZodObject } from "zod";
 import type { Option } from "@/lib/admin/data";
 import { resources, type FieldSpec, type ResourceKey } from "@/lib/admin/resources";
 import { EMPTY_I18N, I18nField, type I18nValue } from "./I18nField";
+import { SkillPicker, type SkillOption } from "./SkillPicker";
 import { SortableList } from "./SortableList";
+import { TagCombobox } from "./TagCombobox";
 import { UploadField } from "./UploadField";
 
 type Values = Record<string, unknown>;
-
-/** Empty values for a new item, one per field kind. */
-export function emptyItem(key: ResourceKey): Values {
-  const values: Values = {};
-  for (const f of resources[key].fields) {
-    values[f.name] =
-      f.kind === "i18n" ? (f.nullable ? null : { ...EMPTY_I18N })
-      : f.kind === "boolean" ? true
-      : f.kind === "select" ? f.options[0]
-      : f.kind === "tags" || f.kind === "links" || f.kind === "relations" || f.kind === "order" ? []
-      : f.kind === "colors" ? ["#0ea5e9", "#e0a84e"]
-      : f.kind === "text" || f.kind === "url" || f.kind === "month" || f.kind === "date" ? (f.nullable ? null : "")
-      : null;
-  }
-  return values;
-}
 
 const CASE_STUDY_PARTS = [
   ["problem", "Vấn đề"],
@@ -49,7 +35,12 @@ function errorText(errors: FieldErrors, name: string): string | undefined {
   return e?.message ?? (e ? "Giá trị chưa hợp lệ" : undefined);
 }
 
-export type Options = Partial<Record<"experiences" | "projects" | "skillGroups", Option[]>>;
+export type Options = Partial<Record<"experiences" | "projects" | "skillGroups", Option[]>> & {
+  /** Skills that can be attached to an experience or project. */
+  skills?: SkillOption[];
+  /** Skill names suggested for free-text tags (certificates, activities). */
+  skillNames?: string[];
+};
 
 /** A form for any list of field specs, validated with `schema` and saved with `onSave`. */
 export function FieldsForm({
@@ -79,8 +70,12 @@ export function FieldsForm({
   const { control, register, handleSubmit, formState } = form;
   const isNew = !lockId;
 
-  const onSubmit = handleSubmit((values) =>
+  const onSubmit = handleSubmit((parsed) =>
     startTransition(async () => {
+      // The resolver drops keys the schema does not know, so put virtual fields back.
+      const raw = form.getValues();
+      const values = { ...parsed };
+      for (const f of fields) if (f.virtual) values[f.name] = raw[f.name];
       const result = await onSave(values);
       if (!result.ok) {
         toast.error(result.error);
@@ -165,7 +160,30 @@ export function FieldsForm({
             </select>
           </label>
         );
+      case "skills":
+        return (
+          <Controller
+            key={f.name}
+            control={control}
+            name={f.name}
+            render={({ field }) => (
+              <SkillPicker label={f.label} value={(field.value as string[]) ?? []} onChange={field.onChange} options={options.skills ?? []} />
+            )}
+          />
+        );
       case "tags":
+        if (f.suggest === "skills") {
+          return (
+            <Controller
+              key={f.name}
+              control={control}
+              name={f.name}
+              render={({ field }) => (
+                <TagCombobox label={f.label} value={(field.value as string[]) ?? []} onChange={field.onChange} suggestions={options.skillNames ?? []} />
+              )}
+            />
+          );
+        }
         return (
           <Controller
             key={f.name}

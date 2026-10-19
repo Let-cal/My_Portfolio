@@ -10,6 +10,7 @@ vi.mock("@/lib/admin/session", () => ({ requireAdmin }));
 type Call = { table: string; op: string; args: unknown[] };
 let calls: Call[] = [];
 let existing: { id: string; sort_index: number }[] = [];
+let links: { skill_id: string; experience_id: string | null; project_id: string | null }[] = [];
 
 /** Records each query; `select ... order` answers with `existing`, writes succeed. */
 function table(name: string) {
@@ -17,11 +18,16 @@ function table(name: string) {
   const done = { error: null, count: 1 };
   const filterable = (op: string, args: unknown[]) => {
     record(op, args);
-    return { eq: (...eqArgs: unknown[]) => (record(`${op}.eq`, eqArgs), Promise.resolve(done)) };
+    return {
+      eq: (...eqArgs: unknown[]) => (record(`${op}.eq`, eqArgs), Promise.resolve(done)),
+      match: (...matchArgs: unknown[]) => (record(`${op}.match`, matchArgs), Promise.resolve(done)),
+    };
   };
   return {
     select: () => ({
       order: () => Promise.resolve({ data: [...existing].sort((a, b) => b.sort_index - a.sort_index), error: null }),
+      eq: (col: string, value: string) =>
+        Promise.resolve({ data: links.filter((l) => l[col as keyof (typeof links)[number]] === value), error: null }),
     }),
     upsert: (...args: unknown[]) => (record("upsert", args), Promise.resolve(done)),
     insert: (...args: unknown[]) => (record("insert", args), Promise.resolve(done)),
@@ -31,9 +37,16 @@ function table(name: string) {
 }
 vi.mock("@/lib/supabase/server", () => ({ createServerSupabase: async () => ({ from: table }) }));
 
-const { saveResource, deleteResource, reorderResource, togglePublished, saveProfile, saveRole, setOpenToWork } = await import(
-  "@/app/admin/actions"
-);
+const {
+  saveResource,
+  deleteResource,
+  reorderResource,
+  togglePublished,
+  saveProfile,
+  saveRole,
+  setOpenToWork,
+  saveSkillLinks,
+} = await import("@/app/admin/actions");
 const content = contentSchema.parse(seed);
 
 beforeEach(() => {
@@ -42,6 +55,7 @@ beforeEach(() => {
     { id: "a", sort_index: 0 },
     { id: "b", sort_index: 4 },
   ];
+  links = [];
   updateTag.mockReset();
   requireAdmin.mockReset().mockResolvedValue({ email: "admin@x.com" });
 });
@@ -120,5 +134,59 @@ describe("admin actions", () => {
     expect(await setOpenToWork(false)).toEqual({ ok: true });
     expect(calls.find((c) => c.op === "update")).toMatchObject({ table: "profile", args: [{ open_to_work: false }] });
     expect(updateTag).toHaveBeenCalledTimes(2);
+  });
+
+  it("saveSkillLinks applies a batch of changes and refreshes the site once", async () => {
+    const result = await saveSkillLinks([
+      { skillId: "react", projectId: "siteplus", linked: true },
+      { skillId: "gsap", experienceId: "skg-coa", linked: true },
+      { skillId: "dart", projectId: "zodiacgems", linked: false },
+    ]);
+    expect(result).toEqual({ ok: true });
+    const upsert = calls.find((c) => c.op === "upsert")!;
+    expect(upsert.table).toBe("skill_links");
+    expect(upsert.args).toEqual([
+      [
+        { skill_id: "react", experience_id: null, project_id: "siteplus" },
+        { skill_id: "gsap", experience_id: "skg-coa", project_id: null },
+      ],
+      { onConflict: "skill_id,experience_id,project_id", ignoreDuplicates: true },
+    ]);
+    expect(calls.filter((c) => c.op === "delete.match").map((c) => c.args[0])).toEqual([
+      { skill_id: "dart", project_id: "zodiacgems" },
+    ]);
+    expect(updateTag).toHaveBeenCalledTimes(1);
+  });
+
+  it("saveSkillLinks refuses non-admins and malformed changes", async () => {
+    requireAdmin.mockRejectedValue(new Error("FORBIDDEN"));
+    expect((await saveSkillLinks([{ skillId: "react", projectId: "siteplus", linked: true }])).ok).toBe(false);
+    requireAdmin.mockResolvedValue({ email: "admin@x.com" });
+    const bad = [{ skillId: "react", projectId: "siteplus", experienceId: "skg-coa", linked: true }];
+    expect((await saveSkillLinks(bad as never)).ok).toBe(false);
+    expect((await saveSkillLinks([{ skillId: "", projectId: "x", linked: true }])).ok).toBe(false);
+    expect(calls).toEqual([]);
+    expect(updateTag).not.toHaveBeenCalled();
+  });
+
+  it("saving a project's skills only touches that project's links", async () => {
+    const project = content.projects.find((p) => p.id === "siteplus")!;
+    existing.push({ id: "siteplus", sort_index: 0 });
+    links = [
+      { skill_id: "react", experience_id: null, project_id: "siteplus" },
+      { skill_id: "flutter", experience_id: null, project_id: "siteplus" },
+      { skill_id: "react", experience_id: "skg-coa", project_id: null },
+    ];
+    const { sortIndex: _s, ...data } = project;
+    void _s;
+    expect(await saveResource("projects", { ...data, skillIds: ["react", "dart"] }, false)).toEqual({ ok: true });
+    const projectUpsert = calls.find((c) => c.op === "upsert" && c.table === "projects")!;
+    expect(projectUpsert.args[0]).not.toHaveProperty("skillIds");
+    expect(calls.filter((c) => c.table === "skill_links" && c.op === "insert").map((c) => c.args[0])).toEqual([
+      [{ skill_id: "dart", experience_id: null, project_id: "siteplus" }],
+    ]);
+    expect(calls.filter((c) => c.op === "delete.match").map((c) => c.args[0])).toEqual([
+      { skill_id: "flutter", project_id: "siteplus" },
+    ]);
   });
 });

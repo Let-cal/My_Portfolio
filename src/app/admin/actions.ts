@@ -1,7 +1,9 @@
 "use server";
 
 import { updateTag } from "next/cache";
+import { z } from "zod";
 import { profileToRow, roleToRow, skillToLinkRows } from "@/lib/data/mappers";
+import { diffLinks, linkMatch, linkRow, type LinkTarget } from "@/lib/admin/links";
 import { isResourceKey, resources, type ResourceKey } from "@/lib/admin/resources";
 import { requireAdmin } from "@/lib/admin/session";
 import { createServerSupabase } from "@/lib/supabase/server";
@@ -36,6 +38,8 @@ export async function saveResource(key: string, data: Record<string, unknown>, i
   return adminWrite(key, async (k) => {
     const resource = resources[k];
     const supabase = await createServerSupabase();
+    const { skillIds, ...fields } = data;
+    data = fields;
     const id = String(data.id ?? "");
     const { data: existing, error } = await supabase
       .from(resource.table)
@@ -58,7 +62,57 @@ export async function saveResource(key: string, data: Record<string, unknown>, i
       const links = skillToLinkRows(item as Skill);
       if (links.length) check((await supabase.from("skill_links").insert(links)).error);
     }
+    if ((k === "experiences" || k === "projects") && Array.isArray(skillIds)) {
+      const column = k === "experiences" ? "experience_id" : "project_id";
+      const target: LinkTarget = k === "experiences" ? { experienceId: id } : { projectId: id };
+      const { data: rows, error: linkError } = await supabase.from("skill_links").select("skill_id").eq(column, id);
+      check(linkError);
+      const { add, remove } = diffLinks((rows ?? []).map((r) => r.skill_id as string), skillIds as string[]);
+      if (add.length) check((await supabase.from("skill_links").insert(add.map((skillId) => linkRow(skillId, target)))).error);
+      for (const skillId of remove) check((await supabase.from("skill_links").delete().match(linkMatch(skillId, target))).error);
+    }
   });
+}
+
+const linkChange = z
+  .object({
+    skillId: z.string().min(1),
+    experienceId: z.string().min(1).optional(),
+    projectId: z.string().min(1).optional(),
+    linked: z.boolean(),
+  })
+  .strict()
+  .refine((c) => (c.experienceId === undefined) !== (c.projectId === undefined), "Exactly one target");
+
+export type LinkChange = z.infer<typeof linkChange>;
+
+/**
+ * Saves the matrix's pending changes in one go: links are upserted (duplicates ignored),
+ * unlinks deleted one by one, then the public site cache is refreshed once.
+ */
+export async function saveSkillLinks(changes: LinkChange[]): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    const parsed = z.array(linkChange).max(1000).safeParse(changes);
+    if (!parsed.success) throw new Error("Thay đổi không hợp lệ.");
+    const target = (c: LinkChange): LinkTarget =>
+      c.experienceId !== undefined ? { experienceId: c.experienceId } : { projectId: c.projectId! };
+    const supabase = await createServerSupabase();
+    const add = parsed.data.filter((c) => c.linked).map((c) => linkRow(c.skillId, target(c)));
+    if (add.length) {
+      check(
+        (await supabase.from("skill_links").upsert(add, { onConflict: "skill_id,experience_id,project_id", ignoreDuplicates: true }))
+          .error,
+      );
+    }
+    for (const c of parsed.data.filter((x) => !x.linked)) {
+      check((await supabase.from("skill_links").delete().match(linkMatch(c.skillId, target(c)))).error);
+    }
+    updateTag("content");
+    return { ok: true };
+  } catch (error) {
+    return fail(error);
+  }
 }
 
 export async function deleteResource(key: string, id: string) {

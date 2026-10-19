@@ -6,3 +6,8 @@ test("the admin area sends visitors to the login page and stays out of search re
   await expect(page.getByRole("heading", { name: "Đăng nhập" })).toBeVisible();
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
 });
+
+test("an admin link with a filter survives the trip through the login page", async ({ page }) => {
+  await page.goto("/admin/skills?filter=orphan");
+  await expect(page).toHaveURL(/\/admin\/login\?next=%2Fadmin%2Fskills%3Ffilter%3Dorphan$/);
+});

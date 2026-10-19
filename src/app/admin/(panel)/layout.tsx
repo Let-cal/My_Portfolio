@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { SignOutButton } from "@/components/admin/SignOutButton";
 import { RESOURCE_KEYS, resources } from "@/lib/admin/resources";
+import { HealthBadge } from "@/components/admin/HealthBadge";
 import { getAdminEmail } from "@/lib/admin/session";
 
 async function SignedInAs() {
@@ -31,8 +32,13 @@ export default function AdminPanelLayout({ children }: { children: React.ReactNo
         <ul className="flex flex-wrap gap-1 md:flex-col">
           {NAV.map((item) => (
             <li key={item.href}>
-              <Link href={item.href} className="block rounded px-2 py-1 text-sm hover:bg-muted">
+              <Link href={item.href} className="flex items-center gap-2 rounded px-2 py-1 text-sm hover:bg-muted">
                 {item.label}
+                {item.href === "/admin" && (
+                  <Suspense>
+                    <HealthBadge />
+                  </Suspense>
+                )}
               </Link>
             </li>
           ))}

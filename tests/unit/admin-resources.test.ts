@@ -24,7 +24,7 @@ describe.each(RESOURCE_KEYS)("resource %s", (key) => {
 
   it("its form edits every field except the drag-and-drop position", () => {
     const schemaKeys = Object.keys(resource.schema.shape).filter((k) => k !== "sortIndex").sort();
-    expect(resource.fields.map((f) => f.name).sort()).toEqual(schemaKeys);
+    expect(resource.fields.filter((f) => !f.virtual).map((f) => f.name).sort()).toEqual(schemaKeys);
   });
 
   it("names only real fields as translated or listed", () => {

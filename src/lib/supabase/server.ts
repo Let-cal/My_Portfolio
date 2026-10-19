@@ -1,8 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 
 /** Cookie-based client for server components, route handlers and server actions (admin session). */
 export async function createServerSupabase() {
+  // Session reads are request-time only; never let them run while Next prerenders a shell
+  // (the auth client checks token expiry with Date.now()).
+  await connection();
   const cookieStore = await cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
