@@ -59,6 +59,7 @@ export type FieldSpec = Base &
     | { kind: "upload"; upload: UploadKind }
     | { kind: "caseStudy" | "links" | "colors" | "stat" }
     | { kind: "relations"; source: "experiences" | "projects" }
+    | { kind: "order"; source: "experiences" | "skillGroups" }
   );
 
 type AnyRow = Record<string, unknown>;

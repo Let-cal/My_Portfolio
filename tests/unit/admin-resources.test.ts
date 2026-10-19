@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { contentSchema, profileSchema } from "@/content/schema";
+import { contentSchema, profileSchema, roleSchema } from "@/content/schema";
 import seed from "@/content/seed.json";
 import { RESOURCE_KEYS, resources, i18nFields, type ResourceKey } from "@/lib/admin/resources";
+import { PROFILE_FIELDS, ROLE_FIELDS } from "@/lib/admin/singletons";
 
 const content = contentSchema.parse(seed);
 const firstItem: Record<ResourceKey, unknown> = {
@@ -47,5 +48,21 @@ describe.each(RESOURCE_KEYS)("resource %s", (key) => {
 describe("profile", () => {
   it("rejects a phone field", () => {
     expect(profileSchema.safeParse({ ...content.profile, phone: "0123" }).success).toBe(false);
+  });
+});
+
+describe("profile and role forms", () => {
+  const topLevel = (names: string[]) => [...new Set(names.map((n) => n.split(".")[0]))].sort();
+
+  it("the profile form edits every profile field, including each role summary", () => {
+    expect(topLevel(PROFILE_FIELDS.map((f) => f.name))).toEqual(Object.keys(profileSchema.shape).sort());
+    const summaries = PROFILE_FIELDS.filter((f) => f.name.startsWith("summaries.")).map((f) => f.name.split(".")[1]);
+    expect(summaries.sort()).toEqual(Object.keys(content.profile.summaries).sort());
+  });
+
+  it("the role form edits every role field except its fixed key", () => {
+    expect(ROLE_FIELDS.map((f) => f.name).sort()).toEqual(
+      Object.keys(roleSchema.shape).filter((k) => k !== "key").sort(),
+    );
   });
 });

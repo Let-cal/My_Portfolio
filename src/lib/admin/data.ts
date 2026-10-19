@@ -1,6 +1,7 @@
-import type { SkillLinkRow } from "@/lib/data/mappers";
+import { ROLE_KEYS } from "@/content/schema";
+import { rowToProfile, rowToRole, type SkillLinkRow } from "@/lib/data/mappers";
 import { createServerSupabase } from "@/lib/supabase/server";
-import { resources, type ResourceKey } from "./resources";
+import { RESOURCE_KEYS, resources, type ResourceKey } from "./resources";
 
 export type Item = Record<string, unknown> & { id: string; sortIndex: number };
 
@@ -35,4 +36,37 @@ export async function relationOptions(): Promise<Record<"experiences" | "project
     experiences: experiences.map((e) => ({ id: e.id, label: `${e.company} · ${e.start}` })),
     projects: projects.map((p) => ({ id: p.id, label: String(p.title) })),
   };
+}
+
+export async function getProfileAndRoles() {
+  const supabase = await createServerSupabase();
+  const [profile, roles] = await Promise.all([
+    supabase.from("profile").select("*").eq("id", "me").maybeSingle(),
+    supabase.from("roles").select("*"),
+  ]);
+  if (profile.error) throw new Error(`profile: ${profile.error.message}`);
+  if (roles.error) throw new Error(`roles: ${roles.error.message}`);
+  return {
+    profile: profile.data ? rowToProfile(profile.data) : null,
+    roles: ROLE_KEYS.flatMap((key) => roles.data.filter((r) => r.key === key).map(rowToRole)),
+  };
+}
+
+/** Row counts for the dashboard, as the admin sees them (hidden rows included). */
+export async function countRows(): Promise<{ key: ResourceKey; count: number; hidden: number }[]> {
+  const supabase = await createServerSupabase();
+  return Promise.all(
+    RESOURCE_KEYS.map(async (key) => {
+      const { table, hasPublished } = resources[key];
+      const all = await supabase.from(table).select("*", { count: "exact", head: true });
+      if (all.error) throw new Error(`${table}: ${all.error.message}`);
+      let hidden = 0;
+      if (hasPublished) {
+        const res = await supabase.from(table).select("*", { count: "exact", head: true }).eq("published", false);
+        if (res.error) throw new Error(`${table}: ${res.error.message}`);
+        hidden = res.count ?? 0;
+      }
+      return { key, count: all.count ?? 0, hidden };
+    }),
+  );
 }

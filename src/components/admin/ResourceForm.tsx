@@ -5,14 +5,16 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Controller, useForm, type FieldErrors, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
-import { saveResource } from "@/app/admin/actions";
+import { saveResource, type ActionResult } from "@/app/admin/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import type { ZodObject } from "zod";
 import type { Option } from "@/lib/admin/data";
 import { resources, type FieldSpec, type ResourceKey } from "@/lib/admin/resources";
 import { EMPTY_I18N, I18nField, type I18nValue } from "./I18nField";
+import { SortableList } from "./SortableList";
 import { UploadField } from "./UploadField";
 
 type Values = Record<string, unknown>;
@@ -25,7 +27,7 @@ export function emptyItem(key: ResourceKey): Values {
       f.kind === "i18n" ? (f.nullable ? null : { ...EMPTY_I18N })
       : f.kind === "boolean" ? true
       : f.kind === "select" ? f.options[0]
-      : f.kind === "tags" || f.kind === "links" || f.kind === "relations" ? []
+      : f.kind === "tags" || f.kind === "links" || f.kind === "relations" || f.kind === "order" ? []
       : f.kind === "colors" ? ["#0ea5e9", "#e0a84e"]
       : f.kind === "text" || f.kind === "url" || f.kind === "month" || f.kind === "date" ? (f.nullable ? null : "")
       : null;
@@ -41,41 +43,51 @@ const CASE_STUDY_PARTS = [
 ] as const;
 
 function errorText(errors: FieldErrors, name: string): string | undefined {
-  const e = errors[name] as { message?: string } | undefined;
+  const e = name.split(".").reduce<unknown>((node, part) => (node as Record<string, unknown> | undefined)?.[part], errors) as
+    | { message?: string }
+    | undefined;
   return e?.message ?? (e ? "Giá trị chưa hợp lệ" : undefined);
 }
 
-export function ResourceForm({
-  resourceKey,
+export type Options = Partial<Record<"experiences" | "projects" | "skillGroups", Option[]>>;
+
+/** A form for any list of field specs, validated with `schema` and saved with `onSave`. */
+export function FieldsForm({
+  fields,
+  schema,
   initial,
-  isNew,
-  options,
+  options = {},
+  lockId = false,
+  onSave,
+  doneHref,
 }: {
-  resourceKey: ResourceKey;
+  fields: FieldSpec[];
+  schema: ZodObject;
   initial: Values;
-  isNew: boolean;
-  options: Record<"experiences" | "projects", Option[]>;
+  options?: Options;
+  lockId?: boolean;
+  onSave: (values: Values) => Promise<ActionResult>;
+  /** Where to go after a successful save; stay on the page when omitted. */
+  doneHref?: string;
 }) {
-  const resource = resources[resourceKey];
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const { sortIndex: _sortIndex, ...defaults } = initial;
-  void _sortIndex;
   const form = useForm<Values>({
-    defaultValues: defaults,
-    resolver: zodResolver(resource.schema.omit({ sortIndex: true })) as unknown as Resolver<Values>,
+    defaultValues: initial,
+    resolver: zodResolver(schema) as unknown as Resolver<Values>,
   });
   const { control, register, handleSubmit, formState } = form;
+  const isNew = !lockId;
 
   const onSubmit = handleSubmit((values) =>
     startTransition(async () => {
-      const result = await saveResource(resourceKey, values, isNew);
+      const result = await onSave(values);
       if (!result.ok) {
         toast.error(result.error);
         return;
       }
       toast.success("Đã lưu");
-      router.push(`/admin/${resourceKey}`);
+      if (doneHref) router.push(doneHref);
       router.refresh();
     }),
   );
@@ -196,7 +208,7 @@ export function ResourceForm({
               return (
                 <fieldset className="flex flex-col gap-1">
                   <legend className="mb-1 text-sm font-medium">{f.label}</legend>
-                  {options[f.source].map((o) => (
+                  {(options[f.source] ?? []).map((o) => (
                     <label key={o.id} className="flex items-center gap-2 text-sm">
                       <input
                         type="checkbox"
@@ -205,12 +217,52 @@ export function ResourceForm({
                           const next = new Set(selected);
                           if (e.target.checked) next.add(o.id);
                           else next.delete(o.id);
-                          field.onChange(options[f.source].map((x) => x.id).filter((id) => next.has(id)));
+                          field.onChange((options[f.source] ?? []).map((x) => x.id).filter((id) => next.has(id)));
                         }}
                       />
                       {o.label}
                     </label>
                   ))}
+                </fieldset>
+              );
+            }}
+          />
+        );
+      case "order":
+        return (
+          <Controller
+            key={f.name}
+            control={control}
+            name={f.name}
+            render={({ field }) => {
+              const labels = new Map((options[f.source] ?? []).map((o) => [o.id, o.label]));
+              const ids = (field.value as string[]) ?? [];
+              const missing = (options[f.source] ?? []).filter((o) => !ids.includes(o.id));
+              return (
+                <fieldset className="flex flex-col gap-2">
+                  <legend className="mb-1 text-sm font-medium">{f.label}</legend>
+                  <SortableList
+                    items={ids.map((id) => ({ id }))}
+                    onReorder={(next) => field.onChange(next.map((i) => i.id))}
+                    renderItem={(item, handle) => (
+                      <div className="flex items-center gap-2 px-2 py-1.5 text-sm">
+                        {handle}
+                        <span className="flex-1">{labels.get(item.id) ?? item.id}</span>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => field.onChange(ids.filter((x) => x !== item.id))}>
+                          Bỏ
+                        </Button>
+                      </div>
+                    )}
+                  />
+                  {missing.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {missing.map((o) => (
+                        <Button key={o.id} type="button" variant="outline" size="xs" onClick={() => field.onChange([...ids, o.id])}>
+                          + {o.label}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
                 </fieldset>
               );
             }}
@@ -342,15 +394,44 @@ export function ResourceForm({
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-6">
-      {resource.fields.map(renderField)}
+      {fields.map(renderField)}
       <div className="sticky bottom-0 flex gap-2 border-t bg-background py-3">
         <Button type="submit" disabled={pending}>
           {pending ? "Đang lưu…" : "Lưu"}
         </Button>
-        <Button type="button" variant="outline" onClick={() => router.push(`/admin/${resourceKey}`)}>
-          Hủy
-        </Button>
+        {doneHref && (
+          <Button type="button" variant="outline" onClick={() => router.push(doneHref)}>
+            Hủy
+          </Button>
+        )}
       </div>
     </form>
+  );
+}
+
+export function ResourceForm({
+  resourceKey,
+  initial,
+  isNew,
+  options,
+}: {
+  resourceKey: ResourceKey;
+  initial: Values;
+  isNew: boolean;
+  options: Options;
+}) {
+  const resource = resources[resourceKey];
+  const { sortIndex: _sortIndex, ...defaults } = initial;
+  void _sortIndex;
+  return (
+    <FieldsForm
+      fields={resource.fields}
+      schema={resource.schema.omit({ sortIndex: true })}
+      initial={defaults}
+      options={options}
+      lockId={!isNew}
+      onSave={(values) => saveResource(resourceKey, values, isNew)}
+      doneHref={`/admin/${resourceKey}`}
+    />
   );
 }

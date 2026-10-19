@@ -31,7 +31,9 @@ function table(name: string) {
 }
 vi.mock("@/lib/supabase/server", () => ({ createServerSupabase: async () => ({ from: table }) }));
 
-const { saveResource, deleteResource, reorderResource, togglePublished } = await import("@/app/admin/actions");
+const { saveResource, deleteResource, reorderResource, togglePublished, saveProfile, saveRole, setOpenToWork } = await import(
+  "@/app/admin/actions"
+);
 const content = contentSchema.parse(seed);
 
 beforeEach(() => {
@@ -98,5 +100,25 @@ describe("admin actions", () => {
 
   it("reject unknown resources", async () => {
     expect((await deleteResource("profile", "me")).ok).toBe(false);
+  });
+
+  it("save the profile as the single 'me' row and refuse a phone number", async () => {
+    expect(await saveProfile(content.profile)).toEqual({ ok: true });
+    const upsert = calls.find((c) => c.op === "upsert")!;
+    expect(upsert.table).toBe("profile");
+    expect(upsert.args[0]).toMatchObject({ id: "me", name: content.profile.name });
+    calls = [];
+    expect((await saveProfile({ ...content.profile, phone: "0123456789" })).ok).toBe(false);
+    expect(calls).toEqual([]);
+  });
+
+  it("save a role by its key and switch open to work", async () => {
+    expect(await saveRole(content.roles[0])).toEqual({ ok: true });
+    const upsert = calls.find((c) => c.op === "upsert")!;
+    expect(upsert.table).toBe("roles");
+    expect(upsert.args[0]).toMatchObject({ key: content.roles[0].key });
+    expect(await setOpenToWork(false)).toEqual({ ok: true });
+    expect(calls.find((c) => c.op === "update")).toMatchObject({ table: "profile", args: [{ open_to_work: false }] });
+    expect(updateTag).toHaveBeenCalledTimes(2);
   });
 });

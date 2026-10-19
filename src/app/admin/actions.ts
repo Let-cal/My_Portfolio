@@ -1,11 +1,11 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { skillToLinkRows } from "@/lib/data/mappers";
+import { profileToRow, roleToRow, skillToLinkRows } from "@/lib/data/mappers";
 import { isResourceKey, resources, type ResourceKey } from "@/lib/admin/resources";
 import { requireAdmin } from "@/lib/admin/session";
 import { createServerSupabase } from "@/lib/supabase/server";
-import type { Skill } from "@/content/schema";
+import { profileSchema, roleSchema, type Skill } from "@/content/schema";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -87,5 +87,45 @@ export async function togglePublished(key: string, id: string, value: boolean) {
     if (!resources[k].hasPublished) throw new Error("Mục này không có trạng thái ẩn/hiện.");
     const supabase = await createServerSupabase();
     check((await supabase.from(resources[k].table).update({ published: value }).eq("id", id)).error);
+  });
+}
+
+/** Profile and roles are single records rather than lists, so they get their own actions. */
+async function adminSave(write: () => Promise<void>): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    await write();
+    updateTag("content");
+    return { ok: true };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+function parsed<T>(result: { success: true; data: T } | { success: false; error: { issues: { path: PropertyKey[]; message: string }[] } }): T {
+  if (!result.success) throw new Error(result.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; "));
+  return result.data;
+}
+
+export async function saveProfile(data: Record<string, unknown>) {
+  return adminSave(async () => {
+    const profile = parsed(profileSchema.safeParse(data));
+    const supabase = await createServerSupabase();
+    check((await supabase.from("profile").upsert({ id: "me", ...profileToRow(profile) }, { onConflict: "id" })).error);
+  });
+}
+
+export async function setOpenToWork(value: boolean) {
+  return adminSave(async () => {
+    const supabase = await createServerSupabase();
+    check((await supabase.from("profile").update({ open_to_work: value }).eq("id", "me")).error);
+  });
+}
+
+export async function saveRole(data: Record<string, unknown>) {
+  return adminSave(async () => {
+    const role = parsed(roleSchema.safeParse(data));
+    const supabase = await createServerSupabase();
+    check((await supabase.from("roles").upsert(roleToRow(role), { onConflict: "key" })).error);
   });
 }
