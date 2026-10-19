@@ -6,7 +6,7 @@ A personal portfolio for **Lê Trần Cát Lâm**, presenting project evidence t
 
 [Website](https://letcal.is-a.dev) · [Design specification](docs/superpowers/specs/2026-10-13-portfolio-koi-redesign-design.md) · [CI and release flow](docs/ci-release.md)
 
-> **Frontend v1** is live at [letcal.is-a.dev](https://letcal.is-a.dev). Check [GitHub Releases](https://github.com/Let-cal/My_Portfolio/releases) for the verified production revision. Supabase provisioning, admin authentication, and content management remain planned work.
+> **Frontend v1** is live at [letcal.is-a.dev](https://letcal.is-a.dev). Content is stored in Supabase and edited through a private admin area at `/admin`.
 
 ## Preview
 
@@ -30,7 +30,8 @@ Desktop preview with Motion off. [Dark](docs/images/portfolio-dark.webp) · [Lig
 | Layer | Implementation |
 | --- | --- |
 | Pages and rendering | Next.js **16.4**, React **19.3**, TypeScript, App Router, Cache Components |
-| Content | Zod-validated seed, repository interface, cached server reads, optional public Supabase adapter |
+| Content | Supabase Postgres with row level security, Zod validation, cached server reads, seed fallback |
+| Admin | Supabase Auth, proxy route guard, server actions, config-driven forms, direct-to-storage uploads |
 | Localization | next-intl with build-time message precompilation |
 | UI | Tailwind CSS, Radix UI, repository-owned components, vendored shadcn CSS |
 | Animation | Motion, GSAP/ScrollTrigger, Lenis; shared effective motion preference |
@@ -38,7 +39,9 @@ Desktop preview with Motion off. [Dark](docs/images/portfolio-dark.webp) · [Lig
 | Verification | Vitest, Testing Library, Playwright/axe, artifact budgets, Lighthouse |
 | Delivery | GitHub Actions checks; Vercel hosting through the repository integration |
 
-Server Components read content through `src/lib/data/get-content.ts`. Without a configured Supabase URL, the site validates and uses `src/content/seed.json`. Failed or invalid Supabase responses also fall back to the seed, with a shorter cache lifetime. The adapter does **not** establish that database policies or admin features are implemented.
+Server Components read content through `src/lib/data/get-content.ts`, cached under the `content` tag. Admin saves call `updateTag('content')`, so the next visitor sees the change. Without a configured Supabase URL the site uses `src/content/seed.json`; failed or invalid Supabase responses also fall back to the seed, with a shorter cache lifetime.
+
+Visitors read through the publishable key, and row level security only returns published rows. Writes require an email listed in `private.app_admins`, a schema the Data API does not expose. The proxy also sends anyone other than `ADMIN_EMAIL` from `/admin` to the login page. `src/lib/data/columns.ts` describes every table once: tests check it against the row mappers, and `supabase/schema.sql` is generated from it.
 
 The scene loads separately from the page content. Mobile uses static imagery; capable desktop devices load live scenery after the page load gate. Production builds verify and use committed portraits, fallbacks, icons and the skill sprite without re-encoding them for the build machine. After editing their sources, run `npm run generate:assets`, review the generated diff and commit it. Exact dependency versions are in `package-lock.json`.
 
@@ -58,7 +61,15 @@ npm run build
 npm run start
 ```
 
-Optional service variables are listed in [.env.example](.env.example). Configure them only for integration work. Never commit real credentials or expose `SUPABASE_SERVICE_ROLE_KEY` through a `NEXT_PUBLIC_` variable. Database migration and seeding commands will accompany the backend implementation.
+### Database and admin (optional)
+
+1. Create a Supabase project and apply `supabase/migrations/` in order (SQL editor or `supabase db push`).
+2. Copy [.env.example](.env.example) to `.env.local` and fill in the project URL, publishable key, secret key and `ADMIN_EMAIL`. Never commit it, and never expose `SUPABASE_SERVICE_ROLE_KEY` through a `NEXT_PUBLIC_` variable.
+3. `npm run db:seed` loads `seed.json`; `npm run db:verify` reads it back with the public key and compares every section.
+4. In Supabase Auth, create the admin user, then run `insert into private.app_admins (email) values ('<email>');`.
+5. Sign in at `/admin/login`.
+
+After changing `columns.ts`, run `npm run db:schema` and add a migration for the live database. The `Supabase keep-alive` workflow reads one row twice a week so a free project does not pause; it uses the `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` repository variables.
 
 The `@swc/core` override preserves an existing Windows tooling workaround. Review Windows and Linux behavior before changing it. Builds also need network access for `next/font/google` font downloads.
 
@@ -118,7 +129,10 @@ Lab loading metrics vary between runs on shared CI machines, so they are reporte
 src/app/[locale]/   Localized routes, layouts, metadata, quick view
 src/components/    Sections, controls, effects
 src/content/       Public seed, schema, generated portrait props
-src/lib/data/      Repositories, mapping, cached content access
+src/lib/data/      Repositories, table columns, mapping, cached content access
+src/app/admin/     Admin login, dashboard and editors
+src/lib/admin/     Admin guard, resource config, server-side data
+supabase/          Migrations and the generated current schema
 src/scene/         Creature, scenery, input, device tiers
 public/            Public CVs, stylized portraits, models, fallbacks
 scripts/           Asset generation and release measurements

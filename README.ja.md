@@ -6,7 +6,7 @@
 
 [Webサイト](https://letcal.is-a.dev) · [設計仕様](docs/superpowers/specs/2026-10-13-portfolio-koi-redesign-design.md) · [CIとリリース手順](docs/ci-release.md)
 
-> **フロントエンド v1** は [letcal.is-a.dev](https://letcal.is-a.dev) で公開中です。本番で確認したリビジョンは[GitHub Releases](https://github.com/Let-cal/My_Portfolio/releases)をご覧ください。Supabaseの環境構築、管理者認証、コンテンツ管理機能は今後の実装予定です。
+> **フロントエンド v1** は [letcal.is-a.dev](https://letcal.is-a.dev) で公開中です。コンテンツはSupabaseに保存し、非公開の管理画面 `/admin` から編集します。
 
 ## プレビュー
 
@@ -30,7 +30,8 @@ Motionオフで撮影したデスクトップ画面です。[ダーク](docs/ima
 | 領域 | 使用技術・構成 |
 | --- | --- |
 | ページ・描画 | Next.js **16.4**、React **19.3**、TypeScript、App Router、Cache Components |
-| コンテンツ | Zodによる検証、seedデータ、リポジトリ層、サーバー側キャッシュ、任意のSupabase接続 |
+| コンテンツ | 行レベルセキュリティ付きのSupabase Postgres、Zodによる検証、サーバー側キャッシュ、seedへのフォールバック |
+| 管理画面 | Supabase Auth、プロキシでのルート保護、Server Actions、設定駆動のフォーム、ストレージへの直接アップロード |
 | 多言語対応 | next-intl、ビルド時のメッセージ事前コンパイル |
 | UI | Tailwind CSS、Radix UI、リポジトリ内のコンポーネント、同梱のshadcn CSS |
 | アニメーション | Motion、GSAP/ScrollTrigger、Lenis |
@@ -38,7 +39,9 @@ Motionオフで撮影したデスクトップ画面です。[ダーク](docs/ima
 | 検証 | Vitest、Testing Library、Playwright/axe、成果物のサイズ検査、Lighthouse |
 | CI・ホスティング | GitHub Actions、Vercelのリポジトリ連携 |
 
-Server Componentsは `src/lib/data/get-content.ts` を通してコンテンツを読み込みます。SupabaseのURLが未設定の場合は、`src/content/seed.json` を検証して使用します。Supabaseの応答に問題がある場合もseedに切り替え、その際はキャッシュの有効期間を短くします。接続用アダプターはありますが、データベースのアクセス制御や管理画面が完成していることを意味するものではありません。
+Server Componentsは `src/lib/data/get-content.ts` を通してコンテンツを読み込み、`content` タグでキャッシュします。管理画面で保存すると `updateTag('content')` が呼ばれ、次の閲覧者には変更後の内容が表示されます。SupabaseのURLが未設定の場合は `src/content/seed.json` を使用し、Supabaseの応答に問題がある場合もseedに切り替えます（キャッシュ期間は短くなります）。
+
+閲覧者は公開用キーで読み込み、行レベルセキュリティにより公開中の行だけが返ります。書き込みには `private.app_admins` に登録されたメールアドレスが必要で、このスキーマはData APIに公開していません。さらにプロキシが `/admin` へのアクセスを確認し、`ADMIN_EMAIL` 以外はログイン画面へ移動させます。各テーブルの定義は `src/lib/data/columns.ts` に一か所でまとめ、テストでマッパーと照合し、`supabase/schema.sql` もここから生成します。
 
 3Dシーンはページ本文とは別に読み込みます。モバイルは静止画を使用し、対応するデスクトップ環境ではページの読み込み後にライブシーンを開始します。本番ビルドでは、コミット済みのポートレート画像、背景画像、アイコン、SVGスプライトを検査して使用し、ビルド環境ごとの再エンコードを避けます。元データを変更した場合は `npm run generate:assets` を実行し、生成差分を確認してコミットしてください。依存パッケージの正確なバージョンは `package-lock.json` を参照してください。
 
@@ -58,7 +61,15 @@ npm run build
 npm run start
 ```
 
-外部サービスを設定する場合の変数は [.env.example](.env.example) に記載しています。認証情報はコミットせず、`SUPABASE_SERVICE_ROLE_KEY` を `NEXT_PUBLIC_` で始まる変数に入れないでください。データベースのマイグレーションと初期データ投入用のコマンドは、バックエンド実装時に追加します。
+### データベースと管理画面（任意）
+
+1. Supabaseのプロジェクトを作成し、`supabase/migrations/` を順番に適用します（SQLエディターまたは `supabase db push`）。
+2. [.env.example](.env.example) を `.env.local` にコピーし、プロジェクトURL、公開用キー、シークレットキー、`ADMIN_EMAIL` を設定します。このファイルはコミットせず、`SUPABASE_SERVICE_ROLE_KEY` を `NEXT_PUBLIC_` で始まる変数に入れないでください。
+3. `npm run db:seed` で `seed.json` を投入し、`npm run db:verify` で公開用キーから読み戻して全セクションを照合します。
+4. Supabase Authで管理者ユーザーを作成し、`insert into private.app_admins (email) values ('<email>');` を実行します。
+5. `/admin/login` からログインします。
+
+`columns.ts` を変更したら `npm run db:schema` を実行し、本番データベース用のマイグレーションを追加してください。`Supabase keep-alive` ワークフローは週2回1行を読み込み、無料プロジェクトの一時停止を防ぎます。リポジトリ変数 `SUPABASE_URL` と `SUPABASE_PUBLISHABLE_KEY` を使用します。
 
 `@swc/core` のバージョン固定は、既存のWindows環境向けの対処です。変更時はWindowsとLinuxの両方で確認してください。また、本番ビルドでは `next/font/google` によるフォント取得のため、ネットワーク接続が必要です。
 
@@ -118,7 +129,10 @@ npm run check:performance
 src/app/[locale]/   言語別ルート、レイアウト、メタデータ、簡易表示
 src/components/    セクション、操作UI、表示効果
 src/content/       公開用seed、スキーマ、生成した画像属性
-src/lib/data/      リポジトリ層、データ変換、キャッシュ
+src/lib/data/      リポジトリ層、テーブル定義、データ変換、キャッシュ
+src/app/admin/     管理画面のログイン、ダッシュボード、編集画面
+src/lib/admin/     ルート保護、リソース設定、サーバー側データ
+supabase/          マイグレーションと生成済みの現行スキーマ
 src/scene/         鯉・龍、背景、入力処理、端末別の描画設定
 public/            公開CV、加工済みポートレート、モデル、静止画
 scripts/           アセット生成、リリース測定
