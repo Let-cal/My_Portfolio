@@ -1,132 +1,124 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { contentSchema } from "@/content/schema";
 import seed from "@/content/seed.json";
 
-const setSkillLink = vi.fn();
-const flushContent = vi.fn();
-const replace = vi.fn();
-vi.mock("@/app/admin/actions", () => ({ setSkillLink, flushContent }));
+const saveSkillLinks = vi.fn();
+const refresh = vi.fn();
+const toast = { error: vi.fn(), success: vi.fn() };
+vi.mock("@/app/admin/actions", () => ({ saveSkillLinks }));
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace, refresh: vi.fn() }),
+  useRouter: () => ({ replace: vi.fn(), refresh }),
   usePathname: () => "/admin/skills",
 }));
-vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
+vi.mock("sonner", () => ({ toast }));
 
 const { SkillMatrix } = await import("@/components/admin/SkillMatrix");
 const content = contentSchema.parse(seed);
-const filter = { q: "", only: "all" as const, group: "all" as const, showHidden: true };
-
-const cell = (skill: string, column: string) =>
-  screen.getByRole("checkbox", { name: `${skill} × ${column}` });
+const all = { q: "", only: "all" as const, group: "all" as const, showHidden: true };
+const cell = (skill: string, column: string) => screen.getByRole("checkbox", { name: `${skill} × ${column}` });
+const saveButton = () => screen.queryByRole("button", { name: /^Lưu/ });
 
 beforeEach(() => {
-  vi.useFakeTimers();
-  setSkillLink.mockReset().mockResolvedValue({ ok: true });
-  flushContent.mockReset().mockResolvedValue({ ok: true });
+  saveSkillLinks.mockReset().mockResolvedValue({ ok: true });
+  refresh.mockReset();
+  toast.error.mockReset();
 });
-afterEach(() => vi.useRealTimers());
 
-describe("SkillMatrix", () => {
-  it("renders a grid and links a cell at once", async () => {
-    render(<SkillMatrix content={content} initialFilter={filter} />);
-    expect(screen.getByRole("grid")).toBeTruthy();
+describe("SkillMatrix (edit, then save)", () => {
+  it("marks a change without saving it", () => {
+    render(<SkillMatrix content={content} initialFilter={all} />);
+    expect(saveButton()).toBeNull();
     const target = cell("C#", "SitePlus");
-    expect(target.getAttribute("aria-checked")).toBe("false");
-    await act(async () => fireEvent.click(target));
+    fireEvent.click(target);
     expect(target.getAttribute("aria-checked")).toBe("true");
-    expect(setSkillLink).toHaveBeenCalledWith("csharp", { projectId: "siteplus" }, true);
+    expect(target.getAttribute("data-changed")).toBe("true");
+    expect(saveSkillLinks).not.toHaveBeenCalled();
+    expect(screen.getByText("1 thay đổi chưa lưu")).toBeTruthy();
   });
 
-  it("rolls back when the save fails", async () => {
-    setSkillLink.mockResolvedValue({ ok: false, error: "nope" });
-    render(<SkillMatrix content={content} initialFilter={filter} />);
+  it("clicking a cell back to its saved state is no longer a change", () => {
+    render(<SkillMatrix content={content} initialFilter={all} />);
     const target = cell("C#", "SitePlus");
-    await act(async () => fireEvent.click(target));
-    await act(async () => {});
-    expect(target.getAttribute("aria-checked")).toBe("false");
+    fireEvent.click(target);
+    fireEvent.click(target);
+    expect(saveButton()).toBeNull();
   });
 
-  it("moves with arrow keys and toggles with Space", async () => {
-    render(<SkillMatrix content={content} initialFilter={filter} />);
+  it("saves every change in one request", async () => {
+    render(<SkillMatrix content={content} initialFilter={all} />);
+    fireEvent.click(cell("C#", "SitePlus"));
+    fireEvent.click(cell("TypeScript", "AI Agent"));
+    await act(async () => fireEvent.click(saveButton()!));
+    expect(saveSkillLinks).toHaveBeenCalledTimes(1);
+    expect(saveSkillLinks.mock.calls[0][0]).toEqual(
+      expect.arrayContaining([
+        { skillId: "csharp", projectId: "siteplus", linked: true },
+        { skillId: "typescript", experienceId: "skg-ai-agent", linked: false },
+      ]),
+    );
+    expect(saveButton()).toBeNull();
+    expect(refresh).toHaveBeenCalled();
+  });
+
+  it("Ctrl+S saves", async () => {
+    render(<SkillMatrix content={content} initialFilter={all} />);
+    fireEvent.click(cell("C#", "SitePlus"));
+    await act(async () => fireEvent.keyDown(window, { key: "s", ctrlKey: true }));
+    expect(saveSkillLinks).toHaveBeenCalledTimes(1);
+  });
+
+  it("Hủy discards the changes", () => {
+    render(<SkillMatrix content={content} initialFilter={all} />);
+    const target = cell("C#", "SitePlus");
+    fireEvent.click(target);
+    fireEvent.click(screen.getByRole("button", { name: "Hủy" }));
+    expect(target.getAttribute("aria-checked")).toBe("false");
+    expect(saveButton()).toBeNull();
+  });
+
+  it("keeps the changes and reports the error when saving fails", async () => {
+    saveSkillLinks.mockResolvedValue({ ok: false, error: "nope" });
+    render(<SkillMatrix content={content} initialFilter={all} />);
+    const target = cell("C#", "SitePlus");
+    fireEvent.click(target);
+    await act(async () => fireEvent.click(saveButton()!));
+    expect(target.getAttribute("aria-checked")).toBe("true");
+    expect(saveButton()).not.toBeNull();
+    expect(toast.error).toHaveBeenCalled();
+  });
+
+  it("keeps a skill in the 'no evidence' list while editing and after saving", async () => {
+    const orphan = { ...all, only: "orphan" as const };
+    const { rerender } = render(<SkillMatrix content={content} initialFilter={orphan} />);
+    fireEvent.click(cell("GSAP", "SitePlus"));
+    expect(cell("GSAP", "SitePlus")).toBeTruthy();
+    await act(async () => fireEvent.click(saveButton()!));
+    // The refresh brings content where GSAP has evidence; the row stays until the filter changes.
+    const updated = structuredClone(content);
+    updated.skills.find((s) => s.name === "GSAP")!.projectIds.push("siteplus");
+    rerender(<SkillMatrix content={updated} initialFilter={orphan} />);
+    expect(cell("GSAP", "SitePlus").getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("moves with arrow keys and toggles with Space", () => {
+    render(<SkillMatrix content={content} initialFilter={all} />);
     const first = cell("TypeScript", "AI Agent");
     first.focus();
-    await act(async () => fireEvent.keyDown(first, { key: "ArrowRight" }));
+    fireEvent.keyDown(first, { key: "ArrowRight" });
     const next = document.activeElement as HTMLElement;
     expect(next).not.toBe(first);
     expect(next.getAttribute("role")).toBe("checkbox");
     const before = next.getAttribute("aria-checked");
-    await act(async () => fireEvent.keyDown(next, { key: " " }));
+    fireEvent.keyDown(next, { key: " " });
     expect(next.getAttribute("aria-checked")).not.toBe(before);
   });
 
-  it("refreshes the site cache once after a burst of toggles", async () => {
-    render(<SkillMatrix content={content} initialFilter={filter} />);
-    await act(async () => fireEvent.click(cell("C#", "SitePlus")));
-    await act(async () => fireEvent.click(cell("C#", "ZodiacGems")));
-    expect(flushContent).not.toHaveBeenCalled();
-    await act(async () => vi.advanceTimersByTime(800));
-    expect(flushContent).toHaveBeenCalledTimes(1);
-  });
-
-  it("keeps the last intent when a cell is clicked again before the first save returns", async () => {
-    let resolveFirst!: (v: { ok: true }) => void;
-    setSkillLink.mockImplementationOnce(() => new Promise((r) => (resolveFirst = r)));
-    render(<SkillMatrix content={content} initialFilter={filter} />);
-    const target = cell("C#", "SitePlus");
-    await act(async () => fireEvent.click(target));
-    await act(async () => fireEvent.click(target));
-    expect(setSkillLink).toHaveBeenCalledTimes(1);
-    await act(async () => resolveFirst({ ok: true }));
-    expect(setSkillLink).toHaveBeenLastCalledWith("csharp", { projectId: "siteplus" }, false);
-    expect(target.getAttribute("aria-checked")).toBe("false");
-  });
-
-  it("still refreshes the site when the page is left before the pause ends", async () => {
-    const { unmount } = render(<SkillMatrix content={content} initialFilter={filter} />);
-    await act(async () => fireEvent.click(cell("C#", "SitePlus")));
-    unmount();
-    await act(async () => {});
-    expect(flushContent).toHaveBeenCalledTimes(1);
-  });
-
-  it("refreshes the site only after the last write has landed", async () => {
-    let resolveFirst!: (v: { ok: true }) => void;
-    setSkillLink.mockImplementationOnce(() => new Promise((r) => (resolveFirst = r)));
-    render(<SkillMatrix content={content} initialFilter={filter} />);
-    const target = cell("C#", "SitePlus");
-    await act(async () => fireEvent.click(target));
-    await act(async () => fireEvent.click(target));
-    await act(async () => vi.advanceTimersByTime(800));
-    expect(flushContent).not.toHaveBeenCalled();
-    await act(async () => resolveFirst({ ok: true }));
-    await act(async () => vi.advanceTimersByTime(800));
-    expect(setSkillLink).toHaveBeenLastCalledWith("csharp", { projectId: "siteplus" }, false);
-    expect(flushContent).toHaveBeenCalledTimes(1);
-    expect(flushContent.mock.invocationCallOrder[0]).toBeGreaterThan(setSkillLink.mock.invocationCallOrder[1]);
-  });
-
-  it("rolls back and frees the cell when the request itself fails", async () => {
-    setSkillLink.mockRejectedValueOnce(new Error("Failed to find Server Action"));
-    render(<SkillMatrix content={content} initialFilter={filter} />);
-    const target = cell("C#", "SitePlus");
-    await act(async () => fireEvent.click(target));
-    await act(async () => {});
-    expect(target.getAttribute("aria-checked")).toBe("false");
-    await act(async () => fireEvent.click(target));
-    expect(setSkillLink).toHaveBeenCalledTimes(2);
-    expect(target.getAttribute("aria-checked")).toBe("true");
-  });
-
-  it("refreshes the site after a request that was still running when the page was left", async () => {
-    let resolveFirst!: (v: { ok: true }) => void;
-    setSkillLink.mockImplementationOnce(() => new Promise((r) => (resolveFirst = r)));
-    const { unmount } = render(<SkillMatrix content={content} initialFilter={filter} />);
-    await act(async () => fireEvent.click(cell("C#", "SitePlus")));
-    unmount();
-    await act(async () => {});
-    expect(flushContent).not.toHaveBeenCalled();
-    await act(async () => resolveFirst({ ok: true }));
-    expect(flushContent).toHaveBeenCalledTimes(1);
+  it("warns before leaving with unsaved changes", () => {
+    render(<SkillMatrix content={content} initialFilter={all} />);
+    fireEvent.click(cell("C#", "SitePlus"));
+    const event = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(true);
   });
 });

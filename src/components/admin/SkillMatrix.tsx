@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { flushContent, setSkillLink } from "@/app/admin/actions";
+import { saveSkillLinks, type LinkChange } from "@/app/admin/actions";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { SKILL_GROUPS } from "@/content/schema";
 import type { AdminContent } from "@/lib/admin/health";
-import type { LinkTarget } from "@/lib/admin/links";
 import {
   buildMatrix,
   columnKey,
@@ -20,110 +20,94 @@ import {
 } from "@/lib/admin/matrix";
 import { cn } from "@/lib/utils";
 
-const FLUSH_DELAY_MS = 800;
 const cellId = (skillId: string, colKey: string) => `${skillId}|${colKey}`;
-const targetOf = (col: MatrixColumn): LinkTarget =>
-  col.kind === "experience" ? { experienceId: col.id } : { projectId: col.id };
 
 /**
- * Skills × Evidence grid. Each cell toggles one skill_links row at once (optimistic), keeps
- * only the latest intent per cell while a save is in flight, and refreshes the public site
- * cache once after the clicks stop.
+ * Skills × Evidence grid. Clicking a cell only marks a change; "Lưu" (or Ctrl/⌘+S) saves all
+ * changes in one request and refreshes the public site once. Rows edited since the filter was
+ * set stay visible, so a skill does not vanish from "Chưa có bằng chứng" while being linked.
  */
 export function SkillMatrix({ content, initialFilter }: { content: AdminContent; initialFilter: MatrixFilter }) {
   const router = useRouter();
   const pathname = usePathname();
   const [filter, setFilter] = useState(initialFilter);
+  // Unsaved changes: cell id → wanted state (only cells that differ from the saved data).
+  const [draft, setDraft] = useState<Map<string, boolean>>(new Map());
+  // Saved in this session but not yet in `content` (until the page refresh brings it).
+  const [saved, setSaved] = useState<Map<string, boolean>>(new Map());
+  const [pinned, setPinned] = useState<Set<string>>(new Set());
+  const [saving, setSaving] = useState(false);
   const base = useMemo(() => buildMatrix(content), [content]);
-  const view = useMemo(() => filterMatrix(base, filter, content), [base, filter, content]);
-
-  // Shown state per cell (overrides the server data), the last state the server confirmed,
-  // and the cells with a request in flight.
-  const [shown, setShown] = useState<Map<string, boolean>>(new Map());
-  const confirmed = useRef(new Map<string, boolean>());
-  const wanted = useRef(new Map<string, boolean>());
-  const inflight = useRef(new Set<string>());
-  const flushTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Writes not yet followed by a cache refresh, and the requests still in flight.
-  const dirty = useRef(false);
-  const pending = useRef(new Set<Promise<void>>());
+  const view = useMemo(() => filterMatrix(base, filter, content, pinned), [base, filter, content, pinned]);
+  const columns = useMemo(() => new Map(base.columns.map((col) => [columnKey(col), col])), [base]);
 
   const serverLinked = (skillId: string, colKey: string) =>
+    saved.get(cellId(skillId, colKey)) ??
     base.groups.some((g) => g.rows.some((r) => r.skill.id === skillId && r.linked.has(colKey)));
-  const isLinked = (skillId: string, colKey: string) => shown.get(cellId(skillId, colKey)) ?? serverLinked(skillId, colKey);
+  const isLinked = (skillId: string, colKey: string) => draft.get(cellId(skillId, colKey)) ?? serverLinked(skillId, colKey);
 
   function updateFilter(next: MatrixFilter) {
     setFilter(next);
+    setPinned(new Set());
     router.replace(`${pathname}${matrixQuery(next)}`, { scroll: false });
-  }
-
-  /** Refreshes the public cache once every write has landed (never before the last one). */
-  function flushWhenSettled() {
-    if (!dirty.current) return;
-    dirty.current = false;
-    void Promise.allSettled([...pending.current]).then(() => flushContent());
-  }
-
-  function scheduleFlush() {
-    if (flushTimer.current) clearTimeout(flushTimer.current);
-    flushTimer.current = setTimeout(() => {
-      flushTimer.current = null;
-      if (inflight.current.size) scheduleFlush();
-      else flushWhenSettled();
-    }, FLUSH_DELAY_MS);
-  }
-
-  // Leaving the page (navigation or closing the tab) must not drop the refresh.
-  useEffect(() => {
-    const onHide = () => flushWhenSettled();
-    window.addEventListener("pagehide", onHide);
-    return () => {
-      window.removeEventListener("pagehide", onHide);
-      if (flushTimer.current) clearTimeout(flushTimer.current);
-      flushWhenSettled();
-    };
-  }, []);
-
-  async function request(skillId: string, col: MatrixColumn, value: boolean) {
-    try {
-      return await setSkillLink(skillId, targetOf(col), value);
-    } catch (error) {
-      return { ok: false as const, error: error instanceof Error ? error.message : String(error) };
-    }
-  }
-
-  async function send(skillId: string, col: MatrixColumn) {
-    const id = cellId(skillId, columnKey(col));
-    const value = wanted.current.get(id)!;
-    inflight.current.add(id);
-    const call = request(skillId, col, value);
-    const tracked = call.then(() => undefined);
-    pending.current.add(tracked);
-    const result = await call;
-    pending.current.delete(tracked);
-    inflight.current.delete(id);
-    if (!result.ok) {
-      const back = confirmed.current.get(id) ?? serverLinked(skillId, columnKey(col));
-      wanted.current.set(id, back);
-      setShown((m) => new Map(m).set(id, back));
-      toast.error(`Không lưu được: ${result.error}`);
-      return;
-    }
-    confirmed.current.set(id, value);
-    dirty.current = true;
-    if (wanted.current.get(id) !== value) await send(skillId, col);
   }
 
   function toggle(skillId: string, col: MatrixColumn) {
     const key = columnKey(col);
     const id = cellId(skillId, key);
     const next = !isLinked(skillId, key);
-    wanted.current.set(id, next);
-    setShown((m) => new Map(m).set(id, next));
-    dirty.current = true; // set now, so leaving mid-request still refreshes once it lands
-    scheduleFlush();
-    if (!inflight.current.has(id)) void send(skillId, col);
+    setDraft((m) => {
+      const copy = new Map(m);
+      if (next === serverLinked(skillId, key)) copy.delete(id);
+      else copy.set(id, next);
+      return copy;
+    });
+    setPinned((p) => (p.has(skillId) ? p : new Set(p).add(skillId)));
   }
+
+  const save = useCallback(async () => {
+    if (!draft.size || saving) return;
+    const changes: LinkChange[] = [...draft].map(([id, linked]) => {
+      const [skillId, colKey] = id.split("|");
+      const col = columns.get(colKey)!;
+      return col.kind === "experience" ? { skillId, experienceId: col.id, linked } : { skillId, projectId: col.id, linked };
+    });
+    setSaving(true);
+    let result: Awaited<ReturnType<typeof saveSkillLinks>>;
+    try {
+      result = await saveSkillLinks(changes);
+    } catch (error) {
+      result = { ok: false, error: error instanceof Error ? error.message : String(error) };
+    }
+    setSaving(false);
+    if (!result.ok) {
+      toast.error(`Không lưu được: ${result.error}`);
+      return;
+    }
+    setSaved((m) => new Map([...m, ...draft]));
+    setDraft(new Map());
+    toast.success(`Đã lưu ${changes.length} thay đổi`);
+    router.refresh();
+  }, [draft, saving, columns, router]);
+
+  // Ctrl/⌘+S saves; leaving with unsaved changes asks first.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        void save();
+      }
+    };
+    const onLeave = (e: BeforeUnloadEvent) => {
+      if (draft.size) e.preventDefault();
+    };
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("beforeunload", onLeave);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("beforeunload", onLeave);
+    };
+  }, [save, draft.size]);
 
   // Roving focus over the visible checkboxes.
   const rows = view.groups.flatMap((g) => g.rows);
@@ -217,12 +201,14 @@ export function SkillMatrix({ content, initialFilter }: { content: AdminContent;
                         </th>
                         {view.columns.map((col, c) => {
                           const on = isLinked(row.skill.id, columnKey(col));
+                          const changed = draft.has(cellId(row.skill.id, columnKey(col)));
                           return (
                             <td key={columnKey(col)} role="gridcell" className={cn("p-1 text-center", c > 0 && view.columns[c - 1].kind !== col.kind && "border-l-2")}>
                               <button
                                 type="button"
                                 role="checkbox"
                                 aria-checked={on}
+                                data-changed={changed || undefined}
                                 aria-label={`${row.skill.name} × ${col.label}`}
                                 data-cell={`${r}:${c}`}
                                 tabIndex={r === 0 && c === 0 ? 0 : -1}
@@ -233,6 +219,7 @@ export function SkillMatrix({ content, initialFilter }: { content: AdminContent;
                                   on && !col.hidden && "border-emerald-600 bg-emerald-500",
                                   on && col.hidden && "border-2 border-amber-500 bg-transparent",
                                   !on && "border-muted-foreground/30 hover:border-foreground/60",
+                                  changed && "ring-2 ring-sky-500 ring-offset-2 ring-offset-background",
                                 )}
                               />
                             </td>
@@ -260,8 +247,26 @@ export function SkillMatrix({ content, initialFilter }: { content: AdminContent;
         </div>
       )}
       <p className="text-xs text-muted-foreground">
-        Chấm xanh: đã gắn. Vòng cam: gắn với mục đang ẩn (khách không thấy). Phím mũi tên để di chuyển, Space để bật/tắt.
+        Chấm xanh: đã gắn. Vòng cam: gắn với mục đang ẩn (khách không thấy). Viền xanh dương: thay đổi chưa lưu. Phím mũi
+        tên để di chuyển, Space để bật/tắt, Ctrl/⌘+S để lưu.
       </p>
+      {draft.size > 0 && (
+        <div
+          role="region"
+          aria-label="Thay đổi chưa lưu"
+          className="sticky bottom-3 z-40 flex items-center justify-between gap-3 rounded-lg border bg-background/95 px-4 py-2.5 shadow-lg backdrop-blur"
+        >
+          <span className="text-sm font-medium">{draft.size} thay đổi chưa lưu</span>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" size="sm" disabled={saving} onClick={() => setDraft(new Map())}>
+              Hủy
+            </Button>
+            <Button type="button" size="sm" disabled={saving} onClick={() => void save()}>
+              {saving ? "Đang lưu…" : "Lưu"}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

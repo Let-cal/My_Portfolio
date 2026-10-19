@@ -45,8 +45,7 @@ const {
   saveProfile,
   saveRole,
   setOpenToWork,
-  setSkillLink,
-  flushContent,
+  saveSkillLinks,
 } = await import("@/app/admin/actions");
 const content = contentSchema.parse(seed);
 
@@ -137,38 +136,35 @@ describe("admin actions", () => {
     expect(updateTag).toHaveBeenCalledTimes(2);
   });
 
-  it("setSkillLink links with an idempotent upsert and leaves the cache refresh to flushContent", async () => {
-    expect(await setSkillLink("react", { experienceId: "skg-coa" }, true)).toEqual({ ok: true });
+  it("saveSkillLinks applies a batch of changes and refreshes the site once", async () => {
+    const result = await saveSkillLinks([
+      { skillId: "react", projectId: "siteplus", linked: true },
+      { skillId: "gsap", experienceId: "skg-coa", linked: true },
+      { skillId: "dart", projectId: "zodiacgems", linked: false },
+    ]);
+    expect(result).toEqual({ ok: true });
     const upsert = calls.find((c) => c.op === "upsert")!;
     expect(upsert.table).toBe("skill_links");
     expect(upsert.args).toEqual([
-      { skill_id: "react", experience_id: "skg-coa", project_id: null },
+      [
+        { skill_id: "react", experience_id: null, project_id: "siteplus" },
+        { skill_id: "gsap", experience_id: "skg-coa", project_id: null },
+      ],
       { onConflict: "skill_id,experience_id,project_id", ignoreDuplicates: true },
     ]);
-    expect(updateTag).not.toHaveBeenCalled();
-    expect(await flushContent()).toEqual({ ok: true });
-    expect(updateTag).toHaveBeenCalledWith("content");
-  });
-
-  it("toggling twice is idempotent", async () => {
-    await setSkillLink("react", { projectId: "siteplus" }, true);
-    expect(await setSkillLink("react", { projectId: "siteplus" }, true)).toEqual({ ok: true });
-    expect(calls.filter((c) => c.op === "upsert")).toHaveLength(2);
-  });
-
-  it("unlinking deletes exactly that row", async () => {
-    await setSkillLink("react", { projectId: "siteplus" }, false);
-    await setSkillLink("react", { experienceId: "skg-coa" }, false);
     expect(calls.filter((c) => c.op === "delete.match").map((c) => c.args[0])).toEqual([
-      { skill_id: "react", project_id: "siteplus" },
-      { skill_id: "react", experience_id: "skg-coa" },
+      { skill_id: "dart", project_id: "zodiacgems" },
     ]);
+    expect(updateTag).toHaveBeenCalledTimes(1);
   });
 
-  it("setSkillLink and flushContent refuse non-admins", async () => {
+  it("saveSkillLinks refuses non-admins and malformed changes", async () => {
     requireAdmin.mockRejectedValue(new Error("FORBIDDEN"));
-    expect((await setSkillLink("react", { projectId: "siteplus" }, true)).ok).toBe(false);
-    expect((await flushContent()).ok).toBe(false);
+    expect((await saveSkillLinks([{ skillId: "react", projectId: "siteplus", linked: true }])).ok).toBe(false);
+    requireAdmin.mockResolvedValue({ email: "admin@x.com" });
+    const bad = [{ skillId: "react", projectId: "siteplus", experienceId: "skg-coa", linked: true }];
+    expect((await saveSkillLinks(bad as never)).ok).toBe(false);
+    expect((await saveSkillLinks([{ skillId: "", projectId: "x", linked: true }])).ok).toBe(false);
     expect(calls).toEqual([]);
     expect(updateTag).not.toHaveBeenCalled();
   });

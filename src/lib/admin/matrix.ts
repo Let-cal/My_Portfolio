@@ -43,9 +43,11 @@ export function buildMatrix(c: AdminContent): Matrix {
 const fold = (s: string) =>
   s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[đĐ]/g, "d").toLowerCase();
 
-export function filterMatrix(m: Matrix, f: MatrixFilter, c: AdminContent): Matrix {
+/** `pinned` skills stay visible whatever the filter (e.g. rows edited since the filter was set). */
+export function filterMatrix(m: Matrix, f: MatrixFilter, c: AdminContent, pinned?: ReadonlySet<string>): Matrix {
   const q = fold(f.q.trim());
   const keep = (row: MatrixRow) => {
+    if (pinned?.has(row.skill.id)) return true;
     if (q && !fold(row.skill.name).includes(q)) return false;
     if (f.only === "all") return true;
     const ev = evidenceOf(row.skill, c);

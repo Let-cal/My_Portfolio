@@ -1,6 +1,7 @@
 "use server";
 
 import { updateTag } from "next/cache";
+import { z } from "zod";
 import { profileToRow, roleToRow, skillToLinkRows } from "@/lib/data/mappers";
 import { diffLinks, linkMatch, linkRow, type LinkTarget } from "@/lib/admin/links";
 import { isResourceKey, resources, type ResourceKey } from "@/lib/admin/resources";
@@ -73,28 +74,40 @@ export async function saveResource(key: string, data: Record<string, unknown>, i
   });
 }
 
-/**
- * Links or unlinks one skill and one evidence item. The matrix calls this per cell and then
- * `flushContent` once after a pause, so a burst of clicks refreshes the site cache only once.
- */
-export async function setSkillLink(skillId: string, target: LinkTarget, linked: boolean): Promise<ActionResult> {
-  try {
-    await requireAdmin();
-    const supabase = await createServerSupabase();
-    const table = supabase.from("skill_links");
-    const { error } = linked
-      ? await table.upsert(linkRow(skillId, target), { onConflict: "skill_id,experience_id,project_id", ignoreDuplicates: true })
-      : await table.delete().match(linkMatch(skillId, target));
-    check(error);
-    return { ok: true };
-  } catch (error) {
-    return fail(error);
-  }
-}
+const linkChange = z
+  .object({
+    skillId: z.string().min(1),
+    experienceId: z.string().min(1).optional(),
+    projectId: z.string().min(1).optional(),
+    linked: z.boolean(),
+  })
+  .strict()
+  .refine((c) => (c.experienceId === undefined) !== (c.projectId === undefined), "Exactly one target");
 
-export async function flushContent(): Promise<ActionResult> {
+export type LinkChange = z.infer<typeof linkChange>;
+
+/**
+ * Saves the matrix's pending changes in one go: links are upserted (duplicates ignored),
+ * unlinks deleted one by one, then the public site cache is refreshed once.
+ */
+export async function saveSkillLinks(changes: LinkChange[]): Promise<ActionResult> {
   try {
     await requireAdmin();
+    const parsed = z.array(linkChange).max(1000).safeParse(changes);
+    if (!parsed.success) throw new Error("Thay đổi không hợp lệ.");
+    const target = (c: LinkChange): LinkTarget =>
+      c.experienceId !== undefined ? { experienceId: c.experienceId } : { projectId: c.projectId! };
+    const supabase = await createServerSupabase();
+    const add = parsed.data.filter((c) => c.linked).map((c) => linkRow(c.skillId, target(c)));
+    if (add.length) {
+      check(
+        (await supabase.from("skill_links").upsert(add, { onConflict: "skill_id,experience_id,project_id", ignoreDuplicates: true }))
+          .error,
+      );
+    }
+    for (const c of parsed.data.filter((x) => !x.linked)) {
+      check((await supabase.from("skill_links").delete().match(linkMatch(c.skillId, target(c)))).error);
+    }
     updateTag("content");
     return { ok: true };
   } catch (error) {
