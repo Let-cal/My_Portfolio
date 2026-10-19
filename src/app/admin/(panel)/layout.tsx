@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { SignOutButton } from "@/components/admin/SignOutButton";
 import { RESOURCE_KEYS, resources } from "@/lib/admin/resources";
+import { getAdminContent } from "@/lib/admin/data";
+import { checkContentHealth } from "@/lib/admin/health";
 import { getAdminEmail } from "@/lib/admin/session";
 
 async function SignedInAs() {
@@ -11,6 +13,17 @@ async function SignedInAs() {
       <span className="hidden sm:inline">{email}</span>
       <SignOutButton />
     </div>
+  );
+}
+
+/** Count of errors and warnings, shown next to "Tổng quan". */
+async function HealthBadge() {
+  const count = checkContentHealth(await getAdminContent()).filter((i) => i.severity !== "info").length;
+  if (!count) return null;
+  return (
+    <span className="ml-auto rounded-full bg-amber-500/20 px-1.5 text-xs font-medium tabular-nums" aria-label={`${count} mục cần chú ý`}>
+      {count}
+    </span>
   );
 }
 
@@ -31,8 +44,13 @@ export default function AdminPanelLayout({ children }: { children: React.ReactNo
         <ul className="flex flex-wrap gap-1 md:flex-col">
           {NAV.map((item) => (
             <li key={item.href}>
-              <Link href={item.href} className="block rounded px-2 py-1 text-sm hover:bg-muted">
+              <Link href={item.href} className="flex items-center gap-2 rounded px-2 py-1 text-sm hover:bg-muted">
                 {item.label}
+                {item.href === "/admin" && (
+                  <Suspense>
+                    <HealthBadge />
+                  </Suspense>
+                )}
               </Link>
             </li>
           ))}

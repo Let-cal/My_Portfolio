@@ -92,3 +92,23 @@ export async function getAdminContent(): Promise<AdminContent> {
     whyCards: byKey.why_cards,
   } as unknown as AdminContent;
 }
+
+const LABEL_COLUMNS = ["name", "title", "company", "school", "key", "id"] as const;
+
+/** The most recently edited row across the content tables, for "Sửa gần nhất". */
+export async function lastEdited(): Promise<{ table: string; id: string; label: string; at: string } | null> {
+  const supabase = await createServerSupabase();
+  const tables = ["profile", "roles", ...RESOURCE_KEYS.map((k) => resources[k].table)];
+  const latest = await Promise.all(
+    tables.map(async (table) => {
+      const { data, error } = await supabase.from(table).select("*").order("updated_at", { ascending: false }).limit(1);
+      if (error) throw new Error(`${table}: ${error.message}`);
+      const row = data?.[0] as Record<string, unknown> | undefined;
+      if (!row) return null;
+      const raw = LABEL_COLUMNS.map((c) => row[c]).find((v) => v !== undefined && v !== null);
+      const label = typeof raw === "object" ? String((raw as { en?: string }).en ?? "") : String(raw);
+      return { table, id: String(row.id ?? row.key), label, at: String(row.updated_at) };
+    }),
+  );
+  return latest.filter((x) => x !== null).sort((a, b) => b.at.localeCompare(a.at))[0] ?? null;
+}
