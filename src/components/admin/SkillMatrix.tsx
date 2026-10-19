@@ -258,11 +258,14 @@ export function SkillMatrix({
             aria-label="Skills × Bằng chứng"
             className="border-separate border-spacing-0 text-sm"
           >
-            <thead>
-              <tr>
+            {/* Column names lean at -45° from the bottom-left of their column, so long names stay
+                readable while columns stay narrow. The header row (not each cell) carries the
+                background, otherwise each cell would paint over its neighbour's slanted label. */}
+            <thead className="sticky top-0 z-20 bg-background">
+              <tr className="h-40">
                 <th
                   scope="col"
-                  className="sticky top-0 left-0 z-30 bg-background p-2 text-left"
+                  className="sticky left-0 z-30 bg-background p-2 text-left align-bottom"
                 >
                   Skill
                 </th>
@@ -271,26 +274,25 @@ export function SkillMatrix({
                     key={columnKey(col)}
                     scope="col"
                     className={cn(
-                      "sticky top-0 z-20 bg-background px-1 py-2 align-bottom text-xs font-medium whitespace-nowrap",
+                      "relative w-9 min-w-9 p-0 align-bottom text-xs font-medium",
                       i > 0 &&
                         view.columns[i - 1].kind !== col.kind &&
                         "border-l-2",
                       col.hidden && "text-muted-foreground italic",
                     )}
                   >
-                    <Link
-                      href={`/admin/${col.kind === "experience" ? "experiences" : "projects"}/${col.id}`}
-                      title={`${col.kind === "experience" ? "Kinh nghiệm" : "Dự án"}: ${col.label}${col.hidden ? " (đang ẩn)" : ""}`}
-                      className="inline-block max-h-40 rotate-180 truncate align-bottom [writing-mode:vertical-rl] hover:underline"
-                    >
-                      {col.label}
-                    </Link>
+                    <div className="absolute bottom-2 left-1/2 w-40 origin-bottom-left -rotate-45">
+                      <Link
+                        href={`/admin/${col.kind === "experience" ? "experiences" : "projects"}/${col.id}`}
+                        title={`${col.kind === "experience" ? "Kinh nghiệm" : "Dự án"}: ${col.label}${col.hidden ? " (đang ẩn)" : ""}`}
+                        className="block truncate rounded-sm px-1 hover:bg-muted hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                      >
+                        {col.label}
+                      </Link>
+                    </div>
                   </th>
                 ))}
-                <th
-                  scope="col"
-                  className="sticky top-0 z-20 bg-background p-2 text-xs"
-                >
+                <th scope="col" className="p-2 align-bottom text-xs">
                   Tổng
                 </th>
               </tr>
