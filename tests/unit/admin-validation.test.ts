@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { ZodObject } from "zod";
 import { certificateSchema, contentSchema, projectSchema, whyCardSchema } from "@/content/schema";
 import seed from "@/content/seed.json";
 import { emptyItem } from "@/lib/admin/empty-item";
@@ -8,8 +9,8 @@ import { describeIssues, isRequired } from "@/lib/admin/validation";
 const content = contentSchema.parse(seed);
 const certFields = resources.certificates.fields;
 
-function errorsFor(schema: typeof certificateSchema | typeof projectSchema | typeof whyCardSchema, fields = certFields, values: Record<string, unknown>) {
-  const result = schema.omit({ sortIndex: true }).safeParse(values);
+function errorsFor(schema: ZodObject, fields = certFields, values: Record<string, unknown>) {
+  const result = schema.omit({ sortIndex: true } as never).safeParse(values);
   if (result.success) return {};
   return Object.fromEntries(describeIssues(result.error.issues, fields, values).map((e) => [e.path, e.message]));
 }

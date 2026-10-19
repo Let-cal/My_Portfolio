@@ -112,7 +112,9 @@ export function describeIssues(issues: readonly Issue[], fields: FieldSpec[], va
       order: fields.indexOf(f),
     });
   }
-  return out.sort((a, b) => a.order - b.order).map(({ order: _o, ...e }) => e);
+  return out
+    .sort((a, b) => a.order - b.order)
+    .map(({ path, field, locale, message }) => ({ path, field, locale, message }));
 }
 
 /** react-hook-form resolver: validate with the schema, report errors with the messages above. */
