@@ -4,7 +4,12 @@
 create or replace function public.set_updated_at() returns trigger
 language plpgsql set search_path = '' as $$
 begin
-  new.updated_at = now();
+  -- A reorder only moves sort_index; it is not an edit, so "last edited" keeps its time.
+  if (to_jsonb(new) - 'sort_index' - 'updated_at') = (to_jsonb(old) - 'sort_index' - 'updated_at') then
+    new.updated_at = old.updated_at;
+  else
+    new.updated_at = now();
+  end if;
   return new;
 end;
 $$;

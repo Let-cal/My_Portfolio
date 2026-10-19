@@ -2,6 +2,7 @@ import { DashboardSkeleton } from "@/components/admin/Skeletons";
 import Link from "next/link";
 import { Suspense } from "react";
 import { HealthList } from "@/components/admin/HealthList";
+import { QuickCreate } from "@/components/admin/QuickCreate";
 import { OpenToWorkSwitch } from "@/components/admin/SingletonForms";
 import { countRows, getAdminContent, lastEdited } from "@/lib/admin/data";
 import { checkContentHealth, translationStats } from "@/lib/admin/health";
@@ -60,6 +61,7 @@ async function Overview() {
   const attention = issues.filter((i) => i.severity !== "info").length;
   return (
     <>
+      <QuickCreate />
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="flex flex-col justify-center rounded-lg border p-4">
           <OpenToWorkSwitch initial={content.profile.openToWork} />
@@ -75,9 +77,18 @@ async function Overview() {
         </Card>
         <Card
           label="Sửa gần nhất"
-          hint={last ? relativeTime(last.at) : undefined}
+          hint={last ? `${last.kind} · ${relativeTime(last.at)}` : undefined}
         >
-          <span className="block truncate text-base">{last?.label ?? "—"}</span>
+          {last ? (
+            <Link
+              href={last.href}
+              className="block truncate text-base hover:underline"
+            >
+              {last.label}
+            </Link>
+          ) : (
+            <span className="block text-base">—</span>
+          )}
         </Card>
       </div>
       <section className="flex flex-col gap-2">
