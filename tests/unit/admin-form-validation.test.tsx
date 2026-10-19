@@ -70,7 +70,9 @@ describe("form validation", () => {
     renderNewCertificate();
     await save();
     await act(async () => fireEvent.change(document.getElementById("field-name")!, { target: { value: "IELTS" } }));
-    expect(within(summary()!).getByText("Có 4 mục cần sửa")).toBeTruthy();
+    // The name also fills the ID of a new item, so both lines go.
+    expect(within(summary()!).getByText("Có 3 mục cần sửa")).toBeTruthy();
+    expect(within(summary()!).queryByRole("link", { name: "Nhập ID" })).toBeNull();
     expect(document.getElementById("field-name")!.getAttribute("aria-invalid")).toBe("false");
   });
 
