@@ -11,14 +11,33 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { ZodObject } from "zod";
 import type { Option } from "@/lib/admin/data";
-import { resources, type FieldSpec, type ResourceKey } from "@/lib/admin/resources";
-import { adminResolver, flattenErrors, isRequired } from "@/lib/admin/validation";
+import {
+  resources,
+  type FieldSpec,
+  type ResourceKey,
+} from "@/lib/admin/resources";
+import {
+  adminResolver,
+  flattenErrors,
+  isRequired,
+} from "@/lib/admin/validation";
 import { cn } from "@/lib/utils";
 import { ErrorSummary, focusField } from "./ErrorSummary";
-import { FormSectionBlock, FormSectionNav, type FormSection } from "./FormSections";
+import {
+  FormSectionBlock,
+  FormSectionNav,
+  type FormSection,
+} from "./FormSections";
 import { SaveBar, useUnsavedGuard } from "./SaveBar";
 import { a11yProps, FieldError, FieldShell } from "./FieldShell";
-import { EMPTY_I18N, I18nField, type I18nErrors, type I18nValue } from "./I18nField";
+import {
+  EMPTY_I18N,
+  I18nField,
+  LocaleModeProvider,
+  LocaleModeSwitch,
+  type I18nErrors,
+  type I18nValue,
+} from "./I18nField";
 import { SkillPicker, type SkillOption } from "./SkillPicker";
 import { SortableList } from "./SortableList";
 import { TagCombobox } from "./TagCombobox";
@@ -33,7 +52,9 @@ const CASE_STUDY_PARTS = [
   ["result", "Kết quả"],
 ] as const;
 
-export type Options = Partial<Record<"experiences" | "projects" | "skillGroups", Option[]>> & {
+export type Options = Partial<
+  Record<"experiences" | "projects" | "skillGroups", Option[]>
+> & {
   /** Skills that can be attached to an experience or project. */
   skills?: SkillOption[];
   /** Skill names suggested for free-text tags (certificates, activities). */
@@ -93,7 +114,8 @@ export function FieldsForm({
         const result = await onSave(values);
         if (!result.ok) {
           if (result.fieldErrors && Object.keys(result.fieldErrors).length) {
-            for (const [path, message] of Object.entries(result.fieldErrors)) setError(path, { type: "server", message });
+            for (const [path, message] of Object.entries(result.fieldErrors))
+              setError(path, { type: "server", message });
             setFocusKey((k) => k + 1);
           } else {
             toast.error(result.error);
@@ -123,13 +145,23 @@ export function FieldsForm({
       case "month":
       case "date":
         return (
-          <FieldShell key={f.name} id={id} label={f.label} required={required} hint={f.hint} error={error}>
+          <FieldShell
+            key={f.name}
+            id={id}
+            label={f.label}
+            required={required}
+            hint={f.hint}
+            error={error}
+          >
             <Input
               {...a11yProps(id, error)}
               className={invalid(error)}
               type={f.kind === "text" ? "text" : f.kind}
               disabled={f.name === "id" && !isNew}
-              {...register(f.name, { setValueAs: (v: string) => (nullableText && v === "" ? null : v) })}
+              {...register(f.name, {
+                setValueAs: (v: string) =>
+                  nullableText && v === "" ? null : v,
+              })}
             />
           </FieldShell>
         );
@@ -143,7 +175,12 @@ export function FieldsForm({
               f.nullable && field.value === null ? (
                 <div className="flex items-center justify-between gap-3 rounded-md border border-dashed p-3 text-sm">
                   <span>{f.label}: chưa có (không bắt buộc)</span>
-                  <Button type="button" variant="outline" size="sm" onClick={() => field.onChange({ ...EMPTY_I18N })}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => field.onChange({ ...EMPTY_I18N })}
+                  >
                     Thêm
                   </Button>
                 </div>
@@ -169,7 +206,11 @@ export function FieldsForm({
             name={f.name}
             render={({ field }) => (
               <label className="flex items-center gap-3 text-sm font-medium">
-                <Switch id={id} checked={Boolean(field.value)} onCheckedChange={field.onChange} />
+                <Switch
+                  id={id}
+                  checked={Boolean(field.value)}
+                  onCheckedChange={field.onChange}
+                />
                 {f.label}
               </label>
             )}
@@ -177,10 +218,19 @@ export function FieldsForm({
         );
       case "select":
         return (
-          <FieldShell key={f.name} id={id} label={f.label} required={required} error={error}>
+          <FieldShell
+            key={f.name}
+            id={id}
+            label={f.label}
+            required={required}
+            error={error}
+          >
             <select
               {...a11yProps(id, error)}
-              className={cn("h-9 rounded-md border bg-background px-2 text-sm", invalid(error))}
+              className={cn(
+                "h-9 rounded-md border bg-background px-2 text-sm",
+                invalid(error),
+              )}
               {...register(f.name)}
             >
               {f.options.map((o) => (
@@ -198,7 +248,12 @@ export function FieldsForm({
             control={control}
             name={f.name}
             render={({ field }) => (
-              <SkillPicker label={f.label} value={(field.value as string[]) ?? []} onChange={field.onChange} options={options.skills ?? []} />
+              <SkillPicker
+                label={f.label}
+                value={(field.value as string[]) ?? []}
+                onChange={field.onChange}
+                options={options.skills ?? []}
+              />
             )}
           />
         );
@@ -210,15 +265,33 @@ export function FieldsForm({
             name={f.name}
             render={({ field }) =>
               f.suggest === "skills" ? (
-                <TagCombobox label={f.label} value={(field.value as string[]) ?? []} onChange={field.onChange} suggestions={options.skillNames ?? []} />
+                <TagCombobox
+                  label={f.label}
+                  value={(field.value as string[]) ?? []}
+                  onChange={field.onChange}
+                  suggestions={options.skillNames ?? []}
+                />
               ) : (
-                <FieldShell id={id} label={f.label} hint="Mỗi dòng một mục" error={error ?? errors.find((e) => e.field === f.name)?.message}>
+                <FieldShell
+                  id={id}
+                  label={f.label}
+                  hint="Mỗi dòng một mục"
+                  error={
+                    error ?? errors.find((e) => e.field === f.name)?.message
+                  }
+                >
                   <Textarea
                     {...a11yProps(id, error)}
                     rows={3}
                     value={((field.value as string[]) ?? []).join("\n")}
                     onChange={(e) => field.onChange(e.target.value.split("\n"))}
-                    onBlur={() => field.onChange(((field.value as string[]) ?? []).map((s) => s.trim()).filter(Boolean))}
+                    onBlur={() =>
+                      field.onChange(
+                        ((field.value as string[]) ?? [])
+                          .map((s) => s.trim())
+                          .filter(Boolean),
+                      )
+                    }
                   />
                 </FieldShell>
               )
@@ -232,7 +305,12 @@ export function FieldsForm({
             control={control}
             name={f.name}
             render={({ field }) => (
-              <UploadField label={f.label} kind={f.upload} value={(field.value as string) ?? null} onChange={field.onChange} />
+              <UploadField
+                label={f.label}
+                kind={f.upload}
+                value={(field.value as string) ?? null}
+                onChange={field.onChange}
+              />
             )}
           />
         );
@@ -247,7 +325,10 @@ export function FieldsForm({
               return (
                 <FieldShell group id={id} label={f.label} error={error}>
                   {(options[f.source] ?? []).map((o) => (
-                    <label key={o.id} className="flex items-center gap-2 text-sm">
+                    <label
+                      key={o.id}
+                      className="flex items-center gap-2 text-sm"
+                    >
                       <input
                         type="checkbox"
                         checked={selected.has(o.id)}
@@ -255,7 +336,11 @@ export function FieldsForm({
                           const next = new Set(selected);
                           if (e.target.checked) next.add(o.id);
                           else next.delete(o.id);
-                          field.onChange((options[f.source] ?? []).map((x) => x.id).filter((x) => next.has(x)));
+                          field.onChange(
+                            (options[f.source] ?? [])
+                              .map((x) => x.id)
+                              .filter((x) => next.has(x)),
+                          );
                         }}
                       />
                       {o.label}
@@ -273,9 +358,13 @@ export function FieldsForm({
             control={control}
             name={f.name}
             render={({ field }) => {
-              const labels = new Map((options[f.source] ?? []).map((o) => [o.id, o.label]));
+              const labels = new Map(
+                (options[f.source] ?? []).map((o) => [o.id, o.label]),
+              );
               const ids = (field.value as string[]) ?? [];
-              const missing = (options[f.source] ?? []).filter((o) => !ids.includes(o.id));
+              const missing = (options[f.source] ?? []).filter(
+                (o) => !ids.includes(o.id),
+              );
               return (
                 <FieldShell group id={id} label={f.label} error={error}>
                   <SortableList
@@ -284,8 +373,17 @@ export function FieldsForm({
                     renderItem={(item, handle) => (
                       <div className="flex items-center gap-2 px-2 py-1.5 text-sm">
                         {handle}
-                        <span className="flex-1">{labels.get(item.id) ?? item.id}</span>
-                        <Button type="button" variant="ghost" size="sm" onClick={() => field.onChange(ids.filter((x) => x !== item.id))}>
+                        <span className="flex-1">
+                          {labels.get(item.id) ?? item.id}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            field.onChange(ids.filter((x) => x !== item.id))
+                          }
+                        >
                           Bỏ
                         </Button>
                       </div>
@@ -294,7 +392,13 @@ export function FieldsForm({
                   {missing.length > 0 && (
                     <div className="flex flex-wrap gap-1">
                       {missing.map((o) => (
-                        <Button key={o.id} type="button" variant="outline" size="xs" onClick={() => field.onChange([...ids, o.id])}>
+                        <Button
+                          key={o.id}
+                          type="button"
+                          variant="outline"
+                          size="xs"
+                          onClick={() => field.onChange([...ids, o.id])}
+                        >
                           + {o.label}
                         </Button>
                       ))}
@@ -315,13 +419,24 @@ export function FieldsForm({
               const value = field.value as Record<string, I18nValue> | null;
               return (
                 <fieldset className="flex flex-col gap-3 rounded-md border p-3">
-                  <legend className="px-1 text-sm font-medium">{f.label} (không bắt buộc)</legend>
+                  <legend className="px-1 text-sm font-medium">
+                    {f.label} (không bắt buộc)
+                  </legend>
                   <label className="flex items-center gap-3 text-sm">
                     <Switch
                       id={id}
                       checked={value !== null}
                       onCheckedChange={(on) =>
-                        field.onChange(on ? Object.fromEntries(CASE_STUDY_PARTS.map(([k]) => [k, { ...EMPTY_I18N }])) : null)
+                        field.onChange(
+                          on
+                            ? Object.fromEntries(
+                                CASE_STUDY_PARTS.map(([k]) => [
+                                  k,
+                                  { ...EMPTY_I18N },
+                                ]),
+                              )
+                            : null,
+                        )
                       }
                     />
                     Có case study
@@ -335,7 +450,9 @@ export function FieldsForm({
                         required
                         multiline
                         value={value[part] ?? EMPTY_I18N}
-                        onChange={(v) => field.onChange({ ...value, [part]: v })}
+                        onChange={(v) =>
+                          field.onChange({ ...value, [part]: v })
+                        }
                         errors={i18nErrors(`${f.name}.${part}`)}
                       />
                     ))}
@@ -351,33 +468,76 @@ export function FieldsForm({
             control={control}
             name={f.name}
             render={({ field }) => {
-              const links = (field.value as { label: string; url: string }[]) ?? [];
-              const set = (i: number, patch: Partial<{ label: string; url: string }>) =>
-                field.onChange(links.map((l, j) => (j === i ? { ...l, ...patch } : l)));
+              const links =
+                (field.value as { label: string; url: string }[]) ?? [];
+              const set = (
+                i: number,
+                patch: Partial<{ label: string; url: string }>,
+              ) =>
+                field.onChange(
+                  links.map((l, j) => (j === i ? { ...l, ...patch } : l)),
+                );
               return (
-                <FieldShell group id={id} label={f.label} hint="Không bắt buộc. Mỗi liên kết cần nhãn và URL đầy đủ.">
+                <FieldShell
+                  group
+                  id={id}
+                  label={f.label}
+                  hint="Không bắt buộc. Mỗi liên kết cần nhãn và URL đầy đủ."
+                >
                   {links.map((l, i) => {
                     const labelId = `field-${f.name}.${i}.label`;
                     const urlId = `field-${f.name}.${i}.url`;
                     const labelErr = errAt(`${f.name}.${i}.label`);
                     const urlErr = errAt(`${f.name}.${i}.url`);
                     return (
-                      <div key={i} className="grid gap-2 sm:grid-cols-[1fr_2fr_auto]">
+                      <div
+                        key={i}
+                        className="grid gap-2 sm:grid-cols-[1fr_2fr_auto]"
+                      >
                         <div className="flex flex-col gap-1">
-                          <Input {...a11yProps(labelId, labelErr)} className={invalid(labelErr)} aria-label={`Nhãn liên kết ${i + 1}`} placeholder="Nhãn" value={l.label} onChange={(e) => set(i, { label: e.target.value })} />
+                          <Input
+                            {...a11yProps(labelId, labelErr)}
+                            className={invalid(labelErr)}
+                            aria-label={`Nhãn liên kết ${i + 1}`}
+                            placeholder="Nhãn"
+                            value={l.label}
+                            onChange={(e) => set(i, { label: e.target.value })}
+                          />
                           <FieldError id={labelId} message={labelErr} />
                         </div>
                         <div className="flex flex-col gap-1">
-                          <Input {...a11yProps(urlId, urlErr)} className={invalid(urlErr)} aria-label={`URL liên kết ${i + 1}`} placeholder="https://" value={l.url} onChange={(e) => set(i, { url: e.target.value })} />
+                          <Input
+                            {...a11yProps(urlId, urlErr)}
+                            className={invalid(urlErr)}
+                            aria-label={`URL liên kết ${i + 1}`}
+                            placeholder="https://"
+                            value={l.url}
+                            onChange={(e) => set(i, { url: e.target.value })}
+                          />
                           <FieldError id={urlId} message={urlErr} />
                         </div>
-                        <Button type="button" variant="ghost" size="sm" onClick={() => field.onChange(links.filter((_, j) => j !== i))}>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            field.onChange(links.filter((_, j) => j !== i))
+                          }
+                        >
                           Xóa
                         </Button>
                       </div>
                     );
                   })}
-                  <Button type="button" variant="outline" size="sm" className="self-start" onClick={() => field.onChange([...links, { label: "", url: "" }])}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="self-start"
+                    onClick={() =>
+                      field.onChange([...links, { label: "", url: "" }])
+                    }
+                  >
                     Thêm liên kết
                   </Button>
                 </FieldShell>
@@ -392,14 +552,40 @@ export function FieldsForm({
             control={control}
             name={f.name}
             render={({ field }) => {
-              const [from, to] = (field.value as [string, string]) ?? ["#000000", "#000000"];
+              const [from, to] = (field.value as [string, string]) ?? [
+                "#000000",
+                "#000000",
+              ];
               const colorErr = errAt(`${f.name}.0`) ?? errAt(`${f.name}.1`);
               return (
-                <FieldShell group id={id} label={f.label} required error={colorErr}>
+                <FieldShell
+                  group
+                  id={id}
+                  label={f.label}
+                  required
+                  error={colorErr}
+                >
                   <div className="flex items-center gap-3">
-                    <input id={`field-${f.name}.0`} type="color" aria-label="Màu bắt đầu" value={from} onChange={(e) => field.onChange([e.target.value, to])} />
-                    <input id={`field-${f.name}.1`} type="color" aria-label="Màu kết thúc" value={to} onChange={(e) => field.onChange([from, e.target.value])} />
-                    <span className="h-6 w-24 rounded" style={{ background: `linear-gradient(90deg, ${from}, ${to})` }} />
+                    <input
+                      id={`field-${f.name}.0`}
+                      type="color"
+                      aria-label="Màu bắt đầu"
+                      value={from}
+                      onChange={(e) => field.onChange([e.target.value, to])}
+                    />
+                    <input
+                      id={`field-${f.name}.1`}
+                      type="color"
+                      aria-label="Màu kết thúc"
+                      value={to}
+                      onChange={(e) => field.onChange([from, e.target.value])}
+                    />
+                    <span
+                      className="h-6 w-24 rounded"
+                      style={{
+                        background: `linear-gradient(90deg, ${from}, ${to})`,
+                      }}
+                    />
                   </div>
                 </FieldShell>
               );
@@ -413,24 +599,73 @@ export function FieldsForm({
             control={control}
             name={f.name}
             render={({ field }) => {
-              const stat = field.value as { value: number; prefix?: string; suffix?: string; label: I18nValue } | null;
+              const stat = field.value as {
+                value: number;
+                prefix?: string;
+                suffix?: string;
+                label: I18nValue;
+              } | null;
               const valueErr = errAt(`${f.name}.value`);
               return (
                 <fieldset className="flex flex-col gap-3 rounded-md border p-3">
-                  <legend className="px-1 text-sm font-medium">{f.label} (không bắt buộc)</legend>
+                  <legend className="px-1 text-sm font-medium">
+                    {f.label} (không bắt buộc)
+                  </legend>
                   <label className="flex items-center gap-3 text-sm">
-                    <Switch id={id} checked={stat !== null} onCheckedChange={(on) => field.onChange(on ? { value: 0, label: { ...EMPTY_I18N } } : null)} />
+                    <Switch
+                      id={id}
+                      checked={stat !== null}
+                      onCheckedChange={(on) =>
+                        field.onChange(
+                          on ? { value: 0, label: { ...EMPTY_I18N } } : null,
+                        )
+                      }
+                    />
                     Hiển thị con số
                   </label>
                   {stat && (
                     <>
                       <div className="grid grid-cols-3 gap-2">
-                        <Input aria-label="Tiền tố" placeholder="Tiền tố (vd ~)" value={stat.prefix ?? ""} onChange={(e) => field.onChange({ ...stat, prefix: e.target.value || undefined })} />
+                        <Input
+                          aria-label="Tiền tố"
+                          placeholder="Tiền tố (vd ~)"
+                          value={stat.prefix ?? ""}
+                          onChange={(e) =>
+                            field.onChange({
+                              ...stat,
+                              prefix: e.target.value || undefined,
+                            })
+                          }
+                        />
                         <div className="flex flex-col gap-1">
-                          <Input {...a11yProps(`field-${f.name}.value`, valueErr)} aria-label="Giá trị" type="number" value={stat.value} onChange={(e) => field.onChange({ ...stat, value: Number(e.target.value) })} />
-                          <FieldError id={`field-${f.name}.value`} message={valueErr} />
+                          <Input
+                            {...a11yProps(`field-${f.name}.value`, valueErr)}
+                            aria-label="Giá trị"
+                            type="number"
+                            value={stat.value}
+                            onChange={(e) =>
+                              field.onChange({
+                                ...stat,
+                                value: Number(e.target.value),
+                              })
+                            }
+                          />
+                          <FieldError
+                            id={`field-${f.name}.value`}
+                            message={valueErr}
+                          />
                         </div>
-                        <Input aria-label="Hậu tố" placeholder="Hậu tố (vd +)" value={stat.suffix ?? ""} onChange={(e) => field.onChange({ ...stat, suffix: e.target.value || undefined })} />
+                        <Input
+                          aria-label="Hậu tố"
+                          placeholder="Hậu tố (vd +)"
+                          value={stat.suffix ?? ""}
+                          onChange={(e) =>
+                            field.onChange({
+                              ...stat,
+                              suffix: e.target.value || undefined,
+                            })
+                          }
+                        />
                       </div>
                       <I18nField
                         label="Chú thích"
@@ -454,7 +689,8 @@ export function FieldsForm({
   useUnsavedGuard(dirty);
   const shownErrors = formState.submitCount > 0 ? errors : [];
   const errorsByField = new Map<string, number>();
-  for (const e of shownErrors) errorsByField.set(e.field, (errorsByField.get(e.field) ?? 0) + 1);
+  for (const e of shownErrors)
+    errorsByField.set(e.field, (errorsByField.get(e.field) ?? 0) + 1);
 
   const placed = new Set(sections?.flatMap((s) => s.fields));
   const byName = new Map(fields.map((f) => [f.name, f]));
@@ -462,7 +698,10 @@ export function FieldsForm({
     <>
       {sections.map((section) => (
         <FormSectionBlock key={section.id} section={section}>
-          {section.fields.map((name) => byName.get(name)).filter((f) => f !== undefined).map(renderField)}
+          {section.fields
+            .map((name) => byName.get(name))
+            .filter((f) => f !== undefined)
+            .map(renderField)}
         </FormSectionBlock>
       ))}
       {fields.filter((f) => !placed.has(f.name)).map(renderField)}
@@ -471,28 +710,40 @@ export function FieldsForm({
     fields.map(renderField)
   );
 
+  const translated = fields.some(
+    (f) => f.kind === "i18n" || f.kind === "caseStudy" || f.kind === "stat",
+  );
+  const errorLocales = new Set(
+    shownErrors.flatMap((e) => (e.locale ? [e.locale] : [])),
+  );
+
   return (
-    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
-      <p className="text-xs text-muted-foreground">Mục có * là bắt buộc</p>
-      <ErrorSummary errors={shownErrors} focusKey={focusKey} />
-      {sections?.length ? (
-        <div className="grid gap-6 lg:grid-cols-[11rem_minmax(0,1fr)]">
-          <FormSectionNav sections={sections} errorsByField={errorsByField} />
-          <div className="flex min-w-0 flex-col gap-6">{body}</div>
+    <LocaleModeProvider>
+      <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs text-muted-foreground">Mục có * là bắt buộc</p>
+          {translated && <LocaleModeSwitch errorLocales={errorLocales} />}
         </div>
-      ) : (
-        body
-      )}
-      <SaveBar
-        dirty={dirty}
-        pending={pending}
-        saved={saved}
-        errorCount={shownErrors.length}
-        onSave={() => void onSubmit()}
-        onShowErrors={() => shownErrors[0] && focusField(shownErrors[0].path)}
-        onCancel={doneHref ? () => router.push(doneHref) : undefined}
-      />
-    </form>
+        <ErrorSummary errors={shownErrors} focusKey={focusKey} />
+        {sections?.length ? (
+          <div className="grid gap-6 lg:grid-cols-[11rem_minmax(0,1fr)]">
+            <FormSectionNav sections={sections} errorsByField={errorsByField} />
+            <div className="flex min-w-0 flex-col gap-6">{body}</div>
+          </div>
+        ) : (
+          body
+        )}
+        <SaveBar
+          dirty={dirty}
+          pending={pending}
+          saved={saved}
+          errorCount={shownErrors.length}
+          onSave={() => void onSubmit()}
+          onShowErrors={() => shownErrors[0] && focusField(shownErrors[0].path)}
+          onCancel={doneHref ? () => router.push(doneHref) : undefined}
+        />
+      </form>
+    </LocaleModeProvider>
   );
 }
 

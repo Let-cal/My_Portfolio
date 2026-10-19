@@ -1,18 +1,103 @@
 "use client";
 
+import { createContext, useContext, useState, useSyncExternalStore } from "react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { a11yProps, FieldError, RequiredMark } from "./FieldShell";
 
 export type I18nValue = { en: string; ja: string; vi: string };
 export type I18nErrors = Partial<Record<keyof I18nValue, string>>;
+type Locale = keyof I18nValue;
+export type LocaleMode = "all" | Locale;
 const LOCALES = ["en", "ja", "vi"] as const;
 export const EMPTY_I18N: I18nValue = { en: "", ja: "", vi: "" };
+const STORAGE_KEY = "admin.locales";
+
+const ModeContext = createContext<{ mode: LocaleMode; setMode: (m: LocaleMode) => void }>({
+  mode: "all",
+  setMode: () => {},
+});
+
+const MODES = new Set<string>(["all", "en", "ja", "vi"]);
+const listeners = new Set<() => void>();
+function readStoredMode(): LocaleMode {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved && MODES.has(saved) ? (saved as LocaleMode) : "all";
+  } catch {
+    return "all"; // Storage can be unavailable (private mode).
+  }
+}
+function storeMode(m: LocaleMode) {
+  try {
+    localStorage.setItem(STORAGE_KEY, m);
+  } catch {
+    // Not remembered this time.
+  }
+  listeners.forEach((l) => l());
+}
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
 
 /**
- * One text in three languages, side by side. Each language box has its own id
- * (`<idPrefix>.<locale>`) and error, so the error summary can jump straight to it.
- * EN is the required one; JA and VI fall back to EN on the public site.
+ * Which languages the translated fields show; remembered in this browser. The server always
+ * renders "Cả 3", the browser then switches to the remembered choice without a hydration mismatch.
+ */
+export function LocaleModeProvider({ initialMode, children }: { initialMode?: LocaleMode; children: React.ReactNode }) {
+  const stored = useSyncExternalStore(subscribe, readStoredMode, () => "all" as LocaleMode);
+  const [fixed, setFixed] = useState<LocaleMode | undefined>(initialMode);
+  const mode = fixed ?? stored;
+  const setMode = (m: LocaleMode) => {
+    if (fixed !== undefined) setFixed(m);
+    storeMode(m);
+  };
+  return <ModeContext value={{ mode, setMode }}>{children}</ModeContext>;
+}
+
+/** "Cả 3 · EN · JA · VI" switch; a red dot marks a hidden language that has an error. */
+export function LocaleModeSwitch({ errorLocales = new Set<string>() }: { errorLocales?: ReadonlySet<string> }) {
+  const { mode, setMode } = useContext(ModeContext);
+  const options: { value: LocaleMode; label: string }[] = [
+    { value: "all", label: "Cả 3" },
+    { value: "en", label: "EN" },
+    { value: "ja", label: "JA" },
+    { value: "vi", label: "VI" },
+  ];
+  return (
+    <div role="radiogroup" aria-label="Ngôn ngữ đang sửa" className="inline-flex rounded-md border p-0.5 text-xs">
+      {options.map((o) => {
+        const flagged = o.value !== "all" && o.value !== mode && errorLocales.has(o.value);
+        return (
+          <button
+            key={o.value}
+            type="button"
+            role="radio"
+            aria-checked={mode === o.value}
+            onClick={() => setMode(o.value)}
+            className={cn(
+              "relative rounded px-2.5 py-1 font-medium transition-colors",
+              mode === o.value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
+            )}
+          >
+            {o.label}
+            {flagged && (
+              <span role="img" aria-label={`${o.label} có lỗi`} className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-destructive" />
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * One text in three languages. Each language box has its own id (`field-<idPrefix>.<locale>`)
+ * and error, so the error summary can jump straight to it. EN is the required one; JA and VI
+ * fall back to EN on the public site. In single-language mode the EN text is shown as reference.
  */
 export function I18nField({
   label,
@@ -32,7 +117,12 @@ export function I18nField({
   required?: boolean;
   errors?: I18nErrors;
 }) {
+  const { mode } = useContext(ModeContext);
+  const shown = mode === "all" ? LOCALES : [mode];
+  // An error in a hidden language must still be visible: show that box too.
+  const visible = LOCALES.filter((l) => shown.includes(l) || errors[l]);
   const missing = LOCALES.filter((l) => !value[l]?.trim());
+
   return (
     <fieldset className="flex flex-col gap-2" data-field={`field-${idPrefix}`}>
       <legend className="mb-1 flex flex-wrap items-center gap-2 text-sm font-medium">
@@ -49,25 +139,45 @@ export function I18nField({
       {required && (
         <p className="text-xs text-muted-foreground">EN bắt buộc. JA, VI không bắt buộc: để trống thì trang hiển thị bản EN.</p>
       )}
-      <div className="grid gap-2 md:grid-cols-3">
-        {LOCALES.map((locale) => {
+      {mode !== "all" && mode !== "en" && value.en && (
+        <p className="rounded-md bg-muted/60 px-3 py-2 text-sm whitespace-pre-line text-muted-foreground">
+          <span className="mr-1 text-xs font-semibold">EN:</span>
+          {value.en}
+        </p>
+      )}
+      <div className={cn("grid gap-3", visible.length === 3 && "md:grid-cols-3")}>
+        {visible.map((locale) => {
           const id = `field-${idPrefix}.${locale}`;
           const props = {
             ...a11yProps(id, errors[locale]),
             lang: locale,
             value: value[locale] ?? "",
-            className: errors[locale] ? "border-destructive" : undefined,
+            className: cn(multiline && "field-sizing-content min-h-20", errors[locale] && "border-destructive"),
             onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
               onChange({ ...value, [locale]: e.target.value }),
           };
+          const canCopy = locale !== "en" && !value[locale]?.trim() && value.en.trim();
           return (
             <div key={locale} className="flex flex-col gap-1">
-              <label htmlFor={id} className="text-xs text-muted-foreground">
-                {locale.toUpperCase()}
-                {required && locale === "en" && <RequiredMark />}
-                <span className="sr-only"> · {label}</span>
-              </label>
-              {multiline ? <Textarea rows={4} {...props} /> : <Input {...props} />}
+              <div className="flex items-center justify-between gap-2">
+                <label htmlFor={id} className="text-xs text-muted-foreground">
+                  {locale.toUpperCase()}
+                  {required && locale === "en" && <RequiredMark />}
+                  <span className="sr-only"> · {label}</span>
+                </label>
+                {canCopy && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="xs"
+                    aria-label={`Chép từ EN sang ${locale.toUpperCase()}`}
+                    onClick={() => onChange({ ...value, [locale]: value.en })}
+                  >
+                    Chép từ EN
+                  </Button>
+                )}
+              </div>
+              {multiline ? <Textarea rows={3} {...props} /> : <Input {...props} />}
               <FieldError id={id} message={errors[locale]} />
             </div>
           );
