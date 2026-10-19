@@ -21,22 +21,6 @@ import { UploadField } from "./UploadField";
 
 type Values = Record<string, unknown>;
 
-/** Empty values for a new item, one per field kind. */
-export function emptyItem(key: ResourceKey): Values {
-  const values: Values = {};
-  for (const f of resources[key].fields) {
-    values[f.name] =
-      f.kind === "i18n" ? (f.nullable ? null : { ...EMPTY_I18N })
-      : f.kind === "boolean" ? true
-      : f.kind === "select" ? f.options[0]
-      : f.kind === "tags" || f.kind === "links" || f.kind === "relations" || f.kind === "order" || f.kind === "skills" ? []
-      : f.kind === "colors" ? ["#0ea5e9", "#e0a84e"]
-      : f.kind === "text" || f.kind === "url" || f.kind === "month" || f.kind === "date" ? (f.nullable ? null : "")
-      : null;
-  }
-  return values;
-}
-
 const CASE_STUDY_PARTS = [
   ["problem", "Vấn đề"],
   ["role", "Vai trò"],

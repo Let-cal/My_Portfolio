@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { emptyItem, ResourceForm } from "@/components/admin/ResourceForm";
+import { ResourceForm } from "@/components/admin/ResourceForm";
+import { emptyItem } from "@/lib/admin/empty-item";
 import type { Options } from "@/components/admin/ResourceForm";
 import type { Skill } from "@/content/schema";
 import { getItem, listItems, relationOptions } from "@/lib/admin/data";
