@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { Content } from "@/content/schema";
+import { SKILL_GROUPS, type Content } from "@/content/schema";
 import {
   rowToActivity,
   rowToCertificate,
@@ -70,7 +70,10 @@ export class SupabaseRepository implements ContentRepository {
       roles: roles.map(rowToRole),
       experiences: experiences.map(rowToExperience),
       projects: projects.map(rowToProject),
-      skills: skills.map((s) => rowToSkill(s, links)),
+      // sort_index counts within a group, so order by group first to keep each group together.
+      skills: skills
+        .map((s) => rowToSkill(s, links))
+        .sort((a, b) => SKILL_GROUPS.indexOf(a.group) - SKILL_GROUPS.indexOf(b.group) || a.sortIndex - b.sortIndex),
       certificates: certificates.map(rowToCertificate),
       activities: activities.map(rowToActivity),
       education: education.map(rowToEducation),
