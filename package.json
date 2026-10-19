@@ -17,11 +17,16 @@
     "start": "next start",
     "lint": "eslint .",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "db:schema": "tsx scripts/generate-db-schema.ts",
+    "db:seed": "tsx --env-file=.env.local scripts/seed-supabase.ts",
+    "db:seed-sql": "tsx scripts/seed-supabase.ts --sql",
+    "db:verify": "tsx --env-file=.env.local scripts/verify-supabase.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "^5.9.1",
     "@radix-ui/react-slot": "1.5.0",
     "@react-three/drei": "^10.7.9",
