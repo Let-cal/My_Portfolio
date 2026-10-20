@@ -1,5 +1,6 @@
 "use client";
 
+import { publicUrl } from "@/lib/admin/public-link";
 import { ADMIN_DISCARD_EVENT, signature } from "@/lib/admin/sync";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
@@ -78,6 +79,7 @@ export function FieldsForm({
   lockId = false,
   onSave,
   doneHref,
+  onSaved,
   sections,
   idScope,
   active = true,
@@ -95,6 +97,8 @@ export function FieldsForm({
   onSave: (values: Values) => Promise<ActionResult>;
   /** Where to go after a successful save; stay on the page when omitted. */
   doneHref?: string;
+  /** Replaces the default "Đã lưu" toast and `doneHref` navigation after a successful save. */
+  onSaved?: (values: Values) => void;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -179,8 +183,12 @@ export function FieldsForm({
         form.reset(raw);
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
-        toast.success("Đã lưu");
-        if (doneHref) router.push(doneHref);
+        if (onSaved) {
+          onSaved(values);
+        } else {
+          toast.success("Đã lưu");
+          if (doneHref) router.push(doneHref);
+        }
       }),
     () => setFocusKey((k) => k + 1),
   );
@@ -927,9 +935,48 @@ export function ResourceForm({
   isNew: boolean;
   options: Options;
 }) {
+  const router = useRouter();
   const resource = resources[resourceKey];
   const { sortIndex: _sortIndex, ...defaults } = initial;
   void _sortIndex;
+  // Back to the list at the saved item, with the likely next steps one click away.
+  const onSaved = (values: Values) => {
+    const id = String(values.id);
+    const label = String(
+      (values.name as string | undefined) ??
+        (values.title as string | undefined) ??
+        (values.company as string | undefined) ??
+        (values.school as string | undefined) ??
+        id,
+    );
+    const visible = values.published !== false;
+    const link =
+      "rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted";
+    toast.success(isNew ? `Đã tạo ${label}` : `Đã lưu ${label}`, {
+      duration: 8000,
+      description: (
+        <span className="mt-1 flex flex-wrap gap-1.5">
+          <a className={link} href={`/admin/${resourceKey}/${id}`}>
+            Mở lại
+          </a>
+          <a className={link} href={`/admin/${resourceKey}/new`}>
+            Tạo thêm
+          </a>
+          {visible && (
+            <a
+              className={link}
+              href={publicUrl(resourceKey, id, window.location.origin)}
+              target="_blank"
+              rel="noopener"
+            >
+              Xem trên trang ↗
+            </a>
+          )}
+        </span>
+      ),
+    });
+    router.push(`/admin/${resourceKey}?highlight=${encodeURIComponent(id)}`);
+  };
   return (
     <FieldsForm
       fields={resource.fields}
@@ -939,6 +986,7 @@ export function ResourceForm({
       lockId={!isNew}
       onSave={(values) => saveResource(resourceKey, values, isNew)}
       doneHref={`/admin/${resourceKey}`}
+      onSaved={onSaved}
       sections={resource.sections}
     />
   );

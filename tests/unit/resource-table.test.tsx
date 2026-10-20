@@ -11,7 +11,10 @@ const deleteResource = vi.fn();
 const togglePublished = vi.fn();
 const undoDelete = vi.fn();
 const toast = { success: vi.fn(), error: vi.fn() };
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push, refresh }) }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push, refresh, replace: vi.fn() }),
+  usePathname: () => "/admin/certificates",
+}));
 vi.mock("@/app/admin/actions", () => ({
   deleteResource,
   undoDelete,
@@ -188,5 +191,18 @@ describe("ResourceTable", () => {
         .getAttribute("aria-checked"),
     ).toBe("false");
     await act(async () => finish({ ok: true }));
+  });
+
+  it("brings the item just saved into view and marks it", () => {
+    const rows = listRows("certificates", content);
+    render(
+      <ResourceTable
+        resourceKey="certificates"
+        initialRows={rows}
+        highlightId={rows[2].id}
+      />,
+    );
+    const marked = document.querySelector('[data-highlight="true"]');
+    expect(marked?.textContent).toContain(rows[2].label);
   });
 });

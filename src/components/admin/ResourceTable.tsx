@@ -2,8 +2,8 @@
 
 import { Copy, Search, Trash2, TriangleAlert } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
   deleteResource,
@@ -76,13 +76,37 @@ export function ResourceTable({
   resourceKey,
   initialRows,
   impacts = {},
+  highlightId,
 }: {
   resourceKey: ResourceKey;
   initialRows: ListRow[];
   /** What deleting each item takes with it (skill links, why cards, role order). */
   impacts?: Record<string, string[]>;
+  /** The item just saved: scrolled into view and marked for a moment. */
+  highlightId?: string;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const [flash, setFlash] = useState<string | null>(highlightId ?? null);
+  const [seenHighlight, setSeenHighlight] = useState(highlightId);
+  if (highlightId !== seenHighlight) {
+    setSeenHighlight(highlightId);
+    setFlash(highlightId ?? null);
+  }
+  useEffect(() => {
+    if (!highlightId) return;
+    const reduce = window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    document.getElementById(`row-${highlightId}`)?.scrollIntoView?.({
+      block: "center",
+      behavior: reduce ? "auto" : "smooth",
+    });
+    // Drop ?highlight so a reload or Back does not mark it again.
+    router.replace(pathname, { scroll: false });
+    const timer = window.setTimeout(() => setFlash(null), 1800);
+    return () => window.clearTimeout(timer);
+  }, [highlightId, pathname, router]);
   const [rows, setRows] = useState(initialRows);
   // Changes this tab is still saving: they win over server data until their action settles.
   const [inflight, setInflight] = useState<
@@ -222,7 +246,11 @@ export function ResourceTable({
   }
 
   const renderRow = (row: ListRow, handle: React.ReactNode) => (
-    <div className="flex items-center gap-2 px-2 py-2 text-sm sm:gap-3">
+    <div
+      id={`row-${row.id}`}
+      data-highlight={flash === row.id || undefined}
+      className="flex items-center gap-2 px-2 py-2 text-sm transition-colors duration-700 data-[highlight=true]:bg-primary/15 sm:gap-3"
+    >
       {handle}
       <div className="min-w-0 flex-1">
         <p

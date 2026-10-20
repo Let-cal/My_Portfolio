@@ -14,9 +14,8 @@ vi.mock("@/app/admin/actions", () => ({
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push, refresh: vi.fn(), replace: vi.fn() }),
 }));
-vi.mock("sonner", () => ({
-  toast: { error: vi.fn(), success: vi.fn(), custom: vi.fn() },
-}));
+const toast = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn() }));
+vi.mock("sonner", () => ({ toast }));
 vi.mock("@/lib/supabase/browser", () => ({ createBrowserSupabase: vi.fn() }));
 globalThis.ResizeObserver ??= class {
   observe() {}
@@ -96,5 +95,36 @@ describe("form and new server data", () => {
     );
     expect(nameInput().value).toBe("Bản đã khôi phục");
     expect(screen.queryByText(/Có bản mới hơn/)).toBeNull();
+  });
+
+  it("after creating, lands on the list at the new item with quick next steps", async () => {
+    const { sortIndex: _x, ...fresh } = content.certificates[1];
+    void _x;
+    render(
+      <ResourceForm
+        resourceKey="certificates"
+        isNew
+        initial={{ ...fresh, id: "test-item", published: true }}
+        options={{ existingIds: [] }}
+      />,
+    );
+    await act(async () =>
+      fireEvent.click(screen.getByRole("button", { name: "Lưu" })),
+    );
+    expect(push).toHaveBeenCalledWith(
+      "/admin/certificates?highlight=test-item",
+    );
+    const [message, options] = toast.success.mock.calls.at(-1)!;
+    expect(message).toContain("Đã tạo");
+    render(<>{options.description}</>);
+    expect(
+      screen.getByRole("link", { name: "Mở lại" }).getAttribute("href"),
+    ).toBe("/admin/certificates/test-item");
+    expect(
+      screen.getByRole("link", { name: "Tạo thêm" }).getAttribute("href"),
+    ).toBe("/admin/certificates/new");
+    expect(
+      screen.getByRole("link", { name: /Xem trên trang/ }).getAttribute("href"),
+    ).toMatch(/\/en#certificates$/);
   });
 });
