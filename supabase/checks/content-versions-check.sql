@@ -1,13 +1,15 @@
 -- Behaviour check for content history (migrations 0004 + 0005). Safe on the live database:
 -- everything runs in one block that always ends with an error, so every change is rolled back.
--- Paste into the Supabase SQL Editor and run. Expected: an error whose message starts with
--- "RESULT" and reads: edits=2 after_reorder=2 restored_name=Test A position_kept=t undo_delete=t
--- links N->N project_back=t nonadmin_sees=0 anon_blocked=t
+-- Paste into the Supabase SQL Editor and run. The editor shows "Failed to run sql query" on
+-- purpose (that error is what undoes the test). Read the message:
+--   "PASS: all 9 checks passed ..."  -> everything works
+--   "FAIL: <list> ..."                -> the named checks did not behave as expected
 do $$
 declare
   n_after_edit int; n_after_reorder int; restored_name text; pos_after int; back boolean;
   proj text; links_before int; links_after int; proj_back boolean;
   v_id bigint; first_edit bigint; nonadmin_sees int := -1; anon_blocked boolean := false;
+  failed text[];
 begin
   -- Act as the admin, signed in.
   perform set_config('request.jwt.claims', '{"email":"letcal2003@gmail.com","role":"authenticated"}', true);
@@ -59,7 +61,20 @@ begin
   exception when others then anon_blocked := true;
   end;
 
-  raise exception 'RESULT edits=% after_reorder=% restored_name=% position_kept=% undo_delete=% links %->% project_back=% nonadmin_sees=% anon_blocked=%',
-    n_after_edit, n_after_reorder, restored_name, pos_after = 5, back,
-    links_before, links_after, proj_back, nonadmin_sees, anon_blocked;
+  failed := array_remove(array[
+    case when n_after_edit <> 2 then format('edits=%s (want 2)', n_after_edit) end,
+    case when n_after_reorder <> n_after_edit then format('reorder made a version (%s)', n_after_reorder) end,
+    case when restored_name is distinct from 'Test A' then format('restored_name=%s', restored_name) end,
+    case when pos_after is distinct from 5 then format('position=%s (want 5)', pos_after) end,
+    case when not back then 'undo of delete' end,
+    case when links_after <> links_before then format('links %s->%s', links_before, links_after) end,
+    case when not proj_back then 'project restore' end,
+    case when nonadmin_sees <> 0 then format('non-admin sees %s', nonadmin_sees) end,
+    case when not anon_blocked then 'anon not blocked' end
+  ], null);
+  if cardinality(failed) = 0 then
+    raise exception 'PASS: all 9 checks passed (edits=2, reorder ignored, restore keeps position, undo delete, % skill links restored, non-admin sees 0, anon blocked). Test data rolled back.', links_after;
+  else
+    raise exception 'FAIL: % . Test data rolled back.', array_to_string(failed, '; ');
+  end if;
 end $$;
