@@ -7,14 +7,18 @@ import { listRows } from "@/lib/admin/list-view";
 const push = vi.fn();
 const refresh = vi.fn();
 const duplicateResource = vi.fn();
+const deleteResource = vi.fn();
+const undoDelete = vi.fn();
+const toast = { success: vi.fn(), error: vi.fn() };
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push, refresh }) }));
 vi.mock("@/app/admin/actions", () => ({
-  deleteResource: vi.fn(),
+  deleteResource,
+  undoDelete,
   reorderResource: vi.fn(),
   togglePublished: vi.fn(),
   duplicateResource,
 }));
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+vi.mock("sonner", () => ({ toast }));
 
 const { ResourceTable } = await import("@/components/admin/ResourceTable");
 const content = contentSchema.parse(seed);
@@ -102,5 +106,44 @@ describe("ResourceTable", () => {
     );
     expect(duplicateResource).not.toHaveBeenCalled();
     expect(push).toHaveBeenCalledWith(`/admin/skills/new?from=${rows[0].id}`);
+  });
+
+  it("lists what a delete affects before confirming", async () => {
+    const rows = listRows("experiences", content);
+    render(
+      <ResourceTable
+        resourceKey="experiences"
+        initialRows={rows}
+        impacts={{ [rows[0].id]: ["Mất 3 liên kết kỹ năng"] }}
+      />,
+    );
+    await act(async () =>
+      fireEvent.click(screen.getAllByRole("button", { name: /^Xóa / })[0]),
+    );
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByText("Mất 3 liên kết kỹ năng")).toBeTruthy();
+  });
+
+  it("offers Hoàn tác for 10 seconds after a delete", async () => {
+    deleteResource.mockResolvedValue({ ok: true });
+    undoDelete.mockResolvedValue({ ok: true });
+    const rows = listRows("certificates", content);
+    render(<ResourceTable resourceKey="certificates" initialRows={rows} />);
+    await act(async () =>
+      fireEvent.click(screen.getAllByRole("button", { name: /^Xóa / })[0]),
+    );
+    await act(async () =>
+      fireEvent.click(
+        within(screen.getByRole("dialog")).getByRole("button", { name: "Xóa" }),
+      ),
+    );
+    const [message, options] = toast.success.mock.calls.at(-1)!;
+    expect(message).toContain("Đã xóa");
+    expect(options).toMatchObject({
+      duration: 10000,
+      action: { label: "Hoàn tác" },
+    });
+    await act(async () => options.action.onClick());
+    expect(undoDelete).toHaveBeenCalledWith("certificates", rows[0].id);
   });
 });
