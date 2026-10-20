@@ -3,7 +3,11 @@ import { describe, expect, it } from "vitest";
 import { contentSchema } from "@/content/schema";
 import seed from "@/content/seed.json";
 import { TABLES, type Table, type TableName } from "@/lib/data/columns";
-import { renderSchemaSql } from "@/lib/data/schema-sql";
+import {
+  renderSchemaSql,
+  VERSIONED_TABLES,
+  VERSIONS_SQL,
+} from "@/lib/data/schema-sql";
 import {
   activityToRow,
   certificateToRow,
@@ -99,5 +103,45 @@ describe("schema SQL", () => {
 
   it("keeps a single profile row", () => {
     expect(renderSchemaSql()).toContain("check (id = 'me')");
+  });
+});
+
+describe("content versions", () => {
+  it("records versions on all 10 content tables", () => {
+    const sql = renderSchemaSql();
+    expect(VERSIONED_TABLES).toHaveLength(10);
+    for (const name of VERSIONED_TABLES) {
+      expect(sql).toContain(
+        `create trigger ${name}_version after update or delete on public.${name}`,
+      );
+    }
+  });
+
+  it("ignores reorder-only updates and keeps 50 versions per item", () => {
+    expect(VERSIONS_SQL).toContain("- 'sort_index' - 'updated_at'");
+    expect(VERSIONS_SQL).toContain("offset 50");
+  });
+
+  it("only signed-in admins can list or restore", () => {
+    expect(VERSIONS_SQL).toContain(
+      "grant execute on function public.admin_list_versions(text, text) to authenticated",
+    );
+    expect(VERSIONS_SQL).toContain(
+      "grant execute on function public.admin_restore_version(bigint) to authenticated",
+    );
+    expect(VERSIONS_SQL).toContain(
+      "revoke execute on function public.admin_restore_version(bigint) from public, anon",
+    );
+    expect(
+      VERSIONS_SQL.match(/private\.is_admin\(\)/g)!.length,
+    ).toBeGreaterThanOrEqual(2);
+  });
+
+  it("the migration is exactly the versions section", () => {
+    const migration = readFileSync(
+      "supabase/migrations/0004_content_versions.sql",
+      "utf8",
+    ).replace(/\r\n/g, "\n");
+    expect(migration).toContain(VERSIONS_SQL);
   });
 });
