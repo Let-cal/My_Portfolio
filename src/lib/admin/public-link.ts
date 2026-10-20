@@ -26,5 +26,5 @@ export function publicUrl(
   id: string,
   origin: string,
 ): string {
-  return `${origin}/en#${publicAnchor(key, id)}`;
+  return `${origin}/en#${encodeURIComponent(publicAnchor(key, id))}`;
 }

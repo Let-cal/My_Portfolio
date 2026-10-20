@@ -1179,13 +1179,15 @@ export function ResourceForm({
         id,
     );
     const visible = values.published !== false;
+    // The id comes from an input: always encoded before it goes into a URL.
+    const path = `/admin/${resourceKey}/${encodeURIComponent(id)}`;
     const link =
       "rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted";
     toast.success(isNew ? `Đã tạo ${label}` : `Đã lưu ${label}`, {
       duration: 8000,
       description: (
         <span className="mt-1 flex flex-wrap gap-1.5">
-          <Link className={link} href={`/admin/${resourceKey}/${id}`}>
+          <Link className={link} href={path}>
             Mở lại
           </Link>
           {isNew && (

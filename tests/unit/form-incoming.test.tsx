@@ -140,7 +140,8 @@ describe("form and new server data", () => {
     localStorage.setItem(
       `admin.draft.certificates.${cert.id}`,
       JSON.stringify({
-        values: { ...cert, name: "Nháp chưa lưu" },
+        // Only the edited field: restoring keeps every other field from the server.
+        values: { name: "Nháp chưa lưu" },
         savedAt: new Date().toISOString(),
         baseSignature: "old",
       }),
@@ -152,6 +153,9 @@ describe("form and new server data", () => {
       fireEvent.click(screen.getByRole("button", { name: "Khôi phục" })),
     );
     expect(nameInput().value).toBe("Nháp chưa lưu");
+    expect(
+      (document.getElementById("field-organization") as HTMLInputElement).value,
+    ).toBe(cert.organization);
     expect(screen.queryByText(/Có bản nháp chưa lưu/)).toBeNull();
   });
 
@@ -160,7 +164,7 @@ describe("form and new server data", () => {
     localStorage.setItem(
       key,
       JSON.stringify({
-        values: { ...cert, name: "Nháp" },
+        values: { name: "Nháp" },
         savedAt: new Date().toISOString(),
         baseSignature: "x",
       }),
