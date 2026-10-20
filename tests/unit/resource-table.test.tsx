@@ -176,6 +176,7 @@ describe("ResourceTable", () => {
     });
     await act(async () => fireEvent.click(toggle));
     expect(toggle.getAttribute("aria-checked")).toBe("false");
+    expect(toggle.hasAttribute("disabled")).toBe(true);
     // Unrelated server data arrives (an extra row) while the toggle is saving.
     const extra = { ...rows[0], id: "new-one", label: "New one" };
     rerender(

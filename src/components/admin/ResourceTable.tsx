@@ -292,6 +292,8 @@ export function ResourceTable({
       {row.canHide && (
         <Switch
           checked={!row.hidden}
+          // One change at a time per item: no second click while the first is saving.
+          disabled={inflight.has(row.id)}
           onCheckedChange={(v) => setPublished(row, v)}
           aria-label={`Hiển thị ${row.label}`}
         />

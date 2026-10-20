@@ -3,6 +3,7 @@ import { AdminCommand } from "@/components/admin/AdminCommand";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminThemeToggle } from "@/components/admin/AdminThemeToggle";
 import { HealthBadge } from "@/components/admin/HealthBadge";
+import { ConnectionBanner } from "@/components/admin/ConnectionBanner";
 import { SessionExpiredDialog } from "@/components/admin/SessionExpiredDialog";
 import { SignOutButton } from "@/components/admin/SignOutButton";
 import { buildCommandItems } from "@/lib/admin/command-items";
@@ -39,6 +40,7 @@ export default function AdminPanelLayout({
         }
       />
       <div className="flex min-w-0 flex-1 flex-col gap-6">
+        <ConnectionBanner />
         <header className="flex items-center justify-end gap-2">
           <Suspense fallback={<AdminCommand items={[]} />}>
             <CommandLoader />
