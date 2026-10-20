@@ -1,5 +1,6 @@
 "use client";
 
+import { runAction } from "@/lib/admin/action-errors";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -107,24 +108,14 @@ export function SkillMatrix({
         : { skillId, projectId: col.id, linked };
     });
     setSaving(true);
-    let result: Awaited<ReturnType<typeof saveSkillLinks>>;
-    try {
-      result = await saveSkillLinks(changes);
-    } catch (error) {
-      result = {
-        ok: false,
-        error: error instanceof Error ? error.message : String(error),
-      };
-    }
+    // Unsaved cells stay marked after a failure, so "Lưu" again is the retry.
+    const result = await runAction(() => saveSkillLinks(changes));
     setSaving(false);
-    if (!result.ok) {
-      toast.error(`Không lưu được: ${result.error}`);
-      return;
-    }
+    if (!result.ok) return;
     setSaved((m) => new Map([...m, ...draft]));
     setDraft(new Map());
     toast.success(`Đã lưu ${changes.length} thay đổi`);
-  }, [draft, saving, columns, router]);
+  }, [draft, saving, columns]);
 
   // Ctrl/⌘+S saves; leaving (tab close, links, ⌘K) with unsaved changes asks first.
   useUnsavedGuard(draft.size > 0);
@@ -537,16 +528,16 @@ function AddSkillRow({ group, span }: { group: string; span: number }) {
     if (!trimmed) return fail("Nhập tên skill");
     if (!id) return fail("Tên cần có ít nhất một chữ cái hoặc chữ số");
     setBusy(true);
-    let result: Awaited<ReturnType<typeof saveResource>>;
-    try {
-      result = await saveResource(
-        "skills",
-        { id, name: trimmed, group, experienceIds: [], projectIds: [] },
-        true,
-      );
-    } catch (e) {
-      result = { ok: false, error: e instanceof Error ? e.message : String(e) };
-    }
+    // Errors show on the input; an expired session or a lost connection is reported globally too.
+    const result = await runAction(
+      () =>
+        saveResource(
+          "skills",
+          { id, name: trimmed, group, experienceIds: [], projectIds: [] },
+          true,
+        ),
+      { silent: true, retry: () => void submit() },
+    );
     setBusy(false);
     if (!result.ok) {
       // The row has no ID field: a clashing id means the skill (or one with the same id) exists.

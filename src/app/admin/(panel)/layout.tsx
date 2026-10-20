@@ -3,6 +3,7 @@ import { AdminCommand } from "@/components/admin/AdminCommand";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminThemeToggle } from "@/components/admin/AdminThemeToggle";
 import { HealthBadge } from "@/components/admin/HealthBadge";
+import { SessionExpiredDialog } from "@/components/admin/SessionExpiredDialog";
 import { SignOutButton } from "@/components/admin/SignOutButton";
 import { buildCommandItems } from "@/lib/admin/command-items";
 import { getAdminContent } from "@/lib/admin/data";
@@ -51,6 +52,7 @@ export default function AdminPanelLayout({
         </header>
         {children}
       </div>
+      <SessionExpiredDialog />
     </div>
   );
 }

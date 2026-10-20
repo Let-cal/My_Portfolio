@@ -1,5 +1,6 @@
 "use client";
 
+import { runAction } from "@/lib/admin/action-errors";
 import { Copy, Search, Trash2, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -142,16 +143,13 @@ export function ResourceTable({
     done: string,
     undo?: () => void,
     finish?: () => void,
+    retry?: () => void,
   ) {
     startTransition(async () => {
-      const result = await action();
+      const result = await runAction(action, { retry });
       finish?.();
-      if (result.ok) {
-        toast.success(done);
-      } else {
-        undo?.();
-        toast.error(result.error);
-      }
+      if (result.ok) toast.success(done);
+      else undo?.();
     });
   }
 
@@ -168,6 +166,7 @@ export function ResourceTable({
       "Đã lưu thứ tự",
       () => setRows(previous),
       () => setInflightOrder(null),
+      () => reorder(next),
     );
   }
 
@@ -182,6 +181,7 @@ export function ResourceTable({
           current.map((r) => (r.id === row.id ? { ...r, hidden: value } : r)),
         ),
       () => settle(row.id),
+      () => setPublished(row, value),
     );
   }
 
@@ -194,12 +194,13 @@ export function ResourceTable({
       return;
     }
     startTransition(async () => {
-      const result = await duplicateResource(resourceKey, row.id);
-      if (result.ok) {
+      const result = await runAction(
+        () => duplicateResource(resourceKey, row.id),
+        { retry: () => duplicate(row) },
+      );
+      if (result.ok && "id" in result) {
         toast.success(`Đã tạo bản sao ${result.id} (đang ẩn)`);
         router.push(`/admin/${resourceKey}/${result.id}`);
-      } else {
-        toast.error(result.error);
       }
     });
   }
@@ -208,15 +209,21 @@ export function ResourceTable({
     if (!toDelete) return;
     const target = toDelete;
     setToDelete(null);
+    remove(target);
+  }
+
+  function remove(target: ListRow) {
     const previous = rows;
     setRows(rows.filter((r) => r.id !== target.id));
     track(target.id, "deleted");
     startTransition(async () => {
-      const result = await deleteResource(resourceKey, target.id);
+      const result = await runAction(
+        () => deleteResource(resourceKey, target.id),
+        { retry: () => remove(target) },
+      );
       settle(target.id);
       if (!result.ok) {
         setRows(previous);
-        toast.error(result.error);
         return;
       }
       // The delete happens at once; for 10 s the toast can bring the item (and its links) back.
@@ -231,7 +238,10 @@ export function ResourceTable({
   }
 
   async function undo(target: ListRow, index: number) {
-    const result = await undoDelete(tableFor(resourceKey), target.id);
+    const result = await runAction(
+      () => undoDelete(tableFor(resourceKey), target.id),
+      { retry: () => void undo(target, index) },
+    );
     if (result.ok) {
       // Put the row back where it was right away; the refresh then brings the saved data.
       setRows((current) =>
@@ -240,8 +250,6 @@ export function ResourceTable({
           : [...current.slice(0, index), target, ...current.slice(index)],
       );
       toast.success(`Đã khôi phục ${target.label}`);
-    } else {
-      toast.error(result.error);
     }
   }
 

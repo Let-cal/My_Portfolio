@@ -1,5 +1,6 @@
 "use client";
 
+import { runAction } from "@/lib/admin/action-errors";
 import { VersionHistory } from "./VersionHistory";
 import { rovingKey } from "./roving";
 import { useTransition, useState } from "react";
@@ -134,15 +135,12 @@ export function OpenToWorkSwitch({ initial }: { initial: boolean }) {
         onCheckedChange={(next) => {
           setValue(next);
           startTransition(async () => {
-            const result = await setOpenToWork(next);
+            const result = await runAction(() => setOpenToWork(next));
             if (result.ok)
               toast.success(
                 next ? "Đang hiện Open to work" : "Đã tắt Open to work",
               );
-            else {
-              setValue(!next);
-              toast.error(result.error);
-            }
+            else setValue(!next);
           });
         }}
       />

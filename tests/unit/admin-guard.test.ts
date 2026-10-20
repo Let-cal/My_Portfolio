@@ -57,4 +57,18 @@ describe("adminGuard", () => {
     expect(res.headers.get("location")).toContain("/admin/login");
     expect(getUser).not.toHaveBeenCalled();
   });
+
+  it("lets server actions through without a session so they can answer 'session expired'", async () => {
+    getUser.mockResolvedValue({ data: { user: null }, error: null });
+    const req = new NextRequest(
+      new URL("/admin/certificates/new", "https://letcal.test"),
+      {
+        method: "POST",
+        headers: { "next-action": "abc123" },
+      },
+    );
+    const res = await adminGuard(req, env);
+    expect(res.headers.get("location")).toBeNull();
+    expect(res.status).toBe(200);
+  });
 });

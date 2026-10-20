@@ -1,5 +1,6 @@
 "use client";
 
+import { runAction } from "@/lib/admin/action-errors";
 import { publicUrl } from "@/lib/admin/public-link";
 import { ADMIN_DISCARD_EVENT, signature } from "@/lib/admin/sync";
 import { useRouter } from "next/navigation";
@@ -168,13 +169,17 @@ export function FieldsForm({
         const raw = form.getValues();
         const values = { ...parsed };
         for (const f of fields) if (f.virtual) values[f.name] = raw[f.name];
-        const result = await onSave(values);
+        // Field errors show on their inputs; session and network problems are reported globally.
+        const result = await runAction(() => onSave(values), {
+          silent: true,
+          retry: () => void onSubmit(),
+        });
         if (!result.ok) {
           if (result.fieldErrors && Object.keys(result.fieldErrors).length) {
             for (const [path, message] of Object.entries(result.fieldErrors))
               setError(path, { type: "server", message });
             setFocusKey((k) => k + 1);
-          } else {
+          } else if (!result.code) {
             toast.error(result.error);
           }
           return;

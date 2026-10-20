@@ -25,9 +25,17 @@ import { createServerSupabase } from "@/lib/supabase/server";
 import { profileSchema, roleSchema, type Skill } from "@/content/schema";
 
 /** `fieldErrors` maps a form path (e.g. "description.en") to the message shown under that input. */
+/** Why a write failed, for the client to react: sign in again, refuse, or offer a retry. */
+export type ActionErrorCode = "SESSION_EXPIRED" | "FORBIDDEN" | "NETWORK";
+
 export type ActionResult =
   | { ok: true }
-  | { ok: false; error: string; fieldErrors?: Record<string, string> };
+  | {
+      ok: false;
+      error: string;
+      fieldErrors?: Record<string, string>;
+      code?: ActionErrorCode;
+    };
 
 /** A failure that belongs to specific inputs; the form shows each message on its field. */
 class FormError extends Error {
@@ -39,13 +47,24 @@ class FormError extends Error {
   }
 }
 
-const fail = (error: unknown): ActionResult =>
-  error instanceof FormError
-    ? { ok: false, error: error.message, fieldErrors: error.fieldErrors }
-    : {
-        ok: false,
-        error: error instanceof Error ? error.message : String(error),
-      };
+const fail = (error: unknown): Extract<ActionResult, { ok: false }> => {
+  if (error instanceof FormError)
+    return { ok: false, error: error.message, fieldErrors: error.fieldErrors };
+  const message = error instanceof Error ? error.message : String(error);
+  if (message === "SESSION_EXPIRED")
+    return {
+      ok: false,
+      error: "Phiên đăng nhập đã hết hạn.",
+      code: "SESSION_EXPIRED",
+    };
+  if (message === "FORBIDDEN")
+    return {
+      ok: false,
+      error: "Tài khoản này không có quyền quản trị.",
+      code: "FORBIDDEN",
+    };
+  return { ok: false, error: message };
+};
 
 type ParseResult<T> =
   | { success: true; data: T }
@@ -479,10 +498,7 @@ export async function listVersions(
       current: (rows?.[0] as Record<string, unknown> | undefined) ?? null,
     };
   } catch (error) {
-    return {
-      ok: false,
-      error: error instanceof Error ? error.message : String(error),
-    };
+    return fail(error);
   }
 }
 

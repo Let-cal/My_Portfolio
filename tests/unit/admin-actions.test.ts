@@ -113,7 +113,8 @@ describe("admin actions", () => {
     void _s;
     expect(await saveResource("certificates", cert, true)).toEqual({
       ok: false,
-      error: "FORBIDDEN",
+      error: "Tài khoản này không có quyền quản trị.",
+      code: "FORBIDDEN",
     });
     expect(calls).toEqual([]);
     expect(updateTag).not.toHaveBeenCalled();
@@ -491,6 +492,15 @@ describe("admin actions", () => {
       ];
       expect((await undoDelete("certificates", "a")).ok).toBe(true);
       expect(refresh).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("tells the client when the session expired, so it can keep the form", async () => {
+    requireAdmin.mockRejectedValue(new Error("SESSION_EXPIRED"));
+    expect(await togglePublished("certificates", "a", false)).toEqual({
+      ok: false,
+      error: "Phiên đăng nhập đã hết hạn.",
+      code: "SESSION_EXPIRED",
     });
   });
 });
