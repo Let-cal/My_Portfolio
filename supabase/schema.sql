@@ -319,7 +319,10 @@ begin
   end if;
   pk := case v.table_name when 'roles' then 'key' else 'id' end;
   select string_agg(format('%I', c.column_name), ', ' order by c.ordinal_position),
+         -- An edit restore keeps the current position: reorders write no version, so the old
+         -- sort_index may be stale. A deleted item comes back at its old position (insert below).
          string_agg(format('%1$I = excluded.%1$I', c.column_name), ', ' order by c.ordinal_position)
+           filter (where c.column_name <> 'sort_index')
     into cols, sets
     from information_schema.columns c
     where c.table_schema = 'public' and c.table_name = v.table_name;

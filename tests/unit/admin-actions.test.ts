@@ -65,9 +65,10 @@ function table(name: string) {
     delete: (...args: unknown[]) => filterable("delete", args),
   };
 }
+let rpcError: { message: string; code?: string } | null = null;
 function rpc(name: string, args: unknown) {
   calls.push({ table: "rpc", op: name, args: [args] });
-  return Promise.resolve({ data: rpcResults[name] ?? null, error: null });
+  return Promise.resolve({ data: rpcResults[name] ?? null, error: rpcError });
 }
 vi.mock("@/lib/supabase/server", () => ({
   createServerSupabase: async () => ({ from: table, rpc }),
@@ -98,6 +99,7 @@ beforeEach(() => {
   links = [];
   tableRows = {};
   rpcResults = {};
+  rpcError = null;
   updateTag.mockReset();
   requireAdmin.mockReset().mockResolvedValue({ email: "admin@x.com" });
 });
@@ -433,5 +435,17 @@ describe("admin actions", () => {
       current: { key: "pm", title: "PM" },
     });
     expect((await listVersions("nope", "x")).ok).toBe(false);
+  });
+
+  it("explains a missing history migration in plain words", async () => {
+    rpcError = {
+      code: "PGRST202",
+      message:
+        "Could not find the function public.admin_list_versions(p_key, p_table) in the schema cache",
+    };
+    expect(await listVersions("certificates", "x")).toEqual({
+      ok: false,
+      error: "Lịch sử chưa được bật trên database (cần áp migration 0004).",
+    });
   });
 });

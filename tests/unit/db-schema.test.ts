@@ -137,6 +137,11 @@ describe("content versions", () => {
     ).toBeGreaterThanOrEqual(2);
   });
 
+  it("restoring an edit keeps the item's current position", () => {
+    // Reorders write no version, so an old sort_index would move the item.
+    expect(VERSIONS_SQL).toContain("c.column_name <> 'sort_index'");
+  });
+
   it("the migration is exactly the versions section", () => {
     const migration = readFileSync(
       "supabase/migrations/0004_content_versions.sql",

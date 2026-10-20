@@ -90,6 +90,20 @@ function check(error: { message: string } | null) {
   if (error) throw new Error(error.message);
 }
 
+/** Like `check`, for the history RPCs: a missing function means migration 0004 is not applied. */
+function checkRpc(error: { message: string; code?: string } | null) {
+  if (
+    error &&
+    (error.code === "PGRST202" ||
+      error.message.includes("Could not find the function"))
+  ) {
+    throw new Error(
+      "Lịch sử chưa được bật trên database (cần áp migration 0004).",
+    );
+  }
+  check(error);
+}
+
 /** Creates or updates one item. New items go to the end of the list. */
 export async function saveResource(
   key: string,
@@ -440,7 +454,7 @@ export async function listVersions(
       p_table: table,
       p_key: itemKey,
     });
-    check(error);
+    checkRpc(error);
     const { data: rows, error: rowError } = await supabase
       .from(table)
       .select("*")
@@ -470,7 +484,7 @@ export async function listVersions(
 export async function restoreVersion(versionId: number): Promise<ActionResult> {
   return adminSave(async () => {
     const supabase = await createServerSupabase();
-    check(
+    checkRpc(
       (await supabase.rpc("admin_restore_version", { p_version_id: versionId }))
         .error,
     );

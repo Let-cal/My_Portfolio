@@ -143,7 +143,10 @@ describe("ResourceTable", () => {
       duration: 10000,
       action: { label: "Hoàn tác" },
     });
+    expect(screen.queryByText(rows[0].label)).toBeNull();
     await act(async () => options.action.onClick());
     expect(undoDelete).toHaveBeenCalledWith("certificates", rows[0].id);
+    // The restored item is back in the list at once, without waiting for a reload.
+    expect(screen.getByText(rows[0].label)).toBeTruthy();
   });
 });

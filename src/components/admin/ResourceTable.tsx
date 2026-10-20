@@ -162,15 +162,21 @@ export function ResourceTable({
         duration: 10000,
         action: {
           label: "Hoàn tác",
-          onClick: () => void undo(target),
+          onClick: () => void undo(target, previous.indexOf(target)),
         },
       });
     });
   }
 
-  async function undo(target: ListRow) {
+  async function undo(target: ListRow, index: number) {
     const result = await undoDelete(tableFor(resourceKey), target.id);
     if (result.ok) {
+      // Put the row back where it was right away; the refresh then brings the saved data.
+      setRows((current) =>
+        current.some((r) => r.id === target.id)
+          ? current
+          : [...current.slice(0, index), target, ...current.slice(index)],
+      );
       toast.success(`Đã khôi phục ${target.label}`);
       router.refresh();
     } else {
