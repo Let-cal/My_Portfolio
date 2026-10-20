@@ -1,6 +1,7 @@
 import { FormSkeleton } from "@/components/admin/Skeletons";
 import { Suspense } from "react";
 import { ProfileForm } from "@/components/admin/SingletonForms";
+import { VersionHistory } from "@/components/admin/VersionHistory";
 import { getProfileAndRoles } from "@/lib/admin/data";
 
 async function Editor() {
@@ -15,7 +16,10 @@ async function Editor() {
 export default function ProfilePage() {
   return (
     <main className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold">Hồ sơ</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-2xl font-semibold">Hồ sơ</h1>
+        <VersionHistory table="profile" itemKey="me" />
+      </div>
       <p className="text-sm text-muted-foreground">
         Trang công khai không bao giờ hiển thị số điện thoại.
       </p>

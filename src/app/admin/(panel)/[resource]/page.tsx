@@ -6,6 +6,7 @@ import { ResourceTable } from "@/components/admin/ResourceTable";
 import { SkillMatrix } from "@/components/admin/SkillMatrix";
 import { Button } from "@/components/ui/button";
 import { getAdminContent } from "@/lib/admin/data";
+import { deleteImpact } from "@/lib/admin/impact";
 import { listRows } from "@/lib/admin/list-view";
 import { parseMatrixFilter } from "@/lib/admin/matrix";
 import { isResourceKey, resources } from "@/lib/admin/resources";
@@ -48,7 +49,16 @@ async function ResourceList({
       ) : matrix ? (
         <SkillMatrix content={content} initialFilter={parseMatrixFilter(sp)} />
       ) : (
-        <ResourceTable resourceKey={key} initialRows={listRows(key, content)} />
+        <ResourceTable
+          resourceKey={key}
+          initialRows={listRows(key, content)}
+          impacts={Object.fromEntries(
+            listRows(key, content).map((r) => [
+              r.id,
+              deleteImpact(key, r.id, content),
+            ]),
+          )}
+        />
       )}
     </>
   );

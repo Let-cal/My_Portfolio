@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, Search, Trash2 } from "lucide-react";
+import { Copy, Search, Trash2, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -10,6 +10,7 @@ import {
   duplicateResource,
   reorderResource,
   togglePublished,
+  undoDelete,
   type ActionResult,
 } from "@/app/admin/actions";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +32,7 @@ import {
   type RowStatus,
 } from "@/lib/admin/list-view";
 import type { ResourceKey } from "@/lib/admin/resources";
+import { tableFor } from "@/lib/admin/versions";
 import { cn } from "@/lib/utils";
 import { SortableList } from "./SortableList";
 
@@ -64,9 +66,12 @@ function chipsFor(
 export function ResourceTable({
   resourceKey,
   initialRows,
+  impacts = {},
 }: {
   resourceKey: ResourceKey;
   initialRows: ListRow[];
+  /** What deleting each item takes with it (skill links, why cards, role order). */
+  impacts?: Record<string, string[]>;
 }) {
   const router = useRouter();
   const [rows, setRows] = useState(initialRows);
@@ -144,11 +149,39 @@ export function ResourceTable({
     setToDelete(null);
     const previous = rows;
     setRows(rows.filter((r) => r.id !== target.id));
-    run(
-      () => deleteResource(resourceKey, target.id),
-      `Đã xóa ${target.label}`,
-      () => setRows(previous),
-    );
+    startTransition(async () => {
+      const result = await deleteResource(resourceKey, target.id);
+      if (!result.ok) {
+        setRows(previous);
+        toast.error(result.error);
+        return;
+      }
+      router.refresh();
+      // The delete happens at once; for 10 s the toast can bring the item (and its links) back.
+      toast.success(`Đã xóa ${target.label}`, {
+        duration: 10000,
+        action: {
+          label: "Hoàn tác",
+          onClick: () => void undo(target, previous.indexOf(target)),
+        },
+      });
+    });
+  }
+
+  async function undo(target: ListRow, index: number) {
+    const result = await undoDelete(tableFor(resourceKey), target.id);
+    if (result.ok) {
+      // Put the row back where it was right away; the refresh then brings the saved data.
+      setRows((current) =>
+        current.some((r) => r.id === target.id)
+          ? current
+          : [...current.slice(0, index), target, ...current.slice(index)],
+      );
+      toast.success(`Đã khôi phục ${target.label}`);
+      router.refresh();
+    } else {
+      toast.error(result.error);
+    }
   }
 
   const renderRow = (row: ListRow, handle: React.ReactNode) => (
@@ -299,8 +332,21 @@ export function ResourceTable({
             <DialogTitle>Xóa {toDelete?.label}?</DialogTitle>
             <DialogDescription>
               Mục &quot;{toDelete?.id}&quot; sẽ bị xóa khỏi database và trang
-              công khai. Không thể hoàn tác.
+              công khai. Bạn có 10 giây để hoàn tác sau khi xóa.
             </DialogDescription>
+            {toDelete && (impacts[toDelete.id]?.length ?? 0) > 0 && (
+              <div className="mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+                <p className="flex items-center gap-1.5 font-medium text-amber-800 dark:text-amber-300">
+                  <TriangleAlert aria-hidden className="size-4" />
+                  Sẽ bị ảnh hưởng:
+                </p>
+                <ul className="mt-1 list-disc pl-6">
+                  {impacts[toDelete.id].map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </DialogHeader>
           <DialogFooter>
             <DialogClose asChild>

@@ -16,6 +16,7 @@ let links: {
   project_id: string | null;
 }[] = [];
 let tableRows: Record<string, Record<string, unknown>[]> = {};
+let rpcResults: Record<string, unknown> = {};
 
 /** Records each query; `select ... order` answers with `existing`, writes succeed. */
 function table(name: string) {
@@ -64,8 +65,13 @@ function table(name: string) {
     delete: (...args: unknown[]) => filterable("delete", args),
   };
 }
+let rpcError: { message: string; code?: string } | null = null;
+function rpc(name: string, args: unknown) {
+  calls.push({ table: "rpc", op: name, args: [args] });
+  return Promise.resolve({ data: rpcResults[name] ?? null, error: rpcError });
+}
 vi.mock("@/lib/supabase/server", () => ({
-  createServerSupabase: async () => ({ from: table }),
+  createServerSupabase: async () => ({ from: table, rpc }),
 }));
 
 const {
@@ -78,6 +84,9 @@ const {
   setOpenToWork,
   saveSkillLinks,
   duplicateResource,
+  listVersions,
+  restoreVersion,
+  undoDelete,
 } = await import("@/app/admin/actions");
 const content = contentSchema.parse(seed);
 
@@ -89,6 +98,8 @@ beforeEach(() => {
   ];
   links = [];
   tableRows = {};
+  rpcResults = {};
+  rpcError = null;
   updateTag.mockReset();
   requireAdmin.mockReset().mockResolvedValue({ email: "admin@x.com" });
 });
@@ -162,18 +173,33 @@ describe("admin actions", () => {
     expect(calls.some((c) => c.op === "upsert")).toBe(false);
   });
 
-  it("replace a skill's evidence links when it is saved", async () => {
-    const skill = content.skills.find((s) => s.experienceIds.length)!;
-    existing.push({ id: skill.id, sort_index: 2 });
-    await saveResource("skills", skill, false);
-    expect(calls.find((c) => c.op === "delete.eq")).toMatchObject({
-      table: "skill_links",
-      args: ["skill_id", skill.id],
-    });
-    const insert = calls.find((c) => c.op === "insert")!;
-    expect(insert.args[0]).toHaveLength(
-      skill.experienceIds.length + skill.projectIds.length,
+  it("saving a skill only adds and removes the links that changed", async () => {
+    const skill = { ...content.skills.find((s) => s.id === "react")! };
+    existing.push({ id: "react", sort_index: 2 });
+    links = [
+      { skill_id: "react", experience_id: null, project_id: "siteplus" },
+      { skill_id: "react", experience_id: "skg-coa", project_id: null },
+    ];
+    await saveResource(
+      "skills",
+      { ...skill, experienceIds: [], projectIds: ["siteplus", "zodiacgems"] },
+      false,
     );
+    expect(
+      calls
+        .filter((c) => c.table === "skill_links" && c.op === "insert")
+        .map((c) => c.args[0]),
+    ).toEqual([
+      [{ skill_id: "react", experience_id: null, project_id: "zodiacgems" }],
+    ]);
+    expect(
+      calls
+        .filter((c) => c.table === "skill_links" && c.op === "delete.match")
+        .map((c) => c.args[0]),
+    ).toEqual([{ skill_id: "react", experience_id: "skg-coa" }]);
+    expect(
+      calls.some((c) => c.table === "skill_links" && c.op === "delete.eq"),
+    ).toBe(false);
   });
 
   it("save a new order as positions", async () => {
@@ -347,5 +373,79 @@ describe("admin actions", () => {
     requireAdmin.mockRejectedValue(new Error("FORBIDDEN"));
     expect((await duplicateResource("certificates", "ielts")).ok).toBe(false);
     expect(calls).toEqual([]);
+  });
+
+  it("undo restores the newest delete of that item", async () => {
+    rpcResults.admin_list_versions = [
+      { id: 7, op: "update", old_row: {}, changed_by: null, changed_at: "b" },
+      { id: 5, op: "delete", old_row: {}, changed_by: null, changed_at: "a" },
+    ];
+    expect(await undoDelete("certificates", "test-item")).toEqual({ ok: true });
+    expect(calls.filter((c) => c.table === "rpc")).toEqual([
+      {
+        table: "rpc",
+        op: "admin_list_versions",
+        args: [{ p_table: "certificates", p_key: "test-item" }],
+      },
+      {
+        table: "rpc",
+        op: "admin_restore_version",
+        args: [{ p_version_id: 5 }],
+      },
+    ]);
+    expect(updateTag).toHaveBeenCalledWith("content");
+  });
+
+  it("undo says so when there is nothing deleted to bring back", async () => {
+    rpcResults.admin_list_versions = [];
+    expect(await undoDelete("certificates", "x")).toEqual({
+      ok: false,
+      error: "Không còn bản đã xóa để hoàn tác.",
+    });
+  });
+
+  it("restore refuses non-admins without calling the database", async () => {
+    requireAdmin.mockRejectedValue(new Error("FORBIDDEN"));
+    expect((await restoreVersion(5)).ok).toBe(false);
+    expect(calls).toEqual([]);
+  });
+
+  it("lists versions with the current row, for known tables only", async () => {
+    rpcResults.admin_list_versions = [
+      {
+        id: 3,
+        op: "update",
+        old_row: { name: "Old" },
+        changed_by: "a@b.c",
+        changed_at: "t",
+      },
+    ];
+    tableRows.roles = [{ key: "pm", title: "PM" }];
+    expect(await listVersions("roles", "pm")).toEqual({
+      ok: true,
+      versions: [
+        {
+          id: 3,
+          op: "update",
+          oldRow: { name: "Old" },
+          changedBy: "a@b.c",
+          changedAt: "t",
+        },
+      ],
+      current: { key: "pm", title: "PM" },
+    });
+    expect((await listVersions("nope", "x")).ok).toBe(false);
+  });
+
+  it("explains a missing history migration in plain words", async () => {
+    rpcError = {
+      code: "PGRST202",
+      message:
+        "Could not find the function public.admin_list_versions(p_key, p_table) in the schema cache",
+    };
+    expect(await listVersions("certificates", "x")).toEqual({
+      ok: false,
+      error: "Lịch sử chưa được bật trên database (cần áp migration 0004).",
+    });
   });
 });

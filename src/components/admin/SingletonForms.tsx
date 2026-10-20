@@ -1,5 +1,6 @@
 "use client";
 
+import { VersionHistory } from "./VersionHistory";
 import { rovingKey } from "./roving";
 import { useTransition, useState } from "react";
 import { toast } from "sonner";
@@ -100,7 +101,11 @@ export function RoleTabs({
           role="tabpanel"
           aria-labelledby={`tab-${role.key}`}
           hidden={active !== role.key}
+          className="flex flex-col gap-3"
         >
+          <div className="flex justify-end">
+            <VersionHistory table="roles" itemKey={role.key} />
+          </div>
           <RoleForm
             initial={role}
             options={options}

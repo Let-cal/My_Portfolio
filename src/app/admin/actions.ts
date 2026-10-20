@@ -2,7 +2,7 @@
 
 import { updateTag } from "next/cache";
 import { z } from "zod";
-import { profileToRow, roleToRow, skillToLinkRows } from "@/lib/data/mappers";
+import { profileToRow, roleToRow } from "@/lib/data/mappers";
 import {
   diffLinks,
   linkMatch,
@@ -17,6 +17,8 @@ import {
 } from "@/lib/admin/resources";
 import { PROFILE_FIELDS, ROLE_FIELDS } from "@/lib/admin/singletons";
 import { copyId } from "@/lib/admin/list-view";
+import type { Version } from "@/lib/admin/versions";
+import { VERSIONED_TABLES } from "@/lib/data/schema-sql";
 import { describeIssues } from "@/lib/admin/validation";
 import { requireAdmin } from "@/lib/admin/session";
 import { createServerSupabase } from "@/lib/supabase/server";
@@ -88,6 +90,20 @@ function check(error: { message: string } | null) {
   if (error) throw new Error(error.message);
 }
 
+/** Like `check`, for the history RPCs: a missing function means migration 0004 is not applied. */
+function checkRpc(error: { message: string; code?: string } | null) {
+  if (
+    error &&
+    (error.code === "PGRST202" ||
+      error.message.includes("Could not find the function"))
+  ) {
+    throw new Error(
+      "Lịch sử chưa được bật trên database (cần áp migration 0004).",
+    );
+  }
+  check(error);
+}
+
 /** Creates or updates one item. New items go to the end of the list. */
 export async function saveResource(
   key: string,
@@ -129,12 +145,52 @@ export async function saveResource(
       .upsert(resource.toRow(item), { onConflict: "id" });
     check(upsertError);
     if (k === "skills") {
-      check(
-        (await supabase.from("skill_links").delete().eq("skill_id", id)).error,
+      // Only the links that changed are written, so history records real unlinks, not churn.
+      const skill = item as Skill;
+      const key = (t: LinkTarget) =>
+        "experienceId" in t ? `exp:${t.experienceId}` : `proj:${t.projectId}`;
+      const targets = new Map<string, LinkTarget>([
+        ...skill.experienceIds.map(
+          (e) => [`exp:${e}`, { experienceId: e }] as const,
+        ),
+        ...skill.projectIds.map(
+          (p) => [`proj:${p}`, { projectId: p }] as const,
+        ),
+      ]);
+      const { data: rows, error: linkError } = await supabase
+        .from("skill_links")
+        .select("*")
+        .eq("skill_id", id);
+      check(linkError);
+      const current = new Map<string, LinkTarget>(
+        (rows ?? []).map((r) => {
+          const t: LinkTarget = r.experience_id
+            ? { experienceId: r.experience_id as string }
+            : { projectId: r.project_id as string };
+          return [key(t), t];
+        }),
       );
-      const links = skillToLinkRows(item as Skill);
-      if (links.length)
-        check((await supabase.from("skill_links").insert(links)).error);
+      const { add, remove } = diffLinks(
+        [...current.keys()],
+        [...targets.keys()],
+      );
+      if (add.length)
+        check(
+          (
+            await supabase
+              .from("skill_links")
+              .insert(add.map((k2) => linkRow(id, targets.get(k2)!)))
+          ).error,
+        );
+      for (const k2 of remove)
+        check(
+          (
+            await supabase
+              .from("skill_links")
+              .delete()
+              .match(linkMatch(id, current.get(k2)!))
+          ).error,
+        );
     }
     if ((k === "experiences" || k === "projects") && Array.isArray(skillIds)) {
       const column = k === "experiences" ? "experience_id" : "project_id";
@@ -379,4 +435,71 @@ export async function saveRole(data: Record<string, unknown>) {
       ).error,
     );
   });
+}
+
+/** History of one item: its saved versions (newest first) and the row as it is now. */
+export async function listVersions(
+  table: string,
+  itemKey: string,
+): Promise<
+  | { ok: true; versions: Version[]; current: Record<string, unknown> | null }
+  | { ok: false; error: string }
+> {
+  try {
+    await requireAdmin();
+    if (!(VERSIONED_TABLES as string[]).includes(table))
+      throw new Error(`Unknown table: ${table}`);
+    const supabase = await createServerSupabase();
+    const { data, error } = await supabase.rpc("admin_list_versions", {
+      p_table: table,
+      p_key: itemKey,
+    });
+    checkRpc(error);
+    const { data: rows, error: rowError } = await supabase
+      .from(table)
+      .select("*")
+      .eq(table === "roles" ? "key" : "id", itemKey);
+    check(rowError);
+    const versions = ((data ?? []) as Record<string, unknown>[]).map((v) => ({
+      id: Number(v.id),
+      op: v.op as Version["op"],
+      oldRow: v.old_row as Record<string, unknown>,
+      changedBy: (v.changed_by as string | null) ?? null,
+      changedAt: String(v.changed_at),
+    }));
+    return {
+      ok: true,
+      versions,
+      current: (rows?.[0] as Record<string, unknown> | undefined) ?? null,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+/** Writes a saved version back. The restore is itself a new version, so it can be undone too. */
+export async function restoreVersion(versionId: number): Promise<ActionResult> {
+  return adminSave(async () => {
+    const supabase = await createServerSupabase();
+    checkRpc(
+      (await supabase.rpc("admin_restore_version", { p_version_id: versionId }))
+        .error,
+    );
+  });
+}
+
+/** "Hoàn tác" after a delete: brings back the newest deleted copy of the item (and its skill links). */
+export async function undoDelete(
+  table: string,
+  itemKey: string,
+): Promise<ActionResult> {
+  const listed = await listVersions(table, itemKey);
+  if (!listed.ok) return listed;
+  const deleted = listed.versions.find((v) => v.op === "delete");
+  if (!deleted)
+    return { ok: false, error: "Không còn bản đã xóa để hoàn tác." };
+  return restoreVersion(deleted.id);
 }
