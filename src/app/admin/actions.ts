@@ -2,7 +2,7 @@
 
 import { updateTag } from "next/cache";
 import { z } from "zod";
-import { profileToRow, roleToRow, skillToLinkRows } from "@/lib/data/mappers";
+import { profileToRow, roleToRow } from "@/lib/data/mappers";
 import {
   diffLinks,
   linkMatch,
@@ -129,12 +129,52 @@ export async function saveResource(
       .upsert(resource.toRow(item), { onConflict: "id" });
     check(upsertError);
     if (k === "skills") {
-      check(
-        (await supabase.from("skill_links").delete().eq("skill_id", id)).error,
+      // Only the links that changed are written, so history records real unlinks, not churn.
+      const skill = item as Skill;
+      const key = (t: LinkTarget) =>
+        "experienceId" in t ? `exp:${t.experienceId}` : `proj:${t.projectId}`;
+      const targets = new Map<string, LinkTarget>([
+        ...skill.experienceIds.map(
+          (e) => [`exp:${e}`, { experienceId: e }] as const,
+        ),
+        ...skill.projectIds.map(
+          (p) => [`proj:${p}`, { projectId: p }] as const,
+        ),
+      ]);
+      const { data: rows, error: linkError } = await supabase
+        .from("skill_links")
+        .select("*")
+        .eq("skill_id", id);
+      check(linkError);
+      const current = new Map<string, LinkTarget>(
+        (rows ?? []).map((r) => {
+          const t: LinkTarget = r.experience_id
+            ? { experienceId: r.experience_id as string }
+            : { projectId: r.project_id as string };
+          return [key(t), t];
+        }),
       );
-      const links = skillToLinkRows(item as Skill);
-      if (links.length)
-        check((await supabase.from("skill_links").insert(links)).error);
+      const { add, remove } = diffLinks(
+        [...current.keys()],
+        [...targets.keys()],
+      );
+      if (add.length)
+        check(
+          (
+            await supabase
+              .from("skill_links")
+              .insert(add.map((k2) => linkRow(id, targets.get(k2)!)))
+          ).error,
+        );
+      for (const k2 of remove)
+        check(
+          (
+            await supabase
+              .from("skill_links")
+              .delete()
+              .match(linkMatch(id, current.get(k2)!))
+          ).error,
+        );
     }
     if ((k === "experiences" || k === "projects") && Array.isArray(skillIds)) {
       const column = k === "experiences" ? "experience_id" : "project_id";

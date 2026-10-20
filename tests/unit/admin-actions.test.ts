@@ -162,18 +162,33 @@ describe("admin actions", () => {
     expect(calls.some((c) => c.op === "upsert")).toBe(false);
   });
 
-  it("replace a skill's evidence links when it is saved", async () => {
-    const skill = content.skills.find((s) => s.experienceIds.length)!;
-    existing.push({ id: skill.id, sort_index: 2 });
-    await saveResource("skills", skill, false);
-    expect(calls.find((c) => c.op === "delete.eq")).toMatchObject({
-      table: "skill_links",
-      args: ["skill_id", skill.id],
-    });
-    const insert = calls.find((c) => c.op === "insert")!;
-    expect(insert.args[0]).toHaveLength(
-      skill.experienceIds.length + skill.projectIds.length,
+  it("saving a skill only adds and removes the links that changed", async () => {
+    const skill = { ...content.skills.find((s) => s.id === "react")! };
+    existing.push({ id: "react", sort_index: 2 });
+    links = [
+      { skill_id: "react", experience_id: null, project_id: "siteplus" },
+      { skill_id: "react", experience_id: "skg-coa", project_id: null },
+    ];
+    await saveResource(
+      "skills",
+      { ...skill, experienceIds: [], projectIds: ["siteplus", "zodiacgems"] },
+      false,
     );
+    expect(
+      calls
+        .filter((c) => c.table === "skill_links" && c.op === "insert")
+        .map((c) => c.args[0]),
+    ).toEqual([
+      [{ skill_id: "react", experience_id: null, project_id: "zodiacgems" }],
+    ]);
+    expect(
+      calls
+        .filter((c) => c.table === "skill_links" && c.op === "delete.match")
+        .map((c) => c.args[0]),
+    ).toEqual([{ skill_id: "react", experience_id: "skg-coa" }]);
+    expect(
+      calls.some((c) => c.table === "skill_links" && c.op === "delete.eq"),
+    ).toBe(false);
   });
 
   it("save a new order as positions", async () => {
