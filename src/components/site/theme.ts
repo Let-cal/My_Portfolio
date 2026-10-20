@@ -8,7 +8,9 @@ export type Theme = "dark" | "light";
 const THEME_EVENT = "letcal-theme-change";
 
 function readTheme(): Theme {
-  return document.documentElement.classList.contains("light") ? "light" : "dark";
+  return document.documentElement.classList.contains("light")
+    ? "light"
+    : "dark";
 }
 
 function subscribe(onChange: () => void) {
@@ -35,7 +37,11 @@ export function applyTheme(theme: Theme) {
 
 /** The theme class on <html> is the single source of truth. The server snapshot is `dark`, the default. */
 export function useTheme(): { theme: Theme; setTheme: (theme: Theme) => void } {
-  const theme = useSyncExternalStore(subscribe, readTheme, () => "dark" as const);
+  const theme = useSyncExternalStore(
+    subscribe,
+    readTheme,
+    () => "dark" as const,
+  );
   const setTheme = useCallback((next: Theme) => applyTheme(next), []);
   return { theme, setTheme };
 }

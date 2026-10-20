@@ -33,7 +33,11 @@ export function SideRail({ name, titles, links, icons }: SideRailProps) {
   const socials = [
     { label: t("footer.github"), href: links.github, icon: icons.github },
     { label: t("footer.linkedin"), href: links.linkedin, icon: icons.linkedin },
-    { label: t("footer.email"), href: `mailto:${links.email}`, icon: <MailIcon className="size-5" /> },
+    {
+      label: t("footer.email"),
+      href: `mailto:${links.email}`,
+      icon: <MailIcon className="size-5" />,
+    },
   ];
 
   return (
@@ -47,11 +51,18 @@ export function SideRail({ name, titles, links, icons }: SideRailProps) {
           >
             {name}
           </a>
-          <p data-scene-avoid="" className="mt-3 font-[family-name:var(--font-serif)] text-xl text-balance text-brand-text italic [&:lang(ja)]:not-italic">
+          <p
+            data-scene-avoid=""
+            className="mt-3 font-[family-name:var(--font-serif)] text-xl text-balance text-brand-text italic [&:lang(ja)]:not-italic"
+          >
             <TextScramble text={titles[role]} />
           </p>
 
-          <nav aria-label={t("header.primaryNav")} data-scene-avoid="" className="mt-14">
+          <nav
+            aria-label={t("header.primaryNav")}
+            data-scene-avoid=""
+            className="mt-14"
+          >
             <ul className="flex flex-col gap-1">
               {SECTION_IDS.map((id) => {
                 const current = active === id;
@@ -62,7 +73,9 @@ export function SideRail({ name, titles, links, icons }: SideRailProps) {
                       aria-current={current ? "true" : undefined}
                       className={clsx(
                         "group flex items-center gap-4 rounded-sm py-2 text-xs font-semibold tracking-[0.18em] uppercase outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-                        current ? "text-foreground" : "text-muted-foreground hover:text-foreground focus-visible:text-foreground",
+                        current
+                          ? "text-foreground"
+                          : "text-muted-foreground hover:text-foreground focus-visible:text-foreground",
                       )}
                     >
                       <span
@@ -71,7 +84,9 @@ export function SideRail({ name, titles, links, icons }: SideRailProps) {
                           "h-px shrink-0 bg-current transition-[width] duration-300 ease-out group-hover:w-16 group-focus-visible:w-16 motion-reduce:transition-none",
                           current ? "w-16" : "w-8",
                         )}
-                        style={current ? { backgroundColor: ACCENT } : undefined}
+                        style={
+                          current ? { backgroundColor: ACCENT } : undefined
+                        }
                       />
                       {t(`nav.${id}`)}
                     </a>
@@ -82,13 +97,19 @@ export function SideRail({ name, titles, links, icons }: SideRailProps) {
           </nav>
         </div>
 
-        <ul aria-label={t("footer.links")} data-scene-avoid="box" className="flex items-center gap-5">
+        <ul
+          aria-label={t("footer.links")}
+          data-scene-avoid="box"
+          className="flex items-center gap-5"
+        >
           {socials.map(({ label, href, icon }) => (
             <li key={label}>
               <a
                 href={href}
                 aria-label={label}
-                {...(href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                {...(href.startsWith("http")
+                  ? { target: "_blank", rel: "noopener noreferrer" }
+                  : {})}
                 className="block rounded-sm text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
               >
                 {icon}

@@ -6,24 +6,47 @@ for (const [locale, title] of [
   ["ja", "レ・チャン・カット・ラム · ソフトウェアエンジニア ポートフォリオ"],
   ["vi", "Lê Trần Cát Lâm · Portfolio Kỹ sư Phần mềm"],
 ] as const) {
-  test(`${locale} exposes its canonical title, language links and person identity`, async ({ page }) => {
+  test(`${locale} exposes its canonical title, language links and person identity`, async ({
+    page,
+  }) => {
     await page.goto(`/${locale}`);
     await expect(page).toHaveTitle(title);
-    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", `https://letcal.is-a.dev/${locale}`);
-    await expect(page.locator('link[rel="alternate"][hreflang="ja"]')).toHaveAttribute("href", "https://letcal.is-a.dev/ja");
-    const person = await page.locator('script[type="application/ld+json"]').textContent();
-    expect(JSON.parse(person!)).toMatchObject({ "@type": "Person", name: "Le Tran Cat Lam", knowsLanguage: ["vi", "en", "ja"] });
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+      "href",
+      `https://letcal.is-a.dev/${locale}`,
+    );
+    await expect(
+      page.locator('link[rel="alternate"][hreflang="ja"]'),
+    ).toHaveAttribute("href", "https://letcal.is-a.dev/ja");
+    const person = await page
+      .locator('script[type="application/ld+json"]')
+      .textContent();
+    expect(JSON.parse(person!)).toMatchObject({
+      "@type": "Person",
+      name: "Le Tran Cat Lam",
+      knowsLanguage: ["vi", "en", "ja"],
+    });
     expect(JSON.parse(person!)).not.toHaveProperty("telephone");
   });
 }
 
-test("the printable view is noindex and points to the main locale page", async ({ page }) => {
+test("the printable view is noindex and points to the main locale page", async ({
+  page,
+}) => {
   await page.goto("/ja/quick?role=pm");
-  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex, follow");
-  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://letcal.is-a.dev/ja");
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+    "content",
+    "noindex, follow",
+  );
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    "href",
+    "https://letcal.is-a.dev/ja",
+  );
 });
 
-test("robots, sitemap and manifest expose the public portfolio identity", async ({ request }) => {
+test("robots, sitemap and manifest expose the public portfolio identity", async ({
+  request,
+}) => {
   const robots = await request.get("/robots.txt");
   expect(robots.ok()).toBe(true);
   expect(await robots.text()).toContain("Disallow: /admin");
@@ -33,15 +56,23 @@ test("robots, sitemap and manifest expose the public portfolio identity", async 
   expect(await sitemap.text()).toContain("https://letcal.is-a.dev/vi");
   const manifest = await request.get("/manifest.webmanifest");
   expect(manifest.ok()).toBe(true);
-  expect(await manifest.json()).toMatchObject({ short_name: "LETCAL", start_url: "/en" });
+  expect(await manifest.json()).toMatchObject({
+    short_name: "LETCAL",
+    start_url: "/en",
+  });
   const icon = await request.get("/icon.svg");
   expect(icon.ok()).toBe(true);
   expect(await icon.text()).toContain("#fb923c");
 });
 
-test("the share card is a real 1200 by 630 image", async ({ page, request }) => {
+test("the share card is a real 1200 by 630 image", async ({
+  page,
+  request,
+}) => {
   await page.goto("/en");
-  const content = await page.locator('meta[property="og:image"]').getAttribute("content");
+  const content = await page
+    .locator('meta[property="og:image"]')
+    .getAttribute("content");
   expect(content).toBeTruthy();
   const url = new URL(content!);
   const response = await request.get(`${url.pathname}${url.search}`);

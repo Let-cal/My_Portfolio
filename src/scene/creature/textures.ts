@@ -1,4 +1,10 @@
-import { CanvasTexture, NoColorSpace, RepeatWrapping, SRGBColorSpace, ClampToEdgeWrapping } from "three";
+import {
+  CanvasTexture,
+  NoColorSpace,
+  RepeatWrapping,
+  SRGBColorSpace,
+  ClampToEdgeWrapping,
+} from "three";
 import type { KoiVariety } from "@/content/schema";
 import { mulberry32 } from "./random";
 
@@ -29,7 +35,11 @@ export type KoiLayout = {
 type Spec = [cu: number, cv: number, hu: number, hv: number];
 
 /** An organic blob around (cu, cv): an ellipse whose radius wobbles with a few seeded harmonics. */
-function blob(rand: () => number, [cu, cv, hu, hv]: Spec, wobble = 1): number[] {
+function blob(
+  rand: () => number,
+  [cu, cv, hu, hv]: Spec,
+  wobble = 1,
+): number[] {
   const k = 36;
   const p1 = rand() * Math.PI * 2;
   const p2 = rand() * Math.PI * 2;
@@ -40,8 +50,16 @@ function blob(rand: () => number, [cu, cv, hu, hv]: Spec, wobble = 1): number[] 
   const pts: number[] = [];
   for (let i = 0; i < k; i++) {
     const a = (i / k) * Math.PI * 2;
-    const f = 1 + wobble * (0.09 * Math.sin(2 * a + p1) + 0.05 * Math.sin(3 * a + p2) + 0.025 * Math.sin(5 * a + p3));
-    pts.push(cu + ju + Math.cos(a) * hu * s * f, cv + jv + Math.sin(a) * hv * s * f);
+    const f =
+      1 +
+      wobble *
+        (0.09 * Math.sin(2 * a + p1) +
+          0.05 * Math.sin(3 * a + p2) +
+          0.025 * Math.sin(5 * a + p3));
+    pts.push(
+      cu + ju + Math.cos(a) * hu * s * f,
+      cv + jv + Math.sin(a) * hv * s * f,
+    );
   }
   return pts;
 }
@@ -52,8 +70,16 @@ const SUMI = "#15110e";
 /** Patch layout of each variety, seeded with mulberry32(42): the same fish on every visit. */
 export function koiPatchLayout(variety: KoiVariety): KoiLayout {
   const rand = mulberry32(SEED);
-  const hi = (spec: Spec, i: number): Patch => ({ tone: "hi", color: HI[i % HI.length], points: blob(rand, spec) });
-  const sumi = (spec: Spec): Patch => ({ tone: "sumi", color: SUMI, points: blob(rand, spec, 1.3) });
+  const hi = (spec: Spec, i: number): Patch => ({
+    tone: "hi",
+    color: HI[i % HI.length],
+    points: blob(rand, spec),
+  });
+  const sumi = (spec: Spec): Patch => ({
+    tone: "sumi",
+    color: SUMI,
+    points: blob(rand, spec, 1.3),
+  });
 
   if (variety === "kohaku") {
     // Classic step pattern: a red head and four patches along the back, clean white belly and tail end.
@@ -95,7 +121,12 @@ export function koiPatchLayout(variety: KoiVariety): KoiLayout {
     };
   }
   // Ogon: a single metallic gold; the shine comes from the material and the bright scale rims.
-  return { base: "#c4831f", belly: "#dfae55", scale: "rgba(255, 226, 150, 0.55)", patches: [] };
+  return {
+    base: "#c4831f",
+    belly: "#dfae55",
+    scale: "rgba(255, 226, 150, 0.55)",
+    patches: [],
+  };
 }
 
 /** One circuit trace: a polyline in uv space, a `phase` (0..1) that offsets its data pulse, and an end pad. */
@@ -109,7 +140,9 @@ export function circuitLayout(): Trace[] {
   for (let n = 0; n < 64; n++) {
     // Three quarters of the traces on the upper half (v 0..0.5), the rest underneath.
     const upper = rand() < 0.78;
-    let row = upper ? 1 + Math.floor(rand() * (ROWS / 2 - 2)) : ROWS / 2 + 2 + Math.floor(rand() * (ROWS / 2 - 4));
+    let row = upper
+      ? 1 + Math.floor(rand() * (ROWS / 2 - 2))
+      : ROWS / 2 + 2 + Math.floor(rand() * (ROWS / 2 - 4));
     let u = 0.03 + rand() * 0.78;
     const pts = [u, row / ROWS];
     const segs = 2 + Math.floor(rand() * 3);
@@ -134,7 +167,12 @@ export function circuitLayout(): Trace[] {
 
 const canvasCache = new Map<string, HTMLCanvasElement>();
 
-function cachedCanvas(key: string, w: number, h: number, draw: (g: CanvasRenderingContext2D, w: number, h: number) => void) {
+function cachedCanvas(
+  key: string,
+  w: number,
+  h: number,
+  draw: (g: CanvasRenderingContext2D, w: number, h: number) => void,
+) {
   let c = canvasCache.get(key);
   if (!c) {
     c = document.createElement("canvas");
@@ -148,7 +186,12 @@ function cachedCanvas(key: string, w: number, h: number, draw: (g: CanvasRenderi
 }
 
 /** Fills a uv-space outline, repeated across the v seam so a patch that wraps around the belly stays whole. */
-function fillOutline(g: CanvasRenderingContext2D, pts: number[], w: number, h: number) {
+function fillOutline(
+  g: CanvasRenderingContext2D,
+  pts: number[],
+  w: number,
+  h: number,
+) {
   for (const dv of [-1, 0, 1]) {
     g.beginPath();
     for (let i = 0; i < pts.length; i += 2) {
@@ -163,20 +206,41 @@ function fillOutline(g: CanvasRenderingContext2D, pts: number[], w: number, h: n
 }
 
 /** Overlapping scale rims, opening towards the head. Scales are drawn wider in u because the body is long. */
-function drawScales(g: CanvasRenderingContext2D, w: number, h: number, stroke: string, sx: number, sy: number, lw: number) {
+function drawScales(
+  g: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  stroke: string,
+  sx: number,
+  sy: number,
+  lw: number,
+) {
   g.strokeStyle = stroke;
   g.lineWidth = lw;
   for (let row = 0, y = 0; y <= h + sy; row++, y += sy) {
     const off = (row % 2) * (sx / 2);
     for (let x = -sx + off; x <= w + sx; x += sx) {
       g.beginPath();
-      g.ellipse(x, y, sx * 0.62, sy * 0.95, 0, -Math.PI / 2 + 0.35, Math.PI / 2 - 0.35);
+      g.ellipse(
+        x,
+        y,
+        sx * 0.62,
+        sy * 0.95,
+        0,
+        -Math.PI / 2 + 0.35,
+        Math.PI / 2 - 0.35,
+      );
       g.stroke();
     }
   }
 }
 
-function drawKoi(layout: KoiLayout, g: CanvasRenderingContext2D, w: number, h: number) {
+function drawKoi(
+  layout: KoiLayout,
+  g: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+) {
   // Back (v 0.25) to belly (v 0.75) gradient, mirrored so both seams match.
   const grad = g.createLinearGradient(0, 0, 0, h);
   grad.addColorStop(0, layout.base);
@@ -197,7 +261,12 @@ function drawKoi(layout: KoiLayout, g: CanvasRenderingContext2D, w: number, h: n
 
 /** Patterned koi skin (sRGB colour map). The pattern is drawn once per variety and cached. */
 export function makeKoiTexture(variety: KoiVariety): CanvasTexture {
-  const canvas = cachedCanvas(`koi-${variety}`, BODY_TEX_W, BODY_TEX_H, (g, w, h) => drawKoi(koiPatchLayout(variety), g, w, h));
+  const canvas = cachedCanvas(
+    `koi-${variety}`,
+    BODY_TEX_W,
+    BODY_TEX_H,
+    (g, w, h) => drawKoi(koiPatchLayout(variety), g, w, h),
+  );
   return finishColor(new CanvasTexture(canvas));
 }
 
@@ -336,7 +405,10 @@ export function makeFinTexture(variety: KoiVariety): CanvasTexture {
       g.fillRect(0, 0, w * 0.45, h);
     }
     // Rays: darker hairlines that fork slightly towards the edge.
-    g.strokeStyle = variety === "showa" ? "rgba(60, 50, 44, 0.5)" : "rgba(170, 140, 110, 0.5)";
+    g.strokeStyle =
+      variety === "showa"
+        ? "rgba(60, 50, 44, 0.5)"
+        : "rgba(170, 140, 110, 0.5)";
     g.lineWidth = 1.2;
     for (let y = 4; y < h; y += 8) {
       g.beginPath();

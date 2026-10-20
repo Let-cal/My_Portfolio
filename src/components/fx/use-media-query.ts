@@ -8,7 +8,11 @@ import { useReducedMotionEffective } from "@/components/site/motion-preference";
 export function useMediaQuery(query: string, serverValue = false): boolean {
   return useSyncExternalStore(
     (onChange) => {
-      if (typeof window === "undefined" || typeof window.matchMedia !== "function") return () => {};
+      if (
+        typeof window === "undefined" ||
+        typeof window.matchMedia !== "function"
+      )
+        return () => {};
       const mql = window.matchMedia(query);
       if (typeof mql.addEventListener === "function") {
         mql.addEventListener("change", onChange);
@@ -17,7 +21,10 @@ export function useMediaQuery(query: string, serverValue = false): boolean {
       mql.addListener?.(onChange);
       return () => mql.removeListener?.(onChange);
     },
-    () => (typeof window !== "undefined" && typeof window.matchMedia === "function" ? window.matchMedia(query).matches : false),
+    () =>
+      typeof window !== "undefined" && typeof window.matchMedia === "function"
+        ? window.matchMedia(query).matches
+        : false,
     () => serverValue,
   );
 }

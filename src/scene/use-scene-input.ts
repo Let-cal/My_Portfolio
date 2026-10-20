@@ -10,7 +10,9 @@ import { sceneStore, type CtaCircle } from "./store";
 function measureTops(): number[] {
   return SECTION_IDS.map((id) => {
     const el = document.getElementById(id);
-    return el ? el.getBoundingClientRect().top + window.scrollY : Number.POSITIVE_INFINITY;
+    return el
+      ? el.getBoundingClientRect().top + window.scrollY
+      : Number.POSITIVE_INFINITY;
   });
 }
 
@@ -26,7 +28,11 @@ export function useChapterTracking(enabled = true) {
     let frame = 0;
     const flush = () => {
       frame = 0;
-      const { chapter, t } = getChapterProgress(window.scrollY, tops, window.innerHeight);
+      const { chapter, t } = getChapterProgress(
+        window.scrollY,
+        tops,
+        window.innerHeight,
+      );
       sceneStore.setState({ chapter, t });
     };
     const schedule = () => {
@@ -36,7 +42,10 @@ export function useChapterTracking(enabled = true) {
       tops = measureTops();
       schedule();
     };
-    const resizeObserver = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(remeasure);
+    const resizeObserver =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(remeasure);
     resizeObserver?.observe(document.body);
     window.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", remeasure);
@@ -68,8 +77,15 @@ export function usePointerTracking(enabled: boolean) {
     };
     const onMove = (e: PointerEvent) => {
       const target = e.target instanceof Element ? e.target : null;
-      const over = !!target?.closest("[data-water-zone]") || sceneStore.getState().chapter === 0;
-      next = over ? { x: (e.clientX / window.innerWidth) * 2 - 1, y: -((e.clientY / window.innerHeight) * 2 - 1) } : null;
+      const over =
+        !!target?.closest("[data-water-zone]") ||
+        sceneStore.getState().chapter === 0;
+      next = over
+        ? {
+            x: (e.clientX / window.innerWidth) * 2 - 1,
+            y: -((e.clientY / window.innerHeight) * 2 - 1),
+          }
+        : null;
       if (!frame) frame = requestAnimationFrame(flush);
     };
     // The pointer left the page or the window lost focus: nothing is hovering the water any more.
@@ -100,7 +116,15 @@ const MERGE_GAP = 28;
 function sameRects(a: Rect[], b: Rect[]): boolean {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) {
-    if (a[i].x0 !== b[i].x0 || a[i].y0 !== b[i].y0 || a[i].x1 !== b[i].x1 || a[i].y1 !== b[i].y1 || a[i].large !== b[i].large || a[i].veil !== b[i].veil) return false;
+    if (
+      a[i].x0 !== b[i].x0 ||
+      a[i].y0 !== b[i].y0 ||
+      a[i].x1 !== b[i].x1 ||
+      a[i].y1 !== b[i].y1 ||
+      a[i].large !== b[i].large ||
+      a[i].veil !== b[i].veil
+    )
+      return false;
   }
   return true;
 }
@@ -122,7 +146,10 @@ const range = typeof document === "undefined" ? null : document.createRange();
  */
 function protectedRect(el: Element, box: DOMRect): DOMRect {
   const mark = el.getAttribute("data-scene-avoid");
-  const glass = mark === "box" || (mark === null && (el.getAttribute("class") ?? "").includes("backdrop-blur"));
+  const glass =
+    mark === "box" ||
+    (mark === null &&
+      (el.getAttribute("class") ?? "").includes("backdrop-blur"));
   if (!range || glass) return box;
   range.selectNodeContents(el);
   const r = range.getBoundingClientRect();
@@ -132,10 +159,17 @@ function protectedRect(el: Element, box: DOMRect): DOMRect {
 /** WCAG large text: 24px and up, or 18.66px and up in bold. Only the lines of a text block count (glass cards mix sizes). */
 function isLargeText(el: Element): boolean {
   const mark = el.getAttribute("data-scene-avoid");
-  if (mark === "box" || (mark === null && (el.getAttribute("class") ?? "").includes("backdrop-blur"))) return false;
+  if (
+    mark === "box" ||
+    (mark === null &&
+      (el.getAttribute("class") ?? "").includes("backdrop-blur"))
+  )
+    return false;
   const cs = getComputedStyle(el);
   const size = parseFloat(cs.fontSize);
-  return size >= 24 || (size >= 18.66 && (parseInt(cs.fontWeight, 10) || 400) >= 700);
+  return (
+    size >= 24 || (size >= 18.66 && (parseInt(cs.fontWeight, 10) || 400) >= 700)
+  );
 }
 
 /** Marks an element (and everything in it) the scene need not protect: it is drawn on an opaque surface of its own. */
@@ -146,14 +180,25 @@ const PINNED_SELECTOR = '[class*="fixed"], [class*="sticky"]';
 
 type Clip = { element: Element; x: boolean; y: boolean };
 /** Cache clipping ancestry during refresh, not computed styles on every scroll frame. */
-function clippingAncestors(element: Element, cache: Map<Element, Clip>): Clip[] {
+function clippingAncestors(
+  element: Element,
+  cache: Map<Element, Clip>,
+): Clip[] {
   const clips: Clip[] = [];
-  for (let parent = element.parentElement; parent && parent !== document.documentElement; parent = parent.parentElement) {
+  for (
+    let parent = element.parentElement;
+    parent && parent !== document.documentElement;
+    parent = parent.parentElement
+  ) {
     let clip = cache.get(parent);
     if (!clip) {
       const style = getComputedStyle(parent);
-      const x = /^(hidden|clip|auto|scroll)$/.test(style.overflowX || style.overflow);
-      const y = /^(hidden|clip|auto|scroll)$/.test(style.overflowY || style.overflow);
+      const x = /^(hidden|clip|auto|scroll)$/.test(
+        style.overflowX || style.overflow,
+      );
+      const y = /^(hidden|clip|auto|scroll)$/.test(
+        style.overflowY || style.overflow,
+      );
       clip = { element: parent, x, y };
       cache.set(parent, clip);
     }
@@ -168,7 +213,15 @@ function clippingAncestors(element: Element, cache: Map<Element, Clip>): Clip[] 
  * each scroll frame: it only reads the rectangles of the candidates near the viewport, plus the pinned ones.
  */
 export function createAvoidMeter() {
-  let items: { el: Element; top: number; bottom: number; pinned: boolean; large: boolean; veil: boolean; clips: Clip[] }[] = [];
+  let items: {
+    el: Element;
+    top: number;
+    bottom: number;
+    pinned: boolean;
+    large: boolean;
+    veil: boolean;
+    clips: Clip[];
+  }[] = [];
   return {
     refresh() {
       const sy = window.scrollY;
@@ -182,7 +235,15 @@ export function createAvoidMeter() {
         if (opaque && opaque !== el) continue;
         const b = el.getBoundingClientRect();
         if (b.width <= 0 || b.height <= 0) continue;
-        items.push({ el, top: b.top + sy, bottom: b.bottom + sy, pinned: !!el.closest(PINNED_SELECTOR), large: isLargeText(el), veil: !opaque, clips: clippingAncestors(el, clips) });
+        items.push({
+          el,
+          top: b.top + sy,
+          bottom: b.bottom + sy,
+          pinned: !!el.closest(PINNED_SELECTOR),
+          large: isLargeText(el),
+          veil: !opaque,
+          clips: clippingAncestors(el, clips),
+        });
       }
     },
     /** The screen-space rectangles near the viewport (see `selectRects`, `mergeRects`). */
@@ -193,7 +254,11 @@ export function createAvoidMeter() {
       const found: Rect[] = [];
       const clipBounds = new Map<Element, DOMRect>();
       for (const it of items) {
-        if (!it.pinned && (it.bottom - sy < -AVOID_MARGIN || it.top - sy > h + AVOID_MARGIN)) continue;
+        if (
+          !it.pinned &&
+          (it.bottom - sy < -AVOID_MARGIN || it.top - sy > h + AVOID_MARGIN)
+        )
+          continue;
         const box = it.el.getBoundingClientRect();
         if (box.width <= 0 || box.height <= 0) continue;
         if (box.bottom < -AVOID_MARGIN || box.top > h + AVOID_MARGIN) continue;
@@ -206,12 +271,28 @@ export function createAvoidMeter() {
         let y1 = Math.min(box.bottom, r.bottom);
         for (const clip of it.clips) {
           let bounds = clipBounds.get(clip.element);
-          if (!bounds) { bounds = clip.element.getBoundingClientRect(); clipBounds.set(clip.element, bounds); }
-          if (clip.x) { x0 = Math.max(x0, bounds.left); x1 = Math.min(x1, bounds.right); }
-          if (clip.y) { y0 = Math.max(y0, bounds.top); y1 = Math.min(y1, bounds.bottom); }
+          if (!bounds) {
+            bounds = clip.element.getBoundingClientRect();
+            clipBounds.set(clip.element, bounds);
+          }
+          if (clip.x) {
+            x0 = Math.max(x0, bounds.left);
+            x1 = Math.min(x1, bounds.right);
+          }
+          if (clip.y) {
+            y0 = Math.max(y0, bounds.top);
+            y1 = Math.min(y1, bounds.bottom);
+          }
         }
         if (x1 <= x0 || y1 <= y0) continue;
-        found.push({ x0, y0, x1, y1, large: it.large, ...(it.veil ? {} : { veil: false }) });
+        found.push({
+          x0,
+          y0,
+          x1,
+          y1,
+          large: it.large,
+          ...(it.veil ? {} : { veil: false }),
+        });
       }
       return selectRects(mergeRects(found, MERGE_GAP), w, h);
     },
@@ -245,7 +326,8 @@ export function useAvoidTracking(enabled: boolean) {
         meter.refresh();
       }
       const next = meter.measure();
-      if (!sameRects(next, sceneStore.getState().avoid)) sceneStore.setState({ avoid: next });
+      if (!sameRects(next, sceneStore.getState().avoid))
+        sceneStore.setState({ avoid: next });
     };
     const schedule = () => {
       if (!frame) frame = requestAnimationFrame(flush);
@@ -256,7 +338,8 @@ export function useAvoidTracking(enabled: boolean) {
     };
     // The veil panels animate their own opacity: their transitions say nothing about the page layout.
     const onTransition = (e: Event) => {
-      if (e.target instanceof Element && e.target.closest("[data-koi-veil]")) return;
+      if (e.target instanceof Element && e.target.closest("[data-koi-veil]"))
+        return;
       relayout();
     };
     const onScroll = () => {
@@ -270,7 +353,10 @@ export function useAvoidTracking(enabled: boolean) {
       window.clearTimeout(clickTimer);
       clickTimer = window.setTimeout(relayout, 400);
     };
-    const resizeObserver = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(relayout);
+    const resizeObserver =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(relayout);
     resizeObserver?.observe(document.body);
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", relayout);
@@ -322,7 +408,12 @@ export function useCtaTracking(enabled: boolean) {
         const el = document.getElementById(CTA_ID);
         if (el) {
           const b = el.getBoundingClientRect();
-          if (b.width > 0 && b.height > 0) next = { x: b.left + b.width / 2, y: b.top + b.height / 2, r: Math.min(b.width, b.height) / 2 };
+          if (b.width > 0 && b.height > 0)
+            next = {
+              x: b.left + b.width / 2,
+              y: b.top + b.height / 2,
+              r: Math.min(b.width, b.height) / 2,
+            };
         }
       }
       if (!sameCta(next, state.cta)) sceneStore.setState({ cta: next });
@@ -342,7 +433,10 @@ export function useCtaTracking(enabled: boolean) {
       chapter = c;
       schedule();
     });
-    const resizeObserver = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(schedule);
+    const resizeObserver =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(schedule);
     resizeObserver?.observe(document.body);
     window.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", schedule);
@@ -361,7 +455,8 @@ export function useCtaTracking(enabled: boolean) {
 }
 
 /** Things a click on the water must leave alone: they have a job of their own. */
-const NOT_WATER = 'a, button, input, select, textarea, label, summary, p, h1, h2, h3, h4, h5, h6, li, dt, dd, [contenteditable="true"], [role="radio"], [role="button"], [role="tab"], [data-role-wheel], [data-panel], [data-no-feed]';
+const NOT_WATER =
+  'a, button, input, select, textarea, label, summary, p, h1, h2, h3, h4, h5, h6, li, dt, dd, [contenteditable="true"], [role="radio"], [role="button"], [role="tab"], [data-role-wheel], [data-panel], [data-no-feed]';
 
 let dropCount = 0;
 
@@ -379,11 +474,25 @@ export function useFeedClicks(enabled: boolean) {
       const target = e.target instanceof Element ? e.target : null;
       if (target?.closest(NOT_WATER)) return;
       // A plain span/div may hold text without belonging to a semantic paragraph.
-      if (target && [...target.childNodes].some((node) => node.nodeType === Node.TEXT_NODE && node.textContent?.trim())) return;
-      const inZone = [...document.querySelectorAll("[data-water-zone]")].some((el) => {
-        const r = el.getBoundingClientRect();
-        return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
-      });
+      if (
+        target &&
+        [...target.childNodes].some(
+          (node) =>
+            node.nodeType === Node.TEXT_NODE && node.textContent?.trim(),
+        )
+      )
+        return;
+      const inZone = [...document.querySelectorAll("[data-water-zone]")].some(
+        (el) => {
+          const r = el.getBoundingClientRect();
+          return (
+            e.clientX >= r.left &&
+            e.clientX <= r.right &&
+            e.clientY >= r.top &&
+            e.clientY <= r.bottom
+          );
+        },
+      );
       if (!inZone) return;
       sceneStore.setState({
         drop: {

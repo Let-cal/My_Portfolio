@@ -3,9 +3,14 @@
 import { isDeepStrictEqual } from "node:util";
 import { contentSchema } from "../src/content/schema";
 import seed from "../src/content/seed.json";
-import { createPublicSupabase, SupabaseRepository } from "../src/lib/data/supabase-repository";
+import {
+  createPublicSupabase,
+  SupabaseRepository,
+} from "../src/lib/data/supabase-repository";
 
-const fromDb = contentSchema.parse(await new SupabaseRepository(createPublicSupabase()).getContent());
+const fromDb = contentSchema.parse(
+  await new SupabaseRepository(createPublicSupabase()).getContent(),
+);
 const expected = contentSchema.parse(seed);
 let differences = 0;
 for (const key of Object.keys(expected) as (keyof typeof expected)[]) {

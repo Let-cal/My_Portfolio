@@ -13,7 +13,8 @@ const env = {
   NEXT_PUBLIC_SUPABASE_ANON_KEY: "sb_publishable_test",
   ADMIN_EMAIL: "admin@x.com",
 };
-const request = (path: string) => new NextRequest(new URL(path, "https://letcal.test"));
+const request = (path: string) =>
+  new NextRequest(new URL(path, "https://letcal.test"));
 
 describe("adminGuard", () => {
   beforeEach(() => getUser.mockReset());
@@ -28,17 +29,25 @@ describe("adminGuard", () => {
     getUser.mockResolvedValue({ data: { user: null }, error: null });
     const res = await adminGuard(request("/admin/projects"), env);
     expect(res.status).toBe(307);
-    expect(res.headers.get("location")).toBe("https://letcal.test/admin/login?next=%2Fadmin%2Fprojects");
+    expect(res.headers.get("location")).toBe(
+      "https://letcal.test/admin/login?next=%2Fadmin%2Fprojects",
+    );
   });
 
   it("sends signed-in users who are not the admin to the login page", async () => {
-    getUser.mockResolvedValue({ data: { user: { email: "someone@x.com" } }, error: null });
+    getUser.mockResolvedValue({
+      data: { user: { email: "someone@x.com" } },
+      error: null,
+    });
     const res = await adminGuard(request("/admin"), env);
     expect(res.headers.get("location")).toContain("/admin/login");
   });
 
   it("lets the admin through", async () => {
-    getUser.mockResolvedValue({ data: { user: { email: "Admin@x.com" } }, error: null });
+    getUser.mockResolvedValue({
+      data: { user: { email: "Admin@x.com" } },
+      error: null,
+    });
     const res = await adminGuard(request("/admin"), env);
     expect(res.headers.get("location")).toBeNull();
   });

@@ -33,7 +33,10 @@ describe("TracingBeam", () => {
         <p>content</p>
       </TracingBeam>,
     );
-    expect(container.querySelector("[data-tracing-beam]")).toHaveAttribute("data-progress", "1");
+    expect(container.querySelector("[data-tracing-beam]")).toHaveAttribute(
+      "data-progress",
+      "1",
+    );
   });
 
   it("starts empty (data-progress=0) before the visitor scrolls, and renders its children and a decorative svg", () => {
@@ -46,7 +49,10 @@ describe("TracingBeam", () => {
       </TracingBeam>,
     );
     expect(getByText("content")).toBeInTheDocument();
-    expect(container.querySelector("[data-tracing-beam]")).toHaveAttribute("data-progress", "0");
+    expect(container.querySelector("[data-tracing-beam]")).toHaveAttribute(
+      "data-progress",
+      "0",
+    );
     const svg = container.querySelector("svg");
     expect(svg?.closest("[aria-hidden='true']")).not.toBeNull();
     expect(container.querySelector("[data-beam-head]")).not.toBeNull();

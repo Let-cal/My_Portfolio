@@ -23,7 +23,8 @@ export function TagCombobox({
   suggestions: string[];
 }) {
   const add = (tag: string) => {
-    if (!value.some((v) => v.toLowerCase() === tag.toLowerCase())) onChange([...value, tag]);
+    if (!value.some((v) => v.toLowerCase() === tag.toLowerCase()))
+      onChange([...value, tag]);
   };
   return (
     <fieldset className="flex flex-col gap-2">
@@ -57,7 +58,9 @@ export function TagCombobox({
         error={error}
         label={label}
         placeholder="Gõ để tìm, Enter để thêm"
-        options={suggestions.filter((s) => !value.includes(s)).map((s) => ({ value: s, label: s }))}
+        options={suggestions
+          .filter((s) => !value.includes(s))
+          .map((s) => ({ value: s, label: s }))}
         onPick={add}
         onEnterText={add}
       />

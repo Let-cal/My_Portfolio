@@ -101,7 +101,11 @@ const LUMINANCE_FLOOR = 0.06;
 const ICONS: Record<string, SkillIcon> = Object.fromEntries(
   Object.entries(SOURCES).map(([id, { path, hex }]) => [
     id,
-    { path, hex: `#${hex}`, hexDark: luminance(hex) < LUMINANCE_FLOOR ? DARK_FALLBACK : `#${hex}` },
+    {
+      path,
+      hex: `#${hex}`,
+      hexDark: luminance(hex) < LUMINANCE_FLOOR ? DARK_FALLBACK : `#${hex}`,
+    },
   ]),
 );
 
@@ -115,6 +119,12 @@ export function skillIconFor(skillId: string): SkillIcon | null {
 /** Up to two letters for the tile of a skill without a glyph: "Amazon RDS" -> AR, "Oracle" -> OR. */
 export function monogramOf(name: string): string {
   const words = name.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
-  const letters = words.length > 1 ? words.slice(0, 2).map((w) => w[0]).join("") : (words[0] ?? name).slice(0, 2);
+  const letters =
+    words.length > 1
+      ? words
+          .slice(0, 2)
+          .map((w) => w[0])
+          .join("")
+      : (words[0] ?? name).slice(0, 2);
   return letters.toUpperCase();
 }

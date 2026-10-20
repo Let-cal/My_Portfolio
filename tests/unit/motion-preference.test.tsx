@@ -1,13 +1,23 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { act, fireEvent, render, renderHook, screen } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+} from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NumberTicker } from "@/components/fx/NumberTicker";
 import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
 import { MotionToggle } from "@/components/site/MotionToggle";
 import { MOTION_INIT_SCRIPT } from "@/components/site/motion-script";
-import { getMotionPreference, setMotionPreference, useMotionPreference } from "@/components/site/motion-preference";
+import {
+  getMotionPreference,
+  setMotionPreference,
+  useMotionPreference,
+} from "@/components/site/motion-preference";
 import en from "@/messages/en.json";
 
 const html = document.documentElement;
@@ -42,7 +52,9 @@ describe("motion preference store", () => {
 
   it("system without OS reduce is not reduced", () => {
     stubOs(false);
-    expect(renderHook(() => useMotionPreference()).result.current.reduced).toBe(false);
+    expect(renderHook(() => useMotionPreference()).result.current.reduced).toBe(
+      false,
+    );
   });
 
   it("on overrides an OS reduce, is saved and marks <html data-motion=full>", () => {
@@ -158,9 +170,16 @@ describe("usePrefersReducedMotion", () => {
     }
     vi.stubGlobal("IntersectionObserver", IO);
     render(<NumberTicker value={14} />);
-    const shown = () => screen.getByLabelText("14").querySelector("[data-ticker-value]")?.textContent;
+    const shown = () =>
+      screen.getByLabelText("14").querySelector("[data-ticker-value]")
+        ?.textContent;
     expect(shown()).not.toBe("14");
-    act(() => trigger([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver));
+    act(() =>
+      trigger(
+        [{ isIntersecting: true } as IntersectionObserverEntry],
+        {} as IntersectionObserver,
+      ),
+    );
     act(() => {
       vi.advanceTimersByTime(5000);
     });
@@ -179,6 +198,8 @@ describe("globals.css", () => {
   it("redefines the Tailwind motion variants on data-motion", () => {
     expect(css).toContain("@custom-variant motion-reduce");
     expect(css).toContain("@custom-variant motion-safe");
-    expect(css).toMatch(/@custom-variant motion-reduce \(&:where\(\[data-motion=reduced\], \[data-motion=reduced\] \*\)\)/);
+    expect(css).toMatch(
+      /@custom-variant motion-reduce \(&:where\(\[data-motion=reduced\], \[data-motion=reduced\] \*\)\)/,
+    );
   });
 });

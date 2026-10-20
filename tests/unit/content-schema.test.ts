@@ -49,15 +49,18 @@ describe("content schema", () => {
     const expIds = new Set(content.experiences.map((e) => e.id));
     const projIds = new Set(content.projects.map((p) => p.id));
     for (const skill of content.skills) {
-      for (const id of skill.experienceIds) expect(expIds, `${skill.id} -> ${id}`).toContain(id);
-      for (const id of skill.projectIds) expect(projIds, `${skill.id} -> ${id}`).toContain(id);
+      for (const id of skill.experienceIds)
+        expect(expIds, `${skill.id} -> ${id}`).toContain(id);
+      for (const id of skill.projectIds)
+        expect(projIds, `${skill.id} -> ${id}`).toContain(id);
     }
   });
 
   it("orders roles only with existing experience ids", () => {
     const expIds = new Set(content.experiences.map((e) => e.id));
     for (const role of content.roles) {
-      for (const id of role.experienceOrder) expect(expIds, `${role.key} -> ${id}`).toContain(id);
+      for (const id of role.experienceOrder)
+        expect(expIds, `${role.key} -> ${id}`).toContain(id);
     }
   });
 
@@ -74,12 +77,14 @@ describe("content schema", () => {
   it("fills en, ja and vi for every i18n text", () => {
     const missing: string[] = [];
     const walk = (node: unknown, path: string) => {
-      if (Array.isArray(node)) return node.forEach((v, i) => walk(v, `${path}[${i}]`));
+      if (Array.isArray(node))
+        return node.forEach((v, i) => walk(v, `${path}[${i}]`));
       if (node && typeof node === "object") {
         const obj = node as Record<string, unknown>;
         if (typeof obj.en === "string") {
           for (const l of ["ja", "vi"]) {
-            if (typeof obj[l] !== "string" || !(obj[l] as string).trim()) missing.push(`${path}.${l}`);
+            if (typeof obj[l] !== "string" || !(obj[l] as string).trim())
+              missing.push(`${path}.${l}`);
           }
           return;
         }

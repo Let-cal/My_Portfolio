@@ -294,19 +294,34 @@ export function rowToSkill(r: SkillRow, links: SkillLinkRow[]): Skill {
     name: r.name,
     group: r.skill_group,
     sortIndex: r.sort_index,
-    experienceIds: own.flatMap((l) => (l.experience_id ? [l.experience_id] : [])),
+    experienceIds: own.flatMap((l) =>
+      l.experience_id ? [l.experience_id] : [],
+    ),
     projectIds: own.flatMap((l) => (l.project_id ? [l.project_id] : [])),
   };
 }
 
 export function skillToRow(s: Skill): SkillRow {
-  return { id: s.id, name: s.name, skill_group: s.group, sort_index: s.sortIndex };
+  return {
+    id: s.id,
+    name: s.name,
+    skill_group: s.group,
+    sort_index: s.sortIndex,
+  };
 }
 
 export function skillToLinkRows(s: Skill): SkillLinkRow[] {
   return [
-    ...s.experienceIds.map((id) => ({ skill_id: s.id, experience_id: id, project_id: null })),
-    ...s.projectIds.map((id) => ({ skill_id: s.id, experience_id: null, project_id: id })),
+    ...s.experienceIds.map((id) => ({
+      skill_id: s.id,
+      experience_id: id,
+      project_id: null,
+    })),
+    ...s.projectIds.map((id) => ({
+      skill_id: s.id,
+      experience_id: null,
+      project_id: id,
+    })),
   ];
 }
 
@@ -405,7 +420,9 @@ export function educationToRow(e: Education): EducationRow {
 export function rowToWhyCard(r: WhyCardRow): WhyCard {
   const [from, to] = r.colors;
   if (r.colors.length !== 2 || !from || !to) {
-    throw new Error(`why_cards.colors must hold exactly 2 colors (card ${r.id})`);
+    throw new Error(
+      `why_cards.colors must hold exactly 2 colors (card ${r.id})`,
+    );
   }
   return {
     id: r.id,

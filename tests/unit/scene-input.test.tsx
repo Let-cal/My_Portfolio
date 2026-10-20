@@ -1,11 +1,26 @@
 import { act, cleanup, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { sceneStore } from "@/scene/store";
-import { measureAvoid, useAvoidTracking, useCtaTracking, useFeedClicks } from "@/scene/use-scene-input";
+import {
+  measureAvoid,
+  useAvoidTracking,
+  useCtaTracking,
+  useFeedClicks,
+} from "@/scene/use-scene-input";
 import { useStaticChapterTracking } from "@/scene/use-static-chapter";
 
 function rect(x0: number, y0: number, x1: number, y1: number): DOMRect {
-  return { left: x0, top: y0, right: x1, bottom: y1, x: x0, y: y0, width: x1 - x0, height: y1 - y0, toJSON: () => ({}) } as DOMRect;
+  return {
+    left: x0,
+    top: y0,
+    right: x1,
+    bottom: y1,
+    x: x0,
+    y: y0,
+    width: x1 - x0,
+    height: y1 - y0,
+    toJSON: () => ({}),
+  } as DOMRect;
 }
 
 /** Gives an element a layout box (jsdom has none). */
@@ -27,37 +42,94 @@ function AvoidProbe() {
 }
 
 it("static scenery observes the dragon chapter without synchronously measuring hidden sections", () => {
-  document.body.innerHTML = '<section id="hero"></section><section id="skills"></section><section id="why"></section>';
+  document.body.innerHTML =
+    '<section id="hero"></section><section id="skills"></section><section id="why"></section>';
   const bounds = vi.spyOn(Element.prototype, "getBoundingClientRect");
   let notify: IntersectionObserverCallback = () => {};
   const margins: string[] = [];
-  const observe = vi.fn(), disconnect = vi.fn();
-  vi.stubGlobal("IntersectionObserver", class {
-    constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) { notify = callback; margins.push(options?.rootMargin ?? ""); }
-    observe = observe;
-    disconnect = disconnect;
-  });
-  function StaticProbe() { useStaticChapterTracking(true); return null; }
+  const observe = vi.fn(),
+    disconnect = vi.fn();
+  vi.stubGlobal(
+    "IntersectionObserver",
+    class {
+      constructor(
+        callback: IntersectionObserverCallback,
+        options?: IntersectionObserverInit,
+      ) {
+        notify = callback;
+        margins.push(options?.rootMargin ?? "");
+      }
+      observe = observe;
+      disconnect = disconnect;
+    },
+  );
+  function StaticProbe() {
+    useStaticChapterTracking(true);
+    return null;
+  }
   try {
     const { unmount } = render(<StaticProbe />);
     expect(bounds).not.toHaveBeenCalled();
     expect(observe).toHaveBeenCalledWith(document.getElementById("why"));
     expect(margins).toEqual([""]);
-    act(() => notify([{ rootBounds: { height: 800 } } as IntersectionObserverEntry], {} as IntersectionObserver));
+    act(() =>
+      notify(
+        [{ rootBounds: { height: 800 } } as IntersectionObserverEntry],
+        {} as IntersectionObserver,
+      ),
+    );
     expect(margins.at(-1)).toBe("0px 0px -400px 0px");
     define("innerHeight", 1000);
     act(() => window.dispatchEvent(new Event("resize")));
     expect(margins.at(-1)).toBe("");
-    act(() => notify([{ rootBounds: { height: 1000 } } as IntersectionObserverEntry], {} as IntersectionObserver));
+    act(() =>
+      notify(
+        [{ rootBounds: { height: 1000 } } as IntersectionObserverEntry],
+        {} as IntersectionObserver,
+      ),
+    );
     expect(margins.at(-1)).toBe("0px 0px -500px 0px");
-    act(() => notify([{ isIntersecting: true, boundingClientRect: { top: 200 } } as IntersectionObserverEntry], {} as IntersectionObserver));
+    act(() =>
+      notify(
+        [
+          {
+            isIntersecting: true,
+            boundingClientRect: { top: 200 },
+          } as IntersectionObserverEntry,
+        ],
+        {} as IntersectionObserver,
+      ),
+    );
     expect(sceneStore.getState().chapter).toBe(5);
-    act(() => notify([{ isIntersecting: false, boundingClientRect: { top: 2000 } } as IntersectionObserverEntry], {} as IntersectionObserver));
+    act(() =>
+      notify(
+        [
+          {
+            isIntersecting: false,
+            boundingClientRect: { top: 2000 },
+          } as IntersectionObserverEntry,
+        ],
+        {} as IntersectionObserver,
+      ),
+    );
     expect(sceneStore.getState().chapter).toBe(0);
-    act(() => notify([{ isIntersecting: false, boundingClientRect: { top: -2000 } } as IntersectionObserverEntry], {} as IntersectionObserver));
+    act(() =>
+      notify(
+        [
+          {
+            isIntersecting: false,
+            boundingClientRect: { top: -2000 },
+          } as IntersectionObserverEntry,
+        ],
+        {} as IntersectionObserver,
+      ),
+    );
     expect(sceneStore.getState().chapter).toBe(5);
-    unmount(); expect(disconnect).toHaveBeenCalled();
-  } finally { vi.unstubAllGlobals(); }
+    unmount();
+    expect(disconnect).toHaveBeenCalled();
+  } finally {
+    vi.unstubAllGlobals();
+  }
 });
 
 beforeEach(() => {
@@ -83,7 +155,17 @@ describe("useFeedClicks", () => {
     };
   }
   const click = (target: Element, x: number, y: number) =>
-    act(() => void target.dispatchEvent(new MouseEvent("click", { bubbles: true, clientX: x, clientY: y, button: 0 })));
+    act(
+      () =>
+        void target.dispatchEvent(
+          new MouseEvent("click", {
+            bubbles: true,
+            clientX: x,
+            clientY: y,
+            button: 0,
+          }),
+        ),
+    );
 
   it("turns a click on the water into a drop request in normalised device coordinates", () => {
     const { stage } = water();
@@ -118,15 +200,18 @@ describe("useFeedClicks", () => {
     expect(sceneStore.getState().drop).toBeNull();
   });
 
-  it.each(["p", "h2", "span"])("does not feed the koi when clicking %s text over the water", (tag) => {
-    const { stage } = water();
-    const text = document.createElement(tag);
-    text.textContent = "Readable portfolio content";
-    stage.appendChild(text);
-    render(<FeedProbe />);
-    click(text, 400, 300);
-    expect(sceneStore.getState().drop).toBeNull();
-  });
+  it.each(["p", "h2", "span"])(
+    "does not feed the koi when clicking %s text over the water",
+    (tag) => {
+      const { stage } = water();
+      const text = document.createElement(tag);
+      text.textContent = "Readable portfolio content";
+      stage.appendChild(text);
+      render(<FeedProbe />);
+      click(text, 400, 300);
+      expect(sceneStore.getState().drop).toBeNull();
+    },
+  );
 
   it("does nothing while the scene is off, and stops listening when unmounted", () => {
     const { stage } = water();
@@ -145,49 +230,68 @@ describe("useFeedClicks", () => {
 
 describe("measureAvoid", () => {
   it("uses the stable local card footprint while its hovered chips move inside it", () => {
-    document.body.innerHTML = '<main><div data-scene-avoid="box" data-scene-veil="off" id="group"><button id="chip" class="backdrop-blur-sm">TypeScript</button></div></main>';
-    const group = document.getElementById("group")!, chip = document.getElementById("chip")!;
-    box(group, rect(400, 200, 850, 420)); box(chip, rect(420, 240, 540, 280));
+    document.body.innerHTML =
+      '<main><div data-scene-avoid="box" data-scene-veil="off" id="group"><button id="chip" class="backdrop-blur-sm">TypeScript</button></div></main>';
+    const group = document.getElementById("group")!,
+      chip = document.getElementById("chip")!;
+    box(group, rect(400, 200, 850, 420));
+    box(chip, rect(420, 240, 540, 280));
     const before = measureAvoid();
-    vi.mocked(chip.getBoundingClientRect).mockReturnValue(rect(420, 238, 540, 278));
+    vi.mocked(chip.getBoundingClientRect).mockReturnValue(
+      rect(420, 238, 540, 278),
+    );
     expect(measureAvoid()).toEqual(before);
-    expect(before).toEqual([{ x0: 400, y0: 200, x1: 850, y1: 420, large: false, veil: false }]);
+    expect(before).toEqual([
+      { x0: 400, y0: 200, x1: 850, y1: 420, large: false, veil: false },
+    ]);
   });
   it("clips a translated carousel card to its overflow viewport before protecting it", () => {
-    document.body.innerHTML = '<main><div id="viewport" style="overflow-x:clip"><article id="card" data-scene-avoid="box">card</article></div></main>';
+    document.body.innerHTML =
+      '<main><div id="viewport" style="overflow-x:clip"><article id="card" data-scene-avoid="box">card</article></div></main>';
     box(document.getElementById("viewport")!, rect(450, 150, 950, 650));
     box(document.getElementById("card")!, rect(100, 200, 500, 600));
-    expect(measureAvoid()).toMatchObject([{ x0: 450, y0: 200, x1: 500, y1: 600 }]);
+    expect(measureAvoid()).toMatchObject([
+      { x0: 450, y0: 200, x1: 500, y1: 600 },
+    ]);
   });
 
   it("keeps an opaque card as a creature exclusion without adding veils over it or its children", () => {
-    document.body.innerHTML = '<main><article id="card" data-scene-avoid="box" data-scene-veil="off"><p id="copy">text</p></article></main>';
+    document.body.innerHTML =
+      '<main><article id="card" data-scene-avoid="box" data-scene-veil="off"><p id="copy">text</p></article></main>';
     box(document.getElementById("card")!, rect(500, 200, 800, 700));
     box(document.getElementById("copy")!, rect(520, 600, 780, 680));
-    expect(measureAvoid()).toMatchObject([{ x0: 500, y0: 200, x1: 800, y1: 700, veil: false }]);
+    expect(measureAvoid()).toMatchObject([
+      { x0: 500, y0: 200, x1: 800, y1: 700, veil: false },
+    ]);
     expect(measureAvoid()).toHaveLength(1);
   });
 
   it("ignores decorative hidden ticker copies even when they extend across the screen", () => {
-    document.body.innerHTML = '<main><div aria-hidden="true"><p id="copy">decorative name repeat</p></div></main>';
+    document.body.innerHTML =
+      '<main><div aria-hidden="true"><p id="copy">decorative name repeat</p></div></main>';
     box(document.getElementById("copy")!, rect(-2000, 100, 3000, 200));
     expect(measureAvoid()).toEqual([]);
   });
   beforeEach(() => {
     // jsdom has no Range geometry: a range reports the box its element was given.
-    vi.spyOn(Range.prototype, "selectNodeContents").mockImplementation(function (this: Range, node: Node) {
-      (this as unknown as { __node: Node }).__node = node;
-    });
+    vi.spyOn(Range.prototype, "selectNodeContents").mockImplementation(
+      function (this: Range, node: Node) {
+        (this as unknown as { __node: Node }).__node = node;
+      },
+    );
     Object.defineProperty(Range.prototype, "getBoundingClientRect", {
       configurable: true,
       value(this: Range) {
-        return (this as unknown as { __node: Element }).__node.getBoundingClientRect();
+        return (
+          this as unknown as { __node: Element }
+        ).__node.getBoundingClientRect();
       },
     });
   });
 
   afterEach(() => {
-    delete (Range.prototype as unknown as Record<string, unknown>).getBoundingClientRect;
+    delete (Range.prototype as unknown as Record<string, unknown>)
+      .getBoundingClientRect;
   });
 
   it("leaves out anything inside a [data-scene-ignore] element, such as the solid round call to action", () => {
@@ -198,7 +302,9 @@ describe("measureAvoid", () => {
     box(document.getElementById("h")!, rect(100, 100, 300, 140));
     box(document.getElementById("cta")!, rect(800, 300, 960, 460));
     box(document.getElementById("label")!, rect(820, 360, 940, 400));
-    expect(measureAvoid()).toMatchObject([{ x0: 100, y0: 100, x1: 300, y1: 140 }]);
+    expect(measureAvoid()).toMatchObject([
+      { x0: 100, y0: 100, x1: 300, y1: 140 },
+    ]);
   });
 
   it("collects marked text, glass cards and the page's own headings, near the screen only", () => {
@@ -228,7 +334,9 @@ describe("measureAvoid", () => {
     box(document.getElementById("a")!, rect(100, 100, 160, 124));
     box(document.getElementById("b")!, rect(170, 100, 230, 124));
     box(document.getElementById("c")!, rect(240, 100, 300, 124));
-    expect(measureAvoid()).toMatchObject([{ x0: 100, y0: 100, x1: 300, y1: 124 }]);
+    expect(measureAvoid()).toMatchObject([
+      { x0: 100, y0: 100, x1: 300, y1: 124 },
+    ]);
   });
 
   it("re-measures after a page transition, but not after the veil's own fade", async () => {
@@ -262,7 +370,9 @@ describe("measureAvoid", () => {
       return 1;
     });
     const { unmount } = render(<AvoidProbe />);
-    expect(sceneStore.getState().avoid).toMatchObject([{ x0: 100, y0: 100, x1: 300, y1: 140 }]);
+    expect(sceneStore.getState().avoid).toMatchObject([
+      { x0: 100, y0: 100, x1: 300, y1: 140 },
+    ]);
     unmount();
     expect(sceneStore.getState().avoid).toEqual([]);
     vi.unstubAllGlobals();
@@ -291,8 +401,12 @@ describe("useCtaTracking", () => {
 
   it("reads nothing before that, and starts as soon as the chapter is reached", () => {
     const a = cta();
-    const spy = vi.spyOn(a, "getBoundingClientRect").mockReturnValue(rect(800, 300, 960, 460));
-    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => window.setTimeout(() => cb(0), 0));
+    const spy = vi
+      .spyOn(a, "getBoundingClientRect")
+      .mockReturnValue(rect(800, 300, 960, 460));
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) =>
+      window.setTimeout(() => cb(0), 0),
+    );
     sceneStore.setState({ chapter: 3 });
     render(<CtaProbe />);
     act(() => {
@@ -320,8 +434,12 @@ describe("useCtaTracking", () => {
 
   it("follows the button as the page scrolls, one read per frame", () => {
     const a = cta();
-    const spy = vi.spyOn(a, "getBoundingClientRect").mockReturnValue(rect(800, 300, 960, 460));
-    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => window.setTimeout(() => cb(0), 0));
+    const spy = vi
+      .spyOn(a, "getBoundingClientRect")
+      .mockReturnValue(rect(800, 300, 960, 460));
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) =>
+      window.setTimeout(() => cb(0), 0),
+    );
     sceneStore.setState({ chapter: 6 });
     render(<CtaProbe />);
     spy.mockClear();

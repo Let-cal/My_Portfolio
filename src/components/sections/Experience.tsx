@@ -1,9 +1,20 @@
 import { useTranslations } from "next-intl";
-import { ROLE_KEYS, type Content, type Experience as ExperienceRecord, type Locale, type RoleKey } from "@/content/schema";
+import {
+  ROLE_KEYS,
+  type Content,
+  type Experience as ExperienceRecord,
+  type Locale,
+  type RoleKey,
+} from "@/content/schema";
 import { formatPeriod } from "@/lib/format";
 import { pickLocale } from "@/lib/i18n-text";
 import { orderExperiences } from "@/lib/roles";
-import { Timeline, type CompanyView, type TimelineData, type TimelineItem } from "./experience/Timeline";
+import {
+  Timeline,
+  type CompanyView,
+  type TimelineData,
+  type TimelineItem,
+} from "./experience/Timeline";
 import { Reveal } from "@/components/site/Reveal";
 
 /** Parent company whose header carries the two position lines (intern, then engineer). From the CV fact bank. */
@@ -14,10 +25,15 @@ const SKG_LINES = [
 ] as const;
 
 /** Earliest start to latest end of a group; open-ended as soon as one member is. */
-function spanOf(exps: ExperienceRecord[]): { start: string; end: string | null } {
+function spanOf(exps: ExperienceRecord[]): {
+  start: string;
+  end: string | null;
+} {
   const start = exps.map((e) => e.start).sort()[0];
   const ends = exps.map((e) => e.end);
-  const end = ends.includes(null) ? null : (ends as string[]).sort().at(-1) ?? null;
+  const end = ends.includes(null)
+    ? null
+    : ((ends as string[]).sort().at(-1) ?? null);
   return { start, end };
 }
 
@@ -25,7 +41,13 @@ function spanOf(exps: ExperienceRecord[]): { start: string; end: string | null }
  * Experience section. Builds localized view-models (one copy of the items, plus the id order of each role) and hands
  * them to the client Timeline, which picks the order of the current role. No other locale's text is shipped.
  */
-export function Experience({ content, locale }: { content: Content; locale: Locale }) {
+export function Experience({
+  content,
+  locale,
+}: {
+  content: Content;
+  locale: Locale;
+}) {
   const t = useTranslations("experience");
   const ts = useTranslations("sections");
   const { experiences, roles, education } = content;
@@ -34,7 +56,9 @@ export function Experience({ content, locale }: { content: Content; locale: Loca
   const orders = Object.fromEntries(
     ROLE_KEYS.map((key) => {
       const role = roles.find((r) => r.key === key);
-      const ordered = role ? orderExperiences(published, role) : [...published].sort((a, b) => a.sortIndex - b.sortIndex);
+      const ordered = role
+        ? orderExperiences(published, role)
+        : [...published].sort((a, b) => a.sortIndex - b.sortIndex);
       return [key, ordered.map((e) => e.id)];
     }),
   ) as Record<RoleKey, string[]>;
@@ -63,14 +87,21 @@ export function Experience({ content, locale }: { content: Content; locale: Loca
   );
 
   const companies: Record<string, CompanyView> = {};
-  for (const name of new Set(published.map((e) => e.parentCompany).filter((n): n is string => n !== null))) {
+  for (const name of new Set(
+    published
+      .map((e) => e.parentCompany)
+      .filter((n): n is string => n !== null),
+  )) {
     const span = spanOf(published.filter((e) => e.parentCompany === name));
     companies[name] = {
       name,
       period: formatPeriod(span.start, span.end, locale),
       lines:
         name === SKG
-          ? SKG_LINES.map((line) => ({ title: t(line.messageKey), period: formatPeriod(line.start, line.end, locale) }))
+          ? SKG_LINES.map((line) => ({
+              title: t(line.messageKey),
+              period: formatPeriod(line.start, line.end, locale),
+            }))
           : [],
     };
   }
@@ -99,7 +130,11 @@ export function Experience({ content, locale }: { content: Content; locale: Loca
       className="relative mx-auto max-w-6xl scroll-mt-14 px-4 py-24 sm:px-6"
     >
       <Reveal>
-        <h2 id="experience-heading" data-scene-avoid="" className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+        <h2
+          id="experience-heading"
+          data-scene-avoid=""
+          className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl"
+        >
           {ts("experience")}
         </h2>
       </Reveal>

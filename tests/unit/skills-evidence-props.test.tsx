@@ -11,7 +11,10 @@ import { stubIntersectionObserver } from "../helpers/io-stub";
 
 const captured = vi.hoisted(() => ({ data: [] as SkillMapData[] }));
 vi.mock("@/components/sections/skills/SkillMap", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/components/sections/skills/SkillMap")>();
+  const actual =
+    await importOriginal<
+      typeof import("@/components/sections/skills/SkillMap")
+    >();
   return {
     ...actual,
     SkillMap(props: { data: SkillMapData }) {
@@ -36,27 +39,55 @@ function fixture(): Content {
     ...base,
     experiences: [
       {
-        ...base.experiences[0], id: "shared", company: "Example Company", published: true,
-        position: { en: "Engineer", ja: "エンジニア", vi: "Kỹ sư" }, start: "2026-04", end: "2026-09",
+        ...base.experiences[0],
+        id: "shared",
+        company: "Example Company",
+        published: true,
+        position: { en: "Engineer", ja: "エンジニア", vi: "Kỹ sư" },
+        start: "2026-04",
+        end: "2026-09",
       },
       { ...base.experiences[0], id: "private", published: false },
     ],
     projects: [
       {
-        ...base.projects[0], id: "shared", title: "Example Project", published: true,
-        role: { en: "Lead", ja: "リード", vi: "Trưởng nhóm" }, start: "2025-01", end: null,
+        ...base.projects[0],
+        id: "shared",
+        title: "Example Project",
+        published: true,
+        role: { en: "Lead", ja: "リード", vi: "Trưởng nhóm" },
+        start: "2025-01",
+        end: null,
       },
       { ...base.projects[0], id: "private", published: false },
     ],
     skills: [
-      { ...base.skills[0], id: "typescript", name: "TypeScript", group: "languages", experienceIds: ["shared", "private", "missing"], projectIds: ["shared", "private", "missing"] },
-      { ...base.skills[1], id: "react", name: "React", group: "frameworks", experienceIds: ["shared", "private", "missing"], projectIds: ["shared", "private", "missing"] },
+      {
+        ...base.skills[0],
+        id: "typescript",
+        name: "TypeScript",
+        group: "languages",
+        experienceIds: ["shared", "private", "missing"],
+        projectIds: ["shared", "private", "missing"],
+      },
+      {
+        ...base.skills[1],
+        id: "react",
+        name: "React",
+        group: "frameworks",
+        experienceIds: ["shared", "private", "missing"],
+        projectIds: ["shared", "private", "missing"],
+      },
     ],
   };
 }
 
 function section(content: Content, locale: Locale) {
-  return <NextIntlClientProvider locale={locale} messages={messages[locale]}><Skills content={content} locale={locale} /></NextIntlClientProvider>;
+  return (
+    <NextIntlClientProvider locale={locale} messages={messages[locale]}>
+      <Skills content={content} locale={locale} />
+    </NextIntlClientProvider>
+  );
 }
 
 const props = () => captured.data.at(-1)!;
@@ -72,25 +103,60 @@ afterEach(() => {
 });
 
 it.each([
-  { locale: "en" as const, role: "Engineer", period: "Apr 2026 – Sep 2026", projectRole: "Lead", projectPeriod: "Jan 2025 – Present" },
-  { locale: "ja" as const, role: "エンジニア", period: "2026年4月 – 2026年9月", projectRole: "リード", projectPeriod: "2025年1月 – 現在" },
-  { locale: "vi" as const, role: "Kỹ sư", period: "Th4 2026 – Th9 2026", projectRole: "Trưởng nhóm", projectPeriod: "Th1 2025 – Hiện tại" },
-])("reuses evidence across groups while preserving $locale text, ordering, and published filtering", ({ locale, role, period, projectRole, projectPeriod }) => {
-  render(section(fixture(), locale));
-  const [first, second] = props().skills;
-  const expected = [
-    { kind: "exp", id: "shared", anchor: "exp-shared", title: "Example Company", role, period },
-    { kind: "proj", id: "shared", anchor: "proj-shared", title: "Example Project", role: projectRole, period: projectPeriod },
-  ];
-  expect(first.group).not.toBe(second.group);
-  expect(first.evidence).toEqual(expected);
-  expect(second.evidence).toEqual(expected);
-  expect(first.evidence[0]).toBe(second.evidence[0]);
-  expect(first.evidence[1]).toBe(second.evidence[1]);
-  expect(first.evidence[0]).not.toBe(first.evidence[1]);
-  // The capture wraps the real SkillMap rather than replacing the rendered UI.
-  expect(document.querySelectorAll("[data-skill-chip]")).toHaveLength(2);
-});
+  {
+    locale: "en" as const,
+    role: "Engineer",
+    period: "Apr 2026 – Sep 2026",
+    projectRole: "Lead",
+    projectPeriod: "Jan 2025 – Present",
+  },
+  {
+    locale: "ja" as const,
+    role: "エンジニア",
+    period: "2026年4月 – 2026年9月",
+    projectRole: "リード",
+    projectPeriod: "2025年1月 – 現在",
+  },
+  {
+    locale: "vi" as const,
+    role: "Kỹ sư",
+    period: "Th4 2026 – Th9 2026",
+    projectRole: "Trưởng nhóm",
+    projectPeriod: "Th1 2025 – Hiện tại",
+  },
+])(
+  "reuses evidence across groups while preserving $locale text, ordering, and published filtering",
+  ({ locale, role, period, projectRole, projectPeriod }) => {
+    render(section(fixture(), locale));
+    const [first, second] = props().skills;
+    const expected = [
+      {
+        kind: "exp",
+        id: "shared",
+        anchor: "exp-shared",
+        title: "Example Company",
+        role,
+        period,
+      },
+      {
+        kind: "proj",
+        id: "shared",
+        anchor: "proj-shared",
+        title: "Example Project",
+        role: projectRole,
+        period: projectPeriod,
+      },
+    ];
+    expect(first.group).not.toBe(second.group);
+    expect(first.evidence).toEqual(expected);
+    expect(second.evidence).toEqual(expected);
+    expect(first.evidence[0]).toBe(second.evidence[0]);
+    expect(first.evidence[1]).toBe(second.evidence[1]);
+    expect(first.evidence[0]).not.toBe(first.evidence[1]);
+    // The capture wraps the real SkillMap rather than replacing the rendered UI.
+    expect(document.querySelectorAll("[data-skill-chip]")).toHaveLength(2);
+  },
+);
 
 it("formats each unique evidence anchor once instead of once per linked skill", () => {
   render(section(fixture(), "en"));
@@ -105,15 +171,29 @@ it("keeps the evidence cache local to a render so changed content and locale can
   const previous = props().skills[0].evidence[0];
   const updated: Content = {
     ...content,
-    experiences: content.experiences.map((experience) => experience.id === "shared"
-      ? { ...experience, company: "Changed Company", start: "2026-05", end: "2026-05" }
-      : experience),
+    experiences: content.experiences.map((experience) =>
+      experience.id === "shared"
+        ? {
+            ...experience,
+            company: "Changed Company",
+            start: "2026-05",
+            end: "2026-05",
+          }
+        : experience,
+    ),
   };
   rerender(section(updated, "vi"));
   const [first, second] = props().skills;
   expect(first.evidence[0]).not.toBe(previous);
   expect(first.evidence[0]).toBe(second.evidence[0]);
-  expect(first.evidence[0]).toEqual({ kind: "exp", id: "shared", anchor: "exp-shared", title: "Changed Company", role: "Kỹ sư", period: "Th5 2026" });
+  expect(first.evidence[0]).toEqual({
+    kind: "exp",
+    id: "shared",
+    anchor: "exp-shared",
+    title: "Changed Company",
+    role: "Kỹ sư",
+    period: "Th5 2026",
+  });
   expect(first.evidence[1].period).toBe("Th1 2025 – Hiện tại");
   expect(formatPeriod).toHaveBeenCalledTimes(4);
 });

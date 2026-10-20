@@ -24,8 +24,14 @@ function scriptsOf(html) {
     const src = m[0].match(/\ssrc="([^"]+)"/i)?.[1];
     if (src) found.add(src);
   }
-  for (const m of html.matchAll(/<link[^>]*rel="preload"[^>]*as="script"[^>]*href="([^"]+)"/g)) found.add(m[1]);
-  for (const m of html.matchAll(/<link[^>]*as="script"[^>]*rel="preload"[^>]*href="([^"]+)"/g)) found.add(m[1]);
+  for (const m of html.matchAll(
+    /<link[^>]*rel="preload"[^>]*as="script"[^>]*href="([^"]+)"/g,
+  ))
+    found.add(m[1]);
+  for (const m of html.matchAll(
+    /<link[^>]*as="script"[^>]*rel="preload"[^>]*href="([^"]+)"/g,
+  ))
+    found.add(m[1]);
   return [...found].filter((s) => s.startsWith("/_next/static/"));
 }
 
@@ -35,7 +41,10 @@ for (const route of list) {
   const file = join(root, ".next/server/app", `${route}.html`);
   if (!existsSync(file)) {
     failed = true;
-    if (!json) console.error(`/${route}: no production HTML; build this route before checking its budget`);
+    if (!json)
+      console.error(
+        `/${route}: no production HTML; build this route before checking its budget`,
+      );
     continue;
   }
   const html = readFileSync(file, "utf8");
@@ -46,11 +55,20 @@ for (const route of list) {
   });
   chunks.sort((a, b) => b.gzip - a.gzip);
   const total = chunks.reduce((s, c) => s + c.gzip, 0);
-  results.push({ route: `/${route}`, totalKB: +(total / 1024).toFixed(1), chunks });
+  results.push({
+    route: `/${route}`,
+    totalKB: +(total / 1024).toFixed(1),
+    chunks,
+  });
   if (total / 1024 > BUDGET_KB) failed = true;
   if (!json) {
-    console.log(`\n/${route}: ${chunks.length} scripts, ${(total / 1024).toFixed(1)} KB gzip (budget ${BUDGET_KB} KB)`);
-    for (const c of chunks) console.log(`  ${(c.gzip / 1024).toFixed(1).padStart(6)} KB gz  ${(c.raw / 1024).toFixed(1).padStart(7)} KB raw  ${c.src}`);
+    console.log(
+      `\n/${route}: ${chunks.length} scripts, ${(total / 1024).toFixed(1)} KB gzip (budget ${BUDGET_KB} KB)`,
+    );
+    for (const c of chunks)
+      console.log(
+        `  ${(c.gzip / 1024).toFixed(1).padStart(6)} KB gz  ${(c.raw / 1024).toFixed(1).padStart(7)} KB raw  ${c.src}`,
+      );
   }
 }
 if (json) console.log(JSON.stringify(results, null, 2));

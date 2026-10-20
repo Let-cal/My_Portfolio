@@ -25,9 +25,13 @@ describe("SortableList", () => {
     const errors = vi.spyOn(console, "error").mockImplementation(() => {});
     const recoverable: unknown[] = [];
     await act(async () => {
-      hydrateRoot(container, list, { onRecoverableError: (e) => recoverable.push(e) });
+      hydrateRoot(container, list, {
+        onRecoverableError: (e) => recoverable.push(e),
+      });
     });
-    const mismatch = errors.mock.calls.some((args) => String(args[0]).includes("didn't match"));
+    const mismatch = errors.mock.calls.some((args) =>
+      String(args[0]).includes("didn't match"),
+    );
     errors.mockRestore();
     expect(mismatch).toBe(false);
     expect(recoverable).toEqual([]);

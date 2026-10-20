@@ -1,7 +1,12 @@
 /** `high` = full scene; `low` = fewer points, no bloom, no reflections; `off` = static image instead of a canvas (spec 7.5). */
 export type Tier = "high" | "low" | "off";
 
-export type TierInput = { webgl: boolean; reducedMotion: boolean; isMobile: boolean; cores: number };
+export type TierInput = {
+  webgl: boolean;
+  reducedMotion: boolean;
+  isMobile: boolean;
+  cores: number;
+};
 
 /** Mobile, no WebGL or reduced motion: static scene. Low-core desktops keep the lighter live scene. */
 export function detectTier(i: TierInput): Tier {
@@ -23,7 +28,8 @@ export function shouldDowngrade(fps: number[]): boolean {
 }
 
 /** Phones and small tablets: narrow screens, or a touch-only primary input. */
-export const MOBILE_QUERY = "(max-width: 767px), (hover: none) and (pointer: coarse)";
+export const MOBILE_QUERY =
+  "(max-width: 767px), (hover: none) and (pointer: coarse)";
 
 let webglSupport: boolean | undefined;
 
@@ -37,7 +43,9 @@ export function detectWebGL(): boolean {
     // Give the probe context back right away (browsers cap the number of live contexts). A failure
     // here must not turn a working WebGL into "unsupported".
     try {
-      (gl as WebGLRenderingContext | null)?.getExtension("WEBGL_lose_context")?.loseContext();
+      (gl as WebGLRenderingContext | null)
+        ?.getExtension("WEBGL_lose_context")
+        ?.loseContext();
     } catch {
       // ignore
     }

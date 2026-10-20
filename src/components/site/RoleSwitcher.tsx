@@ -8,7 +8,11 @@ import { cn } from "@/lib/utils";
 import { useRole } from "./RoleProvider";
 
 /** Koi variety behind each role: kohaku (full-stack), showa (tech lead), ogon (PM). */
-const KOI_BY_ROLE: Record<RoleKey, KoiVariety> = { fullstack: "kohaku", techlead: "showa", pm: "ogon" };
+const KOI_BY_ROLE: Record<RoleKey, KoiVariety> = {
+  fullstack: "kohaku",
+  techlead: "showa",
+  pm: "ogon",
+};
 
 /** Swatch of each koi: two colours split diagonally, or a single colour for ogon. */
 const KOI_DOT: Record<KoiVariety, string> = {
@@ -17,19 +21,31 @@ const KOI_DOT: Record<KoiVariety, string> = {
   ogon: "#e0a84e",
 };
 
-const ARROW_STEP: Record<string, number> = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
+const ARROW_STEP: Record<string, number> = {
+  ArrowRight: 1,
+  ArrowDown: 1,
+  ArrowLeft: -1,
+  ArrowUp: -1,
+};
 
 /** Three-way role picker (radiogroup, roving tabindex, arrow keys). The choice lives in the URL via RoleProvider. */
 export function RoleSwitcher({ className }: { className?: string }) {
   const t = useTranslations("roles");
   const { role, setRole } = useRole();
-  const refs = useRef<Record<RoleKey, HTMLButtonElement | null>>({ fullstack: null, techlead: null, pm: null });
+  const refs = useRef<Record<RoleKey, HTMLButtonElement | null>>({
+    fullstack: null,
+    techlead: null,
+    pm: null,
+  });
 
   function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
     const step = ARROW_STEP[e.key];
     if (!step) return;
     e.preventDefault();
-    const next = ROLE_KEYS[(ROLE_KEYS.indexOf(role) + step + ROLE_KEYS.length) % ROLE_KEYS.length];
+    const next =
+      ROLE_KEYS[
+        (ROLE_KEYS.indexOf(role) + step + ROLE_KEYS.length) % ROLE_KEYS.length
+      ];
     setRole(next);
     refs.current[next]?.focus();
   }
@@ -59,7 +75,9 @@ export function RoleSwitcher({ className }: { className?: string }) {
             onClick={() => setRole(key)}
             className={cn(
               "inline-flex h-9 items-center gap-1.5 rounded-full px-2.5 text-[13px] font-medium whitespace-nowrap sm:gap-2 sm:px-3.5 sm:text-sm transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-              checked ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              checked
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
             <span

@@ -4,7 +4,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const replace = vi.hoisted(() => vi.fn());
 const search = vi.hoisted(() => ({ value: "" }));
-vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams(search.value) }));
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams(search.value),
+}));
 vi.mock("@/i18n/navigation", () => ({
   useRouter: () => ({ replace }),
   usePathname: () => "/ja",
@@ -61,7 +63,9 @@ describe("RoleProvider", () => {
     );
     await userEvent.click(screen.getByText("tl"));
     expect(screen.getByTestId("role").textContent).toBe("techlead");
-    expect(window.location.pathname + window.location.search + window.location.hash).toBe("/ja?utm=x&role=techlead#skills");
+    expect(
+      window.location.pathname + window.location.search + window.location.hash,
+    ).toBe("/ja?utm=x&role=techlead#skills");
     expect(replace).not.toHaveBeenCalled();
   });
 

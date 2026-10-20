@@ -11,12 +11,23 @@ export interface SoundEngine {
 type AudioContextCtor = new () => AudioContext;
 
 function getAudioContextCtor(): AudioContextCtor | undefined {
-  const g = globalThis as { AudioContext?: AudioContextCtor; webkitAudioContext?: AudioContextCtor };
+  const g = globalThis as {
+    AudioContext?: AudioContextCtor;
+    webkitAudioContext?: AudioContextCtor;
+  };
   return g.AudioContext ?? g.webkitAudioContext;
 }
 
 /** One sine blip: pitch sweeps from `from` to `to` Hz while the gain rises fast and decays exponentially. */
-function blip(ctx: AudioContext, { from, to, peak, duration }: { from: number; to: number; peak: number; duration: number }) {
+function blip(
+  ctx: AudioContext,
+  {
+    from,
+    to,
+    peak,
+    duration,
+  }: { from: number; to: number; peak: number; duration: number },
+) {
   const now = ctx.currentTime;
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();

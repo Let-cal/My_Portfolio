@@ -3,7 +3,9 @@ import { slugify } from "@/lib/admin/slug";
 
 describe("slugify", () => {
   it("turns Vietnamese titles into kebab-case ids", () => {
-    expect(slugify("Chứng chỉ AWS Đám mây (2026)")).toBe("chung-chi-aws-dam-may-2026");
+    expect(slugify("Chứng chỉ AWS Đám mây (2026)")).toBe(
+      "chung-chi-aws-dam-may-2026",
+    );
     expect(slugify("IELTS 7.0")).toBe("ielts-7-0");
   });
   it("trims separators and caps the length", () => {

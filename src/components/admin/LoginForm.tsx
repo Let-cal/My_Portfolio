@@ -36,11 +36,23 @@ export function LoginForm() {
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <Label htmlFor="email">Email</Label>
-        <Input id="email" name="email" type="email" autoComplete="username" required />
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="username"
+          required
+        />
       </div>
       <div className="flex flex-col gap-2">
         <Label htmlFor="password">Mật khẩu</Label>
-        <Input id="password" name="password" type="password" autoComplete="current-password" required />
+        <Input
+          id="password"
+          name="password"
+          type="password"
+          autoComplete="current-password"
+          required
+        />
       </div>
       {error && (
         <p role="alert" className="text-sm text-destructive">

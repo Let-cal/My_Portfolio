@@ -1,6 +1,15 @@
 "use client";
 
-import { AwardIcon, BriefcaseIcon, FolderKanbanIcon, HeartIcon, HouseIcon, MailIcon, WrenchIcon, type LucideIcon } from "@/components/site/icons";
+import {
+  AwardIcon,
+  BriefcaseIcon,
+  FolderKanbanIcon,
+  HeartIcon,
+  HouseIcon,
+  MailIcon,
+  WrenchIcon,
+  type LucideIcon,
+} from "@/components/site/icons";
 import * as motion from "motion/react-m";
 import { useTranslations } from "next-intl";
 import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
@@ -51,12 +60,21 @@ export function PillNav() {
                     layoutId="pill-active"
                     aria-hidden="true"
                     className="absolute inset-0 rounded-full"
-                    style={{ backgroundColor: "color-mix(in srgb, var(--role-accent, #f97316) 24%, transparent)" }}
-                    transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 34 }}
+                    style={{
+                      backgroundColor:
+                        "color-mix(in srgb, var(--role-accent, #f97316) 24%, transparent)",
+                    }}
+                    transition={
+                      reduced
+                        ? { duration: 0 }
+                        : { type: "spring", stiffness: 420, damping: 34 }
+                    }
                   />
                 )}
                 <Icon aria-hidden="true" className="relative size-[18px]" />
-                <span className="relative max-w-full truncate tracking-tight">{t(`pill.${id}`)}</span>
+                <span className="relative max-w-full truncate tracking-tight">
+                  {t(`pill.${id}`)}
+                </span>
               </a>
             </li>
           );

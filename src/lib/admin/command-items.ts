@@ -2,7 +2,12 @@
 import type { AdminContent } from "./health";
 import { RESOURCE_KEYS, resources, type ResourceKey } from "./resources";
 
-export type CommandItem = { group: string; label: string; href: string; keywords: string };
+export type CommandItem = {
+  group: string;
+  label: string;
+  href: string;
+  keywords: string;
+};
 
 const SINGULAR: Record<ResourceKey, string> = {
   experiences: "kinh nghiệm",
@@ -24,13 +29,18 @@ const TYPE: Record<ResourceKey, string> = {
 };
 
 function labelOf(key: ResourceKey, item: Record<string, unknown>): string {
-  const pick = (v: unknown) => (typeof v === "string" ? v : ((v as { en?: string } | null)?.en ?? ""));
+  const pick = (v: unknown) =>
+    typeof v === "string" ? v : ((v as { en?: string } | null)?.en ?? "");
   const text =
-    key === "experiences" ? item.company
-    : key === "projects" ? item.title
-    : key === "education" ? item.school
-    : key === "activities" || key === "why_cards" ? pick(item.name ?? item.title)
-    : item.name;
+    key === "experiences"
+      ? item.company
+      : key === "projects"
+        ? item.title
+        : key === "education"
+          ? item.school
+          : key === "activities" || key === "why_cards"
+            ? pick(item.name ?? item.title)
+            : item.name;
   return pick(text) || String(item.id);
 }
 
@@ -46,11 +56,36 @@ const LIST_OF: Record<ResourceKey, keyof AdminContent> = {
 
 export function buildCommandItems(c: AdminContent): CommandItem[] {
   const screens: CommandItem[] = [
-    { group: "Đi tới", label: "Tổng quan", href: "/admin", keywords: "dashboard home" },
-    { group: "Đi tới", label: "Hồ sơ", href: "/admin/profile", keywords: "profile" },
-    { group: "Đi tới", label: "Vai trò & CV", href: "/admin/roles", keywords: "roles cv" },
-    ...RESOURCE_KEYS.map((key) => ({ group: "Đi tới", label: resources[key].label, href: `/admin/${key}`, keywords: key })),
-    { group: "Đi tới", label: "Kỹ năng chưa có bằng chứng", href: "/admin/skills?filter=orphan", keywords: "orphan matrix" },
+    {
+      group: "Đi tới",
+      label: "Tổng quan",
+      href: "/admin",
+      keywords: "dashboard home",
+    },
+    {
+      group: "Đi tới",
+      label: "Hồ sơ",
+      href: "/admin/profile",
+      keywords: "profile",
+    },
+    {
+      group: "Đi tới",
+      label: "Vai trò & CV",
+      href: "/admin/roles",
+      keywords: "roles cv",
+    },
+    ...RESOURCE_KEYS.map((key) => ({
+      group: "Đi tới",
+      label: resources[key].label,
+      href: `/admin/${key}`,
+      keywords: key,
+    })),
+    {
+      group: "Đi tới",
+      label: "Kỹ năng chưa có bằng chứng",
+      href: "/admin/skills?filter=orphan",
+      keywords: "orphan matrix",
+    },
   ];
   const create = RESOURCE_KEYS.map((key) => ({
     group: "Tạo mới",

@@ -7,15 +7,25 @@ export const SITE_TITLES: Record<Locale, string> = {
   vi: "Lê Trần Cát Lâm · Portfolio Kỹ sư Phần mềm",
 };
 
-const OG_LOCALE: Record<Locale, string> = { en: "en_US", ja: "ja_JP", vi: "vi_VN" };
+const OG_LOCALE: Record<Locale, string> = {
+  en: "en_US",
+  ja: "ja_JP",
+  vi: "vi_VN",
+};
 
 export function getSiteUrl(): URL {
-  const url = new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://letcal.is-a.dev");
-  if (url.protocol !== "https:" && url.protocol !== "http:") throw new Error("NEXT_PUBLIC_SITE_URL must use HTTP or HTTPS");
+  const url = new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || "https://letcal.is-a.dev",
+  );
+  if (url.protocol !== "https:" && url.protocol !== "http:")
+    throw new Error("NEXT_PUBLIC_SITE_URL must use HTTP or HTTPS");
   return new URL("/", url);
 }
 
-export function buildPageMetadata(locale: Locale, description: string): Metadata {
+export function buildPageMetadata(
+  locale: Locale,
+  description: string,
+): Metadata {
   const title = SITE_TITLES[locale];
   return {
     metadataBase: getSiteUrl(),
@@ -26,14 +36,24 @@ export function buildPageMetadata(locale: Locale, description: string): Metadata
       languages: { en: "/en", ja: "/ja", vi: "/vi", "x-default": "/en" },
     },
     openGraph: {
-      type: "website", title, description, siteName: "LETCAL", url: `/${locale}`,
-      locale: OG_LOCALE[locale], alternateLocale: Object.values(OG_LOCALE).filter((value) => value !== OG_LOCALE[locale]),
+      type: "website",
+      title,
+      description,
+      siteName: "LETCAL",
+      url: `/${locale}`,
+      locale: OG_LOCALE[locale],
+      alternateLocale: Object.values(OG_LOCALE).filter(
+        (value) => value !== OG_LOCALE[locale],
+      ),
     },
     twitter: { card: "summary_large_image", title, description },
   };
 }
 
-export function buildPersonJsonLd(profile: Pick<Profile, "name" | "linkedin" | "github">, jobTitle: string) {
+export function buildPersonJsonLd(
+  profile: Pick<Profile, "name" | "linkedin" | "github">,
+  jobTitle: string,
+) {
   return {
     "@context": "https://schema.org",
     "@type": "Person",

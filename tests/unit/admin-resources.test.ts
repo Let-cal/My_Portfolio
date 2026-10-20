@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { contentSchema, profileSchema, roleSchema } from "@/content/schema";
 import seed from "@/content/seed.json";
-import { RESOURCE_KEYS, resources, i18nFields, type ResourceKey } from "@/lib/admin/resources";
+import {
+  RESOURCE_KEYS,
+  resources,
+  i18nFields,
+  type ResourceKey,
+} from "@/lib/admin/resources";
 import { PROFILE_FIELDS, ROLE_FIELDS } from "@/lib/admin/singletons";
 
 const content = contentSchema.parse(seed);
@@ -23,8 +28,15 @@ describe.each(RESOURCE_KEYS)("resource %s", (key) => {
   });
 
   it("its form edits every field except the drag-and-drop position", () => {
-    const schemaKeys = Object.keys(resource.schema.shape).filter((k) => k !== "sortIndex").sort();
-    expect(resource.fields.filter((f) => !f.virtual).map((f) => f.name).sort()).toEqual(schemaKeys);
+    const schemaKeys = Object.keys(resource.schema.shape)
+      .filter((k) => k !== "sortIndex")
+      .sort();
+    expect(
+      resource.fields
+        .filter((f) => !f.virtual)
+        .map((f) => f.name)
+        .sort(),
+    ).toEqual(schemaKeys);
   });
 
   it("names only real fields as translated or listed", () => {
@@ -35,8 +47,12 @@ describe.each(RESOURCE_KEYS)("resource %s", (key) => {
 
   it("round-trips the first seed item through its row mapper", () => {
     const item = firstItem[key];
-    expect(resource.fromRow(resource.toRow(item as Record<string, unknown>), [])).toMatchObject(
-      key === "skills" ? { ...(item as object), experienceIds: [], projectIds: [] } : (item as object),
+    expect(
+      resource.fromRow(resource.toRow(item as Record<string, unknown>), []),
+    ).toMatchObject(
+      key === "skills"
+        ? { ...(item as object), experienceIds: [], projectIds: [] }
+        : (item as object),
     );
   });
 
@@ -47,22 +63,33 @@ describe.each(RESOURCE_KEYS)("resource %s", (key) => {
 
 describe("profile", () => {
   it("rejects a phone field", () => {
-    expect(profileSchema.safeParse({ ...content.profile, phone: "0123" }).success).toBe(false);
+    expect(
+      profileSchema.safeParse({ ...content.profile, phone: "0123" }).success,
+    ).toBe(false);
   });
 });
 
 describe("profile and role forms", () => {
-  const topLevel = (names: string[]) => [...new Set(names.map((n) => n.split(".")[0]))].sort();
+  const topLevel = (names: string[]) =>
+    [...new Set(names.map((n) => n.split(".")[0]))].sort();
 
   it("the profile form edits every profile field, including each role summary", () => {
-    expect(topLevel(PROFILE_FIELDS.map((f) => f.name))).toEqual(Object.keys(profileSchema.shape).sort());
-    const summaries = PROFILE_FIELDS.filter((f) => f.name.startsWith("summaries.")).map((f) => f.name.split(".")[1]);
-    expect(summaries.sort()).toEqual(Object.keys(content.profile.summaries).sort());
+    expect(topLevel(PROFILE_FIELDS.map((f) => f.name))).toEqual(
+      Object.keys(profileSchema.shape).sort(),
+    );
+    const summaries = PROFILE_FIELDS.filter((f) =>
+      f.name.startsWith("summaries."),
+    ).map((f) => f.name.split(".")[1]);
+    expect(summaries.sort()).toEqual(
+      Object.keys(content.profile.summaries).sort(),
+    );
   });
 
   it("the role form edits every role field except its fixed key", () => {
     expect(ROLE_FIELDS.map((f) => f.name).sort()).toEqual(
-      Object.keys(roleSchema.shape).filter((k) => k !== "key").sort(),
+      Object.keys(roleSchema.shape)
+        .filter((k) => k !== "key")
+        .sort(),
     );
   });
 });

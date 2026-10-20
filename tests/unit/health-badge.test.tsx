@@ -13,7 +13,13 @@ describe("HealthBadge", () => {
   });
 
   it("renders nothing when content cannot be loaded, so the admin still works", async () => {
-    expect(await HealthBadge({ load: async () => { throw new Error("db down"); } })).toBeNull();
+    expect(
+      await HealthBadge({
+        load: async () => {
+          throw new Error("db down");
+        },
+      }),
+    ).toBeNull();
     expect(await HealthBadge({ load: async () => null })).toBeNull();
   });
 });

@@ -12,17 +12,34 @@ import { Contact } from "@/components/sections/Contact";
 
 const motion = vi.hoisted(() => ({ reduced: false }));
 const reveal = vi.hoisted(() => ({ armed: false, shown: false }));
-vi.mock("@/components/fx/use-media-query", () => ({ usePrefersReducedMotion: () => motion.reduced }));
-vi.mock("@/components/fx/use-reveal-on-view", () => ({ useRevealOnView: () => ({ ref: undefined, ...reveal }) }));
-vi.mock("next-intl", () => ({ useTranslations: () => (key: string) => key === "headline" ? "Lâm 👩‍💻" : key }));
+vi.mock("@/components/fx/use-media-query", () => ({
+  usePrefersReducedMotion: () => motion.reduced,
+}));
+vi.mock("@/components/fx/use-reveal-on-view", () => ({
+  useRevealOnView: () => ({ ref: undefined, ...reveal }),
+}));
+vi.mock("next-intl", () => ({
+  useTranslations: () => (key: string) => (key === "headline" ? "Lâm 👩‍💻" : key),
+}));
 
-afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); motion.reduced = false; reveal.armed = false; reveal.shown = false; });
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+  motion.reduced = false;
+  reveal.armed = false;
+  reveal.shown = false;
+});
 
 it("Contact prepares its headline on the server and the client skips segmentation even when reveal remounts letters", () => {
   const section = Contact({ content: contentSchema.parse(seed), locale: "en" });
-  const headline = Children.toArray(section.props.children).find((child) => isValidElement(child) && child.type === ContactHeadline);
+  const headline = Children.toArray(section.props.children).find(
+    (child) => isValidElement(child) && child.type === ContactHeadline,
+  );
   expect(isValidElement(headline)).toBe(true);
-  const props = (headline as React.ReactElement<React.ComponentProps<typeof ContactHeadline>>).props;
+  const props = (
+    headline as React.ReactElement<React.ComponentProps<typeof ContactHeadline>>
+  ).props;
   expect(props.preparedWords).toEqual([["L", "â", "m"], ["👩‍💻"]]);
   const segment = vi.spyOn(Intl.Segmenter.prototype, "segment");
   const { container, rerender } = render(<ContactHeadline {...props} />);
@@ -35,7 +52,12 @@ it("Contact prepares its headline on the server and the client skips segmentatio
 
 it("prepares graphemes, emoji and exact space boundaries with the shared helper", () => {
   expect(segmentKineticWords("Lâm 👩‍💻")).toEqual([["L", "â", "m"], ["👩‍💻"]]);
-  expect(segmentKineticWords(" 日本語  ")).toEqual([[], ["日", "本", "語"], [], []]);
+  expect(segmentKineticWords(" 日本語  ")).toEqual([
+    [],
+    ["日", "本", "語"],
+    [],
+    [],
+  ]);
   expect(segmentKineticWords("")).toEqual([[]]);
 });
 
@@ -64,22 +86,46 @@ it("uses server-prepared Unicode words without client segmentation on render or 
   const segment = vi.spyOn(Intl.Segmenter.prototype, "segment");
   const text = "Lâm 👩‍💻";
   const preparedWords = [["L", "â", "m"], ["👩‍💻"]];
-  const { container, rerender } = render(<KineticText text={text} preparedWords={preparedWords} staggerMs={30} />);
-  expect([...container.querySelectorAll("[data-char]")].map((n) => n.textContent)).toEqual(["L", "â", "m", " ", "👩‍💻"]);
-  rerender(<KineticText text={text} preparedWords={preparedWords} staggerMs={40} />);
+  const { container, rerender } = render(
+    <KineticText text={text} preparedWords={preparedWords} staggerMs={30} />,
+  );
+  expect(
+    [...container.querySelectorAll("[data-char]")].map((n) => n.textContent),
+  ).toEqual(["L", "â", "m", " ", "👩‍💻"]);
+  rerender(
+    <KineticText text={text} preparedWords={preparedWords} staggerMs={40} />,
+  );
   expect(segment).not.toHaveBeenCalled();
-  expect(container.querySelectorAll<HTMLElement>("[data-char]")[4].style.animationDelay).toBe("160ms");
+  expect(
+    container.querySelectorAll<HTMLElement>("[data-char]")[4].style
+      .animationDelay,
+  ).toBe("160ms");
 });
 
-it.each([false, true])("retains exact server markup with prepared words (reduced motion: %s)", (reduced) => {
-  motion.reduced = reduced;
-  for (const [text, words] of [
-    ["Lâm 👩‍💻", [["L", "â", "m"], ["👩‍💻"]]],
-    ["日本語", [["日", "本", "語"]]],
-    [" A  B ", [[], ["A"], [], ["B"], []]],
-    ["", [[]]],
-  ] as const) {
-    const plain = renderToString(<KineticText as="h2" text={text} staggerMs={30} className="example" />);
-    expect(renderToString(<KineticText as="h2" text={text} preparedWords={words} staggerMs={30} className="example" />)).toBe(plain);
-  }
-});
+it.each([false, true])(
+  "retains exact server markup with prepared words (reduced motion: %s)",
+  (reduced) => {
+    motion.reduced = reduced;
+    for (const [text, words] of [
+      ["Lâm 👩‍💻", [["L", "â", "m"], ["👩‍💻"]]],
+      ["日本語", [["日", "本", "語"]]],
+      [" A  B ", [[], ["A"], [], ["B"], []]],
+      ["", [[]]],
+    ] as const) {
+      const plain = renderToString(
+        <KineticText as="h2" text={text} staggerMs={30} className="example" />,
+      );
+      expect(
+        renderToString(
+          <KineticText
+            as="h2"
+            text={text}
+            preparedWords={words}
+            staggerMs={30}
+            className="example"
+          />,
+        ),
+      ).toBe(plain);
+    }
+  },
+);

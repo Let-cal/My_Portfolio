@@ -17,17 +17,14 @@ npm ci
 npm run dev
 ```
 
-Work on a focused branch from the intended base. Follow `.editorconfig` and preserve the lockfile. For code changes, record the relevant commands and their actual results:
+Work on a focused branch from the intended base. Follow `.editorconfig` and Prettier (`npm run format`), and preserve the lockfile. `npm ci` installs a pre-push hook that runs `npm run verify:quick` (formatting, lint, generated files, types; about 30 seconds). Before opening a pull request, run the same checks CI runs and record the actual results:
 
 ```sh
-npm run lint
-npm test
-npm run build
-npx --no-install tsc --noEmit
-npm run check:bundle
-npm run test:budgets
+npm run verify            # format check, lint, generated files, types, unit tests, build, bundle and script budgets
 npm audit --omit=dev --audit-level=high
 ```
+
+Formatting-only commits are listed in `.git-blame-ignore-revs`; run `git config blame.ignoreRevsFile .git-blame-ignore-revs` once so local `git blame` skips them.
 
 Install Chromium with `npx --no-install playwright install chromium` (add `--with-deps` on Linux), then run `npm run test:e2e -- --workers=1`. Playwright builds and serves production on port 3100, or reuses an existing server there outside CI. Confirm that any reused server matches the revision under review.
 

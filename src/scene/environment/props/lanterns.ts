@@ -39,7 +39,11 @@ export function lanternGeometry(): LatheGeometry {
 
 /** The post: a flared stone foot, then a slender shaft. */
 function poleGeometry(): CylinderGeometry {
-  return new CylinderGeometry(0.035, 0.05, POLE_H, 8).translate(0, POLE_H / 2, 0);
+  return new CylinderGeometry(0.035, 0.05, POLE_H, 8).translate(
+    0,
+    POLE_H / 2,
+    0,
+  );
 }
 
 const GLOW_VERTEX = /* glsl */ `
@@ -79,10 +83,29 @@ export function createLanterns(): Prop {
     };
   });
 
-  const woodMat = own(new MeshStandardMaterial({ color: 0x241810, roughness: 0.75, metalness: 0.1, transparent: true }));
+  const woodMat = own(
+    new MeshStandardMaterial({
+      color: 0x241810,
+      roughness: 0.75,
+      metalness: 0.1,
+      transparent: true,
+    }),
+  );
   const posts = new InstancedMesh(own(poleGeometry()), woodMat, COUNT);
-  const arms = new InstancedMesh(own(new CylinderGeometry(0.018, 0.018, ARM, 6).rotateZ(Math.PI / 2).translate(ARM / 2, 0, 0)), woodMat, COUNT);
-  const caps = new InstancedMesh(own(new CylinderGeometry(0.085, 0.07, 0.035, 14)), woodMat, COUNT * 2);
+  const arms = new InstancedMesh(
+    own(
+      new CylinderGeometry(0.018, 0.018, ARM, 6)
+        .rotateZ(Math.PI / 2)
+        .translate(ARM / 2, 0, 0),
+    ),
+    woodMat,
+    COUNT,
+  );
+  const caps = new InstancedMesh(
+    own(new CylinderGeometry(0.085, 0.07, 0.035, 14)),
+    woodMat,
+    COUNT * 2,
+  );
   const paperMat = own(
     new MeshStandardMaterial({
       color: 0x7a3512,
@@ -104,7 +127,11 @@ export function createLanterns(): Prop {
       blending: AdditiveBlending,
     }),
   );
-  const glows = new InstancedMesh(own(new PlaneGeometry(2.6, 2.6).rotateX(-Math.PI / 2)), glowMat, COUNT);
+  const glows = new InstancedMesh(
+    own(new PlaneGeometry(2.6, 2.6).rotateX(-Math.PI / 2)),
+    glowMat,
+    COUNT,
+  );
   glows.renderOrder = -8;
 
   for (const m of [posts, arms, caps, lamps, glows]) m.frustumCulled = false;

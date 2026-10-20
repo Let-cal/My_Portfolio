@@ -1,6 +1,10 @@
 "use client";
 
-import { Bloom, EffectComposer, ToneMapping } from "@react-three/postprocessing";
+import {
+  Bloom,
+  EffectComposer,
+  ToneMapping,
+} from "@react-three/postprocessing";
 import { ToneMappingMode } from "postprocessing";
 
 /**
@@ -12,7 +16,12 @@ import { ToneMappingMode } from "postprocessing";
 export default function PostFX() {
   return (
     <EffectComposer multisampling={4}>
-      <Bloom luminanceThreshold={0.85} luminanceSmoothing={0.2} intensity={0.55} mipmapBlur />
+      <Bloom
+        luminanceThreshold={0.85}
+        luminanceSmoothing={0.2}
+        intensity={0.55}
+        mipmapBlur
+      />
       <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
     </EffectComposer>
   );

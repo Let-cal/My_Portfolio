@@ -17,7 +17,9 @@ export function Feeding() {
 
   const feeder = useMemo(() => createFeeder(), []);
   useEffect(() => () => feeder.dispose(), [feeder]);
-  useFrame(({ camera, clock }) => feeder.update(camera, clock.elapsedTime, playDrop));
+  useFrame(({ camera, clock }) =>
+    feeder.update(camera, clock.elapsedTime, playDrop),
+  );
 
   return <primitive object={feeder.mesh} />;
 }

@@ -1,3 +1,5 @@
+# Every text file uses LF in the repo and in working copies (matches .editorconfig and Prettier).
+* text=auto eol=lf
 # Generated font manifests are byte-checked on Windows and Linux.
 src/app/fonts/manifest.json text eol=lf
 src/app/fonts/site-subsets.json text eol=lf

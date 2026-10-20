@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 
 type HighlightContextValue = {
   /** Element ids (`exp-<id>`, `proj-<id>`) that should currently glow. */
@@ -10,7 +17,10 @@ type HighlightContextValue = {
 
 const NONE: readonly string[] = [];
 /** Without a provider (an isolated component test) nothing is highlighted and setIds does nothing. */
-const HighlightContext = createContext<HighlightContextValue>({ ids: NONE, setIds: () => {} });
+const HighlightContext = createContext<HighlightContextValue>({
+  ids: NONE,
+  setIds: () => {},
+});
 
 /**
  * Which experience / project elements are lit up. The skill map writes the evidence of the selected skill here;
@@ -19,7 +29,10 @@ const HighlightContext = createContext<HighlightContextValue>({ ids: NONE, setId
  */
 export function HighlightProvider({ children }: { children: ReactNode }) {
   const [ids, setIdsState] = useState<readonly string[]>(NONE);
-  const setIds = useCallback((next: readonly string[]) => setIdsState(next.length === 0 ? NONE : next), []);
+  const setIds = useCallback(
+    (next: readonly string[]) => setIdsState(next.length === 0 ? NONE : next),
+    [],
+  );
   const value = useMemo(() => ({ ids, setIds }), [ids, setIds]);
   return <HighlightContext value={value}>{children}</HighlightContext>;
 }

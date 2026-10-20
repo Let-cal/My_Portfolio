@@ -22,14 +22,23 @@ export type Table = {
 
 const id: Column = { name: "id", type: "text", constraint: "primary key" };
 const sortIndex: Column = { name: "sort_index", type: "integer", default: "0" };
-const published: Column = { name: "published", type: "boolean", default: "true" };
+const published: Column = {
+  name: "published",
+  type: "boolean",
+  default: "true",
+};
 const startMonth: Column = { name: "start_month", type: "text" };
 const endMonth: Column = { name: "end_month", type: "text", nullable: true };
 
 export const TABLES = {
   profile: {
     columns: [
-      { name: "id", type: "text", default: "'me'", constraint: "primary key check (id = 'me')" },
+      {
+        name: "id",
+        type: "text",
+        default: "'me'",
+        constraint: "primary key check (id = 'me')",
+      },
       { name: "name", type: "text" },
       { name: "location", type: "text" },
       { name: "email", type: "text" },
@@ -92,11 +101,20 @@ export const TABLES = {
     ],
   },
   skills: {
-    columns: [id, { name: "name", type: "text" }, { name: "skill_group", type: "text" }, sortIndex],
+    columns: [
+      id,
+      { name: "name", type: "text" },
+      { name: "skill_group", type: "text" },
+      sortIndex,
+    ],
   },
   skill_links: {
     columns: [
-      { name: "skill_id", type: "text", constraint: "references public.skills (id) on delete cascade" },
+      {
+        name: "skill_id",
+        type: "text",
+        constraint: "references public.skills (id) on delete cascade",
+      },
       {
         name: "experience_id",
         type: "text",

@@ -5,7 +5,9 @@ export const DEFAULT_ROLE: RoleKey = "fullstack";
 
 /** Reads a `?role=` value; anything unknown becomes the default role. */
 export function parseRole(v: string | null | undefined): RoleKey {
-  return (ROLE_KEYS as readonly string[]).includes(v ?? "") ? (v as RoleKey) : DEFAULT_ROLE;
+  return (ROLE_KEYS as readonly string[]).includes(v ?? "")
+    ? (v as RoleKey)
+    : DEFAULT_ROLE;
 }
 
 /** Published experiences: ids listed in `role.experienceOrder` first (in that order), the rest by `sortIndex`. */

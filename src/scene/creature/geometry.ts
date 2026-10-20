@@ -19,9 +19,17 @@ export function bodyVertexCount(rings: number, sides: number): number {
   return (rings + 2 * CAP_RINGS) * (sides + 1);
 }
 
-type RingTables = { cos: Float32Array; sin: Float32Array; rings: number; sides: number };
+type RingTables = {
+  cos: Float32Array;
+  sin: Float32Array;
+  rings: number;
+  sides: number;
+};
 
-export function createBodyGeometry(rings: number, sides: number): BufferGeometry {
+export function createBodyGeometry(
+  rings: number,
+  sides: number,
+): BufferGeometry {
   const total = rings + 2 * CAP_RINGS;
   const cols = sides + 1;
   const count = total * cols;
@@ -51,7 +59,10 @@ export function createBodyGeometry(rings: number, sides: number): BufferGeometry
     }
   }
   g.setIndex(index);
-  g.setAttribute("position", new BufferAttribute(new Float32Array(count * 3), 3));
+  g.setAttribute(
+    "position",
+    new BufferAttribute(new Float32Array(count * 3), 3),
+  );
   g.setAttribute("normal", new BufferAttribute(new Float32Array(count * 3), 3));
   g.setAttribute("uv", new BufferAttribute(uv, 2));
   g.setAttribute("aRand", new BufferAttribute(rnd, 3));

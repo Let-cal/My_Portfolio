@@ -46,7 +46,11 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
           ) : id === "contact" ? (
             <Contact content={content} locale={locale} />
           ) : (
-            <section id={id} aria-labelledby={`${id}-heading`} className="mx-auto max-w-6xl scroll-mt-14 px-4 py-24 sm:px-6">
+            <section
+              id={id}
+              aria-labelledby={`${id}-heading`}
+              className="mx-auto max-w-6xl scroll-mt-14 px-4 py-24 sm:px-6"
+            >
               <h2 id={`${id}-heading`} className="text-3xl font-semibold">
                 {t(id)}
               </h2>
@@ -54,9 +58,20 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
           );
         const chapter = SECTION_CHAPTERS[id];
         return (
-          <div key={id} className={id === "hero" ? "relative" : "portfolio-chapter relative"}>
-            {id !== "hero" && <WaveEdge className="text-foreground/[0.05] [mask-image:linear-gradient(to_bottom,#000_15%,transparent)]" />}
-            <SectionLabel index={chapter.index} title={tn(id)} kanji={chapter.kanji} />
+          <div
+            key={id}
+            className={
+              id === "hero" ? "relative" : "portfolio-chapter relative"
+            }
+          >
+            {id !== "hero" && (
+              <WaveEdge className="text-foreground/[0.05] [mask-image:linear-gradient(to_bottom,#000_15%,transparent)]" />
+            )}
+            <SectionLabel
+              index={chapter.index}
+              title={tn(id)}
+              kanji={chapter.kanji}
+            />
             {section}
           </div>
         );

@@ -1,6 +1,18 @@
 import { z } from "zod";
-import { LOCALES, ROLE_KEYS, KOI_VARIETIES, SKILL_GROUPS, CERT_TOPICS } from "./constants";
-export { LOCALES, ROLE_KEYS, KOI_VARIETIES, SKILL_GROUPS, CERT_TOPICS } from "./constants";
+import {
+  LOCALES,
+  ROLE_KEYS,
+  KOI_VARIETIES,
+  SKILL_GROUPS,
+  CERT_TOPICS,
+} from "./constants";
+export {
+  LOCALES,
+  ROLE_KEYS,
+  KOI_VARIETIES,
+  SKILL_GROUPS,
+  CERT_TOPICS,
+} from "./constants";
 
 // Shared content model for the public site, the admin CRUD and the Supabase mappers.
 // Every type below is z.infer of the schema with the matching name.
@@ -27,13 +39,20 @@ export const i18nTextSchema = i18nText;
 export type I18nText = z.infer<typeof i18nText>;
 
 /** 'YYYY-MM' */
-export const yearMonth = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Expected YYYY-MM");
+export const yearMonth = z
+  .string()
+  .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Expected YYYY-MM");
 /** 'YYYY-MM-DD' */
 export const isoDate = z
   .string()
-  .regex(/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/, "Expected YYYY-MM-DD");
+  .regex(
+    /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/,
+    "Expected YYYY-MM-DD",
+  );
 const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Expected #RRGGBB");
-const id = z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "Expected a kebab-case id");
+const id = z
+  .string()
+  .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "Expected a kebab-case id");
 
 // No phone field: the site never shows a phone number. `.strict()` rejects unknown keys.
 export const profileSchema = z
@@ -184,7 +203,10 @@ export const whyCardSchema = z.object({
   colors: z.tuple([hexColor, hexColor]),
   evidenceLink: z
     .string()
-    .regex(/^#(exp|proj)-[a-z0-9]+(-[a-z0-9]+)*$/, "Expected #exp-<id> or #proj-<id>")
+    .regex(
+      /^#(exp|proj)-[a-z0-9]+(-[a-z0-9]+)*$/,
+      "Expected #exp-<id> or #proj-<id>",
+    )
     .nullable(),
   stat: whyStatSchema.nullable().default(null),
   sortIndex: z.number().int(),

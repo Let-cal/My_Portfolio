@@ -4,7 +4,7 @@ name: Supabase keep-alive
 # the admin usable. The public site does not depend on it: pages are cached and fall back to the seed.
 on:
   schedule:
-    - cron: '17 3 * * 1,4'
+    - cron: "17 3 * * 1,4"
   workflow_dispatch:
 
 permissions: {}

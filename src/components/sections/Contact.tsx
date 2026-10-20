@@ -3,7 +3,12 @@ import { useTranslations } from "next-intl";
 import { MagneticButton } from "@/components/fx/MagneticButton";
 import { segmentKineticWords } from "@/components/fx/kinetic-words";
 import { AvailabilityStatus } from "@/components/site/AvailabilityStatus";
-import { ROLE_KEYS, type Content, type Locale, type RoleKey } from "@/content/schema";
+import {
+  ROLE_KEYS,
+  type Content,
+  type Locale,
+  type RoleKey,
+} from "@/content/schema";
 import { pickLocale } from "@/lib/i18n-text";
 import { ContactDetails } from "./contact/ContactDetails";
 import { ContactHeadline } from "./contact/ContactHeadline";
@@ -15,15 +20,23 @@ import { GithubIcon, LinkedinIcon } from "@/components/site/social-icons";
  * the left and the contact list on the right. Server component: the role-dependent CV link and the copy button
  * live in the small client part `ContactDetails`.
  */
-export function Contact({ content, locale }: { content: Content; locale: Locale }) {
+export function Contact({
+  content,
+  locale,
+}: {
+  content: Content;
+  locale: Locale;
+}) {
   const t = useTranslations("contact");
   const { profile, roles } = content;
   const headline = t("headline");
 
-  const cvUrls = Object.fromEntries(ROLE_KEYS.map((key) => [key, roles.find((r) => r.key === key)?.cvFileUrl ?? ""])) as Record<
-    RoleKey,
-    string
-  >;
+  const cvUrls = Object.fromEntries(
+    ROLE_KEYS.map((key) => [
+      key,
+      roles.find((r) => r.key === key)?.cvFileUrl ?? "",
+    ]),
+  ) as Record<RoleKey, string>;
 
   return (
     <section
@@ -60,12 +73,17 @@ export function Contact({ content, locale }: { content: Content; locale: Locale 
 
         <div className="grid gap-10 pt-24 md:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] md:gap-16 md:pt-0">
           <div data-scene-avoid="" className="flex flex-col gap-6 md:pt-10">
-            <p className="max-w-md text-lg text-pretty text-muted-foreground sm:text-xl">{t("intro")}</p>
+            <p className="max-w-md text-lg text-pretty text-muted-foreground sm:text-xl">
+              {t("intro")}
+            </p>
             <AvailabilityStatus
               openToWork={profile.openToWork}
               availabilityNote={pickLocale(profile.availabilityNote, locale)}
               location={profile.location}
-              labels={{ openToWork: t("openToWork"), localTime: t("localTime") }}
+              labels={{
+                openToWork: t("openToWork"),
+                localTime: t("localTime"),
+              }}
             />
           </div>
           <div data-scene-avoid="" className="md:pt-24">
@@ -75,7 +93,10 @@ export function Contact({ content, locale }: { content: Content; locale: Locale 
               github={profile.github}
               bookingUrl={profile.bookingUrl}
               cvUrls={cvUrls}
-              icons={{ github: <GithubIcon className="size-5" />, linkedin: <LinkedinIcon className="size-5" /> }}
+              icons={{
+                github: <GithubIcon className="size-5" />,
+                linkedin: <LinkedinIcon className="size-5" />,
+              }}
             />
           </div>
         </div>

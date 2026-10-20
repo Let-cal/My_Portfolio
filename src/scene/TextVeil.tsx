@@ -61,8 +61,11 @@ export function TextVeil() {
         for (let old = 0; old < pool.length; old++) {
           if (pool[old].style.display !== "block") continue;
           const p = last[old];
-          const cost = Math.abs(r.x0 - PAD - p.x) + Math.abs(r.y0 - PAD - p.y)
-            + Math.abs(r.x1 - r.x0 + PAD * 2 - p.w) + Math.abs(r.y1 - r.y0 + PAD * 2 - p.h);
+          const cost =
+            Math.abs(r.x0 - PAD - p.x) +
+            Math.abs(r.y0 - PAD - p.y) +
+            Math.abs(r.x1 - r.x0 + PAD * 2 - p.w) +
+            Math.abs(r.y1 - r.y0 + PAD * 2 - p.h);
           if (cost < JUMP) candidates.push({ next, old, cost });
         }
       }
@@ -70,7 +73,10 @@ export function TextVeil() {
       const order = new Array<number>(pool.length).fill(-1);
       const used = new Set<number>();
       for (const c of candidates) {
-        if (order[c.next] === -1 && !used.has(c.old)) { order[c.next] = c.old; used.add(c.old); }
+        if (order[c.next] === -1 && !used.has(c.old)) {
+          order[c.next] = c.old;
+          used.add(c.old);
+        }
       }
       let spare = 0;
       for (let i = 0; i < order.length; i++) {
@@ -83,7 +89,10 @@ export function TextVeil() {
         const copy = values.slice();
         for (let i = 0; i < order.length; i++) values[i] = copy[order[i]];
       };
-      reorder(pool); reorder(shown); reorder(snap); reorder(last);
+      reorder(pool);
+      reorder(shown);
+      reorder(snap);
+      reorder(last);
       for (let i = 0; i < pool.length; i++) {
         const panel = pool[i];
         const r = rects[i];
@@ -99,7 +108,14 @@ export function TextVeil() {
         const w = Math.round(r.x1 - r.x0 + PAD * 2);
         const h = Math.round(r.y1 - r.y0 + PAD * 2);
         const was = last[i];
-        if (Math.abs(x - was.x) + Math.abs(y - was.y) + Math.abs(w - was.w) + Math.abs(h - was.h) > JUMP) snap[i] = true;
+        if (
+          Math.abs(x - was.x) +
+            Math.abs(y - was.y) +
+            Math.abs(w - was.w) +
+            Math.abs(h - was.h) >
+          JUMP
+        )
+          snap[i] = true;
         was.x = x;
         was.y = y;
         was.w = w;

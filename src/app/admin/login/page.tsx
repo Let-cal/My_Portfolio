@@ -9,7 +9,9 @@ export default function AdminLoginPage() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-6 px-4">
       <div>
-        <p className="text-xs tracking-[0.2em] text-muted-foreground uppercase">Letcal admin</p>
+        <p className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
+          Letcal admin
+        </p>
         <h1 className="mt-1 text-2xl font-semibold">Đăng nhập</h1>
       </div>
       {isSupabaseConfigured() ? (

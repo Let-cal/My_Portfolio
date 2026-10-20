@@ -160,13 +160,15 @@ void main() {
   float reflection = pow(max(dot(R, celestialRay), 0.0), 220.0);
   float broken = 0.55 + 0.45 * sin(xz.y * 30.0 + uTime * 1.4 + slope.x * 80.0);
   color += mix(vec3(0.42, 0.63, 0.8), vec3(0.95, 0.64, 0.26), uDay) * mix(0.25, 1.0, uDay) * reflection * broken * uGarden;
-  ${GARDEN_LAMPS.map(([x, z]) => `{
+  ${GARDEN_LAMPS.map(
+    ([x, z]) => `{
     vec3 lamp = vec3(${x.toFixed(1)}, ${(WATER_Y + 1.59).toFixed(2)}, ${z.toFixed(1)});
     float distanceToLamp = length(lamp - vWorld);
     float glint = pow(max(dot(R, normalize(lamp - vWorld)), 0.0), 180.0);
     float pool = exp(-dot(xz - lamp.xz, xz - lamp.xz) * 0.8) * 0.012;
     color += vec3(1.0, 0.46, 0.12) * (pool + glint * 0.55 / (1.0 + distanceToLamp * 0.2)) * uGarden * (1.0 - uDay);
-  }`).join("\n")}
+  }`,
+  ).join("\n")}
 
   // --- the far water melts into the air ---
   vec3 fogColor = mix(uNightFog, uDayFog, uDay);
@@ -189,7 +191,11 @@ function updateWater(material: ShaderMaterial, time: number) {
   u.uFlow.value = sceneLive.flow;
   u.uVisible.value = creatureLive.visibility;
   u.uMorph.value = creatureLive.morph;
-  (u.uHead.value as Vector3).set(creatureLive.head.x, creatureLive.head.y, creatureLive.head.z);
+  (u.uHead.value as Vector3).set(
+    creatureLive.head.x,
+    creatureLive.head.y,
+    creatureLive.head.z,
+  );
   (u.uBody.value as Float32Array).set(creatureLive.body);
 }
 
@@ -227,7 +233,12 @@ export function Water() {
   useFrame(({ clock }) => updateWater(material, clock.elapsedTime));
 
   return (
-    <mesh rotation-x={-Math.PI / 2} position={[0, WATER_Y, 0]} frustumCulled={false} renderOrder={-10}>
+    <mesh
+      rotation-x={-Math.PI / 2}
+      position={[0, WATER_Y, 0]}
+      frustumCulled={false}
+      renderOrder={-10}
+    >
       <planeGeometry args={[90, 90, 1, 1]} />
       <primitive object={material} attach="material" />
     </mesh>

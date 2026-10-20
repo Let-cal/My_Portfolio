@@ -1,36 +1,80 @@
 import { act, cleanup, render } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { StrictMode } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+  type MockInstance,
+} from "vitest";
 import { RoleStage } from "@/components/sections/hero/RoleStage";
 import en from "@/messages/en.json";
 
-function rect(left: number, top: number, width: number, height: number): DOMRectReadOnly {
-  return { x: left, y: top, left, top, width, height, right: left + width, bottom: top + height, toJSON: () => ({}) };
+function rect(
+  left: number,
+  top: number,
+  width: number,
+  height: number,
+): DOMRectReadOnly {
+  return {
+    x: left,
+    y: top,
+    left,
+    top,
+    width,
+    height,
+    right: left + width,
+    bottom: top + height,
+    toJSON: () => ({}),
+  };
 }
 
 class Observer {
   static instances: Observer[] = [];
   targets = new Set<Element>();
-  observe = vi.fn((target: Element) => { this.targets.add(target); });
-  unobserve = vi.fn((target: Element) => { this.targets.delete(target); });
-  disconnect = vi.fn(() => { this.targets.clear(); });
-  constructor(readonly callback: ResizeObserverCallback) { Observer.instances.push(this); }
+  observe = vi.fn((target: Element) => {
+    this.targets.add(target);
+  });
+  unobserve = vi.fn((target: Element) => {
+    this.targets.delete(target);
+  });
+  disconnect = vi.fn(() => {
+    this.targets.clear();
+  });
+  constructor(readonly callback: ResizeObserverCallback) {
+    Observer.instances.push(this);
+  }
   emit(entries: ResizeObserverEntry[]) {
     act(() => this.callback(entries, this as unknown as ResizeObserver));
   }
 }
 
-function entry(target: Element, width: number, shape: "array" | "object" | "content" = "array"): ResizeObserverEntry {
+function entry(
+  target: Element,
+  width: number,
+  shape: "array" | "object" | "content" = "array",
+): ResizeObserverEntry {
   const size = { inlineSize: width, blockSize: 700 };
   return {
-    target, contentRect: rect(0, 0, width, 700), contentBoxSize: [size], devicePixelContentBoxSize: [size],
+    target,
+    contentRect: rect(0, 0, width, 700),
+    contentBoxSize: [size],
+    devicePixelContentBoxSize: [size],
     borderBoxSize: shape === "array" ? [size] : shape === "object" ? size : [],
   } as unknown as ResizeObserverEntry;
 }
 
 function mount(strict = false) {
-  const view = <NextIntlClientProvider locale="en" messages={en}><div className="hero-stage-wrap"><RoleStage /></div></NextIntlClientProvider>;
+  const view = (
+    <NextIntlClientProvider locale="en" messages={en}>
+      <div className="hero-stage-wrap">
+        <RoleStage />
+      </div>
+    </NextIntlClientProvider>
+  );
   const result = render(strict ? <StrictMode>{view}</StrictMode> : view);
   const stage = result.container.querySelector<HTMLElement>(".hero-stage")!;
   const panels = [...stage.querySelectorAll<HTMLElement>("[data-panel]")];
@@ -45,14 +89,21 @@ beforeEach(() => {
   vi.stubGlobal("ResizeObserver", Observer);
   vi.stubGlobal("innerWidth", 1600);
   document.documentElement.style.fontSize = "16px";
-  stageWidth = 1000; stageHeight = 700; leftPanelWidth = 250;
-  bounds = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
-    if (this.matches(".hero-stage")) return rect(10, 20, stageWidth, stageHeight);
-    if (this.matches("[data-role-wheel]")) return rect(300, 40, 440, 440);
-    if (this.matches("[data-panel='fullstack']")) return rect(0, 100, leftPanelWidth, 160);
-    if (this.matches("[data-panel='techlead']")) return rect(750, 100, 250, 160);
-    return rect(300, 550, 400, 150);
-  });
+  stageWidth = 1000;
+  stageHeight = 700;
+  leftPanelWidth = 250;
+  bounds = vi
+    .spyOn(Element.prototype, "getBoundingClientRect")
+    .mockImplementation(function (this: Element) {
+      if (this.matches(".hero-stage"))
+        return rect(10, 20, stageWidth, stageHeight);
+      if (this.matches("[data-role-wheel]")) return rect(300, 40, 440, 440);
+      if (this.matches("[data-panel='fullstack']"))
+        return rect(0, 100, leftPanelWidth, 160);
+      if (this.matches("[data-panel='techlead']"))
+        return rect(750, 100, 250, 160);
+      return rect(300, 550, 400, 150);
+    });
 });
 
 afterEach(() => {
@@ -63,19 +114,25 @@ afterEach(() => {
 });
 
 describe("RoleStage leader geometry", () => {
-  it.each(["array", "object", "content"] as const)("uses the %s observer width without mobile bounds reads, even in a wide viewport", (shape) => {
-    const { container, stage, panels, observer } = mount();
-    expect(bounds).not.toHaveBeenCalled();
-    observer.emit([entry(stage, 412, shape)]);
-    expect(bounds).not.toHaveBeenCalled();
-    expect(container.querySelector(".hero-lines")).toBeNull();
-    expect([...observer.targets]).toEqual([stage]);
-    // A queued panel notification must not activate hidden geometry work.
-    observer.emit([entry(panels[0], 250)]);
-    expect(bounds).not.toHaveBeenCalled();
-    observer.emit([entry(stage, 832, shape)]);
-    expect(container.querySelector(".hero-lines")).toHaveAttribute("viewBox", "0 0 1000 700");
-  });
+  it.each(["array", "object", "content"] as const)(
+    "uses the %s observer width without mobile bounds reads, even in a wide viewport",
+    (shape) => {
+      const { container, stage, panels, observer } = mount();
+      expect(bounds).not.toHaveBeenCalled();
+      observer.emit([entry(stage, 412, shape)]);
+      expect(bounds).not.toHaveBeenCalled();
+      expect(container.querySelector(".hero-lines")).toBeNull();
+      expect([...observer.targets]).toEqual([stage]);
+      // A queued panel notification must not activate hidden geometry work.
+      observer.emit([entry(panels[0], 250)]);
+      expect(bounds).not.toHaveBeenCalled();
+      observer.emit([entry(stage, 832, shape)]);
+      expect(container.querySelector(".hero-lines")).toHaveAttribute(
+        "viewBox",
+        "0 0 1000 700",
+      );
+    },
+  );
 
   it("keeps the 52rem boundary inclusive and follows the root font, not the stage font or viewport", () => {
     document.documentElement.style.fontSize = "20px";
@@ -93,15 +150,28 @@ describe("RoleStage leader geometry", () => {
     observer.emit([entry(stage, 1000)]);
     expect(bounds).toHaveBeenCalledTimes(5);
     expect([...observer.targets]).toEqual([stage, ...panels]);
-    expect(container.querySelector(".hero-lines")).toHaveAttribute("viewBox", "0 0 1000 700");
-    expect(container.querySelector(".hero-lines g[data-on] circle:last-child")).toHaveAttribute("cx", "254");
-    expect(container.querySelector(".hero-lines g[data-on] circle:last-child")).toHaveAttribute("cy", "98");
+    expect(container.querySelector(".hero-lines")).toHaveAttribute(
+      "viewBox",
+      "0 0 1000 700",
+    );
+    expect(
+      container.querySelector(".hero-lines g[data-on] circle:last-child"),
+    ).toHaveAttribute("cx", "254");
+    expect(
+      container.querySelector(".hero-lines g[data-on] circle:last-child"),
+    ).toHaveAttribute("cy", "98");
     leftPanelWidth = 270;
     observer.emit([entry(panels[0], 270)]);
-    expect(container.querySelector(".hero-lines g[data-on] circle:last-child")).toHaveAttribute("cx", "274");
-    stageWidth = 1100; stageHeight = 750;
+    expect(
+      container.querySelector(".hero-lines g[data-on] circle:last-child"),
+    ).toHaveAttribute("cx", "274");
+    stageWidth = 1100;
+    stageHeight = 750;
     observer.emit([entry(stage, 1100)]);
-    expect(container.querySelector(".hero-lines")).toHaveAttribute("viewBox", "0 0 1100 750");
+    expect(container.querySelector(".hero-lines")).toHaveAttribute(
+      "viewBox",
+      "0 0 1100 750",
+    );
   });
 
   it("stops mobile measurements after shrinking and resumes fresh geometry when widened again", () => {
@@ -116,7 +186,10 @@ describe("RoleStage leader geometry", () => {
     expect(bounds).not.toHaveBeenCalled();
     stageWidth = 950;
     observer.emit([entry(stage, 950)]);
-    expect(container.querySelector(".hero-lines")).toHaveAttribute("viewBox", "0 0 950 700");
+    expect(container.querySelector(".hero-lines")).toHaveAttribute(
+      "viewBox",
+      "0 0 950 700",
+    );
     expect([...observer.targets]).toEqual([stage, ...panels]);
   });
 

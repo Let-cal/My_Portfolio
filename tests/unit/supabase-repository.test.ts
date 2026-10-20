@@ -30,11 +30,15 @@ function fakeClient(shuffle: boolean): SupabaseClient {
 
 describe("SupabaseRepository", () => {
   it("rebuilds the seed content from its rows", async () => {
-    expect(await new SupabaseRepository(fakeClient(false)).getContent()).toEqual(expected);
+    expect(
+      await new SupabaseRepository(fakeClient(false)).getContent(),
+    ).toEqual(expected);
   });
 
   it("orders skills by group, then position, whatever order the database returns", async () => {
     const content = await new SupabaseRepository(fakeClient(true)).getContent();
-    expect(content.skills.map((s) => s.id)).toEqual(expected.skills.map((s) => s.id));
+    expect(content.skills.map((s) => s.id)).toEqual(
+      expected.skills.map((s) => s.id),
+    );
   });
 });

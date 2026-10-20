@@ -62,24 +62,41 @@ const CIRCUIT_EMISSIVE = /* glsl */ `
 totalEmissiveRadiance += vec3( 1.0, 0.55, 0.2 ) * ( dzEdge * 5.0 );
 `;
 
-function patch(material: MeshStandardMaterial, uniforms: Record<string, { value: unknown }>, decl: string, dragon: boolean) {
+function patch(
+  material: MeshStandardMaterial,
+  uniforms: Record<string, { value: unknown }>,
+  decl: string,
+  dragon: boolean,
+) {
   if (dragon) material.defines = { ...material.defines, CREATURE_DRAGON: "" };
   material.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, uniforms);
     shader.fragmentShader = shader.fragmentShader
       .replace("#include <common>", `#include <common>\n${decl}`)
-      .replace("#include <clipping_planes_fragment>", dragon ? DISSOLVE_DISCARD : "#include <clipping_planes_fragment>")
+      .replace(
+        "#include <clipping_planes_fragment>",
+        dragon ? DISSOLVE_DISCARD : "#include <clipping_planes_fragment>",
+      )
       .replace("#include <map_fragment>", CROSSFADE_MAP)
-      .replace("#include <emissivemap_fragment>", dragon ? CIRCUIT_EMISSIVE : "#include <emissivemap_fragment>");
+      .replace(
+        "#include <emissivemap_fragment>",
+        dragon ? CIRCUIT_EMISSIVE : "#include <emissivemap_fragment>",
+      );
   };
-  material.customProgramCacheKey = () => (dragon ? "creature-body" : "creature-fin");
+  material.customProgramCacheKey = () =>
+    dragon ? "creature-body" : "creature-fin";
 }
 
 /**
  * The Cyber Koi skin: PBR ivory with the variety's pattern, a glowing orange circuit (emissive map), scale relief
  * (bump map) and the dragon hide blended in with `uMorph`.
  */
-export function createBodyMaterial(maps: { koi: Texture; dragon: Texture; circuit: Texture; bump: Texture }) {
+export function createBodyMaterial(maps: {
+  koi: Texture;
+  dragon: Texture;
+  circuit: Texture;
+  bump: Texture;
+}) {
   const uniforms: BodyUniforms = {
     uPrevMap: { value: maps.koi },
     uFade: { value: 1 },
@@ -110,7 +127,10 @@ export function createBodyMaterial(maps: { koi: Texture; dragon: Texture; circui
 
 /** Translucent fin membrane, cross-fading between varieties like the body. */
 export function createFinMaterial(map: Texture, glow: Texture) {
-  const uniforms: CrossfadeUniforms = { uPrevMap: { value: map }, uFade: { value: 1 } };
+  const uniforms: CrossfadeUniforms = {
+    uPrevMap: { value: map },
+    uFade: { value: 1 },
+  };
   const material = new MeshStandardMaterial({
     map,
     color: 0xffffff,
@@ -127,7 +147,12 @@ export function createFinMaterial(map: Texture, glow: Texture) {
   // One pass: three's default back-then-front pass for transparent double-sided materials doubles the draw calls
   // and flags the material for a program check twice a frame. The fins are thin, so the order hardly shows.
   material.forceSinglePass = true;
-  patch(material, uniforms, "uniform sampler2D uPrevMap; uniform float uFade;", false);
+  patch(
+    material,
+    uniforms,
+    "uniform sampler2D uPrevMap; uniform float uFade;",
+    false,
+  );
   return { material, uniforms };
 }
 

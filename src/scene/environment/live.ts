@@ -26,5 +26,6 @@ export function resetSceneLive(day: number) {
   sceneLive.flow = 0;
   sceneLive.props = 0;
   sceneLive.ripples.next = 0;
-  for (let i = 0; i < sceneLive.ripples.data.length; i += 3) sceneLive.ripples.data[i + 2] = -1000;
+  for (let i = 0; i < sceneLive.ripples.data.length; i += 3)
+    sceneLive.ripples.data[i + 2] = -1000;
 }

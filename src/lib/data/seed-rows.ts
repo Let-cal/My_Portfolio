@@ -65,16 +65,24 @@ function literal(value: unknown, type: string): string {
 /** The same snapshot as one SQL script, for seeding through the SQL editor or an MCP client. */
 export function renderSeedSql(rows: SeedRows): string {
   const out = ["begin;"];
-  for (const [table, list] of Object.entries(rows) as [TableName, Record<string, unknown>[]][]) {
+  for (const [table, list] of Object.entries(rows) as [
+    TableName,
+    Record<string, unknown>[],
+  ][]) {
     const columns = TABLES[table].columns;
     if (table === "skill_links") out.push("delete from public.skill_links;");
     if (!list.length) continue;
     const names = columns.map((c) => c.name);
-    const values = list.map((row) => `(${columns.map((c) => literal(row[c.name], c.type)).join(", ")})`);
+    const values = list.map(
+      (row) =>
+        `(${columns.map((c) => literal(row[c.name], c.type)).join(", ")})`,
+    );
     let sql = `insert into public.${table} (${names.join(", ")}) values\n  ${values.join(",\n  ")}`;
     if (table !== "skill_links") {
       const key = CONFLICT_KEY[table];
-      const updates = names.filter((n) => n !== key).map((n) => `${n} = excluded.${n}`);
+      const updates = names
+        .filter((n) => n !== key)
+        .map((n) => `${n} = excluded.${n}`);
       sql += `\non conflict (${key}) do update set ${updates.join(", ")}`;
     }
     out.push(sql + ";");

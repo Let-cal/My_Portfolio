@@ -1,6 +1,10 @@
 "use client";
 
-import { decimalsOf, formatterFor, formatTickerValue } from "@/lib/ticker-format";
+import {
+  decimalsOf,
+  formatterFor,
+  formatTickerValue,
+} from "@/lib/ticker-format";
 import { useEffect, useRef } from "react";
 import { usePrefersReducedMotion } from "./use-media-query";
 
@@ -22,7 +26,14 @@ const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
  * No layout shift: the final text is rendered invisibly in the same grid cell as the counting text, so the
  * element is always as wide as the final value (digit and comma count never change its width).
  */
-export function NumberTicker({ value, formattedValue, prefix = "", suffix = "", durationMs = 1200, className }: NumberTickerProps) {
+export function NumberTicker({
+  value,
+  formattedValue,
+  prefix = "",
+  suffix = "",
+  durationMs = 1200,
+  className,
+}: NumberTickerProps) {
   const reduced = usePrefersReducedMotion();
   const nodeRef = useRef<HTMLSpanElement>(null);
   const decimals = decimalsOf(value);
@@ -58,11 +69,24 @@ export function NumberTicker({ value, formattedValue, prefix = "", suffix = "", 
   }, [reduced, value, durationMs, decimals, prefix, suffix, finalText]);
 
   return (
-    <span role="img" aria-label={finalText} className={`inline-grid tabular-nums${className ? ` ${className}` : ""}`}>
-      <span aria-hidden="true" data-ticker-reserve="" className="invisible col-start-1 row-start-1">
+    <span
+      role="img"
+      aria-label={finalText}
+      className={`inline-grid tabular-nums${className ? ` ${className}` : ""}`}
+    >
+      <span
+        aria-hidden="true"
+        data-ticker-reserve=""
+        className="invisible col-start-1 row-start-1"
+      >
         {finalText}
       </span>
-      <span ref={nodeRef} aria-hidden="true" data-ticker-value="" className="col-start-1 row-start-1">
+      <span
+        ref={nodeRef}
+        aria-hidden="true"
+        data-ticker-value=""
+        className="col-start-1 row-start-1"
+      >
         {finalText}
       </span>
     </span>

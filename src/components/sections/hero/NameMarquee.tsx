@@ -12,7 +12,10 @@ export function NameMarquee({ name }: { name: string }) {
     <div aria-hidden="true" className="select-none">
       <Marquee speed={36} decorative>
         {names.map((n) => (
-          <span key={n} className="hero-stroke-text font-heading text-5xl leading-tight font-bold whitespace-nowrap sm:text-7xl">
+          <span
+            key={n}
+            className="hero-stroke-text font-heading text-5xl leading-tight font-bold whitespace-nowrap sm:text-7xl"
+          >
             {n} —
           </span>
         ))}

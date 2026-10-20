@@ -8,7 +8,16 @@ type Pt = { x: number; y: number };
  * Moves the centre of a ring with half-axes `rx` and `ry` (px) the least it takes for the whole ring to lie on screen with
  * `margin` px to spare on every side. A ring wider than the screen is centred. Writes into `out`.
  */
-export function fitRing(cx: number, cy: number, rx: number, ry: number, width: number, height: number, margin: number, out: Pt): Pt {
+export function fitRing(
+  cx: number,
+  cy: number,
+  rx: number,
+  ry: number,
+  width: number,
+  height: number,
+  margin: number,
+  out: Pt,
+): Pt {
   const minX = rx + margin;
   const maxX = width - rx - margin;
   const minY = ry + margin;
@@ -35,11 +44,22 @@ const OFFSET_COST = 0.04;
 const scratch: Pt = { x: 0, y: 0 };
 
 /** How much of the ring's path lies on text: the coverage (0 clear, 1 under a block) averaged over points along it. */
-export function ringCrowd(rects: readonly Rect[], cx: number, cy: number, rx: number, ry: number): number {
+export function ringCrowd(
+  rects: readonly Rect[],
+  cx: number,
+  cy: number,
+  rx: number,
+  ry: number,
+): number {
   let sum = 0;
   for (let k = 0; k < RING_SAMPLES; k++) {
     const a = (k / RING_SAMPLES) * Math.PI * 2;
-    sum += rectCoverage(rects, cx + Math.cos(a) * rx, cy + Math.sin(a) * ry, RING_FEATHER);
+    sum += rectCoverage(
+      rects,
+      cx + Math.cos(a) * rx,
+      cy + Math.sin(a) * ry,
+      RING_FEATHER,
+    );
   }
   return sum / RING_SAMPLES;
 }
@@ -66,13 +86,23 @@ export function ringCentre(
   const reach = 1 + NEAR_PATH;
   for (let j = -OFFSET_STEPS_Y; j <= OFFSET_STEPS_Y; j++) {
     for (let i = -OFFSET_STEPS_X; i <= OFFSET_STEPS_X; i++) {
-      fitRing(cta.x + (i / OFFSET_STEPS_X) * reach * rx, cta.y + (j / OFFSET_STEPS_Y) * reach * ry, rx, ry, width, height, margin, scratch);
+      fitRing(
+        cta.x + (i / OFFSET_STEPS_X) * reach * rx,
+        cta.y + (j / OFFSET_STEPS_Y) * reach * ry,
+        rx,
+        ry,
+        width,
+        height,
+        margin,
+        scratch,
+      );
       // Is the button still inside the ring or just by its path after the move? (The unmoved centre is always a candidate.)
       const dx = (cta.x - scratch.x) / rx;
       const dy = (cta.y - scratch.y) / ry;
       const away = Math.hypot(dx, dy);
       if (away > reach && !(i === 0 && j === 0)) continue;
-      const cost = ringCrowd(rects, scratch.x, scratch.y, rx, ry) + OFFSET_COST * away;
+      const cost =
+        ringCrowd(rects, scratch.x, scratch.y, rx, ry) + OFFSET_COST * away;
       if (cost < best) {
         best = cost;
         bx = scratch.x;

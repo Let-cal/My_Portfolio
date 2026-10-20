@@ -1,4 +1,13 @@
-import { BoxGeometry, Color, Float32BufferAttribute, Group, Mesh, MeshStandardMaterial, PlaneGeometry, ShaderMaterial } from "three";
+import {
+  BoxGeometry,
+  Color,
+  Float32BufferAttribute,
+  Group,
+  Mesh,
+  MeshStandardMaterial,
+  PlaneGeometry,
+  ShaderMaterial,
+} from "three";
 import { WATER_Y } from "../constants";
 import { gardenWeight } from "../garden";
 import { GARDEN_NIGHT_GLSL as night } from "../garden-palette";
@@ -89,7 +98,11 @@ function material(fragment: string) {
     fragmentShader: fragment,
     transparent: true,
     depthWrite: false,
-    uniforms: { uTime: { value: 0 }, uOpacity: { value: 0 }, uDay: { value: 0 } },
+    uniforms: {
+      uTime: { value: 0 },
+      uOpacity: { value: 0 },
+      uDay: { value: 0 },
+    },
   });
 }
 
@@ -99,24 +112,43 @@ export function createWaterfall(): Prop {
   const root = new Group();
   root.name = "waterfall";
 
-  const cliffMat = own(new MeshStandardMaterial({ color: 0xc0c3b7, vertexColors: true, roughness: 0.92, transparent: true }));
+  const cliffMat = own(
+    new MeshStandardMaterial({
+      color: 0xc0c3b7,
+      vertexColors: true,
+      roughness: 0.92,
+      transparent: true,
+    }),
+  );
   const fallMat = own(material(FALL_FRAGMENT));
   const cliffGeometry = own(new BoxGeometry(20, 6.6, 2.6, 48, 24, 2));
   const cp = cliffGeometry.getAttribute("position");
-  const cliffColors = new Float32Array(cp.count * 3), color = new Color();
+  const cliffColors = new Float32Array(cp.count * 3),
+    color = new Color();
   for (let i = 0; i < cp.count; i++) {
-    const x = cp.getX(i), y = cp.getY(i), depth = cp.getZ(i);
+    const x = cp.getX(i),
+      y = cp.getY(i),
+      depth = cp.getZ(i);
     const grain = Math.sin(x * 3.2 + y * 0.4) * Math.cos(y * 4.7) * 0.15;
     // Lower irregular shoulders leave room for sky and trees instead of a rectangular wall.
     const shoulder = 1 - 0.64 * smoothstep(0.28, 1, Math.abs(x) / 10);
-    cp.setY(i, (y + 3.3) * shoulder - 3.3 + (y > 3.2 ? Math.sin(x * 1.3) * 0.25 + Math.cos(x * 2.9) * 0.18 : 0));
+    cp.setY(
+      i,
+      (y + 3.3) * shoulder -
+        3.3 +
+        (y > 3.2 ? Math.sin(x * 1.3) * 0.25 + Math.cos(x * 2.9) * 0.18 : 0),
+    );
     // Use the same world-height profile as the water, leaving >=0.30 behind its surface even at peak grain.
     const height = (cp.getY(i) + 3.0) / FALL_H;
     if (depth > 0) cp.setZ(i, depth + cascadeDepth(height) - 0.35 + grain);
     color.setRGB(0.7 + grain, 0.76 + grain, 0.65 + grain);
     color.toArray(cliffColors, i * 3);
   }
-  cliffGeometry.setAttribute("color", new Float32BufferAttribute(cliffColors, 3)); cliffGeometry.computeVertexNormals();
+  cliffGeometry.setAttribute(
+    "color",
+    new Float32BufferAttribute(cliffColors, 3),
+  );
+  cliffGeometry.computeVertexNormals();
   const cliff = new Mesh(cliffGeometry, cliffMat);
   cliff.name = "waterfall-cliff";
   cliff.position.set(0, WATER_Y + 3.0, FALL_Z - 1.4);
@@ -141,9 +173,11 @@ export function createWaterfall(): Prop {
   basin.position.set(0, WATER_Y + 0.035, FALL_Z + 2.4);
   basin.renderOrder = -4;
   const landscape = createWaterfallLandscape(own, FALL_Z, cliffMat);
-  const banks = createGardenBanks(own, cliffMat), sky = createGardenSky(own);
+  const banks = createGardenBanks(own, cliffMat),
+    sky = createGardenSky(own);
   root.add(cliff, fall, basin, landscape.root, banks.root, sky.root);
-  const nightCliff = new Color(0x65818d), dayCliff = new Color(0xc0c3b7);
+  const nightCliff = new Color(0x65818d),
+    dayCliff = new Color(0xc0c3b7);
 
   function update(time: number, pos: number, day: number) {
     const w = gardenWeight(pos);

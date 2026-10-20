@@ -9,9 +9,21 @@ export function WaveBackground({ colors }: { colors: [string, string] }) {
   const uid = useId().replace(/:/g, "");
   const [from, to] = colors;
   return (
-    <svg className="why-wave-svg h-full w-full" viewBox="0 0 300 400" preserveAspectRatio="none" focusable="false" aria-hidden="true">
+    <svg
+      className="why-wave-svg h-full w-full"
+      viewBox="0 0 300 400"
+      preserveAspectRatio="none"
+      focusable="false"
+      aria-hidden="true"
+    >
       <defs>
-        <linearGradient id={`why-bg-${uid}`} x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient
+          id={`why-bg-${uid}`}
+          x1="0%"
+          y1="0%"
+          x2="100%"
+          y2="100%"
+        >
           <stop offset="0%" stopColor={from} />
           <stop offset="100%" stopColor={to} />
         </linearGradient>

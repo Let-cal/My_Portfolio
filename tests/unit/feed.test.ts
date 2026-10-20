@@ -69,7 +69,8 @@ describe("eatFood", () => {
 });
 
 describe("nearestFood", () => {
-  it("is null with no food", () => expect(nearestFood([], at(0, 0))).toBeNull());
+  it("is null with no food", () =>
+    expect(nearestFood([], at(0, 0))).toBeNull());
 
   it("picks the pellet closest to the head on the water plane", () => {
     const foods = [
@@ -88,7 +89,9 @@ describe("nearestFood", () => {
     ];
     expect(nearestFood(foods, at(0, 0), 10)?.id).toBe(1);
     expect(nearestFood(foods, at(0, 0), 10.5)?.id).toBe(2);
-    expect(nearestFood([{ id: 3, x: 0, z: 0, t0: 10 }], at(0, 0), 10)).toBeNull();
+    expect(
+      nearestFood([{ id: 3, x: 0, z: 0, t0: 10 }], at(0, 0), 10),
+    ).toBeNull();
   });
 });
 
@@ -100,12 +103,16 @@ describe("landedFood and pruneFood", () => {
 
   it("a pellet is only food for the koi once it has fallen onto the water", () => {
     expect(landedFood(foods, FOOD_FALL_SECONDS - 0.01)).toEqual([]);
-    expect(landedFood(foods, FOOD_FALL_SECONDS + 0.01).map((f) => f.id)).toEqual([1]);
+    expect(
+      landedFood(foods, FOOD_FALL_SECONDS + 0.01).map((f) => f.id),
+    ).toEqual([1]);
     expect(landedFood(foods, 10).map((f) => f.id)).toEqual([1, 2]);
   });
 
   it("uneaten pellets sink after their lifetime", () => {
     expect(pruneFood(foods, FOOD_LIFETIME_SECONDS - 1)).toBe(foods);
-    expect(pruneFood(foods, FOOD_LIFETIME_SECONDS + 1).map((f) => f.id)).toEqual([2]);
+    expect(
+      pruneFood(foods, FOOD_LIFETIME_SECONDS + 1).map((f) => f.id),
+    ).toEqual([2]);
   });
 });

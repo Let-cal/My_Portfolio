@@ -7,12 +7,22 @@ import { flushSync } from "react-dom";
 import type { animate } from "motion";
 import { loadAnimate } from "@/lib/load-animate";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type MouseEvent,
+  type PointerEvent,
+  type ReactNode,
+} from "react";
 import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
 import { useNearViewportEffect } from "@/components/fx/use-near-viewport-effect";
 import { cn } from "@/lib/utils";
 
-const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
+const clamp = (n: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, n));
 
 /** The track positions at which each card is centred in the viewport, clamped so the track never shows empty space. */
 type Metrics = { stops: number[]; min: number };
@@ -27,7 +37,11 @@ const ROUND_BUTTON =
  * keys (while the carousel region has focus) all move the active card by animating the same motion value. The
  * current card is announced politely ("2 of 4"). Reduced motion keeps dragging but snaps without animation.
  */
-export function WhyCarousel({ cards }: { cards: { id: string; content: ReactNode }[] }) {
+export function WhyCarousel({
+  cards,
+}: {
+  cards: { id: string; content: ReactNode }[];
+}) {
   const t = useTranslations("why");
   const reduced = usePrefersReducedMotion();
   const [active, setActive] = useState(0);
@@ -57,7 +71,11 @@ export function WhyCarousel({ cards }: { cards: { id: string; content: ReactNode
         return clamp(width / 2 - (el.offsetLeft + el.offsetWidth / 2), min, 0);
       });
       setMetrics((prev) =>
-        prev.min === min && prev.stops.length === stops.length && prev.stops.every((s, i) => s === stops[i]) ? prev : { stops, min },
+        prev.min === min &&
+        prev.stops.length === stops.length &&
+        prev.stops.every((s, i) => s === stops[i])
+          ? prev
+          : { stops, min },
       );
     };
     measure();
@@ -73,7 +91,10 @@ export function WhyCarousel({ cards }: { cards: { id: string; content: ReactNode
     const observer = new ResizeObserver(measure);
     observer.observe(viewport);
     observer.observe(track);
-    return () => { disposed = true; observer.disconnect(); };
+    return () => {
+      disposed = true;
+      observer.disconnect();
+    };
   }, []);
   useNearViewportEffect(rootRef, setupMeasurements, total);
 
@@ -81,13 +102,29 @@ export function WhyCarousel({ cards }: { cards: { id: string; content: ReactNode
   useEffect(() => {
     const target = metrics.stops[active];
     if (target === undefined || Math.abs(x.get() - target) < 0.5) return;
-    if (reduced) { x.set(target); return; }
+    if (reduced) {
+      x.set(target);
+      return;
+    }
     let cancelled = false;
     let controls: ReturnType<typeof animate> | undefined;
-    void loadAnimate().then((animate) => {
-      if (!cancelled) controls = animate(x, target, { type: "spring", stiffness: 240, damping: 30, mass: 0.9 });
-    }).catch(() => { if (!cancelled) x.set(target); });
-    return () => { cancelled = true; controls?.stop(); };
+    void loadAnimate()
+      .then((animate) => {
+        if (!cancelled)
+          controls = animate(x, target, {
+            type: "spring",
+            stiffness: 240,
+            damping: 30,
+            mass: 0.9,
+          });
+      })
+      .catch(() => {
+        if (!cancelled) x.set(target);
+      });
+    return () => {
+      cancelled = true;
+      controls?.stop();
+    };
   }, [active, metrics, reduced, x]);
 
   /** Index of the card the track currently sits on; the ends win so a drag to either end selects the first/last card. */
@@ -99,14 +136,18 @@ export function WhyCarousel({ cards }: { cards: { id: string; content: ReactNode
       if (position <= min + 0.5) return stops.length - 1;
       let best = 0;
       stops.forEach((stop, i) => {
-        if (Math.abs(stop - position) < Math.abs(stops[best] - position)) best = i;
+        if (Math.abs(stop - position) < Math.abs(stops[best] - position))
+          best = i;
       });
       return best;
     },
     [metrics],
   );
 
-  const go = useCallback((index: number) => setActive(clamp(index, 0, total - 1)), [total]);
+  const go = useCallback(
+    (index: number) => setActive(clamp(index, 0, total - 1)),
+    [total],
+  );
 
   function handleKeyDown(e: KeyboardEvent<HTMLDivElement>) {
     if (e.key === "ArrowRight") go(active + 1);
@@ -136,7 +177,10 @@ export function WhyCarousel({ cards }: { cards: { id: string; content: ReactNode
   }
 
   return (
-    <div ref={rootRef} className="relative mt-12 -mx-4 sm:-mx-6 lg:mx-0 lg:px-[60px]">
+    <div
+      ref={rootRef}
+      className="relative mt-12 -mx-4 sm:-mx-6 lg:mx-0 lg:px-[60px]"
+    >
       <div
         role="region"
         aria-roledescription="carousel"
@@ -154,7 +198,13 @@ export function WhyCarousel({ cards }: { cards: { id: string; content: ReactNode
             ref={trackRef}
             data-carousel-track=""
             className="relative flex w-max cursor-grab gap-6 px-4 active:cursor-grabbing sm:px-6 lg:px-3"
-            style={{ x, touchAction: "pan-y", userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none" }}
+            style={{
+              x,
+              touchAction: "pan-y",
+              userSelect: "none",
+              WebkitUserSelect: "none",
+              WebkitTouchCallout: "none",
+            }}
             drag={dragReady ? "x" : false}
             layout="position"
             layoutDependency={metrics}
@@ -242,13 +292,19 @@ export function WhyCarousel({ cards }: { cards: { id: string; content: ReactNode
                   aria-hidden="true"
                   className={cn(
                     "h-2 rounded-full transition-[width,background-color] duration-300 motion-reduce:transition-none",
-                    i === active ? "w-6 bg-(--role-accent)" : "w-2 bg-foreground/30 group-hover:bg-foreground/55",
+                    i === active
+                      ? "w-6 bg-(--role-accent)"
+                      : "w-2 bg-foreground/30 group-hover:bg-foreground/55",
                   )}
                 />
               </button>
             ))}
           </div>
-          <p role="status" aria-live="polite" className="font-mono text-xs tracking-wider text-muted-foreground tabular-nums">
+          <p
+            role="status"
+            aria-live="polite"
+            className="font-mono text-xs tracking-wider text-muted-foreground tabular-nums"
+          >
             {status}
           </p>
         </div>

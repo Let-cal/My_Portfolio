@@ -24,7 +24,10 @@ export function LanternFrame({
     "--bob-dur": `${(5.4 + (index % 4) * 0.7).toFixed(1)}s`,
   } as CSSProperties;
   return (
-    <div className={cn("lantern-scene", className)} data-flipped={flipped ? "" : undefined}>
+    <div
+      className={cn("lantern-scene", className)}
+      data-flipped={flipped ? "" : undefined}
+    >
       <div className="lantern-bob" style={style}>
         <span aria-hidden="true" className="lantern-cord" />
         <span aria-hidden="true" className="lantern-cap" />

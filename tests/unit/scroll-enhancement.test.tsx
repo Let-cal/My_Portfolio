@@ -3,7 +3,10 @@ import { useRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useScrollEnhancement } from "@/components/fx/use-scroll-enhancement";
 
-const effects = vi.hoisted(() => ({ attachBeam: vi.fn(), attachWords: vi.fn() }));
+const effects = vi.hoisted(() => ({
+  attachBeam: vi.fn(),
+  attachWords: vi.fn(),
+}));
 vi.mock("@/components/fx/scroll-enhancements", () => effects);
 
 function Example({ reduced = false }: { reduced?: boolean }) {
@@ -12,18 +15,33 @@ function Example({ reduced = false }: { reduced?: boolean }) {
   return <div ref={ref}>The complete section remains visible</div>;
 }
 
-afterEach(() => { vi.unstubAllGlobals(); vi.clearAllMocks(); });
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.clearAllMocks();
+});
 
 describe("deferred native scroll enhancement", () => {
   function observer() {
     let callback: IntersectionObserverCallback = () => {};
     const disconnect = vi.fn();
-    vi.stubGlobal("IntersectionObserver", class {
-      constructor(cb: IntersectionObserverCallback) { callback = cb; }
-      observe() {}
-      disconnect = disconnect;
-    });
-    return { disconnect, enter: () => callback([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver) };
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class {
+        constructor(cb: IntersectionObserverCallback) {
+          callback = cb;
+        }
+        observe() {}
+        disconnect = disconnect;
+      },
+    );
+    return {
+      disconnect,
+      enter: () =>
+        callback(
+          [{ isIntersecting: true } as IntersectionObserverEntry],
+          {} as IntersectionObserver,
+        ),
+    };
   }
 
   it("leaves content rendered while waiting, then attaches once near the viewport", async () => {
@@ -31,9 +49,13 @@ describe("deferred native scroll enhancement", () => {
     const stop = vi.fn();
     effects.attachBeam.mockReturnValue(stop);
     const view = render(<Example />);
-    expect(view.getByText("The complete section remains visible")).toBeVisible();
+    expect(
+      view.getByText("The complete section remains visible"),
+    ).toBeVisible();
     expect(effects.attachBeam).not.toHaveBeenCalled();
-    await act(async () => { io.enter(); });
+    await act(async () => {
+      io.enter();
+    });
     expect(effects.attachBeam).toHaveBeenCalledOnce();
     view.unmount();
     expect(stop).toHaveBeenCalledOnce();

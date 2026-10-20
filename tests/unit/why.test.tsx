@@ -6,7 +6,12 @@ import en from "@/messages/en.json";
 import ja from "@/messages/ja.json";
 import vi_ from "@/messages/vi.json";
 import seed from "@/content/seed.json";
-import { contentSchema, whyCardSchema, type Content, type Locale } from "@/content/schema";
+import {
+  contentSchema,
+  whyCardSchema,
+  type Content,
+  type Locale,
+} from "@/content/schema";
 import { Why } from "@/components/sections/Why";
 
 const base: Content = contentSchema.parse(seed);
@@ -52,7 +57,8 @@ function renderWhy(opts: { locale?: Locale; content?: Content } = {}) {
   );
 }
 
-const region = () => screen.getByRole("region", { name: "Reasons to work with me" });
+const region = () =>
+  screen.getByRole("region", { name: "Reasons to work with me" });
 const cards = () => within(region()).getAllByRole("group", { name: /of 4$/ });
 
 afterEach(() => vi.unstubAllGlobals());
@@ -63,15 +69,29 @@ describe("Why section", () => {
     renderWhy();
     const section = document.getElementById("why");
     expect(section).not.toBeNull();
-    expect(within(section as HTMLElement).getByRole("heading", { level: 2, name: "Why work with me" })).toBeInTheDocument();
+    expect(
+      within(section as HTMLElement).getByRole("heading", {
+        level: 2,
+        name: "Why work with me",
+      }),
+    ).toBeInTheDocument();
   });
 
   it("renders all 4 seed cards in sortIndex order, whatever the array order", () => {
     stubBrowser();
-    const shuffled: Content = { ...base, whyCards: [...base.whyCards].reverse() };
+    const shuffled: Content = {
+      ...base,
+      whyCards: [...base.whyCards].reverse(),
+    };
     renderWhy({ content: shuffled });
-    const titles = cards().map((c) => within(c).getByRole("heading", { level: 3 }).textContent);
-    expect(titles).toEqual([...base.whyCards].sort((a, b) => a.sortIndex - b.sortIndex).map((c) => c.title.en));
+    const titles = cards().map(
+      (c) => within(c).getByRole("heading", { level: 3 }).textContent,
+    );
+    expect(titles).toEqual(
+      [...base.whyCards]
+        .sort((a, b) => a.sortIndex - b.sortIndex)
+        .map((c) => c.title.en),
+    );
     expect(titles).toHaveLength(4);
   });
 
@@ -87,7 +107,12 @@ describe("Why section", () => {
 
   it("omits the evidence link when a card has none", () => {
     stubBrowser();
-    const noLink: Content = { ...base, whyCards: base.whyCards.map((c, i) => (i === 0 ? { ...c, evidenceLink: null } : c)) };
+    const noLink: Content = {
+      ...base,
+      whyCards: base.whyCards.map((c, i) =>
+        i === 0 ? { ...c, evidenceLink: null } : c,
+      ),
+    };
     renderWhy({ content: noLink });
     expect(within(cards()[0]).queryByRole("link")).toBeNull();
     expect(within(cards()[1]).getByRole("link")).toBeInTheDocument();
@@ -141,7 +166,10 @@ describe("Why section", () => {
     stubBrowser();
     renderWhy();
     for (const name of ["Previous card", "Next card"]) {
-      expect(screen.getByRole("button", { name })).toHaveClass("size-[50px]", "rounded-full");
+      expect(screen.getByRole("button", { name })).toHaveClass(
+        "size-[50px]",
+        "rounded-full",
+      );
     }
   });
 
@@ -149,12 +177,18 @@ describe("Why section", () => {
     stubBrowser();
     const user = userEvent.setup();
     renderWhy();
-    expect(screen.getByRole("button", { name: "Previous card" })).toHaveAttribute("aria-disabled", "true");
+    expect(
+      screen.getByRole("button", { name: "Previous card" }),
+    ).toHaveAttribute("aria-disabled", "true");
     await user.click(screen.getByRole("button", { name: "Previous card" }));
     expect(screen.getByRole("status")).toHaveTextContent("1 of 4");
-    for (let i = 0; i < 5; i++) await user.click(screen.getByRole("button", { name: "Next card" }));
+    for (let i = 0; i < 5; i++)
+      await user.click(screen.getByRole("button", { name: "Next card" }));
     expect(screen.getByRole("status")).toHaveTextContent("4 of 4");
-    expect(screen.getByRole("button", { name: "Next card" })).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByRole("button", { name: "Next card" })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
   });
 
   it("has one dot per card that jumps to it", async () => {
@@ -163,30 +197,44 @@ describe("Why section", () => {
     renderWhy();
     await user.click(screen.getByRole("button", { name: "Go to card 3" }));
     expect(screen.getByRole("status")).toHaveTextContent("3 of 4");
-    expect(screen.getByRole("button", { name: "Go to card 3" })).toHaveAttribute("aria-current", "true");
+    expect(
+      screen.getByRole("button", { name: "Go to card 3" }),
+    ).toHaveAttribute("aria-current", "true");
   });
 });
 
 describe("Why manifesto", () => {
   it.each([
-    ["en", "I turn what Japanese clients ask for into software that has been released"],
+    [
+      "en",
+      "I turn what Japanese clients ask for into software that has been released",
+    ],
     ["ja", "日本のお客様の要望を"],
     ["vi", "Tôi biến yêu cầu của khách hàng Nhật"],
-  ] as const)("shows the %s manifesto once for assistive tech, with the visual copy hidden", (locale, start) => {
-    stubBrowser();
-    renderWhy({ locale });
-    const full = document.querySelectorAll("[data-manifesto] .sr-only");
-    expect(full).toHaveLength(1);
-    expect(full[0].textContent).toContain(start);
-    const visual = document.querySelector("[data-manifesto] [aria-hidden='true']") as HTMLElement;
-    expect(visual).not.toBeNull();
-    expect(visual.textContent?.replace(/\s/g, "")).toBe(full[0].textContent?.replace(/\s/g, ""));
-  });
+  ] as const)(
+    "shows the %s manifesto once for assistive tech, with the visual copy hidden",
+    (locale, start) => {
+      stubBrowser();
+      renderWhy({ locale });
+      const full = document.querySelectorAll("[data-manifesto] .sr-only");
+      expect(full).toHaveLength(1);
+      expect(full[0].textContent).toContain(start);
+      const visual = document.querySelector(
+        "[data-manifesto] [aria-hidden='true']",
+      ) as HTMLElement;
+      expect(visual).not.toBeNull();
+      expect(visual.textContent?.replace(/\s/g, "")).toBe(
+        full[0].textContent?.replace(/\s/g, ""),
+      );
+    },
+  );
 
   it("avoids the banned words and invented numbers", () => {
     for (const m of [en, ja, vi_]) {
       expect(m.why.manifesto).not.toMatch(/\d/);
-      expect(m.why.manifesto).not.toMatch(/seamless|spearhead|leverag|passionate|transformative|empower/i);
+      expect(m.why.manifesto).not.toMatch(
+        /seamless|spearhead|leverag|passionate|transformative|empower/i,
+      );
     }
   });
 });
@@ -197,7 +245,12 @@ describe("Why stats", () => {
     renderWhy();
     const stats = cards().map((c) => {
       const ticker = within(c).queryByRole("img");
-      return ticker ? [ticker.getAttribute("aria-label"), c.querySelector("[data-stat-label]")?.textContent] : null;
+      return ticker
+        ? [
+            ticker.getAttribute("aria-label"),
+            c.querySelector("[data-stat-label]")?.textContent,
+          ]
+        : null;
     });
     expect(stats).toEqual([
       ["6", "Japanese client projects in 14 months"],
@@ -206,7 +259,9 @@ describe("Why stats", () => {
       null,
     ]);
     // The counted text itself is already the final value (no half-counted number to read).
-    expect(cards()[0].querySelector("[data-ticker-value]")?.textContent).toBe("6");
+    expect(cards()[0].querySelector("[data-ticker-value]")?.textContent).toBe(
+      "6",
+    );
   });
 
   it("renders no ticker and no label for a card whose stat is null", () => {
@@ -222,11 +277,26 @@ describe("Why stats", () => {
     const est: Content = {
       ...base,
       whyCards: base.whyCards.map((c, i) =>
-        i === 0 ? { ...c, stat: { value: 300, prefix: "~", label: { en: "unit tests", ja: "ユニットテスト", vi: "unit test" } } } : c,
+        i === 0
+          ? {
+              ...c,
+              stat: {
+                value: 300,
+                prefix: "~",
+                label: {
+                  en: "unit tests",
+                  ja: "ユニットテスト",
+                  vi: "unit test",
+                },
+              },
+            }
+          : c,
       ),
     };
     renderWhy({ content: est });
-    expect(within(cards()[0]).getByRole("img", { name: "~300" })).toBeInTheDocument();
+    expect(
+      within(cards()[0]).getByRole("img", { name: "~300" }),
+    ).toBeInTheDocument();
   });
 });
 
@@ -242,12 +312,20 @@ describe("whyCardSchema stat", () => {
     expect(whyCardSchema.parse(withoutStat).stat).toBeNull();
   });
   it("accepts a full stat with prefix and suffix", () => {
-    const parsed = whyCardSchema.parse({ ...withoutStat, stat: { value: 14, prefix: "~", suffix: "+", label } });
+    const parsed = whyCardSchema.parse({
+      ...withoutStat,
+      stat: { value: 14, prefix: "~", suffix: "+", label },
+    });
     expect(parsed.stat).toMatchObject({ value: 14, prefix: "~", suffix: "+" });
   });
   it("rejects a stat without a label or with a non-numeric value", () => {
-    expect(whyCardSchema.safeParse({ ...withoutStat, stat: { value: 2 } }).success).toBe(false);
-    expect(whyCardSchema.safeParse({ ...withoutStat, stat: { value: "2", label } }).success).toBe(false);
+    expect(
+      whyCardSchema.safeParse({ ...withoutStat, stat: { value: 2 } }).success,
+    ).toBe(false);
+    expect(
+      whyCardSchema.safeParse({ ...withoutStat, stat: { value: "2", label } })
+        .success,
+    ).toBe(false);
   });
   it("seed: P1 2 lockers, parallel 2 projects, Japanese clients 6 projects, UI/UX null", () => {
     const byId = Object.fromEntries(base.whyCards.map((c) => [c.id, c.stat]));
@@ -259,19 +337,38 @@ describe("whyCardSchema stat", () => {
 });
 
 describe("Why card pointer effects", () => {
-  const firstCard = () => cards()[0].querySelector("[data-why-card]") as HTMLElement;
+  const firstCard = () =>
+    cards()[0].querySelector("[data-why-card]") as HTMLElement;
 
   it("tilts towards the pointer by at most 8 degrees on a fine pointer, and shifts the waves", () => {
     stubBrowser((q) => q.includes("pointer: fine"));
     stubRaf();
     renderWhy();
     const el = firstCard();
-    el.getBoundingClientRect = () => ({ left: 0, top: 0, width: 300, height: 500, right: 300, bottom: 500, x: 0, y: 0, toJSON() {} });
+    el.getBoundingClientRect = () => ({
+      left: 0,
+      top: 0,
+      width: 300,
+      height: 500,
+      right: 300,
+      bottom: 500,
+      x: 0,
+      y: 0,
+      toJSON() {},
+    });
     fireEvent.pointerEnter(el, { pointerType: "mouse" });
-    fireEvent.pointerMove(el, { clientX: 300, clientY: 0, pointerType: "mouse" });
+    fireEvent.pointerMove(el, {
+      clientX: 300,
+      clientY: 0,
+      pointerType: "mouse",
+    });
     expect(el).toHaveAttribute("data-hover", "true");
-    expect(Number.parseFloat(el.style.getPropertyValue("--why-rx"))).toBeCloseTo(-8);
-    expect(Number.parseFloat(el.style.getPropertyValue("--why-ry"))).toBeCloseTo(-8);
+    expect(
+      Number.parseFloat(el.style.getPropertyValue("--why-rx")),
+    ).toBeCloseTo(-8);
+    expect(
+      Number.parseFloat(el.style.getPropertyValue("--why-ry")),
+    ).toBeCloseTo(-8);
     expect(el.style.getPropertyValue("--why-tx")).toBe("0.5");
     fireEvent.pointerLeave(el, { pointerType: "mouse" });
     expect(el).not.toHaveAttribute("data-hover");
@@ -279,20 +376,33 @@ describe("Why card pointer effects", () => {
   });
 
   it("does not tilt on screens up to 640px wide", () => {
-    stubBrowser((q) => q.includes("pointer: fine") || q.includes("max-width: 640px"));
+    stubBrowser(
+      (q) => q.includes("pointer: fine") || q.includes("max-width: 640px"),
+    );
     stubRaf();
     renderWhy();
     const el = firstCard();
-    fireEvent.pointerMove(el, { clientX: 300, clientY: 0, pointerType: "mouse" });
+    fireEvent.pointerMove(el, {
+      clientX: 300,
+      clientY: 0,
+      pointerType: "mouse",
+    });
     expect(el.style.getPropertyValue("--why-rx")).toBe("");
   });
 
   it("does not tilt when motion is reduced", () => {
-    stubBrowser((q) => q.includes("pointer: fine") || q.includes("prefers-reduced-motion"));
+    stubBrowser(
+      (q) =>
+        q.includes("pointer: fine") || q.includes("prefers-reduced-motion"),
+    );
     stubRaf();
     renderWhy();
     const el = firstCard();
-    fireEvent.pointerMove(el, { clientX: 300, clientY: 0, pointerType: "mouse" });
+    fireEvent.pointerMove(el, {
+      clientX: 300,
+      clientY: 0,
+      pointerType: "mouse",
+    });
     expect(el.style.getPropertyValue("--why-rx")).toBe("");
   });
 });

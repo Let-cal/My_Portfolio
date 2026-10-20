@@ -16,7 +16,11 @@ function scrambleFrame(target: string, progress: number) {
   const chars = Array.from(target);
   const settled = Math.floor(progress * chars.length);
   return chars
-    .map((ch, i) => (i < settled || ch === " " ? ch : CHARSET[Math.floor(Math.random() * CHARSET.length)]))
+    .map((ch, i) =>
+      i < settled || ch === " "
+        ? ch
+        : CHARSET[Math.floor(Math.random() * CHARSET.length)],
+    )
     .join("");
 }
 
@@ -24,10 +28,16 @@ function scrambleFrame(target: string, progress: number) {
  * When `text` changes the characters shuffle and lock onto the new string from left to right.
  * The accessible name is always the final text (sr-only); the shuffling copy is aria-hidden.
  */
-export function TextScramble({ text, durationMs = 500, className }: TextScrambleProps) {
+export function TextScramble({
+  text,
+  durationMs = 500,
+  className,
+}: TextScrambleProps) {
   const reduced = usePrefersReducedMotion();
   // A frame is tagged with the text it belongs to, so a stale frame from a previous target is never shown.
-  const [frame, setFrame] = useState<{ target: string; value: string } | null>(null);
+  const [frame, setFrame] = useState<{ target: string; value: string } | null>(
+    null,
+  );
   const previous = useRef(text);
 
   useEffect(() => {

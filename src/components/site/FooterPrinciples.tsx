@@ -16,7 +16,12 @@ export function FooterPrinciples() {
 
   return (
     <div>
-      <h2 data-scene-avoid="" className="text-xs font-medium tracking-[0.2em] text-muted-foreground uppercase">{t("principlesLabel")}</h2>
+      <h2
+        data-scene-avoid=""
+        className="text-xs font-medium tracking-[0.2em] text-muted-foreground uppercase"
+      >
+        {t("principlesLabel")}
+      </h2>
       <ol
         ref={ref}
         role="list"
@@ -33,7 +38,10 @@ export function FooterPrinciples() {
             style={{ "--i": i } as CSSProperties}
             className="footer-principle flex gap-4 border-t border-border py-5 text-lg leading-snug text-balance sm:text-xl"
           >
-            <span aria-hidden="true" className="pt-1 font-mono text-xs text-muted-foreground tabular-nums">
+            <span
+              aria-hidden="true"
+              className="pt-1 font-mono text-xs text-muted-foreground tabular-nums"
+            >
               {String(i + 1).padStart(2, "0")}
             </span>
             <span>{line}</span>

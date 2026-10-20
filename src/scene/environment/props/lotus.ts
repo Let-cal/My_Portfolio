@@ -83,7 +83,14 @@ export function createLotus(): Prop {
   const map = veinTexture();
   if (map) own(map);
   const leafMat = own(
-    new MeshStandardMaterial({ map, color: 0xffffff, roughness: 0.55, metalness: 0, side: DoubleSide, transparent: true }),
+    new MeshStandardMaterial({
+      map,
+      color: 0xffffff,
+      roughness: 0.55,
+      metalness: 0,
+      side: DoubleSide,
+      transparent: true,
+    }),
   );
   const leafMesh = new InstancedMesh(own(leafGeometry()), leafMat, LEAVES);
   leafMesh.frustumCulled = false;
@@ -95,7 +102,9 @@ export function createLotus(): Prop {
   root.add(leafMesh);
 
   // Flowers: petals are squashed spheres standing on their base.
-  const petalGeo = own(new SphereGeometry(1, 12, 8).scale(0.075, 0.2, 0.04).translate(0, 0.2, 0));
+  const petalGeo = own(
+    new SphereGeometry(1, 12, 8).scale(0.075, 0.2, 0.04).translate(0, 0.2, 0),
+  );
   const petalMat = own(
     new MeshStandardMaterial({
       color: 0xf7cfdc,
@@ -170,7 +179,13 @@ export function createLotus(): Prop {
         WATER_Y + 0.02 + Math.sin(time * 0.8 + l.seed * 9) * 0.008,
         l.z + Math.cos(time * 0.1 + l.seed * 5.1) * 0.22,
       );
-      dummy.quaternion.setFromEuler(euler.set(Math.sin(time * 0.5 + l.seed * 7) * 0.015, l.rot + time * l.spin, 0));
+      dummy.quaternion.setFromEuler(
+        euler.set(
+          Math.sin(time * 0.5 + l.seed * 7) * 0.015,
+          l.rot + time * l.spin,
+          0,
+        ),
+      );
       // The same leaves remain in the same pond when the camera rises towards Skills.
       dummy.scale.setScalar(l.r);
       dummy.updateMatrix();

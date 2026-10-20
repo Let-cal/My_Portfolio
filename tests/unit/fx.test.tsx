@@ -1,6 +1,12 @@
 import { renderToString } from "react-dom/server";
 import { Profiler } from "react";
-import { act, fireEvent, render, renderHook, screen } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { GlowCard } from "@/components/fx/GlowCard";
@@ -10,7 +16,10 @@ import { LocalTime } from "@/components/fx/LocalTime";
 import { MagneticButton } from "@/components/fx/MagneticButton";
 import { Marquee } from "@/components/fx/Marquee";
 import { NumberTicker } from "@/components/fx/NumberTicker";
-import { SCROLL_REVEAL_MIN_OPACITY, ScrollTextReveal } from "@/components/fx/ScrollTextReveal";
+import {
+  SCROLL_REVEAL_MIN_OPACITY,
+  ScrollTextReveal,
+} from "@/components/fx/ScrollTextReveal";
 import { Spotlight } from "@/components/fx/Spotlight";
 import { TextScramble } from "@/components/fx/TextScramble";
 import { WaveEdge } from "@/components/fx/WaveEdge";
@@ -62,41 +71,83 @@ describe("NumberTicker", () => {
   it("defers the prepared ticker formatter until its first visible animation frame", () => {
     stubMedia(() => false);
     let trigger: IntersectionObserverCallback = () => {};
-    vi.stubGlobal("IntersectionObserver", class extends FakeObserver {
-      constructor(callback: IntersectionObserverCallback) { super(); trigger = callback; }
-    });
-    vi.stubGlobal("requestAnimationFrame", vi.fn(() => 1));
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class extends FakeObserver {
+        constructor(callback: IntersectionObserverCallback) {
+          super();
+          trigger = callback;
+        }
+      },
+    );
+    vi.stubGlobal(
+      "requestAnimationFrame",
+      vi.fn(() => 1),
+    );
     vi.stubGlobal("cancelAnimationFrame", vi.fn());
     const constructor = vi.spyOn(Intl, "NumberFormat");
     try {
       render(<NumberTicker value={1.234567} formattedValue="1.234567" />);
       expect(constructor).not.toHaveBeenCalled();
-      expect(screen.getByLabelText("1.234567").querySelector("[data-ticker-value]")).toHaveTextContent("0.000000");
-      act(() => trigger([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver));
+      expect(
+        screen.getByLabelText("1.234567").querySelector("[data-ticker-value]"),
+      ).toHaveTextContent("0.000000");
+      act(() =>
+        trigger(
+          [{ isIntersecting: true } as IntersectionObserverEntry],
+          {} as IntersectionObserver,
+        ),
+      );
       expect(constructor).toHaveBeenCalledTimes(1);
-    } finally { constructor.mockRestore(); }
+    } finally {
+      constructor.mockRestore();
+    }
   });
   it("counts without scheduling React renders on animation frames", () => {
     stubMedia(() => false);
     vi.useFakeTimers();
     let trigger: IntersectionObserverCallback = () => {};
-    vi.stubGlobal("IntersectionObserver", class extends FakeObserver {
-      constructor(callback: IntersectionObserverCallback) { super(); trigger = callback; }
-    });
-    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => setTimeout(() => callback(performance.now()), 16));
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class extends FakeObserver {
+        constructor(callback: IntersectionObserverCallback) {
+          super();
+          trigger = callback;
+        }
+      },
+    );
+    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) =>
+      setTimeout(() => callback(performance.now()), 16),
+    );
     vi.stubGlobal("cancelAnimationFrame", (id: number) => clearTimeout(id));
     const commits = vi.fn();
-    render(<Profiler id="ticker" onRender={commits}><NumberTicker value={100} durationMs={1000} /></Profiler>);
+    render(
+      <Profiler id="ticker" onRender={commits}>
+        <NumberTicker value={100} durationMs={1000} />
+      </Profiler>,
+    );
     commits.mockClear();
-    act(() => trigger([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver));
-    act(() => { vi.advanceTimersByTime(1100); });
-    expect(screen.getByLabelText("100").querySelector("[data-ticker-value]")).toHaveTextContent("100");
+    act(() =>
+      trigger(
+        [{ isIntersecting: true } as IntersectionObserverEntry],
+        {} as IntersectionObserver,
+      ),
+    );
+    act(() => {
+      vi.advanceTimersByTime(1100);
+    });
+    expect(
+      screen.getByLabelText("100").querySelector("[data-ticker-value]"),
+    ).toHaveTextContent("100");
     expect(commits).not.toHaveBeenCalled();
   });
   it("shows the final value immediately under reduced motion", () => {
     stubMedia(reduced);
     render(<NumberTicker value={14} />);
-    expect(screen.getByLabelText("14").querySelector("[data-ticker-value]")?.textContent).toBe("14");
+    expect(
+      screen.getByLabelText("14").querySelector("[data-ticker-value]")
+        ?.textContent,
+    ).toBe("14");
   });
 
   it("keeps the final text (with prefix and suffix) in the accessible label while counting", () => {
@@ -117,14 +168,26 @@ describe("NumberTicker", () => {
       }
     }
     vi.stubGlobal("IntersectionObserver", IO);
-    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => setTimeout(() => cb(performance.now()), 16));
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) =>
+      setTimeout(() => cb(performance.now()), 16),
+    );
     vi.stubGlobal("cancelAnimationFrame", (id: number) => clearTimeout(id));
     render(<NumberTicker value={14} durationMs={1000} />);
-    const shown = () => screen.getByLabelText("14").querySelector("[data-ticker-value]")?.textContent;
+    const shown = () =>
+      screen.getByLabelText("14").querySelector("[data-ticker-value]")
+        ?.textContent;
     expect(shown()).toBe("0");
     // Width is reserved by the invisible final text, so counting 0 -> 14 never changes the box.
-    expect(screen.getByLabelText("14").querySelector("[data-ticker-reserve]")?.textContent).toBe("14");
-    act(() => trigger([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver));
+    expect(
+      screen.getByLabelText("14").querySelector("[data-ticker-reserve]")
+        ?.textContent,
+    ).toBe("14");
+    act(() =>
+      trigger(
+        [{ isIntersecting: true } as IntersectionObserverEntry],
+        {} as IntersectionObserver,
+      ),
+    );
     act(() => {
       vi.advanceTimersByTime(1100);
     });
@@ -142,7 +205,10 @@ describe("NumberTicker", () => {
     expect(reserve).toHaveAttribute("aria-hidden", "true");
     expect(root).toHaveClass("inline-grid");
     // Counting text sits in the same grid cell as the reserve, so it overlays instead of adding width.
-    expect(root.querySelector("[data-ticker-value]")).toHaveClass("col-start-1", "row-start-1");
+    expect(root.querySelector("[data-ticker-value]")).toHaveClass(
+      "col-start-1",
+      "row-start-1",
+    );
   });
 });
 
@@ -156,9 +222,13 @@ describe("KineticText", () => {
   });
 
   it("leaves Japanese text flat so it can wrap between characters", () => {
-    const { container } = render(<KineticText text="フルスタックエンジニアのポートフォリオ" />);
+    const { container } = render(
+      <KineticText text="フルスタックエンジニアのポートフォリオ" />,
+    );
     expect(container.querySelector(".whitespace-nowrap")).toBeNull();
-    expect(document.querySelectorAll("[data-char]")).toHaveLength(Array.from("フルスタックエンジニアのポートフォリオ").length);
+    expect(document.querySelectorAll("[data-char]")).toHaveLength(
+      Array.from("フルスタックエンジニアのポートフォリオ").length,
+    );
   });
 
   it("keeps decomposed Vietnamese diacritics attached to their letter", () => {
@@ -177,13 +247,19 @@ describe("KineticText", () => {
     const { container } = render(<KineticText text="Let us build" />);
     const groups = Array.from(container.querySelectorAll(".whitespace-nowrap"));
     expect(groups.map((g) => g.textContent)).toEqual(["Let ", "us ", "build"]);
-    expect(Array.from(container.querySelectorAll("[data-char]"))).toHaveLength("Let us build".length);
-    container.querySelectorAll(".whitespace-pre").forEach((sp) => expect(sp.closest(".whitespace-nowrap")).not.toBeNull());
+    expect(Array.from(container.querySelectorAll("[data-char]"))).toHaveLength(
+      "Let us build".length,
+    );
+    container
+      .querySelectorAll(".whitespace-pre")
+      .forEach((sp) => expect(sp.closest(".whitespace-nowrap")).not.toBeNull());
   });
 
   it("renders the requested heading level", () => {
     render(<KineticText as="h1" text="Hi" />);
-    expect(screen.getByRole("heading", { level: 1, name: "Hi" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Hi" }),
+    ).toBeInTheDocument();
   });
 });
 
@@ -217,8 +293,11 @@ describe("TextScramble", () => {
 
   it("scrambles on change and settles on the new text after durationMs", () => {
     stubMedia(() => false);
-    const { container, rerender } = render(<TextScramble text="Fullstack" durationMs={500} />);
-    const visible = () => container.querySelector("[aria-hidden='true']")?.textContent;
+    const { container, rerender } = render(
+      <TextScramble text="Fullstack" durationMs={500} />,
+    );
+    const visible = () =>
+      container.querySelector("[aria-hidden='true']")?.textContent;
     expect(visible()).toBe("Fullstack");
     rerender(<TextScramble text="Tech Lead" durationMs={500} />);
     act(() => {
@@ -230,14 +309,18 @@ describe("TextScramble", () => {
       vi.advanceTimersByTime(600);
     });
     expect(visible()).toBe("Tech Lead");
-    expect(screen.getByText("Tech Lead", { selector: ".sr-only" })).toBeInTheDocument();
+    expect(
+      screen.getByText("Tech Lead", { selector: ".sr-only" }),
+    ).toBeInTheDocument();
   });
 
   it("swaps instantly under reduced motion", () => {
     stubMedia(reduced);
     const { container, rerender } = render(<TextScramble text="A" />);
     rerender(<TextScramble text="B" />);
-    expect(container.querySelector("[aria-hidden='true']")?.textContent).toBe("B");
+    expect(container.querySelector("[aria-hidden='true']")?.textContent).toBe(
+      "B",
+    );
   });
 });
 
@@ -283,7 +366,10 @@ describe("MagneticButton", () => {
         <a href="https://example.com/x">Link</a>
       </MagneticButton>,
     );
-    expect(screen.getByRole("link", { name: "Link" })).toHaveAttribute("href", "https://example.com/x");
+    expect(screen.getByRole("link", { name: "Link" })).toHaveAttribute(
+      "href",
+      "https://example.com/x",
+    );
     expect(screen.queryByRole("button")).toBeNull();
   });
 });
@@ -300,7 +386,9 @@ describe("Spotlight / GrainOverlay / WaveEdge / GlowCard", () => {
     expect(layer).toHaveAttribute("aria-hidden", "true");
     expect(layer.className).toContain("fixed");
     expect(layer.className).toContain("pointer-events-none");
-    expect(layer.style.background || layer.style.backgroundImage).toContain("600px circle");
+    expect(layer.style.background || layer.style.backgroundImage).toContain(
+      "600px circle",
+    );
   });
 
   it("GrainOverlay is a decorative, click-through fixed layer with configurable opacity", () => {
@@ -321,7 +409,9 @@ describe("Spotlight / GrainOverlay / WaveEdge / GlowCard", () => {
     expect(wrap.className).toContain("h-12");
     expect(wrap.className).not.toContain("-scale-y-100");
     rerender(<WaveEdge flip />);
-    expect((container.firstElementChild as HTMLElement).className).toContain("-scale-y-100");
+    expect((container.firstElementChild as HTMLElement).className).toContain(
+      "-scale-y-100",
+    );
   });
 
   it("GlowCard exposes data-glow-card and ignores the pointer on touch devices", () => {
@@ -347,7 +437,11 @@ describe("Spotlight / GrainOverlay / WaveEdge / GlowCard", () => {
     vi.stubGlobal("cancelAnimationFrame", () => {});
     render(<GlowCard tilt>card</GlowCard>);
     const card = screen.getByText("card");
-    fireEvent.pointerMove(card, { clientX: 5, clientY: 7, pointerType: "mouse" });
+    fireEvent.pointerMove(card, {
+      clientX: 5,
+      clientY: 7,
+      pointerType: "mouse",
+    });
     expect(card.style.getPropertyValue("--gx")).toBe("5px");
     expect(card.style.getPropertyValue("--gy")).toBe("7px");
     fireEvent.pointerLeave(card);
@@ -374,26 +468,40 @@ describe("ScrollTextReveal", () => {
     const { container } = render(<ScrollTextReveal text={ja} locale="ja" />);
     const units = container.querySelectorAll("[data-reveal-unit]");
     expect(units.length).toBeGreaterThan(5);
-    expect(Array.from(units).map((u) => u.textContent).join("")).toBe(ja);
+    expect(
+      Array.from(units)
+        .map((u) => u.textContent)
+        .join(""),
+    ).toBe(ja);
   });
 
   it("keeps the whole sentence for screen readers exactly once, and hides the dimmed words from them", () => {
     stubMedia(() => false);
     vi.stubGlobal("ResizeObserver", FakeObserver);
     vi.stubGlobal("IntersectionObserver", FakeObserver);
-    const { container } = render(<ScrollTextReveal text="I build things for the web" />);
+    const { container } = render(
+      <ScrollTextReveal text="I build things for the web" />,
+    );
     const sr = container.querySelectorAll(".sr-only");
     expect(sr).toHaveLength(1);
     expect(sr[0].textContent).toBe("I build things for the web");
-    expect(container.querySelector("[aria-hidden='true']")?.querySelectorAll("[data-reveal-unit]")).toHaveLength(6);
+    expect(
+      container
+        .querySelector("[aria-hidden='true']")
+        ?.querySelectorAll("[data-reveal-unit]"),
+    ).toHaveLength(6);
   });
 
   it("shows every word at full opacity when motion is reduced", () => {
     stubMedia(reduced);
     vi.stubGlobal("ResizeObserver", FakeObserver);
     vi.stubGlobal("IntersectionObserver", FakeObserver);
-    const { container } = render(<ScrollTextReveal text="I build things for the web" />);
-    const units = Array.from(container.querySelectorAll<HTMLElement>("[data-reveal-unit]"));
+    const { container } = render(
+      <ScrollTextReveal text="I build things for the web" />,
+    );
+    const units = Array.from(
+      container.querySelectorAll<HTMLElement>("[data-reveal-unit]"),
+    );
     expect(units).toHaveLength(6);
     for (const u of units) expect(u.style.opacity).toBe("1");
   });

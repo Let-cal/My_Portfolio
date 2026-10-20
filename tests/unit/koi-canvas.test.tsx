@@ -7,24 +7,49 @@ import { sceneStore } from "@/scene/store";
 import { detectWebGL } from "@/scene/tier";
 
 // useRole() lives in RoleProvider, which imports the routing helpers; the context default (fullstack) is all this test needs.
-vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams("") }));
-vi.mock("@/i18n/navigation", () => ({ useRouter: () => ({ replace: vi.fn() }), usePathname: () => "/en" }));
-vi.mock("@/scene/tier", async (orig) => ({ ...(await orig<typeof import("@/scene/tier")>()), detectWebGL: vi.fn(() => true) }));
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams(""),
+}));
+vi.mock("@/i18n/navigation", () => ({
+  useRouter: () => ({ replace: vi.fn() }),
+  usePathname: () => "/en",
+}));
+vi.mock("@/scene/tier", async (orig) => ({
+  ...(await orig<typeof import("@/scene/tier")>()),
+  detectWebGL: vi.fn(() => true),
+}));
 // Stands in for the real three.js scene so the test never needs WebGL.
 const sceneFault = vi.hoisted(() => ({ throwOnRender: false }));
 vi.mock("@/scene/SceneRoot", () => ({
-  default: function FakeSceneRoot({ tier, onReadyChange }: { tier: string; onReadyChange: (r: boolean) => void }) {
+  default: function FakeSceneRoot({
+    tier,
+    onReadyChange,
+  }: {
+    tier: string;
+    onReadyChange: (r: boolean) => void;
+  }) {
     if (sceneFault.throwOnRender) throw new Error("renderer creation failed");
-    return <canvas data-testid="scene" data-tier={tier} ref={() => onReadyChange(true)} />;
+    return (
+      <canvas
+        data-testid="scene"
+        data-tier={tier}
+        ref={() => onReadyChange(true)}
+      />
+    );
   },
 }));
 
-const img = () => document.querySelector<HTMLImageElement>("img[data-koi-fallback]");
+const img = () =>
+  document.querySelector<HTMLImageElement>("img[data-koi-fallback]");
 const settle = () => new Promise((r) => setTimeout(r, 60));
-const raf = (cb: FrameRequestCallback) => setTimeout(() => cb(0), 0) as unknown as number;
+const raf = (cb: FrameRequestCallback) =>
+  setTimeout(() => cb(0), 0) as unknown as number;
 
 function setCores(n: number) {
-  Object.defineProperty(navigator, "hardwareConcurrency", { value: n, configurable: true });
+  Object.defineProperty(navigator, "hardwareConcurrency", {
+    value: n,
+    configurable: true,
+  });
 }
 function define(key: "innerWidth" | "innerHeight" | "scrollY", value: number) {
   Object.defineProperty(window, key, { value, configurable: true });
@@ -52,11 +77,19 @@ describe("KoiCanvas", () => {
     const el = img()!;
     expect(el).toHaveAttribute("src", "/fallback/koi-night.jpg");
     expect(el).toHaveAttribute("aria-hidden", "true");
-    expect(el.style).toMatchObject({ position: "fixed", objectFit: "cover", opacity: "0.15", pointerEvents: "none" });
+    expect(el.style).toMatchObject({
+      position: "fixed",
+      objectFit: "cover",
+      opacity: "0.15",
+      pointerEvents: "none",
+    });
     expect(el.style.zIndex).toBe("-1");
     expect(el.parentElement?.tagName).toBe("PICTURE");
     expect(el.parentElement?.parentElement).toBe(document.body);
-    expect(el.parentElement?.querySelector("source")).toHaveAttribute("srcset", "/fallback/koi-night.avif");
+    expect(el.parentElement?.querySelector("source")).toHaveAttribute(
+      "srcset",
+      "/fallback/koi-night.avif",
+    );
     expect(el).toHaveClass("print:hidden");
   });
 
@@ -64,7 +97,11 @@ describe("KoiCanvas", () => {
     render(<KoiCanvas />);
     const scene = await screen.findByTestId("scene");
     expect(scene).toHaveAttribute("data-tier", "high");
-    expect(scene.parentElement).toHaveStyle({ position: "fixed", zIndex: "-1", pointerEvents: "none" });
+    expect(scene.parentElement).toHaveStyle({
+      position: "fixed",
+      zIndex: "-1",
+      pointerEvents: "none",
+    });
     await waitFor(() => expect(img()!.style.opacity).toBe("0"));
     expect(sceneStore.getState().tier).toBe("high");
   });
@@ -72,14 +109,19 @@ describe("KoiCanvas", () => {
   it("uses the low tier on 4 cores or fewer", async () => {
     setCores(4);
     render(<KoiCanvas />);
-    expect(await screen.findByTestId("scene")).toHaveAttribute("data-tier", "low");
+    expect(await screen.findByTestId("scene")).toHaveAttribute(
+      "data-tier",
+      "low",
+    );
   });
 
   it("follows the theme: day image on the light theme", async () => {
     render(<KoiCanvas />);
     await waitFor(() => expect(img()).not.toBeNull());
     act(() => applyTheme("light"));
-    await waitFor(() => expect(img()).toHaveAttribute("src", "/fallback/koi-day.jpg"));
+    await waitFor(() =>
+      expect(img()).toHaveAttribute("src", "/fallback/koi-day.jpg"),
+    );
     expect(sceneStore.getState().theme).toBe("light");
   });
 
@@ -98,7 +140,9 @@ describe("KoiCanvas", () => {
 
     it("swaps to the dragon image from chapter 5 and back", async () => {
       render(<KoiCanvas />);
-      await waitFor(() => expect(img()).toHaveAttribute("src", "/fallback/koi-night.jpg"));
+      await waitFor(() =>
+        expect(img()).toHaveAttribute("src", "/fallback/koi-night.jpg"),
+      );
       act(() => sceneStore.setState({ chapter: 4 }));
       expect(img()).toHaveAttribute("src", "/fallback/koi-night.jpg");
       act(() => sceneStore.setState({ chapter: 5 }));
@@ -191,11 +235,20 @@ describe("KoiCanvas mobile loading", () => {
 
 describe("KoiCanvas input tracking", () => {
   it("writes chapter and t into the store on scroll", async () => {
-    const tops = { hero: 0, experience: 1000, projects: 2000, skills: 3000, certificates: 4000, why: 5000, contact: 6000 };
+    const tops = {
+      hero: 0,
+      experience: 1000,
+      projects: 2000,
+      skills: 3000,
+      certificates: 4000,
+      why: 5000,
+      contact: 6000,
+    };
     const sections = Object.entries(tops).map(([id, top]) => {
       const el = document.createElement("section");
       el.id = id;
-      el.getBoundingClientRect = () => ({ top: top - window.scrollY }) as DOMRect;
+      el.getBoundingClientRect = () =>
+        ({ top: top - window.scrollY }) as DOMRect;
       document.body.append(el);
       return el;
     });
@@ -224,22 +277,30 @@ describe("KoiCanvas input tracking", () => {
     render(<KoiCanvas />);
     await waitFor(() => expect(sceneStore.getState().tier).toBe("high"));
     // Tier selection precedes loading the desktop input chunk. Interact only after it mounts.
-    await waitFor(() => expect(document.querySelector("[data-koi-veil]")).not.toBeNull());
+    await waitFor(() =>
+      expect(document.querySelector("[data-koi-veil]")).not.toBeNull(),
+    );
     const move = (el: Element, clientX: number, clientY: number) =>
       act(() => {
-        el.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, clientX, clientY }));
+        el.dispatchEvent(
+          new PointerEvent("pointermove", { bubbles: true, clientX, clientY }),
+        );
       });
 
     // Chapter 0: anywhere counts.
     move(other, 500, 200);
-    await waitFor(() => expect(sceneStore.getState().pointer).toEqual({ x: 0, y: 0.5 }));
+    await waitFor(() =>
+      expect(sceneStore.getState().pointer).toEqual({ x: 0, y: 0.5 }),
+    );
 
     // Chapter 3: only the water zone.
     act(() => sceneStore.setState({ chapter: 3 }));
     move(other, 250, 200);
     await waitFor(() => expect(sceneStore.getState().pointer).toBeNull());
     move(zone, 1000, 0);
-    await waitFor(() => expect(sceneStore.getState().pointer).toEqual({ x: 1, y: 1 }));
+    await waitFor(() =>
+      expect(sceneStore.getState().pointer).toEqual({ x: 1, y: 1 }),
+    );
     // Leaving the page (or losing focus) clears it, even over the water.
     move(zone, 500, 400);
     await waitFor(() => expect(sceneStore.getState().pointer).not.toBeNull());

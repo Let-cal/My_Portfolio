@@ -17,12 +17,22 @@ const report = (values = {}) => ({
 
 test("requires three complete measurements and rejects missing or invalid data", () => {
   assert.throws(() => evaluatePerformance([report()]), /three/);
-  assert.throws(() => evaluatePerformance([{}, report(), report()]), /missing|invalid/);
-  assert.throws(() => evaluatePerformance([report({ lcp: NaN }), report(), report()]), /missing|invalid/);
+  assert.throws(
+    () => evaluatePerformance([{}, report(), report()]),
+    /missing|invalid/,
+  );
+  assert.throws(
+    () => evaluatePerformance([report({ lcp: NaN }), report(), report()]),
+    /missing|invalid/,
+  );
 });
 
 test("uses the median, so one outlier run does not change the result", () => {
-  const result = evaluatePerformance([report(), report(), report({ lcp: 10000, accessibility: 0.5 })]);
+  const result = evaluatePerformance([
+    report(),
+    report(),
+    report({ lcp: 10000, accessibility: 0.5 }),
+  ]);
   assert.deepEqual(result.failures, []);
   assert.deepEqual(result.warnings, []);
 });
@@ -34,5 +44,8 @@ test("accessibility, SEO and layout shift block; loading metrics only warn", () 
   assert.equal(result.warnings.length, 3);
 
   const broken = report({ accessibility: 0.94, seo: 0.89, cls: 0.11 });
-  assert.equal(evaluatePerformance([broken, broken, report()]).failures.length, 3);
+  assert.equal(
+    evaluatePerformance([broken, broken, report()]).failures.length,
+    3,
+  );
 });
