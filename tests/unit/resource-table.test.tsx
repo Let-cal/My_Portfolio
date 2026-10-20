@@ -206,4 +206,47 @@ describe("ResourceTable", () => {
     const marked = document.querySelector('[data-highlight="true"]');
     expect(marked?.textContent).toContain(rows[2].label);
   });
+
+  it("keeps the mark for a moment after the URL drops ?highlight", async () => {
+    vi.useFakeTimers();
+    const rows = listRows("certificates", content);
+    const { rerender } = render(
+      <ResourceTable
+        resourceKey="certificates"
+        initialRows={rows}
+        highlightId={rows[2].id}
+      />,
+    );
+    // The page re-renders without the param after router.replace.
+    rerender(<ResourceTable resourceKey="certificates" initialRows={rows} />);
+    expect(
+      document.querySelector('[data-highlight="true"]')?.textContent,
+    ).toContain(rows[2].label);
+    await act(async () => vi.advanceTimersByTime(2000));
+    expect(document.querySelector('[data-highlight="true"]')).toBeNull();
+    vi.useRealTimers();
+  });
+
+  it("runs Hoàn tác only once however often it is clicked", async () => {
+    let finish: (v: { ok: true }) => void = () => {};
+    deleteResource.mockResolvedValue({ ok: true });
+    undoDelete.mockReturnValue(new Promise((r) => (finish = r)));
+    const rows = listRows("certificates", content);
+    render(<ResourceTable resourceKey="certificates" initialRows={rows} />);
+    await act(async () =>
+      fireEvent.click(screen.getAllByRole("button", { name: /^Xóa / })[0]),
+    );
+    await act(async () =>
+      fireEvent.click(
+        within(screen.getByRole("dialog")).getByRole("button", { name: "Xóa" }),
+      ),
+    );
+    const [, options] = toast.success.mock.calls.at(-1)!;
+    await act(async () => {
+      options.action.onClick();
+      options.action.onClick();
+    });
+    expect(undoDelete).toHaveBeenCalledTimes(1);
+    await act(async () => finish({ ok: true }));
+  });
 });

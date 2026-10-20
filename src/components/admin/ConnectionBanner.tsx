@@ -3,7 +3,7 @@
 import { WifiOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useSyncExternalStore } from "react";
-import { setNetworkDown, useActionState } from "@/lib/admin/action-errors";
+import { setNetworkDown, useAdminActionState } from "@/lib/admin/action-errors";
 
 const subscribe = (onChange: () => void) => {
   window.addEventListener("online", onChange);
@@ -25,7 +25,7 @@ export function ConnectionBanner() {
     () => navigator.onLine,
     () => true,
   );
-  const { networkDown } = useActionState();
+  const { networkDown } = useAdminActionState();
 
   useEffect(() => {
     const back = () => {

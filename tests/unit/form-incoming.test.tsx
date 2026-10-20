@@ -91,7 +91,13 @@ describe("form and new server data", () => {
     await act(async () =>
       fireEvent.change(nameInput(), { target: { value: "Tôi đang sửa" } }),
     );
-    await act(async () => window.dispatchEvent(new Event(ADMIN_DISCARD_EVENT)));
+    await act(async () =>
+      window.dispatchEvent(
+        new CustomEvent(ADMIN_DISCARD_EVENT, {
+          detail: { table: "certificates", itemKey: String(cert.id) },
+        }),
+      ),
+    );
     await act(async () =>
       rerender(form({ ...cert, name: "Bản đã khôi phục" })),
     );
@@ -204,5 +210,73 @@ describe("form and new server data", () => {
       }),
     );
     expect(push).toHaveBeenCalledWith("/admin/certificates");
+  });
+
+  it("a restore elsewhere on the page leaves other forms' edits alone", async () => {
+    render(form(cert));
+    await act(async () =>
+      fireEvent.change(nameInput(), { target: { value: "Tôi đang sửa" } }),
+    );
+    await act(async () =>
+      window.dispatchEvent(
+        new CustomEvent(ADMIN_DISCARD_EVENT, {
+          detail: { table: "roles", itemKey: "pm" },
+        }),
+      ),
+    );
+    // Still marked unsaved: the guard, save bar and autosave keep protecting these edits.
+    expect(screen.getByText("Có thay đổi chưa lưu")).toBeTruthy();
+  });
+
+  it("a restore of this item shows the server version even when nothing changed on the server", async () => {
+    render(form(cert));
+    await act(async () =>
+      fireEvent.change(nameInput(), { target: { value: "Tôi đang sửa" } }),
+    );
+    await act(async () =>
+      window.dispatchEvent(
+        new CustomEvent(ADMIN_DISCARD_EVENT, {
+          detail: { table: "certificates", itemKey: String(cert.id) },
+        }),
+      ),
+    );
+    expect(nameInput().value).toBe(cert.name);
+  });
+
+  it("says so when the account may not save", async () => {
+    saveResource.mockResolvedValue({
+      ok: false,
+      error: "Tài khoản này không có quyền quản trị.",
+      code: "FORBIDDEN",
+    });
+    render(form(cert));
+    await act(async () =>
+      fireEvent.change(nameInput(), { target: { value: "X" } }),
+    );
+    await act(async () =>
+      fireEvent.click(screen.getByRole("button", { name: "Lưu" })),
+    );
+    expect(toast.error).toHaveBeenCalledWith(
+      "Tài khoản này không có quyền quản trị.",
+    );
+  });
+
+  it("lets go of a held refresh when the form closes", async () => {
+    const { publishChange, isRefreshHeld } =
+      await import("@/lib/admin/own-writes");
+    const view = render(form(cert));
+    await act(async () =>
+      fireEvent.change(nameInput(), { target: { value: "Tôi đang sửa" } }),
+    );
+    await act(async () =>
+      publishChange({
+        table: "certificates",
+        op: "delete",
+        key: String(cert.id),
+      }),
+    );
+    expect(isRefreshHeld(window.location.pathname)).toBe(true);
+    view.unmount();
+    expect(isRefreshHeld(window.location.pathname)).toBe(false);
   });
 });

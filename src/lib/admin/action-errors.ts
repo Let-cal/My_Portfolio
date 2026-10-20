@@ -6,7 +6,7 @@
 import { useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import type { ActionResult } from "@/app/admin/actions";
-import { markOwnWrite } from "./own-writes";
+import { beginOwnWrite, endOwnWrite } from "./own-writes";
 
 type State = { sessionExpired: boolean; networkDown: boolean };
 let state: State = { sessionExpired: false, networkDown: false };
@@ -23,7 +23,7 @@ const subscribe = (listener: () => void) => {
 };
 
 /** The shared session and connection state, for the dialog and the connection banner. */
-export function useActionState(): State {
+export function useAdminActionState(): State {
   return useSyncExternalStore(
     subscribe,
     () => state,
@@ -45,6 +45,12 @@ export function showActionError(result: Failure, retry?: () => void) {
     set({ sessionExpired: true });
     return;
   }
+  if (result.code === "STALE") {
+    toast.error(result.error, {
+      action: { label: "Tải lại", onClick: () => window.location.reload() },
+    });
+    return;
+  }
   if (result.code === "NETWORK") {
     toast.error("Không kết nối được máy chủ. Thay đổi chưa được lưu.", {
       action: retry ? { label: "Thử lại", onClick: retry } : undefined,
@@ -52,6 +58,23 @@ export function showActionError(result: Failure, retry?: () => void) {
     return;
   }
   toast.error(result.error, undefined);
+}
+
+/** What a thrown action means: an old page after a deploy, a lost connection, or a plain error. */
+function thrownFailure(error: unknown): Failure {
+  if (error instanceof Error && error.name === "UnrecognizedActionError")
+    return {
+      ok: false,
+      error:
+        "Trang đã cũ vì vừa có bản cập nhật. Tải lại trang (bản nháp vẫn được giữ).",
+      code: "STALE",
+    };
+  if (error instanceof TypeError)
+    return { ok: false, error: "Không kết nối được máy chủ.", code: "NETWORK" };
+  return {
+    ok: false,
+    error: error instanceof Error ? error.message : String(error),
+  };
 }
 
 /**
@@ -63,17 +86,14 @@ export async function runAction<R extends { ok: boolean }>(
   { retry, silent = false }: { retry?: () => void; silent?: boolean } = {},
 ): Promise<R | Failure> {
   let result: R | Failure;
-  markOwnWrite();
+  beginOwnWrite();
   try {
     result = await action();
-    // The echo of this write arrives over Realtime right after: not news for this tab.
-    markOwnWrite();
-  } catch {
-    result = {
-      ok: false,
-      error: "Không kết nối được máy chủ.",
-      code: "NETWORK",
-    };
+  } catch (error) {
+    result = thrownFailure(error);
+  } finally {
+    // The echo of this write arrives over Realtime around now: not news for this tab.
+    endOwnWrite();
   }
   if (result.ok) {
     if (state.networkDown) set({ networkDown: false });
@@ -84,7 +104,8 @@ export async function runAction<R extends { ok: boolean }>(
   if (
     !silent ||
     failure.code === "SESSION_EXPIRED" ||
-    failure.code === "NETWORK"
+    failure.code === "NETWORK" ||
+    failure.code === "STALE"
   )
     showActionError(failure, retry);
   return result;

@@ -21,6 +21,8 @@ export function ProfileForm({ initial }: { initial: Record<string, unknown> }) {
       lockId
       onSave={saveProfile}
       draftId={draftKey("profile", "me")}
+      table="profile"
+      itemKey="me"
     />
   );
 }
@@ -47,6 +49,8 @@ export function RoleForm({
       active={active}
       onSave={(values) => saveRole({ ...values, key })}
       draftId={draftKey("roles", String(key))}
+      table="roles"
+      itemKey={String(key)}
     />
   );
 }

@@ -69,7 +69,9 @@ export function VersionHistory({
       if (!result.ok) return;
       // Open forms drop their edits (already confirmed) and take the restored data that the
       // action's refresh brings; the history list reloads for the next restore.
-      window.dispatchEvent(new Event(ADMIN_DISCARD_EVENT));
+      window.dispatchEvent(
+        new CustomEvent(ADMIN_DISCARD_EVENT, { detail: { table, itemKey } }),
+      );
       toast.success("Đã khôi phục phiên bản");
       setOpen(false);
     });

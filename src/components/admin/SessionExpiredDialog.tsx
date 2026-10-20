@@ -10,11 +10,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { closeSessionExpired, useActionState } from "@/lib/admin/action-errors";
+import {
+  closeSessionExpired,
+  useAdminActionState,
+} from "@/lib/admin/action-errors";
 
 /** Shown when a save finds the session gone: sign in again in a new tab, nothing here is lost. */
 export function SessionExpiredDialog() {
-  const { sessionExpired } = useActionState();
+  const { sessionExpired } = useAdminActionState();
   return (
     <Dialog
       open={sessionExpired}

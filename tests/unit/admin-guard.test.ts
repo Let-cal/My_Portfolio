@@ -71,4 +71,16 @@ describe("adminGuard", () => {
     expect(res.headers.get("location")).toBeNull();
     expect(res.status).toBe(200);
   });
+
+  it("still redirects page requests that only carry a Next-Action header", async () => {
+    getUser.mockResolvedValue({ data: { user: null }, error: null });
+    const req = new NextRequest(
+      new URL("/admin/experiences", "https://letcal.test"),
+      {
+        headers: { "next-action": "abc123" },
+      },
+    );
+    const res = await adminGuard(req, env);
+    expect(res.status).toBe(307);
+  });
 });

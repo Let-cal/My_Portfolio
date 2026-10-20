@@ -4,7 +4,7 @@ import { runAction } from "@/lib/admin/action-errors";
 import { Copy, Search, Trash2, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
   deleteResource,
@@ -92,7 +92,8 @@ export function ResourceTable({
   const [seenHighlight, setSeenHighlight] = useState(highlightId);
   if (highlightId !== seenHighlight) {
     setSeenHighlight(highlightId);
-    setFlash(highlightId ?? null);
+    // The URL drops ?highlight right away; the mark stays until its own timer ends.
+    if (highlightId) setFlash(highlightId);
   }
   useEffect(() => {
     if (!highlightId) return;
@@ -105,10 +106,14 @@ export function ResourceTable({
     });
     // Drop ?highlight so a reload or Back does not mark it again.
     router.replace(pathname, { scroll: false });
+  }, [highlightId, pathname, router]);
+  useEffect(() => {
+    if (!flash) return;
     const timer = window.setTimeout(() => setFlash(null), 1800);
     return () => window.clearTimeout(timer);
-  }, [highlightId, pathname, router]);
+  }, [flash]);
   const [rows, setRows] = useState(initialRows);
+  const undoing = useRef(new Set<string>());
   // Changes this tab is still saving: they win over server data until their action settles.
   const [inflight, setInflight] = useState<
     Map<string, Partial<ListRow> | "deleted">
@@ -238,6 +243,9 @@ export function ResourceTable({
   }
 
   async function undo(target: ListRow, index: number) {
+    // The toast button can be clicked again while the first undo is still running.
+    if (undoing.current.has(target.id)) return;
+    undoing.current.add(target.id);
     const result = await runAction(
       () => undoDelete(tableFor(resourceKey), target.id),
       { retry: () => void undo(target, index) },
@@ -251,6 +259,7 @@ export function ResourceTable({
       );
       toast.success(`Đã khôi phục ${target.label}`);
     }
+    undoing.current.delete(target.id);
   }
 
   const renderRow = (row: ListRow, handle: React.ReactNode) => (

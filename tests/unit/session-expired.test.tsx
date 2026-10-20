@@ -57,4 +57,35 @@ describe("runAction", () => {
     expect(await runAction(async () => ({ ok: true }))).toEqual({ ok: true });
     expect(toast.error).not.toHaveBeenCalled();
   });
+
+  it("reports a stale page (new deploy) as such, not as a lost connection", async () => {
+    const { setNetworkDown, useAdminActionState } =
+      await import("@/lib/admin/action-errors");
+    void setNetworkDown;
+    void useAdminActionState;
+    const error = Object.assign(new Error("Server Action not found"), {
+      name: "UnrecognizedActionError",
+    });
+    const result = await runAction(async () => {
+      throw error;
+    });
+    expect(result).toMatchObject({ ok: false, code: "STALE" });
+    expect(toast.error.mock.calls[0][0]).toContain("Trang đã cũ");
+  });
+
+  it("counts a write that is still running as this tab's own", async () => {
+    const { isRecentOwnWrite } = await import("@/lib/admin/own-writes");
+    let finish: () => void = () => {};
+    const running = runAction(
+      () =>
+        new Promise<{ ok: true }>((resolve) => {
+          finish = () => resolve({ ok: true });
+        }),
+    );
+    // A slow (cold) action: well past the window, yet still running.
+    expect(isRecentOwnWrite(Date.now() + 10_000)).toBe(true);
+    finish();
+    await running;
+    expect(isRecentOwnWrite(Date.now() + 10_000)).toBe(false);
+  });
 });

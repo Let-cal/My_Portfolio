@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { holdRefresh, onChange } from "@/lib/admin/own-writes";
 import {
   clearDraft,
@@ -225,7 +226,7 @@ export function FieldsForm({
             for (const [path, message] of Object.entries(result.fieldErrors))
               setError(path, { type: "server", message });
             setFocusKey((k) => k + 1);
-          } else if (!result.code) {
+          } else if (!result.code || result.code === "FORBIDDEN") {
             toast.error(result.error);
           }
           return;
@@ -873,11 +874,23 @@ export function FieldsForm({
   useEffect(() => {
     if (resets > 0) form.reset(baseValues);
   }, [form, resets, baseValues]);
+  // A restore of this item (history panel): drop the edits and show the server version.
+  const latest = useRef(initial);
   useEffect(() => {
-    const discard = () => form.reset(form.getValues());
+    latest.current = initial;
+  }, [initial]);
+  useEffect(() => {
+    const discard = (event: Event) => {
+      const detail = (
+        event as CustomEvent<{ table?: string; itemKey?: string }>
+      ).detail;
+      if (!table || detail?.table !== table || detail?.itemKey !== itemKey)
+        return;
+      form.reset(latest.current);
+    };
     window.addEventListener(ADMIN_DISCARD_EVENT, discard);
     return () => window.removeEventListener(ADMIN_DISCARD_EVENT, discard);
-  }, [form]);
+  }, [form, table, itemKey]);
   const reloadFromServer = () =>
     setBase({
       signature: initialSignature,
@@ -946,6 +959,13 @@ export function FieldsForm({
       }
     });
   }, [table, itemKey, form, router, doneHref]);
+  // Leaving the page (sidebar, Back) must not keep its refreshes held.
+  useEffect(
+    () => () => {
+      if (table && itemKey) holdRefresh(window.location.pathname, false);
+    },
+    [table, itemKey],
+  );
   const leaveDeleted = () => {
     holdRefresh(window.location.pathname, false);
     setDeletedElsewhere(false);
@@ -1165,12 +1185,14 @@ export function ResourceForm({
       duration: 8000,
       description: (
         <span className="mt-1 flex flex-wrap gap-1.5">
-          <a className={link} href={`/admin/${resourceKey}/${id}`}>
+          <Link className={link} href={`/admin/${resourceKey}/${id}`}>
             Mở lại
-          </a>
-          <a className={link} href={`/admin/${resourceKey}/new`}>
-            Tạo thêm
-          </a>
+          </Link>
+          {isNew && (
+            <Link className={link} href={`/admin/${resourceKey}/new`}>
+              Tạo thêm
+            </Link>
+          )}
           {visible && (
             <a
               className={link}

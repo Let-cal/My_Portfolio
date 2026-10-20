@@ -26,7 +26,8 @@ import { profileSchema, roleSchema, type Skill } from "@/content/schema";
 
 /** `fieldErrors` maps a form path (e.g. "description.en") to the message shown under that input. */
 /** Why a write failed, for the client to react: sign in again, refuse, or offer a retry. */
-export type ActionErrorCode = "SESSION_EXPIRED" | "FORBIDDEN" | "NETWORK";
+export type ActionErrorCode =
+  "SESSION_EXPIRED" | "FORBIDDEN" | "NETWORK" | "STALE";
 
 export type ActionResult =
   | { ok: true }
