@@ -1,5 +1,6 @@
 "use client";
 
+import { draftKey } from "@/lib/admin/drafts";
 import { runAction } from "@/lib/admin/action-errors";
 import { VersionHistory } from "./VersionHistory";
 import { rovingKey } from "./roving";
@@ -19,6 +20,7 @@ export function ProfileForm({ initial }: { initial: Record<string, unknown> }) {
       initial={initial}
       lockId
       onSave={saveProfile}
+      draftId={draftKey("profile", "me")}
     />
   );
 }
@@ -44,6 +46,7 @@ export function RoleForm({
       idScope={String(key)}
       active={active}
       onSave={(values) => saveRole({ ...values, key })}
+      draftId={draftKey("roles", String(key))}
     />
   );
 }

@@ -127,4 +127,43 @@ describe("form and new server data", () => {
       screen.getByRole("link", { name: /Xem trên trang/ }).getAttribute("href"),
     ).toMatch(/\/en#certificates$/);
   });
+
+  it("offers an unsaved draft and restores it", async () => {
+    localStorage.setItem(
+      `admin.draft.certificates.${cert.id}`,
+      JSON.stringify({
+        values: { ...cert, name: "Nháp chưa lưu" },
+        savedAt: new Date().toISOString(),
+        baseSignature: "old",
+      }),
+    );
+    render(form(cert));
+    expect(screen.getByText(/Có bản nháp chưa lưu/)).toBeTruthy();
+    expect(screen.getByText(/dữ liệu đã thay đổi kể từ bản nháp/)).toBeTruthy();
+    await act(async () =>
+      fireEvent.click(screen.getByRole("button", { name: "Khôi phục" })),
+    );
+    expect(nameInput().value).toBe("Nháp chưa lưu");
+    expect(screen.queryByText(/Có bản nháp chưa lưu/)).toBeNull();
+  });
+
+  it("forgets the draft after a successful save", async () => {
+    const key = `admin.draft.certificates.${cert.id}`;
+    localStorage.setItem(
+      key,
+      JSON.stringify({
+        values: { ...cert, name: "Nháp" },
+        savedAt: new Date().toISOString(),
+        baseSignature: "x",
+      }),
+    );
+    render(form(cert));
+    await act(async () =>
+      fireEvent.click(screen.getByRole("button", { name: "Khôi phục" })),
+    );
+    await act(async () =>
+      fireEvent.click(screen.getByRole("button", { name: "Lưu" })),
+    );
+    expect(localStorage.getItem(key)).toBeNull();
+  });
 });

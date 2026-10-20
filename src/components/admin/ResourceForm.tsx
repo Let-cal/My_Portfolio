@@ -1,10 +1,23 @@
 "use client";
 
+import {
+  clearDraft,
+  draftKey,
+  parseDraft,
+  pruneDrafts,
+  saveDraft,
+} from "@/lib/admin/drafts";
 import { runAction } from "@/lib/admin/action-errors";
 import { publicUrl } from "@/lib/admin/public-link";
 import { ADMIN_DISCARD_EVENT, signature } from "@/lib/admin/sync";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  useTransition,
+} from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { saveResource, type ActionResult } from "@/app/admin/actions";
@@ -71,6 +84,21 @@ export type Options = Partial<
 /** Field that seeds a new item's ID, in order of preference. */
 const ID_SOURCES = ["name", "title", "company", "school"];
 
+const DAY = 24 * 60 * 60 * 1000;
+
+/** Drafts changed in another tab show up here too (the storage event). */
+const subscribeStorage = (onChange: () => void) => {
+  window.addEventListener("storage", onChange);
+  return () => window.removeEventListener("storage", onChange);
+};
+const readStorage = (key: string) => {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
 /** A form for any list of field specs, validated with `schema` and saved with `onSave`. */
 export function FieldsForm({
   fields,
@@ -81,6 +109,7 @@ export function FieldsForm({
   onSave,
   doneHref,
   onSaved,
+  draftId,
   sections,
   idScope,
   active = true,
@@ -100,6 +129,8 @@ export function FieldsForm({
   doneHref?: string;
   /** Replaces the default "Đã lưu" toast and `doneHref` navigation after a successful save. */
   onSaved?: (values: Values) => void;
+  /** Storage key for autosaved drafts (see draftKey); no drafts when omitted. */
+  draftId?: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -184,6 +215,7 @@ export function FieldsForm({
           }
           return;
         }
+        if (draftId) clearDraft(localStorage, draftId);
         // Mark the current values as saved so the unsaved-changes guard lets go.
         form.reset(raw);
         setSaved(true);
@@ -838,6 +870,54 @@ export function FieldsForm({
       resets: base.resets + 1,
     });
   const keepMine = () => setBase({ ...base, signature: initialSignature });
+
+  // Autosaved drafts: written about a second after the last edit, offered when the form opens
+  // again with nothing edited yet, forgotten after a save or after 7 days.
+  const draftRaw = useSyncExternalStore(
+    subscribeStorage,
+    () => (draftId ? readStorage(draftId) : null),
+    () => null,
+  );
+  const draft = draftRaw ? parseDraft(draftRaw) : null;
+  const [draftHandled, setDraftHandled] = useState(false);
+  const draftFresh =
+    draft !== null && Date.now() - new Date(draft.savedAt).getTime() < 7 * DAY;
+  const showDraft =
+    draftFresh &&
+    !draftHandled &&
+    !dirty &&
+    signature(draft.values) !== signature(initial);
+  useEffect(() => {
+    pruneDrafts(localStorage, Date.now());
+  }, []);
+  useEffect(() => {
+    if (!draftId) return;
+    let timer: number | undefined;
+    const sub = form.watch(() => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        if (!form.formState.isDirty) return;
+        saveDraft(localStorage, draftId, {
+          values: form.getValues(),
+          savedAt: new Date().toISOString(),
+          baseSignature: initialSignature,
+        });
+      }, 1000);
+    });
+    return () => {
+      window.clearTimeout(timer);
+      sub.unsubscribe();
+    };
+  }, [form, draftId, initialSignature]);
+  const restoreDraft = () => {
+    if (!draft) return;
+    form.reset({ ...initial, ...draft.values }, { keepDefaultValues: true });
+    setDraftHandled(true);
+  };
+  const dropDraft = () => {
+    if (draftId) clearDraft(localStorage, draftId);
+    setDraftHandled(true);
+  };
   const shownErrors = formState.submitCount > 0 ? errors : [];
   const errorsByField = new Map<string, number>();
   for (const e of shownErrors)
@@ -875,6 +955,36 @@ export function FieldsForm({
           <p className="text-xs text-muted-foreground">Mục có * là bắt buộc</p>
           {translated && <LocaleModeSwitch errorLocales={errorLocales} />}
         </div>
+        {showDraft && draft && (
+          <div
+            role="status"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm"
+          >
+            <span>
+              Có bản nháp chưa lưu lúc{" "}
+              {new Date(draft.savedAt).toLocaleTimeString("vi-VN", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+              {draft.baseSignature !== initialSignature &&
+                " (dữ liệu đã thay đổi kể từ bản nháp)"}
+              .
+            </span>
+            <span className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={dropDraft}
+              >
+                Bỏ
+              </Button>
+              <Button type="button" size="sm" onClick={restoreDraft}>
+                Khôi phục
+              </Button>
+            </span>
+          </div>
+        )}
         {serverMoved && dirty && (
           <div
             role="status"
@@ -992,6 +1102,7 @@ export function ResourceForm({
       onSave={(values) => saveResource(resourceKey, values, isNew)}
       doneHref={`/admin/${resourceKey}`}
       onSaved={onSaved}
+      draftId={draftKey(resource.table, isNew ? "new" : String(initial.id))}
       sections={resource.sections}
     />
   );
