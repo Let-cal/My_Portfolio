@@ -4,6 +4,7 @@ import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminThemeToggle } from "@/components/admin/AdminThemeToggle";
 import { HealthBadge } from "@/components/admin/HealthBadge";
 import { ConnectionBanner } from "@/components/admin/ConnectionBanner";
+import { RealtimeSync } from "@/components/admin/RealtimeSync";
 import { SessionExpiredDialog } from "@/components/admin/SessionExpiredDialog";
 import { SignOutButton } from "@/components/admin/SignOutButton";
 import { buildCommandItems } from "@/lib/admin/command-items";
@@ -55,6 +56,10 @@ export default function AdminPanelLayout({
         {children}
       </div>
       <SessionExpiredDialog />
+      {/* Reads the current path (request data), so it renders inside Suspense. */}
+      <Suspense>
+        <RealtimeSync />
+      </Suspense>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { holdRefresh, onChange } from "@/lib/admin/own-writes";
 import {
   clearDraft,
   draftKey,
@@ -20,7 +21,11 @@ import {
 } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { saveResource, type ActionResult } from "@/app/admin/actions";
+import {
+  saveResource,
+  type ActionResult,
+  undoDelete,
+} from "@/app/admin/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -110,6 +115,9 @@ export function FieldsForm({
   doneHref,
   onSaved,
   draftId,
+  table,
+  itemKey,
+  onSaveAsNew,
   sections,
   idScope,
   active = true,
@@ -131,6 +139,11 @@ export function FieldsForm({
   onSaved?: (values: Values) => void;
   /** Storage key for autosaved drafts (see draftKey); no drafts when omitted. */
   draftId?: string;
+  /** The saved item this form edits, to notice when it changes or is deleted elsewhere. */
+  table?: string;
+  itemKey?: string;
+  /** Saves the form as a new item, for when the edited item was deleted elsewhere. */
+  onSaveAsNew?: (values: Values) => Promise<ActionResult>;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -201,7 +214,9 @@ export function FieldsForm({
         const values = { ...parsed };
         for (const f of fields) if (f.virtual) values[f.name] = raw[f.name];
         // Field errors show on their inputs; session and network problems are reported globally.
-        const result = await runAction(() => onSave(values), {
+        const save = saveAsNew.current && onSaveAsNew ? onSaveAsNew : onSave;
+        saveAsNew.current = false;
+        const result = await runAction(() => save(values), {
           silent: true,
           retry: () => void onSubmit(),
         });
@@ -909,6 +924,45 @@ export function FieldsForm({
       sub.unsubscribe();
     };
   }, [form, draftId, initialSignature]);
+  // The edited item deleted in another tab or device: unsaved edits stay, with three ways out.
+  const [deletedElsewhere, setDeletedElsewhere] = useState(false);
+  const saveAsNew = useRef(false);
+  useEffect(() => {
+    if (!table || !itemKey) return;
+    return onChange((event) => {
+      if (
+        event.op !== "delete" ||
+        event.table !== table ||
+        event.key !== itemKey
+      )
+        return;
+      if (form.formState.isDirty) {
+        // A refresh would now show a 404 in place of the form: hold it until the user decides.
+        holdRefresh(window.location.pathname, true);
+        setDeletedElsewhere(true);
+      } else {
+        toast("Mục đã bị xóa ở nơi khác");
+        router.push(doneHref ?? "/admin");
+      }
+    });
+  }, [table, itemKey, form, router, doneHref]);
+  const leaveDeleted = () => {
+    holdRefresh(window.location.pathname, false);
+    setDeletedElsewhere(false);
+  };
+  const restoreThenSave = async () => {
+    if (!table || !itemKey) return;
+    const result = await runAction(() => undoDelete(table, itemKey));
+    if (!result.ok) return;
+    leaveDeleted();
+    void onSubmit();
+  };
+  const saveDeletedAsNew = () => {
+    leaveDeleted();
+    saveAsNew.current = true;
+    void onSubmit();
+  };
+
   const restoreDraft = () => {
     if (!draft) return;
     form.reset({ ...initial, ...draft.values }, { keepDefaultValues: true });
@@ -955,6 +1009,46 @@ export function FieldsForm({
           <p className="text-xs text-muted-foreground">Mục có * là bắt buộc</p>
           {translated && <LocaleModeSwitch errorLocales={errorLocales} />}
         </div>
+        {deletedElsewhere && (
+          <div
+            role="alert"
+            className="flex flex-col gap-3 rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm"
+          >
+            <span>
+              Mục này đã bị xóa ở nơi khác. Thay đổi bạn đang sửa vẫn còn ở đây.
+            </span>
+            <span className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => void restoreThenSave()}
+              >
+                Khôi phục rồi lưu bản của tôi
+              </Button>
+              {onSaveAsNew && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={saveDeletedAsNew}
+                >
+                  Lưu thành mục mới
+                </Button>
+              )}
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  leaveDeleted();
+                  router.push(doneHref ?? "/admin");
+                }}
+              >
+                Về danh sách
+              </Button>
+            </span>
+          </div>
+        )}
         {showDraft && draft && (
           <div
             role="status"
@@ -1103,6 +1197,9 @@ export function ResourceForm({
       doneHref={`/admin/${resourceKey}`}
       onSaved={onSaved}
       draftId={draftKey(resource.table, isNew ? "new" : String(initial.id))}
+      table={resource.table}
+      itemKey={isNew ? undefined : String(initial.id)}
+      onSaveAsNew={(values) => saveResource(resourceKey, values, true)}
       sections={resource.sections}
     />
   );

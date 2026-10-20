@@ -14,7 +14,9 @@ vi.mock("@/app/admin/actions", () => ({
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push, refresh: vi.fn(), replace: vi.fn() }),
 }));
-const toast = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn() }));
+const toast = vi.hoisted(() =>
+  Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }),
+);
 vi.mock("sonner", () => ({ toast }));
 vi.mock("@/lib/supabase/browser", () => ({ createBrowserSupabase: vi.fn() }));
 globalThis.ResizeObserver ??= class {
@@ -165,5 +167,42 @@ describe("form and new server data", () => {
       fireEvent.click(screen.getByRole("button", { name: "Lưu" })),
     );
     expect(localStorage.getItem(key)).toBeNull();
+  });
+
+  it("keeps unsaved edits when the item is deleted elsewhere and offers a way out", async () => {
+    const { publishChange } = await import("@/lib/admin/own-writes");
+    render(form(cert));
+    await act(async () =>
+      fireEvent.change(nameInput(), { target: { value: "Tôi đang sửa" } }),
+    );
+    await act(async () =>
+      publishChange({
+        table: "certificates",
+        op: "delete",
+        key: String(cert.id),
+      }),
+    );
+    expect(screen.getByText(/Mục này đã bị xóa ở nơi khác/)).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Khôi phục rồi lưu bản của tôi" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Lưu thành mục mới" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Về danh sách" })).toBeTruthy();
+    expect(nameInput().value).toBe("Tôi đang sửa");
+  });
+
+  it("goes back to the list when an untouched item is deleted elsewhere", async () => {
+    const { publishChange } = await import("@/lib/admin/own-writes");
+    render(form(cert));
+    await act(async () =>
+      publishChange({
+        table: "certificates",
+        op: "delete",
+        key: String(cert.id),
+      }),
+    );
+    expect(push).toHaveBeenCalledWith("/admin/certificates");
   });
 });

@@ -6,6 +6,7 @@
 import { useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import type { ActionResult } from "@/app/admin/actions";
+import { markOwnWrite } from "./own-writes";
 
 type State = { sessionExpired: boolean; networkDown: boolean };
 let state: State = { sessionExpired: false, networkDown: false };
@@ -62,8 +63,11 @@ export async function runAction<R extends { ok: boolean }>(
   { retry, silent = false }: { retry?: () => void; silent?: boolean } = {},
 ): Promise<R | Failure> {
   let result: R | Failure;
+  markOwnWrite();
   try {
     result = await action();
+    // The echo of this write arrives over Realtime right after: not news for this tab.
+    markOwnWrite();
   } catch {
     result = {
       ok: false,
