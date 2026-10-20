@@ -8,6 +8,8 @@ import type { Options } from "@/components/admin/ResourceForm";
 import type { Skill } from "@/content/schema";
 import { getItem, listItems, relationOptions } from "@/lib/admin/data";
 import { copyId, neighbours } from "@/lib/admin/list-view";
+import { tableFor } from "@/lib/admin/versions";
+import { VersionHistory } from "@/components/admin/VersionHistory";
 import { isResourceKey, resources } from "@/lib/admin/resources";
 
 type Params = Promise<{ resource: string; id: string }>;
@@ -141,9 +143,12 @@ async function Editor({
             </nav>
           )}
         </div>
-        <h1 className="text-2xl font-semibold">
-          {from ? `Nhân bản ${from}` : isNew ? "Thêm mới" : `Sửa ${id}`}
-        </h1>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h1 className="text-2xl font-semibold">
+            {from ? `Nhân bản ${from}` : isNew ? "Thêm mới" : `Sửa ${id}`}
+          </h1>
+          {!isNew && <VersionHistory table={tableFor(key)} itemKey={id} />}
+        </div>
       </header>
       <ResourceForm
         resourceKey={key}
