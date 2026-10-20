@@ -6,6 +6,7 @@ import { TABLES, type Table, type TableName } from "@/lib/data/columns";
 import {
   renderSchemaSql,
   VERSIONED_TABLES,
+  VERSIONS_SECURITY_SQL,
   VERSIONS_SQL,
 } from "@/lib/data/schema-sql";
 import {
@@ -148,5 +149,23 @@ describe("content versions", () => {
       "utf8",
     ).replace(/\r\n/g, "\n");
     expect(migration).toContain(VERSIONS_SQL);
+  });
+
+  it("history functions run with the caller's rights; only admins read history (lint 0029)", () => {
+    expect(VERSIONS_SECURITY_SQL).toContain(
+      "alter function public.admin_list_versions(text, text) security invoker;",
+    );
+    expect(VERSIONS_SECURITY_SQL).toContain(
+      "alter function public.admin_restore_version(bigint) security invoker;",
+    );
+    expect(VERSIONS_SECURITY_SQL).toMatch(
+      /create policy "content_versions_admin_read" on private\.content_versions for select to authenticated using \(private\.is_admin\(\)\);/,
+    );
+    expect(renderSchemaSql()).toContain(VERSIONS_SECURITY_SQL);
+    const migration = readFileSync(
+      "supabase/migrations/0005_versions_security_invoker.sql",
+      "utf8",
+    ).replace(/\r\n/g, "\n");
+    expect(migration).toContain(VERSIONS_SECURITY_SQL);
   });
 });

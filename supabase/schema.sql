@@ -356,3 +356,9 @@ revoke execute on function public.admin_list_versions(text, text) from public, a
 grant execute on function public.admin_list_versions(text, text) to authenticated;
 revoke execute on function public.admin_restore_version(bigint) from public, anon;
 grant execute on function public.admin_restore_version(bigint) to authenticated;
+
+-- History functions run with the caller's rights; only admins may read the history table.
+alter function public.admin_list_versions(text, text) security invoker;
+alter function public.admin_restore_version(bigint) security invoker;
+grant select on private.content_versions to authenticated;
+create policy "content_versions_admin_read" on private.content_versions for select to authenticated using (private.is_admin());

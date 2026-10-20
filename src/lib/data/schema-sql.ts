@@ -84,7 +84,11 @@ export function renderSchemaSql(): string {
   const tables = Object.entries(TABLES).map(([name, table]) =>
     tableSql(name, table),
   );
-  return [HEADER, ...tables, storageSql(), VERSIONS_SQL].join("\n\n") + "\n";
+  return (
+    [HEADER, ...tables, storageSql(), VERSIONS_SQL, VERSIONS_SECURITY_SQL].join(
+      "\n\n",
+    ) + "\n"
+  );
 }
 
 /** Every content table keeps a history of old rows (batch 3: undo and restore). */
@@ -221,3 +225,15 @@ revoke execute on function public.admin_list_versions(text, text) from public, a
 grant execute on function public.admin_list_versions(text, text) to authenticated;
 revoke execute on function public.admin_restore_version(bigint) from public, anon;
 grant execute on function public.admin_restore_version(bigint) to authenticated;`;
+
+/**
+ * supabase/migrations/0005_versions_security_invoker.sql (Supabase lint 0029). The history
+ * functions run with the caller's rights instead of the owner's: reading history goes through an
+ * admin-only RLS policy, and a restore writes through the existing admin-only write policies.
+ * Their own is_admin() check stays as a clear error for everyone else.
+ */
+export const VERSIONS_SECURITY_SQL = `-- History functions run with the caller's rights; only admins may read the history table.
+alter function public.admin_list_versions(text, text) security invoker;
+alter function public.admin_restore_version(bigint) security invoker;
+grant select on private.content_versions to authenticated;
+create policy "content_versions_admin_read" on private.content_versions for select to authenticated using (private.is_admin());`;
