@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "motion/react";
 import { useEffect, useId, useRef } from "react";
 import type { FieldError } from "@/lib/admin/validation";
 
@@ -7,7 +8,9 @@ import type { FieldError } from "@/lib/admin/validation";
 export function focusField(id: string) {
   const el = document.getElementById(id);
   if (!el) return;
-  const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const reduce = window.matchMedia?.(
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
   el.scrollIntoView({ block: "center", behavior: reduce ? "auto" : "smooth" });
   el.focus({ preventScroll: true });
 }
@@ -39,10 +42,14 @@ export function ErrorSummary({
   }, [focusKey, visible]);
   if (!errors.length) return null;
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0 }}
       ref={ref}
       tabIndex={-1}
-      role="alert"
+      // GOV.UK Frontend v5: the summary is focused on a failed save, which reads it; an alert
+      // role on top would announce it twice.
+      role="region"
       aria-labelledby={titleId}
       className="rounded-lg border-2 border-destructive/60 bg-destructive/5 p-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-destructive"
     >
@@ -65,6 +72,6 @@ export function ErrorSummary({
           </li>
         ))}
       </ul>
-    </div>
+    </motion.div>
   );
 }

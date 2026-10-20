@@ -114,25 +114,38 @@ export function FieldsForm({
   // Chips have one input for the whole list, so their item errors point at that input.
   const kindOf = new Map(fields.map((f) => [f.name, f.kind]));
   const errorTarget = (e: { path: string; field: string }) =>
-    kindOf.get(e.field) === "tags" || kindOf.get(e.field) === "upload" ? fid(e.field) : fid(e.path);
+    kindOf.get(e.field) === "tags" || kindOf.get(e.field) === "upload"
+      ? fid(e.field)
+      : fid(e.path);
 
   // New items: the ID follows the name/title until the user edits the ID field.
   const idEdited = useRef(false);
-  const idSource = fields.find((f) => ID_SOURCES.includes(f.name))?.name ?? (fields.some((f) => f.name === "name") ? "name" : undefined);
+  const idSource =
+    fields.find((f) => ID_SOURCES.includes(f.name))?.name ??
+    (fields.some((f) => f.name === "name") ? "name" : undefined);
   useEffect(() => {
     if (!isNew || !idSource || !fields.some((f) => f.name === "id")) return;
     const sub = form.watch((values, { name }) => {
       if (name !== idSource && name !== `${idSource}.en`) return;
       if (idEdited.current) return;
       const source = values[idSource];
-      const text = typeof source === "string" ? source : ((source as { en?: string } | undefined)?.en ?? "");
-      form.setValue("id", slugify(text), { shouldDirty: true, shouldValidate: formState.submitCount > 0 });
+      const text =
+        typeof source === "string"
+          ? source
+          : ((source as { en?: string } | undefined)?.en ?? "");
+      form.setValue("id", slugify(text), {
+        shouldDirty: true,
+        shouldValidate: formState.submitCount > 0,
+      });
     });
     return () => sub.unsubscribe();
   }, [form, idSource, isNew, fields, formState.submitCount]);
   const watchedId = form.watch("id");
   const takenId =
-    isNew && typeof watchedId === "string" && watchedId && options.existingIds?.includes(watchedId)
+    isNew &&
+    typeof watchedId === "string" &&
+    watchedId &&
+    options.existingIds?.includes(watchedId)
       ? `ID "${watchedId}" đã được dùng, chọn ID khác`
       : undefined;
   const errors = flattenErrors(formState.errors, fields);
@@ -192,14 +205,23 @@ export function FieldsForm({
           setValueAs: (v: string) => (nullableText && v === "" ? null : v),
         });
         return (
-          <FieldShell key={f.name} id={id} label={f.label} required={required} hint={hint} error={shownError}>
+          <FieldShell
+            key={f.name}
+            id={id}
+            label={f.label}
+            required={required}
+            hint={hint}
+            error={shownError}
+          >
             <Input
               {...a11yProps(id, shownError)}
               className={invalid(shownError)}
               type={f.kind === "text" ? "text" : f.kind}
               disabled={f.name === "id" && !isNew}
               // Server HTML shows the value before hydration (register only fills it in the browser).
-              defaultValue={(initial[f.name] as string | null | undefined) ?? ""}
+              defaultValue={
+                (initial[f.name] as string | null | undefined) ?? ""
+              }
               {...reg}
               onChange={(e) => {
                 if (f.name === "id") idEdited.current = true;
@@ -212,11 +234,26 @@ export function FieldsForm({
       case "evidence": {
         const ev = options.evidence ?? { experiences: [], projects: [] };
         return (
-          <FieldShell key={f.name} id={id} label={f.label} hint="Thẻ sẽ dẫn tới mục này trên trang." error={error}>
+          <FieldShell
+            key={f.name}
+            id={id}
+            label={f.label}
+            hint="Thẻ sẽ dẫn tới mục này trên trang."
+            error={error}
+          >
             <select
               {...a11yProps(id, error)}
-              className={cn("h-9 rounded-md border bg-background px-2 text-sm", invalid(error))}
-              {...register(f.name, { setValueAs: (v: string) => (v === "" ? null : v) })}
+              className={cn(
+                "h-9 rounded-md border bg-background px-2 text-sm",
+                invalid(error),
+              )}
+              {...register(f.name, {
+                setValueAs: (v: string) => (v === "" ? null : v),
+              })}
+              // Server HTML shows the saved choice before hydration (as text inputs do).
+              defaultValue={
+                (initial[f.name] as string | null | undefined) ?? ""
+              }
             >
               <option value="">Không có</option>
               <optgroup label="Kinh nghiệm">
@@ -260,9 +297,11 @@ export function FieldsForm({
                 <I18nField
                   label={f.label}
                   idPrefix={scoped(f.name)}
-                  required={required}
+                  // An optional text that has been opened needs its EN (the schema checks it).
+                  required={required || Boolean(f.nullable)}
                   value={(field.value as I18nValue) ?? EMPTY_I18N}
                   onChange={field.onChange}
+                  onRemove={f.nullable ? () => field.onChange(null) : undefined}
                   multiline={f.multiline}
                   errors={i18nErrors(f.name)}
                 />
@@ -331,8 +370,11 @@ export function FieldsForm({
         );
       case "tags": {
         const tagErrors = errors.filter((e) => e.field === f.name);
-        const tagError = tagErrors.map((e) => e.message).join(" · ") || undefined;
-        const invalidIndexes = new Set(tagErrors.map((e) => Number(e.path.split(".").at(-1))));
+        const tagError =
+          tagErrors.map((e) => e.message).join(" · ") || undefined;
+        const invalidIndexes = new Set(
+          tagErrors.map((e) => Number(e.path.split(".").at(-1))),
+        );
         return (
           <Controller
             key={f.name}
@@ -346,7 +388,9 @@ export function FieldsForm({
                 invalidIndexes={invalidIndexes}
                 value={(field.value as string[]) ?? []}
                 onChange={field.onChange}
-                suggestions={f.suggest === "skills" ? (options.skillNames ?? []) : []}
+                suggestions={
+                  f.suggest === "skills" ? (options.skillNames ?? []) : []
+                }
               />
             )}
           />
@@ -627,6 +671,8 @@ export function FieldsForm({
                       id={fid(`${f.name}.0`)}
                       type="color"
                       aria-label="Màu bắt đầu"
+                      aria-invalid={Boolean(colorErr)}
+                      aria-describedby={colorErr ? `${id}-error` : undefined}
                       value={from}
                       onChange={(e) => field.onChange([e.target.value, to])}
                     />
@@ -634,6 +680,8 @@ export function FieldsForm({
                       id={fid(`${f.name}.1`)}
                       type="color"
                       aria-label="Màu kết thúc"
+                      aria-invalid={Boolean(colorErr)}
+                      aria-describedby={colorErr ? `${id}-error` : undefined}
                       value={to}
                       onChange={(e) => field.onChange([from, e.target.value])}
                     />
@@ -781,7 +829,11 @@ export function FieldsForm({
           <p className="text-xs text-muted-foreground">Mục có * là bắt buộc</p>
           {translated && <LocaleModeSwitch errorLocales={errorLocales} />}
         </div>
-        <ErrorSummary errors={shownErrors} focusKey={focusKey} idFor={errorTarget} />
+        <ErrorSummary
+          errors={shownErrors}
+          focusKey={focusKey}
+          idFor={errorTarget}
+        />
         {sections?.length ? (
           <div className="grid gap-6 lg:grid-cols-[11rem_minmax(0,1fr)]">
             <FormSectionNav sections={sections} errorsByField={errorsByField} />
@@ -796,7 +848,9 @@ export function FieldsForm({
           saved={saved}
           errorCount={shownErrors.length}
           onSave={() => void onSubmit()}
-          onShowErrors={() => shownErrors[0] && focusField(errorTarget(shownErrors[0]))}
+          onShowErrors={() =>
+            shownErrors[0] && focusField(errorTarget(shownErrors[0]))
+          }
           active={active}
           onCancel={doneHref ? () => router.push(doneHref) : undefined}
         />

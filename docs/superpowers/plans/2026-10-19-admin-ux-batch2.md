@@ -165,17 +165,124 @@
 - [ ] **Step 4: Run** the full suite `npx vitest run`, lint, `tsc`, and `npx playwright test tests/e2e/admin.spec.ts --workers=1`. Expected: PASS.
 - [ ] **Step 5: Commit** `feat(admin): auto IDs, chips, evidence picker and role tabs`. Final review, push, PR with a preview checklist (create a test certificate with empty fields and confirm messages; fix them; save; delete the test item).
 
-## Batch 2b — Shell and lists (outline; detailed when 2a merges)
+## Batch 2b — Shell, lists and polish (PR "feat(admin): modern shell, faster lists and polish")
 
-- **Sidebar and navigation:**
-  - Icon sidebar with the active item highlighted and "Nội dung / Cấu hình" groups; collapsible on desktop, drawer on mobile; account menu.
-  - Light/dark toggle using the site tokens; skeletons.
-  - Admin ⌘K: jump to any item, create, open the public site.
-- **Lists:**
-  - Search, status filters, readable columns ("04/2026 – nay", skill count, translation, visibility), duplicate item.
-  - Prev/next item navigation inside the editor (J/K).
-- **Dashboard:**
-  - "Sửa gần nhất" shows type + name + link, and ignores reorders.
-  - Quick-create row.
-- **Matrix:** "+ Thêm skill" row; compact rotated column headers.
-- **Motion:** 150–250 ms transitions with `motion/react` (save bar, summary, list filtering, drawer menu), respecting reduced motion.
+### Task 6: Admin shell
+
+**Files:**
+- Create: `src/components/admin/AdminSidebar.tsx` (client), `src/components/admin/AdminThemeToggle.tsx`, `src/components/admin/Skeletons.tsx`
+- Modify: `src/app/admin/layout.tsx` (theme init script from `@/components/site/theme-script`), `src/app/admin/(panel)/layout.tsx`, the page `fallback`s
+- Test: `tests/unit/admin-sidebar.test.tsx`
+
+**Interfaces:**
+- `NAV_GROUPS: { title: string; items: { href: string; label: string; icon: LucideIcon }[] }[]`. The groups are "Tổng quan", "Nội dung" (the 7 lists, with "Kỹ năng" first) and "Hồ sơ & vai trò".
+- `AdminSidebar({ badge })`:
+  - The active item uses `aria-current="page"`, matched by longest prefix on `usePathname()`.
+  - At ≥ 768px the sidebar is sticky and can collapse to icons, with the collapsed state kept in `localStorage["admin.sidebar"]`.
+  - Below 768px a top bar has a ☰ button that opens a `Sheet` drawer. The drawer closes on navigation.
+- `AdminThemeToggle` uses the site `useTheme`; it is a light/dark icon button labelled "Chế độ sáng" or "Chế độ tối".
+
+**Steps:**
+1. Write failing tests:
+   - The active link has `aria-current="page"` on `/admin/projects/siteplus` (Dự án).
+   - The groups render in order.
+   - The ☰ button opens a dialog containing the links.
+   - The collapse toggle stores `admin.sidebar=collapsed`.
+2. Run the tests and see them FAIL.
+3. Implement.
+4. Run the tests and see them PASS.
+5. Commit `feat(admin): icon sidebar, mobile drawer, theme toggle and skeletons`.
+
+### Task 7: Admin command palette (⌘K)
+
+**Files:**
+- Create: `src/components/admin/AdminCommand.tsx`, plus `src/lib/admin/command-items.ts` (pure)
+- Modify: `(panel)/layout.tsx`, which loads the items inside Suspense
+- Test: `tests/unit/admin-command.test.tsx`
+
+**Interfaces:**
+- `buildCommandItems(c: AdminContent): { group: string; label: string; href: string; keywords: string }[]`. It returns:
+  - "Đi tới" for every screen;
+  - one entry per item of every list, with label `"<Loại> · <tên>"`;
+  - "Tạo mới" per list;
+  - "Trang công khai" for `/en`, `/ja`, `/vi`;
+  - "Kỹ năng chưa có bằng chứng" pointing to `/admin/skills?filter=orphan`.
+- `AdminCommand({ items })` opens with ⌘/Ctrl+K and from a search button in the top bar.
+
+**Steps:**
+1. Write failing tests:
+   - The seed gives an item "Dự án · SitePlus" with href `/admin/projects/siteplus`.
+   - Ctrl+K opens the dialog.
+   - Typing "sitep" and pressing Enter navigates.
+2. Run, FAIL. 3. Implement. 4. Run, PASS.
+5. Commit `feat(admin): command palette to jump anywhere`.
+
+### Task 8: Faster lists
+
+**Files:**
+- Modify: `src/components/admin/ResourceTable.tsx`, `src/lib/admin/resources.ts` (`listColumns` gain formatters), `src/app/admin/actions.ts` (`duplicateResource`), and `[id]/page.tsx` (prev/next and `existingIds` only for new items)
+- Create: `src/lib/admin/list-view.ts` (pure)
+- Test: `tests/unit/admin-list-view.test.ts`, extend `tests/unit/admin-actions.test.ts`
+
+**Interfaces:**
+- `formatPeriod(start: string, end: string | null): string` gives `"01/2025 – 05/2025"` or `"04/2026 – nay"`.
+- `itemStatus(key, item, c): { hidden: boolean; missingLocales: ("ja"|"vi")[]; skillCount?: number; translated: number }`.
+- `filterItems(items, { q, status }, key, c)` filters by `status`, which is one of `all | visible | hidden | untranslated | no-skills`. `q` is accent-insensitive and matches the label columns.
+- `duplicateResource(key, id): ActionResult & { id?: string }`. The copy gets id `<id>-copy` (or `-copy-2`, `-copy-3` …), `published=false`, goes last, and skills copy their links.
+
+**Steps:**
+1. Write failing tests:
+   - The period formatting above.
+   - Filtering the seed experiences with `status: "no-skills"` returns none.
+   - Hiding one project makes `hidden` return 1.
+   - `duplicateResource("certificates", "ielts")` upserts `ielts-copy` with `published: false` and `sort_index` = max+1.
+   - The list renders a search box, the status chips and the "Nhân bản" menu item.
+   - The editor shows "← Trước / Sau →" links.
+2. Run, FAIL. 3. Implement. 4. Run, PASS.
+5. Commit `feat(admin): searchable, filterable lists with duplicate and item navigation`.
+
+### Task 9: Dashboard and "last edited"
+
+**Files:**
+- Create: `supabase/migrations/0003_updated_at_ignores_order.sql`. It is additive: `create or replace function public.set_updated_at()` keeps `old.updated_at` when only `sort_index` changed. Mirror the change in `schema-sql.ts`.
+- Modify: `src/lib/admin/data.ts` (`lastEdited` returns `{ kind: "Dự án" …, label, href, at }` and includes `skill_links`), and `(panel)/page.tsx` (a "Tạo nhanh" row and a link on "Sửa gần nhất")
+- Test: extend `tests/unit/db-schema.test.ts` and `tests/unit/health-list.test.tsx`
+
+**Steps:**
+1. Write failing tests:
+   - The rendered schema contains `- 'sort_index'` in `set_updated_at`.
+   - The dashboard renders "Tạo nhanh" with 4 links.
+2. Run, FAIL. 3. Implement and apply the migration through Supabase MCP.
+4. Run, PASS. Verify on the DB that a reorder leaves `updated_at` unchanged.
+5. Commit `feat(admin): meaningful 'last edited' and quick create`.
+
+### Task 10: Matrix and motion polish
+
+**Files:**
+- Modify: `SkillMatrix.tsx` ("+ Thêm skill" row per group: name input → `saveResource("skills", { id: slugify(name), name, group, experienceIds: [], projectIds: [] }, true)`; compact column headers rotated -45° with a `title` tooltip)
+- Motion: `motion/react` for the sidebar active indicator (`layoutId`), save bar state and summary appearance, and list row reflow. Durations are 150–250 ms. Reduced motion is respected through `useReducedMotion`.
+- Test: extend `tests/unit/skill-matrix.test.tsx`.
+
+**Steps:**
+1. Write failing tests:
+   - "+ Thêm skill" in the "ai" group with the name "LangGraph" calls `saveResource("skills", { id: "langgraph", name: "LangGraph", group: "ai", … }, true)`.
+   - The headers have a `title`.
+2. Run, FAIL. 3. Implement. 4. Run, PASS.
+5. Commit `feat(admin): add skills from the matrix; motion polish`.
+
+### Task 11: Accessibility follow-ups from 2a review
+
+These are the items that review deferred:
+- Colour inputs get `aria-invalid` and `aria-describedby`.
+- The nullable i18n "notes" field gets a "Bỏ" button, and EN is marked required once it is opened.
+- Roving arrow keys for the language radiogroup and the role tablist.
+- The error summary drops `role="alert"`; it keeps focus and a `tabindex` heading, per GOV.UK Frontend v5.
+- Inline errors get a visually hidden "Lỗi:" prefix.
+- One shared leave-confirm, so several dirty forms trigger only one dialog.
+- The evidence select renders its saved value in the server HTML.
+
+**Steps:**
+1. Write failing tests for each item.
+2. Run, FAIL. 3. Implement. 4. Run, PASS.
+5. Commit `fix(admin): accessibility follow-ups`.
+6. Final review, PR with a preview checklist.

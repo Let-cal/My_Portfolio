@@ -1,3 +1,4 @@
+import { FormSkeleton } from "@/components/admin/Skeletons";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -6,19 +7,41 @@ import { emptyItem } from "@/lib/admin/empty-item";
 import type { Options } from "@/components/admin/ResourceForm";
 import type { Skill } from "@/content/schema";
 import { getItem, listItems, relationOptions } from "@/lib/admin/data";
+import { copyId, neighbours } from "@/lib/admin/list-view";
 import { isResourceKey, resources } from "@/lib/admin/resources";
 
 type Params = Promise<{ resource: string; id: string }>;
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
-async function Editor({ params }: { params: Params }) {
-  const { resource: key, id } = await params;
+async function Editor({
+  params,
+  searchParams,
+}: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const [{ resource: key, id }, sp] = await Promise.all([params, searchParams]);
   if (!isResourceKey(key)) notFound();
   const isNew = id === "new";
-  const needsSkills = key === "experiences" || key === "projects" || key === "certificates" || key === "activities";
+  // "Nhân bản" for lists that cannot hide items: a new, unsaved item pre-filled from `from`.
+  const from = isNew && typeof sp.from === "string" ? sp.from : null;
+  const needsSkills =
+    key === "experiences" ||
+    key === "projects" ||
+    key === "certificates" ||
+    key === "activities";
   const [found, relations, skills] = await Promise.all([
-    isNew ? Promise.resolve(emptyItem(key)) : getItem(key, id),
-    key === "skills" ? relationOptions() : Promise.resolve({ experiences: [], projects: [] }),
-    needsSkills ? (listItems("skills") as unknown as Promise<Skill[]>) : Promise.resolve([] as Skill[]),
+    from
+      ? getItem(key, from)
+      : isNew
+        ? Promise.resolve(emptyItem(key))
+        : getItem(key, id),
+    key === "skills"
+      ? relationOptions()
+      : Promise.resolve({ experiences: [], projects: [] }),
+    needsSkills
+      ? (listItems("skills") as unknown as Promise<Skill[]>)
+      : Promise.resolve([] as Skill[]),
   ]);
   if (!found) notFound();
   const [ownList, experiences, projects] = await Promise.all([
@@ -26,41 +49,123 @@ async function Editor({ params }: { params: Params }) {
     key === "why_cards" ? listItems("experiences") : Promise.resolve([]),
     key === "why_cards" ? listItems("projects") : Promise.resolve([]),
   ]);
-  const hiddenMark = (item: Record<string, unknown>) => (item.published === false ? " (đang ẩn)" : "");
+  let source: Record<string, unknown> = found;
+  if (from) {
+    const { sortIndex: _s, ...copy } = found as Record<string, unknown>;
+    void _s;
+    source = {
+      ...copy,
+      id: copyId(
+        from,
+        ownList.map((i) => i.id),
+      ),
+    };
+  }
+  const hiddenMark = (item: Record<string, unknown>) =>
+    item.published === false ? " (đang ẩn)" : "";
   const options: Options = {
     ...relations,
-    existingIds: ownList.map((i) => i.id),
+    // Only a new item can clash with an existing id; an edit keeps its own.
+    existingIds: isNew ? ownList.map((i) => i.id) : [],
     evidence: {
-      experiences: experiences.map((e) => ({ id: e.id, label: `${String(e.company)} · ${String(e.start)}${hiddenMark(e)}` })),
-      projects: projects.map((p) => ({ id: p.id, label: `${String(p.title)}${hiddenMark(p)}` })),
+      experiences: experiences.map((e) => ({
+        id: e.id,
+        label: `${String(e.company)} · ${String(e.start)}${hiddenMark(e)}`,
+      })),
+      projects: projects.map((p) => ({
+        id: p.id,
+        label: `${String(p.title)}${hiddenMark(p)}`,
+      })),
     },
     skills: skills.map((s) => ({ id: s.id, label: s.name, group: s.group })),
     skillNames: skills.map((s) => s.name),
   };
   // An experience or project edits its skills here; they live in skill_links.
-  const linkIds = (s: Skill) => (key === "experiences" ? s.experienceIds : s.projectIds);
+  const linkIds = (s: Skill) =>
+    key === "experiences" ? s.experienceIds : s.projectIds;
   const item =
     key === "experiences" || key === "projects"
-      ? { ...found, skillIds: isNew ? [] : skills.filter((s) => linkIds(s).includes(id)).map((s) => s.id) }
-      : found;
+      ? {
+          ...source,
+          skillIds:
+            isNew && !from
+              ? []
+              : skills
+                  .filter((s) => linkIds(s).includes(from ?? id))
+                  .map((s) => s.id),
+        }
+      : source;
+  const nav = isNew
+    ? null
+    : neighbours(
+        ownList.map((i) => i.id),
+        id,
+      );
+  const navLink =
+    "text-sm text-muted-foreground hover:text-foreground hover:underline";
   return (
     <>
       <header className="flex flex-col gap-1">
-        <Link href={`/admin/${key}`} className="text-sm text-muted-foreground hover:underline">
-          ← {resources[key].label}
-        </Link>
-        <h1 className="text-2xl font-semibold">{isNew ? "Thêm mới" : `Sửa ${id}`}</h1>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Link href={`/admin/${key}`} className={navLink}>
+            ← {resources[key].label}
+          </Link>
+          {nav && (nav.prev || nav.next) && (
+            <nav aria-label="Mục khác trong danh sách" className="flex gap-4">
+              {nav.prev ? (
+                <Link
+                  href={`/admin/${key}/${nav.prev}`}
+                  className={navLink}
+                  aria-label={`Mục trước: ${nav.prev}`}
+                >
+                  ← Trước
+                </Link>
+              ) : (
+                <span className="text-sm text-muted-foreground/50" aria-hidden>
+                  ← Trước
+                </span>
+              )}
+              {nav.next ? (
+                <Link
+                  href={`/admin/${key}/${nav.next}`}
+                  className={navLink}
+                  aria-label={`Mục sau: ${nav.next}`}
+                >
+                  Sau →
+                </Link>
+              ) : (
+                <span className="text-sm text-muted-foreground/50" aria-hidden>
+                  Sau →
+                </span>
+              )}
+            </nav>
+          )}
+        </div>
+        <h1 className="text-2xl font-semibold">
+          {from ? `Nhân bản ${from}` : isNew ? "Thêm mới" : `Sửa ${id}`}
+        </h1>
       </header>
-      <ResourceForm resourceKey={key} initial={item} isNew={isNew} options={options} />
+      <ResourceForm
+        resourceKey={key}
+        initial={item}
+        isNew={isNew}
+        options={options}
+      />
     </>
   );
 }
 
-export default function EditResourcePage({ params }: { params: Params }) {
+export default function EditResourcePage({
+  params,
+  searchParams,
+}: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
   return (
     <main className="flex flex-col gap-4">
-      <Suspense fallback={<p className="text-sm text-muted-foreground">Đang tải…</p>}>
-        <Editor params={params} />
+      <Suspense fallback={<FormSkeleton />}>
+        <Editor params={params} searchParams={searchParams} />
       </Suspense>
     </main>
   );

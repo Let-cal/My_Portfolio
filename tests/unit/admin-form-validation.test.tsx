@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const saveResource = vi.fn();
 vi.mock("@/app/admin/actions", () => ({ saveResource }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+}));
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 vi.mock("@/lib/supabase/browser", () => ({ createBrowserSupabase: vi.fn() }));
 globalThis.ResizeObserver ??= class {
@@ -17,9 +19,17 @@ const { ResourceForm } = await import("@/components/admin/ResourceForm");
 const { emptyItem } = await import("@/lib/admin/empty-item");
 
 const renderNewCertificate = () =>
-  render(<ResourceForm resourceKey="certificates" isNew initial={emptyItem("certificates")} options={{}} />);
-const save = () => act(async () => fireEvent.click(screen.getByRole("button", { name: "Lưu" })));
-const summary = () => screen.queryByRole("alert", { name: /mục cần sửa/ });
+  render(
+    <ResourceForm
+      resourceKey="certificates"
+      isNew
+      initial={emptyItem("certificates")}
+      options={{}}
+    />,
+  );
+const save = () =>
+  act(async () => fireEvent.click(screen.getByRole("button", { name: "Lưu" })));
+const summary = () => screen.queryByRole("region", { name: /mục cần sửa/ });
 
 beforeEach(() => saveResource.mockReset().mockResolvedValue({ ok: true }));
 
@@ -27,8 +37,12 @@ describe("form validation", () => {
   it("marks required fields", () => {
     renderNewCertificate();
     expect(screen.getByText("Mục có * là bắt buộc")).toBeTruthy();
-    expect(screen.getByText("Tên chứng chỉ").closest("label")!.textContent).toContain("*");
-    expect(screen.getByText("Link xác minh").closest("label")!.textContent).not.toContain("*");
+    expect(
+      screen.getByText("Tên chứng chỉ").closest("label")!.textContent,
+    ).toContain("*");
+    expect(
+      screen.getByText("Link xác minh").closest("label")!.textContent,
+    ).not.toContain("*");
   });
 
   it("lists every problem in a focused summary instead of saving", async () => {
@@ -37,7 +51,11 @@ describe("form validation", () => {
     const box = summary()!;
     expect(box).toBeTruthy();
     expect(within(box).getByText("Có 5 mục cần sửa")).toBeTruthy();
-    expect(within(box).getAllByRole("link").map((a) => a.textContent)).toEqual([
+    expect(
+      within(box)
+        .getAllByRole("link")
+        .map((a) => a.textContent),
+    ).toEqual([
       "Nhập ID",
       "Nhập tên chứng chỉ",
       "Nhập tổ chức cấp",
@@ -54,7 +72,9 @@ describe("form validation", () => {
     const name = document.getElementById("field-name")!;
     expect(name.getAttribute("aria-invalid")).toBe("true");
     const describedBy = name.getAttribute("aria-describedby")!;
-    expect(document.getElementById(describedBy)!.textContent).toBe("Nhập tên chứng chỉ");
+    expect(document.getElementById(describedBy)!.textContent).toBe(
+      "Lỗi: Nhập tên chứng chỉ",
+    );
     const en = document.getElementById("field-description.en")!;
     expect(en.getAttribute("aria-invalid")).toBe("true");
   });
@@ -62,18 +82,28 @@ describe("form validation", () => {
   it("jumps to the field from the summary", async () => {
     renderNewCertificate();
     await save();
-    fireEvent.click(within(summary()!).getByRole("link", { name: "Nhập tên chứng chỉ" }));
+    fireEvent.click(
+      within(summary()!).getByRole("link", { name: "Nhập tên chứng chỉ" }),
+    );
     expect(document.activeElement).toBe(document.getElementById("field-name"));
   });
 
   it("clears a fixed field from the summary at once", async () => {
     renderNewCertificate();
     await save();
-    await act(async () => fireEvent.change(document.getElementById("field-name")!, { target: { value: "IELTS" } }));
+    await act(async () =>
+      fireEvent.change(document.getElementById("field-name")!, {
+        target: { value: "IELTS" },
+      }),
+    );
     // The name also fills the ID of a new item, so both lines go.
     expect(within(summary()!).getByText("Có 3 mục cần sửa")).toBeTruthy();
-    expect(within(summary()!).queryByRole("link", { name: "Nhập ID" })).toBeNull();
-    expect(document.getElementById("field-name")!.getAttribute("aria-invalid")).toBe("false");
+    expect(
+      within(summary()!).queryByRole("link", { name: "Nhập ID" }),
+    ).toBeNull();
+    expect(
+      document.getElementById("field-name")!.getAttribute("aria-invalid"),
+    ).toBe("false");
   });
 
   it("shows server errors on the field they belong to", async () => {
@@ -99,12 +129,20 @@ describe("form validation", () => {
     );
     await save();
     expect(saveResource).toHaveBeenCalledTimes(1);
-    expect(within(summary()!).getByRole("link", { name: 'ID "ielts" đã được dùng, chọn ID khác' })).toBeTruthy();
-    expect(document.getElementById("field-id")!.getAttribute("aria-invalid")).toBe("true");
+    expect(
+      within(summary()!).getByRole("link", {
+        name: 'ID "ielts" đã được dùng, chọn ID khác',
+      }),
+    ).toBeTruthy();
+    expect(
+      document.getElementById("field-id")!.getAttribute("aria-invalid"),
+    ).toBe("true");
   });
 
   it("explains that JA and VI may stay empty", () => {
     renderNewCertificate();
-    expect(screen.getAllByText(/JA, VI không bắt buộc/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/JA, VI không bắt buộc/).length).toBeGreaterThan(
+      0,
+    );
   });
 });

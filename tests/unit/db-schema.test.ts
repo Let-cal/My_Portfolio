@@ -26,7 +26,9 @@ const sampleRows: Record<TableName, object> = {
   experiences: experienceToRow(c.experiences[0]),
   projects: projectToRow(c.projects[0]),
   skills: skillToRow(c.skills[0]),
-  skill_links: skillToLinkRows(c.skills.find((s) => s.experienceIds.length > 0)!)[0],
+  skill_links: skillToLinkRows(
+    c.skills.find((s) => s.experienceIds.length > 0)!,
+  )[0],
   certificates: certificateToRow(c.certificates[0]),
   activities: activityToRow(c.activities[0]),
   education: educationToRow(c.education[0]),
@@ -34,10 +36,13 @@ const sampleRows: Record<TableName, object> = {
 };
 
 describe("database columns", () => {
-  it.each(Object.keys(TABLES) as TableName[])("%s has exactly the mapper's columns", (table) => {
-    const declared = TABLES[table].columns.map((col) => col.name).sort();
-    expect(declared).toEqual(Object.keys(sampleRows[table]).sort());
-  });
+  it.each(Object.keys(TABLES) as TableName[])(
+    "%s has exactly the mapper's columns",
+    (table) => {
+      const declared = TABLES[table].columns.map((col) => col.name).sort();
+      expect(declared).toEqual(Object.keys(sampleRows[table]).sort());
+    },
+  );
 
   it("only tables with a published column hide rows from visitors", () => {
     for (const [name, table] of Object.entries(TABLES) as [string, Table][]) {
@@ -49,24 +54,47 @@ describe("database columns", () => {
 
 describe("schema SQL", () => {
   it("the committed schema is generated from columns.ts", () => {
-    const committed = readFileSync("supabase/schema.sql", "utf8").replace(/\r\n/g, "\n");
+    const committed = readFileSync("supabase/schema.sql", "utf8").replace(
+      /\r\n/g,
+      "\n",
+    );
     expect(committed).toBe(renderSchemaSql());
   });
 
   it("turns on row level security for every public table", () => {
     const sql = renderSchemaSql();
     for (const table of Object.keys(TABLES)) {
-      expect(sql).toContain(`alter table public.${table} enable row level security;`);
+      expect(sql).toContain(
+        `alter table public.${table} enable row level security;`,
+      );
     }
   });
 
   it("lets visitors read published rows only and lets only admins write", () => {
     const sql = renderSchemaSql();
-    expect(sql).toMatch(/create policy "experiences_read" on public\.experiences for select to anon, authenticated using \(published or private\.is_admin\(\)\);/);
-    expect(sql).toMatch(/create policy "skills_read" on public\.skills for select to anon, authenticated using \(true\);/);
-    expect(sql).toMatch(/create policy "skills_write" on public\.skills for all to authenticated using \(private\.is_admin\(\)\) with check \(private\.is_admin\(\)\);/);
+    expect(sql).toMatch(
+      /create policy "experiences_read" on public\.experiences for select to anon, authenticated using \(published or private\.is_admin\(\)\);/,
+    );
+    expect(sql).toMatch(
+      /create policy "skills_read" on public\.skills for select to anon, authenticated using \(true\);/,
+    );
+    expect(sql).toMatch(
+      /create policy "skills_write" on public\.skills for all to authenticated using \(private\.is_admin\(\)\) with check \(private\.is_admin\(\)\);/,
+    );
     expect(sql).toContain("create table private.app_admins");
-    expect(sql).toContain("revoke all on private.app_admins from public, anon, authenticated;");
+    expect(sql).toContain(
+      "revoke all on private.app_admins from public, anon, authenticated;",
+    );
+  });
+
+  it("does not count a reorder as an edit", () => {
+    const sql = renderSchemaSql();
+    const fn = sql.slice(
+      sql.indexOf("function public.set_updated_at"),
+      sql.indexOf("$$;"),
+    );
+    expect(fn).toContain("- 'sort_index'");
+    expect(fn).toContain("new.updated_at = old.updated_at");
   });
 
   it("keeps a single profile row", () => {

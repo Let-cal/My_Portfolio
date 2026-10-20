@@ -16,7 +16,9 @@ function tableSql(name: string, table: Table): string {
     "  updated_at timestamptz not null default now()",
     ...(table.tableConstraints ?? []).map((c) => `  ${c}`),
   ];
-  const readable = table.hasPublished ? "published or private.is_admin()" : "true";
+  const readable = table.hasPublished
+    ? "published or private.is_admin()"
+    : "true";
   return [
     `create table public.${name} (\n${lines.join(",\n")}\n);`,
     `create trigger ${name}_updated_at before update on public.${name} for each row execute function public.set_updated_at();`,
@@ -32,7 +34,12 @@ const HEADER = `-- Current schema, generated from src/lib/data/columns.ts by \`n
 create or replace function public.set_updated_at() returns trigger
 language plpgsql set search_path = '' as $$
 begin
-  new.updated_at = now();
+  -- A reorder only moves sort_index; it is not an edit, so "last edited" keeps its time.
+  if (to_jsonb(new) - 'sort_index' - 'updated_at') = (to_jsonb(old) - 'sort_index' - 'updated_at') then
+    new.updated_at = old.updated_at;
+  else
+    new.updated_at = now();
+  end if;
   return new;
 end;
 $$;
@@ -74,6 +81,8 @@ function storageSql(): string {
 
 /** The full current schema. Tests compare it with supabase/schema.sql. */
 export function renderSchemaSql(): string {
-  const tables = Object.entries(TABLES).map(([name, table]) => tableSql(name, table));
+  const tables = Object.entries(TABLES).map(([name, table]) =>
+    tableSql(name, table),
+  );
   return [HEADER, ...tables, storageSql()].join("\n\n") + "\n";
 }
