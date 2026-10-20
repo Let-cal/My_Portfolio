@@ -17,6 +17,8 @@ import {
 } from "@/lib/admin/resources";
 import { PROFILE_FIELDS, ROLE_FIELDS } from "@/lib/admin/singletons";
 import { copyId } from "@/lib/admin/list-view";
+import type { Version } from "@/lib/admin/versions";
+import { VERSIONED_TABLES } from "@/lib/data/schema-sql";
 import { describeIssues } from "@/lib/admin/validation";
 import { requireAdmin } from "@/lib/admin/session";
 import { createServerSupabase } from "@/lib/supabase/server";
@@ -419,4 +421,71 @@ export async function saveRole(data: Record<string, unknown>) {
       ).error,
     );
   });
+}
+
+/** History of one item: its saved versions (newest first) and the row as it is now. */
+export async function listVersions(
+  table: string,
+  itemKey: string,
+): Promise<
+  | { ok: true; versions: Version[]; current: Record<string, unknown> | null }
+  | { ok: false; error: string }
+> {
+  try {
+    await requireAdmin();
+    if (!(VERSIONED_TABLES as string[]).includes(table))
+      throw new Error(`Unknown table: ${table}`);
+    const supabase = await createServerSupabase();
+    const { data, error } = await supabase.rpc("admin_list_versions", {
+      p_table: table,
+      p_key: itemKey,
+    });
+    check(error);
+    const { data: rows, error: rowError } = await supabase
+      .from(table)
+      .select("*")
+      .eq(table === "roles" ? "key" : "id", itemKey);
+    check(rowError);
+    const versions = ((data ?? []) as Record<string, unknown>[]).map((v) => ({
+      id: Number(v.id),
+      op: v.op as Version["op"],
+      oldRow: v.old_row as Record<string, unknown>,
+      changedBy: (v.changed_by as string | null) ?? null,
+      changedAt: String(v.changed_at),
+    }));
+    return {
+      ok: true,
+      versions,
+      current: (rows?.[0] as Record<string, unknown> | undefined) ?? null,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+/** Writes a saved version back. The restore is itself a new version, so it can be undone too. */
+export async function restoreVersion(versionId: number): Promise<ActionResult> {
+  return adminSave(async () => {
+    const supabase = await createServerSupabase();
+    check(
+      (await supabase.rpc("admin_restore_version", { p_version_id: versionId }))
+        .error,
+    );
+  });
+}
+
+/** "Hoàn tác" after a delete: brings back the newest deleted copy of the item (and its skill links). */
+export async function undoDelete(
+  table: string,
+  itemKey: string,
+): Promise<ActionResult> {
+  const listed = await listVersions(table, itemKey);
+  if (!listed.ok) return listed;
+  const deleted = listed.versions.find((v) => v.op === "delete");
+  if (!deleted)
+    return { ok: false, error: "Không còn bản đã xóa để hoàn tác." };
+  return restoreVersion(deleted.id);
 }

@@ -16,6 +16,7 @@ let links: {
   project_id: string | null;
 }[] = [];
 let tableRows: Record<string, Record<string, unknown>[]> = {};
+let rpcResults: Record<string, unknown> = {};
 
 /** Records each query; `select ... order` answers with `existing`, writes succeed. */
 function table(name: string) {
@@ -64,8 +65,12 @@ function table(name: string) {
     delete: (...args: unknown[]) => filterable("delete", args),
   };
 }
+function rpc(name: string, args: unknown) {
+  calls.push({ table: "rpc", op: name, args: [args] });
+  return Promise.resolve({ data: rpcResults[name] ?? null, error: null });
+}
 vi.mock("@/lib/supabase/server", () => ({
-  createServerSupabase: async () => ({ from: table }),
+  createServerSupabase: async () => ({ from: table, rpc }),
 }));
 
 const {
@@ -78,6 +83,9 @@ const {
   setOpenToWork,
   saveSkillLinks,
   duplicateResource,
+  listVersions,
+  restoreVersion,
+  undoDelete,
 } = await import("@/app/admin/actions");
 const content = contentSchema.parse(seed);
 
@@ -89,6 +97,7 @@ beforeEach(() => {
   ];
   links = [];
   tableRows = {};
+  rpcResults = {};
   updateTag.mockReset();
   requireAdmin.mockReset().mockResolvedValue({ email: "admin@x.com" });
 });
@@ -362,5 +371,67 @@ describe("admin actions", () => {
     requireAdmin.mockRejectedValue(new Error("FORBIDDEN"));
     expect((await duplicateResource("certificates", "ielts")).ok).toBe(false);
     expect(calls).toEqual([]);
+  });
+
+  it("undo restores the newest delete of that item", async () => {
+    rpcResults.admin_list_versions = [
+      { id: 7, op: "update", old_row: {}, changed_by: null, changed_at: "b" },
+      { id: 5, op: "delete", old_row: {}, changed_by: null, changed_at: "a" },
+    ];
+    expect(await undoDelete("certificates", "test-item")).toEqual({ ok: true });
+    expect(calls.filter((c) => c.table === "rpc")).toEqual([
+      {
+        table: "rpc",
+        op: "admin_list_versions",
+        args: [{ p_table: "certificates", p_key: "test-item" }],
+      },
+      {
+        table: "rpc",
+        op: "admin_restore_version",
+        args: [{ p_version_id: 5 }],
+      },
+    ]);
+    expect(updateTag).toHaveBeenCalledWith("content");
+  });
+
+  it("undo says so when there is nothing deleted to bring back", async () => {
+    rpcResults.admin_list_versions = [];
+    expect(await undoDelete("certificates", "x")).toEqual({
+      ok: false,
+      error: "Không còn bản đã xóa để hoàn tác.",
+    });
+  });
+
+  it("restore refuses non-admins without calling the database", async () => {
+    requireAdmin.mockRejectedValue(new Error("FORBIDDEN"));
+    expect((await restoreVersion(5)).ok).toBe(false);
+    expect(calls).toEqual([]);
+  });
+
+  it("lists versions with the current row, for known tables only", async () => {
+    rpcResults.admin_list_versions = [
+      {
+        id: 3,
+        op: "update",
+        old_row: { name: "Old" },
+        changed_by: "a@b.c",
+        changed_at: "t",
+      },
+    ];
+    tableRows.roles = [{ key: "pm", title: "PM" }];
+    expect(await listVersions("roles", "pm")).toEqual({
+      ok: true,
+      versions: [
+        {
+          id: 3,
+          op: "update",
+          oldRow: { name: "Old" },
+          changedBy: "a@b.c",
+          changedAt: "t",
+        },
+      ],
+      current: { key: "pm", title: "PM" },
+    });
+    expect((await listVersions("nope", "x")).ok).toBe(false);
   });
 });
