@@ -24,6 +24,7 @@ import {
   type MatrixFilter,
 } from "@/lib/admin/matrix";
 import { slugify } from "@/lib/admin/slug";
+import { signature } from "@/lib/admin/sync";
 import { cn } from "@/lib/utils";
 import { useUnsavedGuard } from "./SaveBar";
 
@@ -48,6 +49,13 @@ export function SkillMatrix({
   const [draft, setDraft] = useState<Map<string, boolean>>(new Map());
   // Saved in this session but not yet in `content` (until the page refresh brings it).
   const [saved, setSaved] = useState<Map<string, boolean>>(new Map());
+  // Fresh server data already contains what this tab saved, and maybe changes from elsewhere.
+  const contentSignature = signature(content);
+  const [seenContent, setSeenContent] = useState(contentSignature);
+  if (contentSignature !== seenContent) {
+    setSeenContent(contentSignature);
+    setSaved(new Map());
+  }
   const [pinned, setPinned] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
   // The hovered or focused cell: its row and column light up like a crosshair (r = -1: a header).
@@ -116,7 +124,6 @@ export function SkillMatrix({
     setSaved((m) => new Map([...m, ...draft]));
     setDraft(new Map());
     toast.success(`Đã lưu ${changes.length} thay đổi`);
-    router.refresh();
   }, [draft, saving, columns, router]);
 
   // Ctrl/⌘+S saves; leaving (tab close, links, ⌘K) with unsaved changes asks first.
@@ -323,7 +330,6 @@ export function SkillMatrix({
                     <AddSkillRow
                       group={g.group}
                       span={view.columns.length + 2}
-                      onAdded={() => router.refresh()}
                     />
                   }
                 >
@@ -507,15 +513,7 @@ function GroupRows({
 }
 
 /** "+ Thêm skill" at the end of a group: type a name, Enter adds it (the id comes from the name). */
-function AddSkillRow({
-  group,
-  span,
-  onAdded,
-}: {
-  group: string;
-  span: number;
-  onAdded: () => void;
-}) {
+function AddSkillRow({ group, span }: { group: string; span: number }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -563,7 +561,6 @@ function AddSkillRow({
     // Stay open, empty and focused so several skills can be added in a row.
     setName("");
     setError(null);
-    onAdded();
     requestAnimationFrame(() => inputRef.current?.focus());
   }
 

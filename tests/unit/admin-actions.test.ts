@@ -3,8 +3,9 @@ import { contentSchema } from "@/content/schema";
 import seed from "@/content/seed.json";
 
 const updateTag = vi.fn();
+const refresh = vi.fn();
 const requireAdmin = vi.fn();
-vi.mock("next/cache", () => ({ updateTag }));
+vi.mock("next/cache", () => ({ updateTag, refresh }));
 vi.mock("@/lib/admin/session", () => ({ requireAdmin }));
 
 type Call = { table: string; op: string; args: unknown[] };
@@ -101,6 +102,7 @@ beforeEach(() => {
   rpcResults = {};
   rpcError = null;
   updateTag.mockReset();
+  refresh.mockReset();
   requireAdmin.mockReset().mockResolvedValue({ email: "admin@x.com" });
 });
 
@@ -446,6 +448,49 @@ describe("admin actions", () => {
     expect(await listVersions("certificates", "x")).toEqual({
       ok: false,
       error: "Lịch sử chưa được bật trên database (cần áp migration 0004).",
+    });
+  });
+
+  describe("every write refreshes the admin and the public site", () => {
+    const { sortIndex: _s, ...cert } = content.certificates[0];
+    void _s;
+    const writes: [string, () => Promise<{ ok: boolean }>][] = [
+      ["saveResource", () => saveResource("certificates", cert, true)],
+      ["deleteResource", () => deleteResource("certificates", "a")],
+      ["reorderResource", () => reorderResource("certificates", ["b", "a"])],
+      ["togglePublished", () => togglePublished("certificates", "a", false)],
+      [
+        "saveSkillLinks",
+        () =>
+          saveSkillLinks([
+            { skillId: "react", projectId: "siteplus", linked: true },
+          ]),
+      ],
+      ["saveProfile", () => saveProfile(content.profile)],
+      ["setOpenToWork", () => setOpenToWork(true)],
+      ["saveRole", () => saveRole(content.roles[0])],
+      ["restoreVersion", () => restoreVersion(5)],
+    ];
+    it.each(writes)("%s", async (_name, write) => {
+      expect((await write()).ok).toBe(true);
+      expect(updateTag).toHaveBeenCalledWith("content");
+      expect(refresh).toHaveBeenCalledTimes(1);
+    });
+
+    it("duplicateResource", async () => {
+      tableRows.certificates = [
+        { id: "a", name: "A", published: true, sort_index: 0 },
+      ];
+      expect((await duplicateResource("certificates", "a")).ok).toBe(true);
+      expect(refresh).toHaveBeenCalledTimes(1);
+    });
+
+    it("undoDelete", async () => {
+      rpcResults.admin_list_versions = [
+        { id: 5, op: "delete", old_row: {}, changed_by: null, changed_at: "a" },
+      ];
+      expect((await undoDelete("certificates", "a")).ok).toBe(true);
+      expect(refresh).toHaveBeenCalledTimes(1);
     });
   });
 });

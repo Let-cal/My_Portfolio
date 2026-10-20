@@ -1,5 +1,6 @@
 "use client";
 
+import { ADMIN_DISCARD_EVENT, signature } from "@/lib/admin/sync";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -180,7 +181,6 @@ export function FieldsForm({
         setTimeout(() => setSaved(false), 2000);
         toast.success("Đã lưu");
         if (doneHref) router.push(doneHref);
-        router.refresh();
       }),
     () => setFocusKey((k) => k + 1),
   );
@@ -792,6 +792,39 @@ export function FieldsForm({
 
   const dirty = formState.isDirty;
   useUnsavedGuard(dirty);
+
+  // Server data that changed while the form is open (own save, another tab, a restore): taken
+  // as is when nothing is edited, otherwise offered, never forced over unsaved edits.
+  const initialSignature = signature(initial);
+  const [base, setBase] = useState({
+    signature: initialSignature,
+    values: initial,
+    resets: 0,
+  });
+  const serverMoved = initialSignature !== base.signature;
+  if (serverMoved && !dirty) {
+    setBase({
+      signature: initialSignature,
+      values: initial,
+      resets: base.resets + 1,
+    });
+  }
+  const { resets, values: baseValues } = base;
+  useEffect(() => {
+    if (resets > 0) form.reset(baseValues);
+  }, [form, resets, baseValues]);
+  useEffect(() => {
+    const discard = () => form.reset(form.getValues());
+    window.addEventListener(ADMIN_DISCARD_EVENT, discard);
+    return () => window.removeEventListener(ADMIN_DISCARD_EVENT, discard);
+  }, [form]);
+  const reloadFromServer = () =>
+    setBase({
+      signature: initialSignature,
+      values: initial,
+      resets: base.resets + 1,
+    });
+  const keepMine = () => setBase({ ...base, signature: initialSignature });
   const shownErrors = formState.submitCount > 0 ? errors : [];
   const errorsByField = new Map<string, number>();
   for (const e of shownErrors)
@@ -829,6 +862,30 @@ export function FieldsForm({
           <p className="text-xs text-muted-foreground">Mục có * là bắt buộc</p>
           {translated && <LocaleModeSwitch errorLocales={errorLocales} />}
         </div>
+        {serverMoved && dirty && (
+          <div
+            role="status"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-sky-500/40 bg-sky-500/10 px-4 py-3 text-sm"
+          >
+            <span>
+              Có bản mới hơn của mục này (vừa lưu ở nơi khác). Bạn đang có thay
+              đổi chưa lưu.
+            </span>
+            <span className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={keepMine}
+              >
+                Giữ bản của tôi
+              </Button>
+              <Button type="button" size="sm" onClick={reloadFromServer}>
+                Tải lại
+              </Button>
+            </span>
+          </div>
+        )}
         <ErrorSummary
           errors={shownErrors}
           focusKey={focusKey}

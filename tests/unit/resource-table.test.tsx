@@ -8,6 +8,7 @@ const push = vi.fn();
 const refresh = vi.fn();
 const duplicateResource = vi.fn();
 const deleteResource = vi.fn();
+const togglePublished = vi.fn();
 const undoDelete = vi.fn();
 const toast = { success: vi.fn(), error: vi.fn() };
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push, refresh }) }));
@@ -15,7 +16,7 @@ vi.mock("@/app/admin/actions", () => ({
   deleteResource,
   undoDelete,
   reorderResource: vi.fn(),
-  togglePublished: vi.fn(),
+  togglePublished,
   duplicateResource,
 }));
 vi.mock("sonner", () => ({ toast }));
@@ -148,5 +149,44 @@ describe("ResourceTable", () => {
     expect(undoDelete).toHaveBeenCalledWith("certificates", rows[0].id);
     // The restored item is back in the list at once, without waiting for a reload.
     expect(screen.getByText(rows[0].label)).toBeTruthy();
+  });
+
+  it("shows rows that arrive from the server", () => {
+    const rows = listRows("certificates", content);
+    const { rerender } = render(
+      <ResourceTable resourceKey="certificates" initialRows={rows.slice(1)} />,
+    );
+    expect(screen.queryByText(rows[0].label)).toBeNull();
+    rerender(<ResourceTable resourceKey="certificates" initialRows={rows} />);
+    expect(screen.getByText(rows[0].label)).toBeTruthy();
+  });
+
+  it("keeps a toggle that is still saving when server data arrives", async () => {
+    let finish: (v: { ok: true }) => void = () => {};
+    togglePublished.mockReturnValue(new Promise((r) => (finish = r)));
+    const rows = listRows("certificates", content);
+    const { rerender } = render(
+      <ResourceTable resourceKey="certificates" initialRows={rows} />,
+    );
+    const toggle = screen.getByRole("switch", {
+      name: `Hiển thị ${rows[0].label}`,
+    });
+    await act(async () => fireEvent.click(toggle));
+    expect(toggle.getAttribute("aria-checked")).toBe("false");
+    // Unrelated server data arrives (an extra row) while the toggle is saving.
+    const extra = { ...rows[0], id: "new-one", label: "New one" };
+    rerender(
+      <ResourceTable
+        resourceKey="certificates"
+        initialRows={[...rows, extra]}
+      />,
+    );
+    expect(screen.getByText("New one")).toBeTruthy();
+    expect(
+      screen
+        .getByRole("switch", { name: `Hiển thị ${rows[0].label}` })
+        .getAttribute("aria-checked"),
+    ).toBe("false");
+    await act(async () => finish({ ok: true }));
   });
 });

@@ -1,6 +1,6 @@
 "use server";
 
-import { updateTag } from "next/cache";
+import { refresh, updateTag } from "next/cache";
 import { z } from "zod";
 import { profileToRow, roleToRow } from "@/lib/data/mappers";
 import {
@@ -80,6 +80,8 @@ async function adminWrite(
     if (!isResourceKey(key)) throw new Error(`Unknown resource: ${key}`);
     await write(key);
     updateTag("content");
+    // Admin screens re-render with the new data (updateTag only refreshes the public site).
+    refresh();
     return { ok: true };
   } catch (error) {
     return fail(error);
@@ -281,6 +283,8 @@ export async function saveSkillLinks(
       );
     }
     updateTag("content");
+    // Admin screens re-render with the new data (updateTag only refreshes the public site).
+    refresh();
     return { ok: true };
   } catch (error) {
     return fail(error);
@@ -379,6 +383,8 @@ async function adminSave(write: () => Promise<void>): Promise<ActionResult> {
     await requireAdmin();
     await write();
     updateTag("content");
+    // Admin screens re-render with the new data (updateTag only refreshes the public site).
+    refresh();
     return { ok: true };
   } catch (error) {
     return fail(error);

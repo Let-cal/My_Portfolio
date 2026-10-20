@@ -120,6 +120,12 @@ export function RoleTabs({
 export function OpenToWorkSwitch({ initial }: { initial: boolean }) {
   const [value, setValue] = useState(initial);
   const [pending, startTransition] = useTransition();
+  // Follow the server (another tab may switch it) unless this tab's own change is still saving.
+  const [seen, setSeen] = useState(initial);
+  if (initial !== seen && !pending) {
+    setSeen(initial);
+    setValue(initial);
+  }
   return (
     <label className="flex items-center gap-3 text-sm font-medium">
       <Switch

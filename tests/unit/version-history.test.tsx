@@ -9,11 +9,14 @@ vi.mock("sonner", () => ({ toast }));
 
 const { VersionHistory } = await import("@/components/admin/VersionHistory");
 const reload = vi.fn();
+const discarded = vi.fn();
+window.addEventListener("admin:discard-edits", discarded);
 
 beforeEach(() => {
   listVersions.mockReset();
   restoreVersion.mockReset().mockResolvedValue({ ok: true });
   reload.mockReset();
+  discarded.mockReset();
   Object.defineProperty(window, "location", {
     value: { ...window.location, reload },
     configurable: true,
@@ -82,7 +85,10 @@ describe("VersionHistory", () => {
       ),
     );
     expect(restoreVersion).toHaveBeenCalledWith(4);
-    expect(reload).toHaveBeenCalled();
+    // No full reload: open forms drop their edits and the server refresh brings the restored data.
+    expect(reload).not.toHaveBeenCalled();
+    expect(discarded).toHaveBeenCalled();
+    expect(toast.success).toHaveBeenCalledWith("Đã khôi phục phiên bản");
   });
 
   it("explains an empty history", async () => {

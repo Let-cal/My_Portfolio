@@ -31,6 +31,7 @@ import {
   type ListRow,
   type RowStatus,
 } from "@/lib/admin/list-view";
+import { mergeRows, signature } from "@/lib/admin/sync";
 import type { ResourceKey } from "@/lib/admin/resources";
 import { tableFor } from "@/lib/admin/versions";
 import { cn } from "@/lib/utils";
@@ -63,6 +64,14 @@ function chipsFor(
   ];
 }
 
+/** Rows in a given id order (a reorder still saving); rows not in it keep their place at the end. */
+function inOrder(rows: ListRow[], ids: string[]): ListRow[] {
+  const at = new Map(ids.map((id, i) => [id, i]));
+  return [...rows].sort(
+    (a, b) => (at.get(a.id) ?? ids.length) - (at.get(b.id) ?? ids.length),
+  );
+}
+
 export function ResourceTable({
   resourceKey,
   initialRows,
@@ -75,6 +84,27 @@ export function ResourceTable({
 }) {
   const router = useRouter();
   const [rows, setRows] = useState(initialRows);
+  // Changes this tab is still saving: they win over server data until their action settles.
+  const [inflight, setInflight] = useState<
+    Map<string, Partial<ListRow> | "deleted">
+  >(() => new Map());
+  const [inflightOrder, setInflightOrder] = useState<string[] | null>(null);
+  // New server data (after any write, here or elsewhere) replaces the rows, pending changes kept.
+  const serverSignature = signature(initialRows);
+  const [seenSignature, setSeenSignature] = useState(serverSignature);
+  if (serverSignature !== seenSignature) {
+    setSeenSignature(serverSignature);
+    const merged = mergeRows(initialRows, inflight);
+    setRows(inflightOrder ? inOrder(merged, inflightOrder) : merged);
+  }
+  const track = (id: string, change: Partial<ListRow> | "deleted") =>
+    setInflight((m) => new Map(m).set(id, change));
+  const settle = (id: string) =>
+    setInflight((m) => {
+      const next = new Map(m);
+      next.delete(id);
+      return next;
+    });
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<RowStatus>("all");
   const [toDelete, setToDelete] = useState<ListRow | null>(null);
@@ -87,12 +117,13 @@ export function ResourceTable({
     action: () => Promise<ActionResult>,
     done: string,
     undo?: () => void,
+    finish?: () => void,
   ) {
     startTransition(async () => {
       const result = await action();
+      finish?.();
       if (result.ok) {
         toast.success(done);
-        router.refresh();
       } else {
         undo?.();
         toast.error(result.error);
@@ -103,6 +134,7 @@ export function ResourceTable({
   function reorder(next: ListRow[]) {
     const previous = rows;
     setRows(next);
+    setInflightOrder(next.map((r) => r.id));
     run(
       () =>
         reorderResource(
@@ -111,16 +143,21 @@ export function ResourceTable({
         ),
       "Đã lưu thứ tự",
       () => setRows(previous),
+      () => setInflightOrder(null),
     );
   }
 
   function setPublished(row: ListRow, value: boolean) {
-    const previous = rows;
     setRows(rows.map((r) => (r.id === row.id ? { ...r, hidden: !value } : r)));
+    track(row.id, { hidden: !value });
     run(
       () => togglePublished(resourceKey, row.id, value),
       value ? "Đã hiện" : "Đã ẩn",
-      () => setRows(previous),
+      () =>
+        setRows((current) =>
+          current.map((r) => (r.id === row.id ? { ...r, hidden: value } : r)),
+        ),
+      () => settle(row.id),
     );
   }
 
@@ -149,14 +186,15 @@ export function ResourceTable({
     setToDelete(null);
     const previous = rows;
     setRows(rows.filter((r) => r.id !== target.id));
+    track(target.id, "deleted");
     startTransition(async () => {
       const result = await deleteResource(resourceKey, target.id);
+      settle(target.id);
       if (!result.ok) {
         setRows(previous);
         toast.error(result.error);
         return;
       }
-      router.refresh();
       // The delete happens at once; for 10 s the toast can bring the item (and its links) back.
       toast.success(`Đã xóa ${target.label}`, {
         duration: 10000,
@@ -178,7 +216,6 @@ export function ResourceTable({
           : [...current.slice(0, index), target, ...current.slice(index)],
       );
       toast.success(`Đã khôi phục ${target.label}`);
-      router.refresh();
     } else {
       toast.error(result.error);
     }
