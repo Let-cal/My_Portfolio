@@ -44,10 +44,56 @@ No added findings. Before and after both contain:
 | `rls_enabled_no_policy` on `private.app_admins` | INFO | Existing private whitelist intentionally has no caller-facing policy; do not add a broad read policy to silence the notice. [Advisor reference](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy). |
 | `auth_leaked_password_protection` | WARN | Existing Auth setting. [Supabase documents leaked-password protection as Pro and above](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection); left unchanged under the approved zero-cost requirement. |
 
-## Remaining owner/preview checks
+## Initial browser handoff
 
-An anonymous browser visit to the current PR preview correctly reached `/admin/login?next=%2Fadmin%2Fmedia`. The browser does not currently have an authenticated admin session. The login page was left open for the owner; credentials are not requested in chat.
+An anonymous browser visit to the PR preview correctly reached `/admin/login?next=%2Fadmin%2Fmedia`. At that point the browser had no authenticated admin session, so the login page was left open for the owner. Credentials were not requested in chat.
 
-After owner sign-in, use the [disposable-file preview checklist](admin-media-library.md#owner-preview-checklist) to verify positive listing, picker behavior, saved hidden references and the delete lifecycle. These authenticated file interactions have **not** been claimed as completed by the catalog, role or anonymous API checks above. The PR stays draft pending those checks and owner review.
+The owner subsequently signed in through the **in-app browser**. The authenticated checks below supersede the initial empty-bucket limitation for the tested PDF fixture. Owner review remains separate from these implementation checks.
+
+## Authenticated preview follow-up
+
+Target: `https://letcal-git-feat-admin-media-library-let-cals-projects.vercel.app/admin/media`, using the owner's existing signed-in session. No password/session token was read or copied.
+
+Only disposable fixtures were created:
+
+- Hidden certificate `test-item-media-qa-20261021`, explicitly labelled not a professional qualification, with `published=false` before its first save.
+- One 1-page PDF labelled **DISPOSABLE MEDIA QA FIXTURE**, no personal information, **1,462 bytes**. Storage key: `files/pdf/9158c349-test-item-media-qa-20261021.pdf`.
+
+| Browser check | Observed result |
+| --- | --- |
+| Initial signed-in library | Empty inventory, matching the database |
+| Upload through certificate form | PDF uploaded successfully with the admin session |
+| Picker | PDF shown with correct size/date/icon and the 10 MiB picker limit |
+| Escape/cancel picker | No selection persisted; focus returned to **Chọn từ thư viện** |
+| Select existing PDF | Returned its URL without a second upload; database still had **0 saved test certificates and 1 file** until explicit Save |
+| Save hidden certificate | 1 hidden test item; original published count stayed 10 |
+| Library usage | Linked the PDF to the hidden certificate and offered **no delete button** for the used file |
+| Search/type/unused filters | Non-matching search and image filter hid the PDF; PDF filter restored it; unused-only excluded it while referenced |
+| Reload | Retained correct usage and active filters |
+| Light/mobile layout | At 390×844, CSS document width 375 and main width 343: no horizontal overflow; viewport override later reset |
+| Remove file reference and Save | File became unused and its delete button appeared |
+| Cancel delete | No deletion; keyboard focus returned to the original delete button |
+| Confirm delete | Owner explicitly approved permanent removal of this exact fixture at action time; UI returned to 0 files and focus to search |
+| Cleanup | Removed only the test certificate through the normal recoverable admin delete flow; restored the original dark theme |
+
+### Positive RLS check with the uploaded object
+
+While the PDF existed, repeated read-only role/claim transactions against that exact object returned:
+
+| Context | Visible fixture objects |
+| --- | --- |
+| Authenticated admin claim | **1** |
+| Authenticated synthetic non-admin claim | **0** |
+| Anonymous empty claims | **0** |
+
+These database probes still use local role/claim contexts; they do not claim a signed non-admin Auth session. The signed **admin** upload/list/delete path was exercised through the real browser. Real anonymous Storage list API calls also returned no objects while the fixture existed.
+
+### Cleanup evidence and remaining limits
+
+- Final database checks: **0 Storage objects**, **0 current test certificates**, **10 total / 10 published certificates** (matching the pre-test list). Normal content version history was left under the application's retention rules.
+- Direct GET of the removed PDF returned HTTP **400** with Storage payload `404`, `Object not found`, `NoSuchKey`; the blob was not left behind.
+- Local screenshots of used-file protection, mobile light layout, delete confirmation and the clean library are kept in ignored QA output, not published with account details in this public repository.
+- Live concurrent-save/delete rejection, forced network loss, expiration during a media action, oversized/unknown-size picker cases and real image/video previews were not exercised in this signed-in session. Their automated coverage and the remaining owner checklist are distinguished from the live PDF lifecycle above. No other user/account was created, no forced sign-out was performed, and no atomic cross-tab deletion guarantee is claimed.
+- Implementation is ready for owner PR review; owner approval and merge are not inferred from these checks.
 
 Rollback SQL is prepared in [admin-media-storage-rollback.sql](admin-media-storage-rollback.sql), but was not executed: the additive policy remains installed for preview testing.
