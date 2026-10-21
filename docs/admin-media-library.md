@@ -21,6 +21,8 @@ Preview and production share a database. Apply only this migration to the existi
 
 The checked-in SQL and mocked tests are not evidence that a remote migration or advisor check ran. Record execution results in the PR.
 
+For the existing portfolio project, this policy was applied on 2026-10-21. See the [remote verification record](admin-media-verification-2026-10-21.md) for the recorded migration version, before/after advisor comparison and remaining authenticated preview checks. Do not apply the policy a second time.
+
 **Rollback:** [admin-media-storage-rollback.sql](admin-media-storage-rollback.sql) drops only the added policy. It does not delete files or content. The library cannot list files without its SELECT permission. Rerun the read-only catalog checks after rollback.
 
 ## Deletion contract

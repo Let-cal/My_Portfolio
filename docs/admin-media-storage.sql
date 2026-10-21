@@ -1,4 +1,5 @@
--- Batch 5 Storage policy verification. READ ONLY; not executed by implementation.
+-- Batch 5 Storage policy verification. READ ONLY.
+-- Remote execution results: docs/admin-media-verification-2026-10-21.md.
 -- The parent/owner runs these checks before and after applying
 -- supabase/migrations/20261021124334_admin_media_select.sql separately.
 -- This file does not apply the migration or change roles, JWTs, buckets or objects.

@@ -27,7 +27,8 @@
 - [x] Generate icon artifacts and verify types/lint.
 
 ## Task 3: Validate and deliver
-- [ ] Apply/verify additive policy using existing authorized project connection; no fabricated execution results.
+- [x] Apply additive policy using the authorized project connection; verify catalog, role/claim predicates, anonymous API and advisor comparison.
+- [ ] Authenticated preview/file lifecycle with owner session; distinguish this from empty-bucket catalog/role checks.
 - [x] npm run verify, anonymous browser checks, independent whole-patch review and important-finding fix pass.
 - [x] Commit/push/open batch5 PR with migration state, rollback and test-item-only owner checklist. Owner controls merge.
 
@@ -39,5 +40,5 @@
 - Opt-in complete content pagination covers later/hidden rows; existing callers retain their current default behavior. Read-only actions no longer suppress other-tab Realtime notes.
 - Integration regression found by the full suite: command-palette search matched overbroad new keywords. Scoped the media keywords and retained the previous default screen ordering; existing navigation regression is green.
 - Ruling: one bounded database-policy worker ran alongside inline UI implementation, following the user's previously authorized subagent workflow. The worker had a disjoint write set; one fresh reviewer evaluated the integrated patch.
-- **Remote gate remains pending:** no Supabase management connection in this session. CLI returned `AccessTokenRequiredError`; no migration, advisor, or real RLS/session check has been executed. Prepared exact migration, read-only verification and policy-only rollback. Keep the delivery PR draft until those checks and owner preview review are complete. Mocked tests are not remote execution evidence.
+- Initial delivery lacked a Supabase management connection. **Updated after owner connected Supabase:** migration `admin_media_select` applied to the confirmed portfolio project, remote version `20261021141852`. Catalog comparison confirms exactly one added SELECT policy and unchanged previous policies/helper/buckets/RLS; security advisor has no new findings. Read-only database-role/claim probes and anonymous Storage API checks completed. [Remote verification record](../../admin-media-verification-2026-10-21.md) distinguishes these checks from signed Auth sessions and positive object tests. Both buckets are empty; authenticated preview/file checks and owner review remain pending, so keep the PR draft.
 - Delivery: implementation commit `c539514`, branch `feat/admin-media-library`, [draft PR #15](https://github.com/Let-cal/My_Portfolio/pull/15). GitHub checks and Vercel preview started; their final outcomes must be checked against the current PR head before marking ready. Production and main have not been changed by this batch.
