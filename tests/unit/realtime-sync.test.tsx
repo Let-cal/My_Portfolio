@@ -40,6 +40,8 @@ vi.mock("@/lib/supabase/browser", () => ({
 
 const { RealtimeSync } = await import("@/components/admin/RealtimeSync");
 const { markOwnWrite, resetOwnWrites } = await import("@/lib/admin/own-writes");
+const { expireAdminSession, resetActionState } =
+  await import("@/lib/admin/action-errors");
 
 const send = (payload: unknown) =>
   act(() => channel.state.handler?.({ payload }));
@@ -49,10 +51,23 @@ beforeEach(() => {
   refresh.mockReset();
   toast.mockReset();
   resetOwnWrites();
+  resetActionState();
 });
 afterEach(() => vi.useRealTimers());
 
 describe("RealtimeSync", () => {
+  it("does not refresh expired editors on a queued change or reconnect", async () => {
+    render(<RealtimeSync />);
+    await act(async () => {});
+    act(() => channel.state.status?.("SUBSCRIBED"));
+    send({ table: "projects", op: "update", key: "a" });
+    act(() => expireAdminSession());
+    await act(async () => vi.advanceTimersByTime(500));
+    act(() => channel.state.status?.("CHANNEL_ERROR"));
+    act(() => channel.state.status?.("SUBSCRIBED"));
+    expect(refresh).not.toHaveBeenCalled();
+    expect(toast).not.toHaveBeenCalled();
+  });
   it("listens on the private admin topic", async () => {
     render(<RealtimeSync />);
     await act(async () => {});

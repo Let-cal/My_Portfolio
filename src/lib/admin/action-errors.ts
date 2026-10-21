@@ -8,8 +8,16 @@ import { toast } from "sonner";
 import type { ActionResult } from "@/app/admin/actions";
 import { beginOwnWrite, endOwnWrite } from "./own-writes";
 
-type State = { sessionExpired: boolean; networkDown: boolean };
-let state: State = { sessionExpired: false, networkDown: false };
+type State = {
+  sessionExpired: boolean;
+  sessionBlocked: boolean;
+  networkDown: boolean;
+};
+let state: State = {
+  sessionExpired: false,
+  sessionBlocked: false,
+  networkDown: false,
+};
 const listeners = new Set<() => void>();
 
 function set(next: Partial<State>) {
@@ -32,17 +40,23 @@ export function useAdminActionState(): State {
 }
 
 export const closeSessionExpired = () => set({ sessionExpired: false });
+export const isAdminSessionBlocked = () => state.sessionBlocked;
+export const expireAdminSession = () =>
+  set({ sessionExpired: true, sessionBlocked: true });
+export const blockAdminSession = () => set({ sessionBlocked: true });
+export const resumeAdminSession = () =>
+  set({ sessionExpired: false, sessionBlocked: false });
 export const setNetworkDown = (down: boolean) => set({ networkDown: down });
 /** For tests. */
 export const resetActionState = () =>
-  set({ sessionExpired: false, networkDown: false });
+  set({ sessionExpired: false, sessionBlocked: false, networkDown: false });
 
 type Failure = Extract<ActionResult, { ok: false }>;
 
 /** Shows a failed result: dialog for an expired session, retry toast for the network, else the message. */
 export function showActionError(result: Failure, retry?: () => void) {
   if (result.code === "SESSION_EXPIRED") {
-    set({ sessionExpired: true });
+    expireAdminSession();
     return;
   }
   if (result.code === "STALE") {

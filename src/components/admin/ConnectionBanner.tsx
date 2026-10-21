@@ -4,6 +4,7 @@ import { WifiOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useSyncExternalStore } from "react";
 import { setNetworkDown, useAdminActionState } from "@/lib/admin/action-errors";
+import { isAdminSessionBlocked } from "@/lib/admin/action-errors";
 
 const subscribe = (onChange: () => void) => {
   window.addEventListener("online", onChange);
@@ -30,7 +31,7 @@ export function ConnectionBanner() {
   useEffect(() => {
     const back = () => {
       setNetworkDown(false);
-      router.refresh();
+      if (!isAdminSessionBlocked()) router.refresh();
     };
     window.addEventListener("online", back);
     return () => window.removeEventListener("online", back);

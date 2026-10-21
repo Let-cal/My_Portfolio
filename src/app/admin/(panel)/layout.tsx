@@ -7,6 +7,7 @@ import { ConnectionBanner } from "@/components/admin/ConnectionBanner";
 import { RealtimeSync } from "@/components/admin/RealtimeSync";
 import { SessionExpiredDialog } from "@/components/admin/SessionExpiredDialog";
 import { SignOutButton } from "@/components/admin/SignOutButton";
+import { AdminSessionSync } from "@/components/admin/AdminSessionSync";
 import { buildCommandItems } from "@/lib/admin/command-items";
 import { getAdminContent } from "@/lib/admin/data";
 import { getAdminEmail } from "@/lib/admin/session";
@@ -56,6 +57,7 @@ export default function AdminPanelLayout({
         {children}
       </div>
       <SessionExpiredDialog />
+      <AdminSessionSync />
       {/* Reads the current path (request data), so it renders inside Suspense. */}
       <Suspense>
         <RealtimeSync />

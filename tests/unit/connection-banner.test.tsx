@@ -8,6 +8,7 @@ const { ConnectionBanner } =
   await import("@/components/admin/ConnectionBanner");
 const { setNetworkDown, resetActionState } =
   await import("@/lib/admin/action-errors");
+const { expireAdminSession } = await import("@/lib/admin/action-errors");
 
 beforeEach(() => {
   refresh.mockReset();
@@ -15,6 +16,12 @@ beforeEach(() => {
 });
 
 describe("ConnectionBanner", () => {
+  it("does not redirect an expired editor through a back-online refresh", async () => {
+    render(<ConnectionBanner />);
+    act(() => expireAdminSession());
+    await act(async () => window.dispatchEvent(new Event("online")));
+    expect(refresh).not.toHaveBeenCalled();
+  });
   it("appears while offline and refreshes once when back online", async () => {
     render(<ConnectionBanner />);
     expect(screen.queryByRole("status")).toBeNull();

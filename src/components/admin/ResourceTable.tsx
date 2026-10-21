@@ -1,9 +1,10 @@
 "use client";
+import { useAdminRouter as useRouter } from "@/lib/admin/use-admin-router";
 
 import { runAction } from "@/lib/admin/action-errors";
 import { Copy, Search, Trash2, TriangleAlert } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {

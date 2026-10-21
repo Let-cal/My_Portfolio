@@ -1,4 +1,5 @@
 "use client";
+import { useAdminRouter as useRouter } from "@/lib/admin/use-admin-router";
 
 import Link from "next/link";
 import { holdRefresh, onChange } from "@/lib/admin/own-writes";
@@ -12,7 +13,7 @@ import {
 import { runAction } from "@/lib/admin/action-errors";
 import { publicUrl } from "@/lib/admin/public-link";
 import { ADMIN_DISCARD_EVENT, signature } from "@/lib/admin/sync";
-import { useRouter } from "next/navigation";
+
 import {
   useEffect,
   useRef,

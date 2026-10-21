@@ -67,6 +67,16 @@ const fail = (error: unknown): Extract<ActionResult, { ok: false }> => {
   return { ok: false, error: message };
 };
 
+/** Revalidate reauthentication without refreshing the editor or writing content. */
+export async function checkAdminSession(): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    return { ok: true };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
 type ParseResult<T> =
   | { success: true; data: T }
   | {

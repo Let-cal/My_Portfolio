@@ -27,12 +27,21 @@ globalThis.ResizeObserver ??= class {
 Element.prototype.scrollIntoView ??= function () {};
 
 const { ResourceForm } = await import("@/components/admin/ResourceForm");
+const { SessionExpiredDialog } =
+  await import("@/components/admin/SessionExpiredDialog");
+const {
+  expireAdminSession,
+  closeSessionExpired,
+  resumeAdminSession,
+  resetActionState,
+} = await import("@/lib/admin/action-errors");
 const { ADMIN_DISCARD_EVENT } = await import("@/lib/admin/sync");
 const content = contentSchema.parse(seed);
 const { sortIndex: _s, ...cert } = content.certificates[0];
 void _s;
 
 beforeEach(() => {
+  resetActionState();
   saveResource.mockReset().mockResolvedValue({ ok: true });
   push.mockReset();
   localStorage.clear();
@@ -50,6 +59,40 @@ const nameInput = () =>
   document.getElementById("field-name") as HTMLInputElement;
 
 describe("form and new server data", () => {
+  it("keeps a real editor after expiry and blocks cancel until verified; saving remains manual", async () => {
+    render(
+      <>
+        {form(cert)}
+        <SessionExpiredDialog />
+      </>,
+    );
+    await act(async () =>
+      fireEvent.change(nameInput(), {
+        target: { value: "Edits kept after logout" },
+      }),
+    );
+    act(() => {
+      expireAdminSession();
+      closeSessionExpired();
+    });
+    await act(async () =>
+      fireEvent.click(screen.getByRole("button", { name: "Hủy" })),
+    );
+    expect(push).not.toHaveBeenCalled();
+    expect(nameInput().value).toBe("Edits kept after logout");
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(saveResource).not.toHaveBeenCalled();
+    act(() => resumeAdminSession());
+    expect(saveResource).not.toHaveBeenCalled();
+    await act(async () =>
+      fireEvent.click(screen.getByRole("button", { name: "Lưu" })),
+    );
+    expect(saveResource).toHaveBeenCalledWith(
+      "certificates",
+      expect.objectContaining({ name: "Edits kept after logout" }),
+      false,
+    );
+  });
   it("takes new server data when nothing is edited", async () => {
     const { rerender } = render(form(cert));
     await act(async () =>

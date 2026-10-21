@@ -11,6 +11,7 @@ import {
   type ChangeEvent,
 } from "@/lib/admin/own-writes";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
+import { isAdminSessionBlocked } from "@/lib/admin/action-errors";
 
 const DEBOUNCE_MS = 400;
 
@@ -37,6 +38,10 @@ export function RealtimeSync() {
     let stopped = false;
 
     const flush = () => {
+      if (isAdminSessionBlocked()) {
+        fromElsewhere = false;
+        return;
+      }
       if (!isRefreshHeld(path.current)) router.refresh();
       if (fromElsewhere) toast("Đã cập nhật từ nơi khác");
       fromElsewhere = false;
@@ -56,7 +61,13 @@ export function RealtimeSync() {
         .subscribe((status) => {
           if (status === "SUBSCRIBED") {
             // Back after a drop: refresh once to catch up on anything missed meanwhile.
-            if (connected && lost) router.refresh();
+            if (
+              connected &&
+              lost &&
+              !isAdminSessionBlocked() &&
+              !isRefreshHeld(path.current)
+            )
+              router.refresh();
             connected = true;
             lost = false;
           } else if (

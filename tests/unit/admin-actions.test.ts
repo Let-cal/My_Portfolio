@@ -76,6 +76,7 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 const {
+  checkAdminSession,
   saveResource,
   deleteResource,
   reorderResource,
@@ -107,6 +108,17 @@ beforeEach(() => {
 });
 
 describe("admin actions", () => {
+  it("checks reauthentication without a content write or router refresh", async () => {
+    expect(await checkAdminSession()).toEqual({ ok: true });
+    expect(calls).toEqual([]);
+    expect(refresh).not.toHaveBeenCalled();
+    expect(updateTag).not.toHaveBeenCalled();
+    requireAdmin.mockRejectedValue(new Error("SESSION_EXPIRED"));
+    expect(await checkAdminSession()).toMatchObject({
+      ok: false,
+      code: "SESSION_EXPIRED",
+    });
+  });
   it("refuse to write for anyone who is not the admin", async () => {
     requireAdmin.mockRejectedValue(new Error("FORBIDDEN"));
     const { sortIndex: _s, ...cert } = content.certificates[0];

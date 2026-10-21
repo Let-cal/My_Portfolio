@@ -32,7 +32,12 @@ export function SessionExpiredDialog() {
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={closeSessionExpired}>
+          <Button
+            variant="outline"
+            onClick={() =>
+              window.dispatchEvent(new Event("admin:verify-session"))
+            }
+          >
             Tôi đã đăng nhập lại
           </Button>
           <Button asChild>
