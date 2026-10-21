@@ -2,6 +2,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { contentSchema, type Content } from "@/content/schema";
 import type { ContentRepository } from "./repository";
 import { SeedRepository } from "./seed-repository";
+import { getPreviewContent } from "./preview-content";
 import {
   createPublicSupabase,
   SupabaseRepository,
@@ -61,6 +62,11 @@ export async function loadContent(
  * recovers after Supabase resumes; every other result is cached for the max lifetime.
  */
 export async function getContent(): Promise<Content> {
+  return (await getPreviewContent()) ?? getPublicContent();
+}
+
+/** Anonymous-only cache. Admin clients and draft content must never enter this scope. */
+async function getPublicContent(): Promise<Content> {
   "use cache";
   cacheTag("content");
   const { content, source } = await loadContentWithSource();

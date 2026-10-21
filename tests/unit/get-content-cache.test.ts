@@ -5,6 +5,9 @@ import seed from "@/content/seed.json";
 const cacheLife = vi.fn();
 const cacheTag = vi.fn();
 vi.mock("next/cache", () => ({ cacheLife, cacheTag }));
+vi.mock("next/headers", () => ({
+  draftMode: async () => ({ isEnabled: false }),
+}));
 
 const repoGetContent = vi.fn();
 vi.mock("@/lib/data/supabase-repository", () => ({

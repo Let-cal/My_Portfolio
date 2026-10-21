@@ -25,13 +25,13 @@ export type HealthIssue = {
 
 const RANK = { error: 0, warning: 1, info: 2 } as const;
 
-function isI18nLeaf(v: unknown): v is { en: string; ja: string; vi: string } {
+function isI18nLeaf(v: unknown): v is { en: string; ja?: string; vi?: string } {
   if (!v || typeof v !== "object") return false;
   const o = v as Record<string, unknown>;
   return (
     typeof o.en === "string" &&
-    typeof o.ja === "string" &&
-    typeof o.vi === "string"
+    (o.ja === undefined || typeof o.ja === "string") &&
+    (o.vi === undefined || typeof o.vi === "string")
   );
 }
 
@@ -46,8 +46,8 @@ export function translationStats(value: unknown): {
     if (isI18nLeaf(v)) {
       if (!v.en.trim()) return;
       acc.total++;
-      if (v.ja.trim()) acc.ja++;
-      if (v.vi.trim()) acc.vi++;
+      if (v.ja?.trim()) acc.ja++;
+      if (v.vi?.trim()) acc.vi++;
       return;
     }
     if (Array.isArray(v)) v.forEach(walk);

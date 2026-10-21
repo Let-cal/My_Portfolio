@@ -59,6 +59,23 @@ const nameInput = () =>
   document.getElementById("field-name") as HTMLInputElement;
 
 describe("form and new server data", () => {
+  it("shows translation progress from the live editor and a non-prefetched saved-preview link", async () => {
+    render(form({ ...cert, description: { en: "A", ja: "", vi: "" } }));
+    const link = screen.getByRole("link", {
+      name: /Xem trước nội dung đã lưu/,
+    });
+    expect(link.getAttribute("href")).toBe(
+      "/admin/preview?locale=en&target=certificates",
+    );
+    expect(link.getAttribute("target")).toBe("_blank");
+    expect(screen.getByRole("progressbar", { name: "JA 0/1" })).toBeTruthy();
+    await act(async () =>
+      fireEvent.change(document.getElementById("field-description.ja")!, {
+        target: { value: "あ" },
+      }),
+    );
+    expect(screen.getByRole("progressbar", { name: "JA 1/1" })).toBeTruthy();
+  });
   it("keeps a real editor after expiry and blocks cancel until verified; saving remains manual", async () => {
     render(
       <>
