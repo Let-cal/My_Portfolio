@@ -1,4 +1,5 @@
 "use client";
+import { TranslationProgress } from "./TranslationProgress";
 import { useAdminRouter as useRouter } from "@/lib/admin/use-admin-router";
 
 import { runAction } from "@/lib/admin/action-errors";
@@ -280,6 +281,7 @@ export function ResourceTable({
           {row.label}
         </p>
         <p className="truncate text-xs text-muted-foreground">{row.detail}</p>
+        <TranslationProgress stats={row.translations} />
       </div>
       <div className="hidden flex-wrap justify-end gap-1 md:flex">
         {row.skillCount !== undefined && (

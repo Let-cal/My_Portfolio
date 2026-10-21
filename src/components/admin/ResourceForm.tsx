@@ -21,7 +21,9 @@ import {
   useSyncExternalStore,
   useTransition,
 } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
+import { TranslationProgress } from "./TranslationProgress";
+import { publicAnchor } from "@/lib/admin/public-link";
 import { toast } from "sonner";
 import {
   saveResource,
@@ -160,6 +162,7 @@ export function FieldsForm({
     resolver: adminResolver(schema, fields),
   });
   const { control, register, handleSubmit, formState, setError } = form;
+  const translationValues = useWatch({ control });
   const isNew = !lockId;
   const scoped = (path: string) => (idScope ? `${idScope}-${path}` : path);
   const fid = (path: string) => `field-${scoped(path)}`;
@@ -1029,6 +1032,7 @@ export function FieldsForm({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-xs text-muted-foreground">Mục có * là bắt buộc</p>
           {translated && <LocaleModeSwitch errorLocales={errorLocales} />}
+          <TranslationProgress value={translationValues} />
         </div>
         {deletedElsewhere && (
           <div
@@ -1212,20 +1216,36 @@ export function ResourceForm({
     router.push(`/admin/${resourceKey}?highlight=${encodeURIComponent(id)}`);
   };
   return (
-    <FieldsForm
-      fields={resource.fields}
-      schema={resource.schema.omit({ sortIndex: true })}
-      initial={defaults}
-      options={options}
-      lockId={!isNew}
-      onSave={(values) => saveResource(resourceKey, values, isNew)}
-      doneHref={`/admin/${resourceKey}`}
-      onSaved={onSaved}
-      draftId={draftKey(resource.table, isNew ? "new" : String(initial.id))}
-      table={resource.table}
-      itemKey={isNew ? undefined : String(initial.id)}
-      onSaveAsNew={(values) => saveResource(resourceKey, values, true)}
-      sections={resource.sections}
-    />
+    <>
+      {!isNew && (
+        <div className="flex justify-end">
+          <Button asChild variant="outline" size="sm">
+            <Link
+              href={`/admin/preview?locale=en&target=${encodeURIComponent(publicAnchor(resourceKey, String(initial.id)))}`}
+              prefetch={false}
+              target="_blank"
+              rel="noopener"
+            >
+              Xem trước nội dung đã lưu ↗
+            </Link>
+          </Button>
+        </div>
+      )}
+      <FieldsForm
+        fields={resource.fields}
+        schema={resource.schema.omit({ sortIndex: true })}
+        initial={defaults}
+        options={options}
+        lockId={!isNew}
+        onSave={(values) => saveResource(resourceKey, values, isNew)}
+        doneHref={`/admin/${resourceKey}`}
+        onSaved={onSaved}
+        draftId={draftKey(resource.table, isNew ? "new" : String(initial.id))}
+        table={resource.table}
+        itemKey={isNew ? undefined : String(initial.id)}
+        onSaveAsNew={(values) => saveResource(resourceKey, values, true)}
+        sections={resource.sections}
+      />
+    </>
   );
 }

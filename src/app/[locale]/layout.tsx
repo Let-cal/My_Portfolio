@@ -38,6 +38,8 @@ import {
 } from "@/lib/metadata";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { DeferredToaster } from "@/components/site/DeferredToaster";
+import { PreviewBanner } from "@/components/site/PreviewBanner";
+import { getPreviewContent } from "@/lib/data/preview-content";
 import "../globals.css";
 
 // Inter and Space Grotesk are vendored unchanged with explicit subset ordering (fonts/vietnamese.css).
@@ -61,7 +63,10 @@ export async function generateMetadata({
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) return {};
   const t = await getTranslations({ locale, namespace: "meta" });
-  return buildPageMetadata(locale, t("description"));
+  const metadata = buildPageMetadata(locale, t("description"));
+  return (await getPreviewContent())
+    ? { ...metadata, robots: { index: false, follow: false } }
+    : metadata;
 }
 
 export default async function LocaleLayout({
@@ -116,6 +121,7 @@ export default async function LocaleLayout({
         </noscript>
       </head>
       <body className={bodyClassName}>
+        <PreviewBanner locale={locale} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

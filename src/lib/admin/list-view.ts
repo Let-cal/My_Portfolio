@@ -4,6 +4,7 @@ import { translationStats } from "./health";
 import type { ResourceKey } from "./resources";
 
 export type ListRow = {
+  translations?: ReturnType<typeof translationStats>;
   id: string;
   label: string;
   detail: string;
@@ -53,6 +54,7 @@ export function listRows(key: ResourceKey, c: AdminContent): ListRow[] {
     hidden: published === false,
     canHide: published !== undefined,
     missingLocales: missing(item),
+    translations: translationStats(item),
   });
   switch (key) {
     case "experiences":
