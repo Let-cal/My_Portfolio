@@ -4,6 +4,10 @@ import { motion } from "motion/react";
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import {
+  expireAdminSession,
+  isAdminSessionBlocked,
+} from "@/lib/admin/action-errors";
 
 // Every form with unsaved edits registers here; one shared listener asks once, however many are dirty.
 const dirtyForms = new Set<object>();
@@ -14,6 +18,10 @@ function onBeforeUnload(e: BeforeUnloadEvent) {
 
 /** True when it is fine to leave: nothing unsaved, or the user agreed to drop it. Asks at most once. */
 export function confirmLeave(): boolean {
+  if (isAdminSessionBlocked()) {
+    expireAdminSession();
+    return false;
+  }
   return (
     dirtyForms.size === 0 ||
     window.confirm(
@@ -23,6 +31,7 @@ export function confirmLeave(): boolean {
 }
 
 function onLinkClick(e: MouseEvent) {
+  if (isAdminSessionBlocked()) return; // The session guard handles this before the unsaved prompt.
   const link = (e.target as Element | null)?.closest?.("a[href]");
   if (
     !link ||

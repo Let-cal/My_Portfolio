@@ -52,6 +52,9 @@ async function ResourceList({
         <ResourceTable
           resourceKey={key}
           initialRows={listRows(key, content)}
+          highlightId={
+            typeof sp.highlight === "string" ? sp.highlight : undefined
+          }
           impacts={Object.fromEntries(
             listRows(key, content).map((r) => [
               r.id,

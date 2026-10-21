@@ -1,5 +1,7 @@
 "use client";
 
+import { draftKey } from "@/lib/admin/drafts";
+import { runAction } from "@/lib/admin/action-errors";
 import { VersionHistory } from "./VersionHistory";
 import { rovingKey } from "./roving";
 import { useTransition, useState } from "react";
@@ -18,6 +20,9 @@ export function ProfileForm({ initial }: { initial: Record<string, unknown> }) {
       initial={initial}
       lockId
       onSave={saveProfile}
+      draftId={draftKey("profile", "me")}
+      table="profile"
+      itemKey="me"
     />
   );
 }
@@ -43,6 +48,9 @@ export function RoleForm({
       idScope={String(key)}
       active={active}
       onSave={(values) => saveRole({ ...values, key })}
+      draftId={draftKey("roles", String(key))}
+      table="roles"
+      itemKey={String(key)}
     />
   );
 }
@@ -120,6 +128,12 @@ export function RoleTabs({
 export function OpenToWorkSwitch({ initial }: { initial: boolean }) {
   const [value, setValue] = useState(initial);
   const [pending, startTransition] = useTransition();
+  // Follow the server (another tab may switch it) unless this tab's own change is still saving.
+  const [seen, setSeen] = useState(initial);
+  if (initial !== seen && !pending) {
+    setSeen(initial);
+    setValue(initial);
+  }
   return (
     <label className="flex items-center gap-3 text-sm font-medium">
       <Switch
@@ -128,15 +142,12 @@ export function OpenToWorkSwitch({ initial }: { initial: boolean }) {
         onCheckedChange={(next) => {
           setValue(next);
           startTransition(async () => {
-            const result = await setOpenToWork(next);
+            const result = await runAction(() => setOpenToWork(next));
             if (result.ok)
               toast.success(
                 next ? "Đang hiện Open to work" : "Đã tắt Open to work",
               );
-            else {
-              setValue(!next);
-              toast.error(result.error);
-            }
+            else setValue(!next);
           });
         }}
       />

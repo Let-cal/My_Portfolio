@@ -6,6 +6,7 @@ import { TABLES, type Table, type TableName } from "@/lib/data/columns";
 import {
   renderSchemaSql,
   VERSIONED_TABLES,
+  REALTIME_SQL,
   VERSIONS_SECURITY_SQL,
   VERSIONS_SQL,
 } from "@/lib/data/schema-sql";
@@ -167,5 +168,39 @@ describe("content versions", () => {
       "utf8",
     ).replace(/\r\n/g, "\n");
     expect(migration).toContain(VERSIONS_SECURITY_SQL);
+  });
+});
+
+describe("admin realtime", () => {
+  it("every content table sends a tiny change note on a private admin topic", () => {
+    for (const name of VERSIONED_TABLES) {
+      expect(renderSchemaSql()).toContain(
+        `create trigger ${name}_broadcast after insert or update or delete on public.${name}`,
+      );
+    }
+    expect(REALTIME_SQL).toContain("realtime.send(");
+    expect(REALTIME_SQL).toContain("'admin:content'");
+    // Only the table, operation and key travel, never the row itself.
+    expect(REALTIME_SQL).toContain(
+      "jsonb_build_object('table', tg_table_name, 'op', lower(tg_op), 'key'",
+    );
+  });
+
+  it("only the admin can listen, and a failed send never blocks a save", () => {
+    expect(REALTIME_SQL).toContain(
+      `create policy "admin_content_receive" on realtime.messages for select to authenticated using (realtime.topic() = 'admin:content' and private.is_admin());`,
+    );
+    expect(REALTIME_SQL).toContain("exception when others then");
+    expect(REALTIME_SQL).toContain(
+      "revoke execute on function private.broadcast_content_change() from public, anon, authenticated;",
+    );
+  });
+
+  it("the migration is exactly the realtime section", () => {
+    const migration = readFileSync(
+      "supabase/migrations/0006_admin_realtime.sql",
+      "utf8",
+    ).replace(/\r\n/g, "\n");
+    expect(migration).toContain(REALTIME_SQL);
   });
 });

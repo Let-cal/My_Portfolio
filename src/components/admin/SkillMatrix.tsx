@@ -1,8 +1,10 @@
 "use client";
+import { useAdminRouter as useRouter } from "@/lib/admin/use-admin-router";
 
+import { runAction } from "@/lib/admin/action-errors";
 import { motion } from "motion/react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -24,6 +26,7 @@ import {
   type MatrixFilter,
 } from "@/lib/admin/matrix";
 import { slugify } from "@/lib/admin/slug";
+import { signature } from "@/lib/admin/sync";
 import { cn } from "@/lib/utils";
 import { useUnsavedGuard } from "./SaveBar";
 
@@ -48,6 +51,13 @@ export function SkillMatrix({
   const [draft, setDraft] = useState<Map<string, boolean>>(new Map());
   // Saved in this session but not yet in `content` (until the page refresh brings it).
   const [saved, setSaved] = useState<Map<string, boolean>>(new Map());
+  // Fresh server data already contains what this tab saved, and maybe changes from elsewhere.
+  const contentSignature = signature(content);
+  const [seenContent, setSeenContent] = useState(contentSignature);
+  if (contentSignature !== seenContent) {
+    setSeenContent(contentSignature);
+    setSaved(new Map());
+  }
   const [pinned, setPinned] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
   // The hovered or focused cell: its row and column light up like a crosshair (r = -1: a header).
@@ -99,25 +109,14 @@ export function SkillMatrix({
         : { skillId, projectId: col.id, linked };
     });
     setSaving(true);
-    let result: Awaited<ReturnType<typeof saveSkillLinks>>;
-    try {
-      result = await saveSkillLinks(changes);
-    } catch (error) {
-      result = {
-        ok: false,
-        error: error instanceof Error ? error.message : String(error),
-      };
-    }
+    // Unsaved cells stay marked after a failure, so "Lưu" again is the retry.
+    const result = await runAction(() => saveSkillLinks(changes));
     setSaving(false);
-    if (!result.ok) {
-      toast.error(`Không lưu được: ${result.error}`);
-      return;
-    }
+    if (!result.ok) return;
     setSaved((m) => new Map([...m, ...draft]));
     setDraft(new Map());
     toast.success(`Đã lưu ${changes.length} thay đổi`);
-    router.refresh();
-  }, [draft, saving, columns, router]);
+  }, [draft, saving, columns]);
 
   // Ctrl/⌘+S saves; leaving (tab close, links, ⌘K) with unsaved changes asks first.
   useUnsavedGuard(draft.size > 0);
@@ -323,7 +322,6 @@ export function SkillMatrix({
                     <AddSkillRow
                       group={g.group}
                       span={view.columns.length + 2}
-                      onAdded={() => router.refresh()}
                     />
                   }
                 >
@@ -507,15 +505,7 @@ function GroupRows({
 }
 
 /** "+ Thêm skill" at the end of a group: type a name, Enter adds it (the id comes from the name). */
-function AddSkillRow({
-  group,
-  span,
-  onAdded,
-}: {
-  group: string;
-  span: number;
-  onAdded: () => void;
-}) {
+function AddSkillRow({ group, span }: { group: string; span: number }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -539,16 +529,16 @@ function AddSkillRow({
     if (!trimmed) return fail("Nhập tên skill");
     if (!id) return fail("Tên cần có ít nhất một chữ cái hoặc chữ số");
     setBusy(true);
-    let result: Awaited<ReturnType<typeof saveResource>>;
-    try {
-      result = await saveResource(
-        "skills",
-        { id, name: trimmed, group, experienceIds: [], projectIds: [] },
-        true,
-      );
-    } catch (e) {
-      result = { ok: false, error: e instanceof Error ? e.message : String(e) };
-    }
+    // Errors show on the input; an expired session or a lost connection is reported globally too.
+    const result = await runAction(
+      () =>
+        saveResource(
+          "skills",
+          { id, name: trimmed, group, experienceIds: [], projectIds: [] },
+          true,
+        ),
+      { silent: true, retry: () => void submit() },
+    );
     setBusy(false);
     if (!result.ok) {
       // The row has no ID field: a clashing id means the skill (or one with the same id) exists.
@@ -563,7 +553,6 @@ function AddSkillRow({
     // Stay open, empty and focused so several skills can be added in a row.
     setName("");
     setError(null);
-    onAdded();
     requestAnimationFrame(() => inputRef.current?.focus());
   }
 

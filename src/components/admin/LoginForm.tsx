@@ -1,35 +1,68 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { safeNextPath } from "@/lib/admin/auth";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
+import { replaceAuthPage } from "@/lib/admin/auth-navigation";
 
 export function LoginForm() {
-  const router = useRouter();
   const next = safeNextPath(useSearchParams().get("next"));
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const busy = useRef(false);
+  const attempt = useRef(0);
+  useEffect(
+    () => () => {
+      ++attempt.current;
+    },
+    [],
+  );
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (busy.current) return;
     const form = new FormData(event.currentTarget);
     setPending(true);
     setError(null);
-    const { error } = await createBrowserSupabase().auth.signInWithPassword({
-      email: String(form.get("email")),
-      password: String(form.get("password")),
-    });
-    if (error) {
-      setError("Email hoặc mật khẩu không đúng.");
-      setPending(false);
-      return;
+    busy.current = true;
+    const current = ++attempt.current;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const { error } = await Promise.race([
+        createBrowserSupabase().auth.signInWithPassword({
+          email: String(form.get("email")),
+          password: String(form.get("password")),
+        }),
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(() => reject(new Error("timeout")), 20000);
+        }),
+      ]);
+      if (current !== attempt.current) return;
+      if (error) {
+        setError(
+          error.name === "AuthRetryableFetchError" ||
+            error.status === 0 ||
+            (error.status ?? 0) >= 500
+            ? "Không thể hoàn tất đăng nhập. Kiểm tra kết nối rồi thử lại."
+            : "Email hoặc mật khẩu không đúng.",
+        );
+        return;
+      }
+      replaceAuthPage(next);
+    } catch {
+      if (current === attempt.current)
+        setError("Không thể hoàn tất đăng nhập. Kiểm tra kết nối rồi thử lại.");
+    } finally {
+      clearTimeout(timer);
+      if (current === attempt.current) {
+        busy.current = false;
+        setPending(false);
+      }
     }
-    router.replace(next);
-    router.refresh();
   }
 
   return (

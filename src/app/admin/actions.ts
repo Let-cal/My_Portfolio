@@ -1,6 +1,6 @@
 "use server";
 
-import { updateTag } from "next/cache";
+import { refresh, updateTag } from "next/cache";
 import { z } from "zod";
 import { profileToRow, roleToRow } from "@/lib/data/mappers";
 import {
@@ -25,9 +25,18 @@ import { createServerSupabase } from "@/lib/supabase/server";
 import { profileSchema, roleSchema, type Skill } from "@/content/schema";
 
 /** `fieldErrors` maps a form path (e.g. "description.en") to the message shown under that input. */
+/** Why a write failed, for the client to react: sign in again, refuse, or offer a retry. */
+export type ActionErrorCode =
+  "SESSION_EXPIRED" | "FORBIDDEN" | "NETWORK" | "STALE";
+
 export type ActionResult =
   | { ok: true }
-  | { ok: false; error: string; fieldErrors?: Record<string, string> };
+  | {
+      ok: false;
+      error: string;
+      fieldErrors?: Record<string, string>;
+      code?: ActionErrorCode;
+    };
 
 /** A failure that belongs to specific inputs; the form shows each message on its field. */
 class FormError extends Error {
@@ -39,13 +48,34 @@ class FormError extends Error {
   }
 }
 
-const fail = (error: unknown): ActionResult =>
-  error instanceof FormError
-    ? { ok: false, error: error.message, fieldErrors: error.fieldErrors }
-    : {
-        ok: false,
-        error: error instanceof Error ? error.message : String(error),
-      };
+const fail = (error: unknown): Extract<ActionResult, { ok: false }> => {
+  if (error instanceof FormError)
+    return { ok: false, error: error.message, fieldErrors: error.fieldErrors };
+  const message = error instanceof Error ? error.message : String(error);
+  if (message === "SESSION_EXPIRED")
+    return {
+      ok: false,
+      error: "Phiên đăng nhập đã hết hạn.",
+      code: "SESSION_EXPIRED",
+    };
+  if (message === "FORBIDDEN")
+    return {
+      ok: false,
+      error: "Tài khoản này không có quyền quản trị.",
+      code: "FORBIDDEN",
+    };
+  return { ok: false, error: message };
+};
+
+/** Revalidate reauthentication without refreshing the editor or writing content. */
+export async function checkAdminSession(): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    return { ok: true };
+  } catch (error) {
+    return fail(error);
+  }
+}
 
 type ParseResult<T> =
   | { success: true; data: T }
@@ -80,6 +110,8 @@ async function adminWrite(
     if (!isResourceKey(key)) throw new Error(`Unknown resource: ${key}`);
     await write(key);
     updateTag("content");
+    // Admin screens re-render with the new data (updateTag only refreshes the public site).
+    refresh();
     return { ok: true };
   } catch (error) {
     return fail(error);
@@ -281,6 +313,8 @@ export async function saveSkillLinks(
       );
     }
     updateTag("content");
+    // Admin screens re-render with the new data (updateTag only refreshes the public site).
+    refresh();
     return { ok: true };
   } catch (error) {
     return fail(error);
@@ -379,6 +413,8 @@ async function adminSave(write: () => Promise<void>): Promise<ActionResult> {
     await requireAdmin();
     await write();
     updateTag("content");
+    // Admin screens re-render with the new data (updateTag only refreshes the public site).
+    refresh();
     return { ok: true };
   } catch (error) {
     return fail(error);
@@ -473,10 +509,7 @@ export async function listVersions(
       current: (rows?.[0] as Record<string, unknown> | undefined) ?? null,
     };
   } catch (error) {
-    return {
-      ok: false,
-      error: error instanceof Error ? error.message : String(error),
-    };
+    return fail(error);
   }
 }
 

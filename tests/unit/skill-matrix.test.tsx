@@ -72,7 +72,8 @@ describe("SkillMatrix (edit, then save)", () => {
       ]),
     );
     expect(saveButton()).toBeNull();
-    expect(refresh).toHaveBeenCalled();
+    // The server action refreshes the screens (tested in admin-actions); no extra client refresh.
+    expect(refresh).not.toHaveBeenCalled();
   });
 
   it("Ctrl+S saves", async () => {
@@ -165,7 +166,6 @@ describe("SkillMatrix (add skills, headers)", () => {
       },
       true,
     );
-    expect(refresh).toHaveBeenCalled();
     // Ready for the next one: the row stays open, empty and focused.
     const again = screen.getByRole("textbox", {
       name: "Tên skill mới (ai)",

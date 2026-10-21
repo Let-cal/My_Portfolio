@@ -42,6 +42,11 @@ export async function adminGuard(
   );
 
   const { data } = await supabase.auth.getUser();
+  // Server actions (POST with a Next-Action header) are not redirected: a redirect would replace
+  // the page and lose the form. requireAdmin() answers them (SESSION_EXPIRED / FORBIDDEN) and
+  // row level security still rejects every write from a non-admin.
+  if (request.method === "POST" && request.headers.has("next-action"))
+    return response;
   if (!isAdminEmail(data.user?.email, env.ADMIN_EMAIL)) return toLogin();
   return response;
 }

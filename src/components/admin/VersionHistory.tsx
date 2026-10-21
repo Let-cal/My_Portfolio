@@ -1,5 +1,6 @@
 "use client";
 
+import { runAction } from "@/lib/admin/action-errors";
 import { History, RotateCcw } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -12,6 +13,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { ADMIN_DISCARD_EVENT } from "@/lib/admin/sync";
 import { diffRow, type Version } from "@/lib/admin/versions";
 import { cn } from "@/lib/utils";
 import { confirmLeave } from "./SaveBar";
@@ -49,24 +51,29 @@ export function VersionHistory({
     setError(null);
     setSelected(null);
     startLoading(async () => {
-      const result = await listVersions(table, itemKey);
-      if (result.ok)
+      const result = await runAction(() => listVersions(table, itemKey), {
+        silent: true,
+      });
+      if (result.ok && "versions" in result)
         setData({ versions: result.versions, current: result.current });
-      else setError(result.error);
+      else if (!result.ok) setError(result.error);
     });
   }
 
   function restore(version: Version) {
     if (!confirmLeave()) return;
     startRestoring(async () => {
-      const result = await restoreVersion(version.id);
-      if (!result.ok) {
-        toast.error(`Không khôi phục được: ${result.error}`);
-        return;
-      }
+      const result = await runAction(() => restoreVersion(version.id), {
+        retry: () => restore(version),
+      });
+      if (!result.ok) return;
+      // Open forms drop their edits (already confirmed) and take the restored data that the
+      // action's refresh brings; the history list reloads for the next restore.
+      window.dispatchEvent(
+        new CustomEvent(ADMIN_DISCARD_EVENT, { detail: { table, itemKey } }),
+      );
       toast.success("Đã khôi phục phiên bản");
-      // The forms keep their own state; a reload shows the restored data everywhere.
-      window.location.reload();
+      setOpen(false);
     });
   }
 

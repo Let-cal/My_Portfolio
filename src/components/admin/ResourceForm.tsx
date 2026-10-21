@@ -1,10 +1,33 @@
 "use client";
+import { useAdminRouter as useRouter } from "@/lib/admin/use-admin-router";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import Link from "next/link";
+import { holdRefresh, onChange } from "@/lib/admin/own-writes";
+import {
+  clearDraft,
+  draftKey,
+  parseDraft,
+  pruneDrafts,
+  saveDraft,
+} from "@/lib/admin/drafts";
+import { runAction } from "@/lib/admin/action-errors";
+import { publicUrl } from "@/lib/admin/public-link";
+import { ADMIN_DISCARD_EVENT, signature } from "@/lib/admin/sync";
+
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  useTransition,
+} from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { saveResource, type ActionResult } from "@/app/admin/actions";
+import {
+  saveResource,
+  type ActionResult,
+  undoDelete,
+} from "@/app/admin/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -68,6 +91,21 @@ export type Options = Partial<
 /** Field that seeds a new item's ID, in order of preference. */
 const ID_SOURCES = ["name", "title", "company", "school"];
 
+const DAY = 24 * 60 * 60 * 1000;
+
+/** Drafts changed in another tab show up here too (the storage event). */
+const subscribeStorage = (onChange: () => void) => {
+  window.addEventListener("storage", onChange);
+  return () => window.removeEventListener("storage", onChange);
+};
+const readStorage = (key: string) => {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
 /** A form for any list of field specs, validated with `schema` and saved with `onSave`. */
 export function FieldsForm({
   fields,
@@ -77,6 +115,11 @@ export function FieldsForm({
   lockId = false,
   onSave,
   doneHref,
+  onSaved,
+  draftId,
+  table,
+  itemKey,
+  onSaveAsNew,
   sections,
   idScope,
   active = true,
@@ -94,6 +137,15 @@ export function FieldsForm({
   onSave: (values: Values) => Promise<ActionResult>;
   /** Where to go after a successful save; stay on the page when omitted. */
   doneHref?: string;
+  /** Replaces the default "Đã lưu" toast and `doneHref` navigation after a successful save. */
+  onSaved?: (values: Values) => void;
+  /** Storage key for autosaved drafts (see draftKey); no drafts when omitted. */
+  draftId?: string;
+  /** The saved item this form edits, to notice when it changes or is deleted elsewhere. */
+  table?: string;
+  itemKey?: string;
+  /** Saves the form as a new item, for when the edited item was deleted elsewhere. */
+  onSaveAsNew?: (values: Values) => Promise<ActionResult>;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -163,24 +215,34 @@ export function FieldsForm({
         const raw = form.getValues();
         const values = { ...parsed };
         for (const f of fields) if (f.virtual) values[f.name] = raw[f.name];
-        const result = await onSave(values);
+        // Field errors show on their inputs; session and network problems are reported globally.
+        const save = saveAsNew.current && onSaveAsNew ? onSaveAsNew : onSave;
+        saveAsNew.current = false;
+        const result = await runAction(() => save(values), {
+          silent: true,
+          retry: () => void onSubmit(),
+        });
         if (!result.ok) {
           if (result.fieldErrors && Object.keys(result.fieldErrors).length) {
             for (const [path, message] of Object.entries(result.fieldErrors))
               setError(path, { type: "server", message });
             setFocusKey((k) => k + 1);
-          } else {
+          } else if (!result.code || result.code === "FORBIDDEN") {
             toast.error(result.error);
           }
           return;
         }
+        if (draftId) clearDraft(localStorage, draftId);
         // Mark the current values as saved so the unsaved-changes guard lets go.
         form.reset(raw);
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
-        toast.success("Đã lưu");
-        if (doneHref) router.push(doneHref);
-        router.refresh();
+        if (onSaved) {
+          onSaved(values);
+        } else {
+          toast.success("Đã lưu");
+          if (doneHref) router.push(doneHref);
+        }
       }),
     () => setFocusKey((k) => k + 1),
   );
@@ -792,6 +854,145 @@ export function FieldsForm({
 
   const dirty = formState.isDirty;
   useUnsavedGuard(dirty);
+
+  // Server data that changed while the form is open (own save, another tab, a restore): taken
+  // as is when nothing is edited, otherwise offered, never forced over unsaved edits.
+  const initialSignature = signature(initial);
+  const [base, setBase] = useState({
+    signature: initialSignature,
+    values: initial,
+    resets: 0,
+  });
+  const serverMoved = initialSignature !== base.signature;
+  if (serverMoved && !dirty) {
+    setBase({
+      signature: initialSignature,
+      values: initial,
+      resets: base.resets + 1,
+    });
+  }
+  const { resets, values: baseValues } = base;
+  useEffect(() => {
+    if (resets > 0) form.reset(baseValues);
+  }, [form, resets, baseValues]);
+  // A restore of this item (history panel): drop the edits and show the server version.
+  const latest = useRef(initial);
+  useEffect(() => {
+    latest.current = initial;
+  }, [initial]);
+  useEffect(() => {
+    const discard = (event: Event) => {
+      const detail = (
+        event as CustomEvent<{ table?: string; itemKey?: string }>
+      ).detail;
+      if (!table || detail?.table !== table || detail?.itemKey !== itemKey)
+        return;
+      form.reset(latest.current);
+    };
+    window.addEventListener(ADMIN_DISCARD_EVENT, discard);
+    return () => window.removeEventListener(ADMIN_DISCARD_EVENT, discard);
+  }, [form, table, itemKey]);
+  const reloadFromServer = () =>
+    setBase({
+      signature: initialSignature,
+      values: initial,
+      resets: base.resets + 1,
+    });
+  const keepMine = () => setBase({ ...base, signature: initialSignature });
+
+  // Autosaved drafts: written about a second after the last edit, offered when the form opens
+  // again with nothing edited yet, forgotten after a save or after 7 days.
+  const draftRaw = useSyncExternalStore(
+    subscribeStorage,
+    () => (draftId ? readStorage(draftId) : null),
+    () => null,
+  );
+  const draft = draftRaw ? parseDraft(draftRaw) : null;
+  const [draftHandled, setDraftHandled] = useState(false);
+  const draftFresh =
+    draft !== null && Date.now() - new Date(draft.savedAt).getTime() < 7 * DAY;
+  const showDraft =
+    draftFresh &&
+    !draftHandled &&
+    !dirty &&
+    signature(draft.values) !== signature(initial);
+  useEffect(() => {
+    pruneDrafts(localStorage, Date.now());
+  }, []);
+  useEffect(() => {
+    if (!draftId) return;
+    let timer: number | undefined;
+    const sub = form.watch(() => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        if (!form.formState.isDirty) return;
+        saveDraft(localStorage, draftId, {
+          values: form.getValues(),
+          savedAt: new Date().toISOString(),
+          baseSignature: initialSignature,
+        });
+      }, 1000);
+    });
+    return () => {
+      window.clearTimeout(timer);
+      sub.unsubscribe();
+    };
+  }, [form, draftId, initialSignature]);
+  // The edited item deleted in another tab or device: unsaved edits stay, with three ways out.
+  const [deletedElsewhere, setDeletedElsewhere] = useState(false);
+  const saveAsNew = useRef(false);
+  useEffect(() => {
+    if (!table || !itemKey) return;
+    return onChange((event) => {
+      if (
+        event.op !== "delete" ||
+        event.table !== table ||
+        event.key !== itemKey
+      )
+        return;
+      if (form.formState.isDirty) {
+        // A refresh would now show a 404 in place of the form: hold it until the user decides.
+        holdRefresh(window.location.pathname, true);
+        setDeletedElsewhere(true);
+      } else {
+        toast("Mục đã bị xóa ở nơi khác");
+        router.push(doneHref ?? "/admin");
+      }
+    });
+  }, [table, itemKey, form, router, doneHref]);
+  // Leaving the page (sidebar, Back) must not keep its refreshes held.
+  useEffect(
+    () => () => {
+      if (table && itemKey) holdRefresh(window.location.pathname, false);
+    },
+    [table, itemKey],
+  );
+  const leaveDeleted = () => {
+    holdRefresh(window.location.pathname, false);
+    setDeletedElsewhere(false);
+  };
+  const restoreThenSave = async () => {
+    if (!table || !itemKey) return;
+    const result = await runAction(() => undoDelete(table, itemKey));
+    if (!result.ok) return;
+    leaveDeleted();
+    void onSubmit();
+  };
+  const saveDeletedAsNew = () => {
+    leaveDeleted();
+    saveAsNew.current = true;
+    void onSubmit();
+  };
+
+  const restoreDraft = () => {
+    if (!draft) return;
+    form.reset({ ...initial, ...draft.values }, { keepDefaultValues: true });
+    setDraftHandled(true);
+  };
+  const dropDraft = () => {
+    if (draftId) clearDraft(localStorage, draftId);
+    setDraftHandled(true);
+  };
   const shownErrors = formState.submitCount > 0 ? errors : [];
   const errorsByField = new Map<string, number>();
   for (const e of shownErrors)
@@ -829,6 +1030,100 @@ export function FieldsForm({
           <p className="text-xs text-muted-foreground">Mục có * là bắt buộc</p>
           {translated && <LocaleModeSwitch errorLocales={errorLocales} />}
         </div>
+        {deletedElsewhere && (
+          <div
+            role="alert"
+            className="flex flex-col gap-3 rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm"
+          >
+            <span>
+              Mục này đã bị xóa ở nơi khác. Thay đổi bạn đang sửa vẫn còn ở đây.
+            </span>
+            <span className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => void restoreThenSave()}
+              >
+                Khôi phục rồi lưu bản của tôi
+              </Button>
+              {onSaveAsNew && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={saveDeletedAsNew}
+                >
+                  Lưu thành mục mới
+                </Button>
+              )}
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  leaveDeleted();
+                  router.push(doneHref ?? "/admin");
+                }}
+              >
+                Về danh sách
+              </Button>
+            </span>
+          </div>
+        )}
+        {showDraft && draft && (
+          <div
+            role="status"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm"
+          >
+            <span>
+              Có bản nháp chưa lưu lúc{" "}
+              {new Date(draft.savedAt).toLocaleTimeString("vi-VN", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+              {draft.baseSignature !== initialSignature &&
+                " (dữ liệu đã thay đổi kể từ bản nháp)"}
+              .
+            </span>
+            <span className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={dropDraft}
+              >
+                Bỏ
+              </Button>
+              <Button type="button" size="sm" onClick={restoreDraft}>
+                Khôi phục
+              </Button>
+            </span>
+          </div>
+        )}
+        {serverMoved && dirty && (
+          <div
+            role="status"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-sky-500/40 bg-sky-500/10 px-4 py-3 text-sm"
+          >
+            <span>
+              Có bản mới hơn của mục này (vừa lưu ở nơi khác). Bạn đang có thay
+              đổi chưa lưu.
+            </span>
+            <span className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={keepMine}
+              >
+                Giữ bản của tôi
+              </Button>
+              <Button type="button" size="sm" onClick={reloadFromServer}>
+                Tải lại
+              </Button>
+            </span>
+          </div>
+        )}
         <ErrorSummary
           errors={shownErrors}
           focusKey={focusKey}
@@ -870,9 +1165,52 @@ export function ResourceForm({
   isNew: boolean;
   options: Options;
 }) {
+  const router = useRouter();
   const resource = resources[resourceKey];
   const { sortIndex: _sortIndex, ...defaults } = initial;
   void _sortIndex;
+  // Back to the list at the saved item, with the likely next steps one click away.
+  const onSaved = (values: Values) => {
+    const id = String(values.id);
+    const label = String(
+      (values.name as string | undefined) ??
+        (values.title as string | undefined) ??
+        (values.company as string | undefined) ??
+        (values.school as string | undefined) ??
+        id,
+    );
+    const visible = values.published !== false;
+    // The id comes from an input: always encoded before it goes into a URL.
+    const path = `/admin/${resourceKey}/${encodeURIComponent(id)}`;
+    const link =
+      "rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted";
+    toast.success(isNew ? `Đã tạo ${label}` : `Đã lưu ${label}`, {
+      duration: 8000,
+      description: (
+        <span className="mt-1 flex flex-wrap gap-1.5">
+          <Link className={link} href={path}>
+            Mở lại
+          </Link>
+          {isNew && (
+            <Link className={link} href={`/admin/${resourceKey}/new`}>
+              Tạo thêm
+            </Link>
+          )}
+          {visible && (
+            <a
+              className={link}
+              href={publicUrl(resourceKey, id, window.location.origin)}
+              target="_blank"
+              rel="noopener"
+            >
+              Xem trên trang ↗
+            </a>
+          )}
+        </span>
+      ),
+    });
+    router.push(`/admin/${resourceKey}?highlight=${encodeURIComponent(id)}`);
+  };
   return (
     <FieldsForm
       fields={resource.fields}
@@ -882,6 +1220,11 @@ export function ResourceForm({
       lockId={!isNew}
       onSave={(values) => saveResource(resourceKey, values, isNew)}
       doneHref={`/admin/${resourceKey}`}
+      onSaved={onSaved}
+      draftId={draftKey(resource.table, isNew ? "new" : String(initial.id))}
+      table={resource.table}
+      itemKey={isNew ? undefined : String(initial.id)}
+      onSaveAsNew={(values) => saveResource(resourceKey, values, true)}
       sections={resource.sections}
     />
   );

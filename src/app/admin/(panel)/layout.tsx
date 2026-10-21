@@ -3,7 +3,11 @@ import { AdminCommand } from "@/components/admin/AdminCommand";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminThemeToggle } from "@/components/admin/AdminThemeToggle";
 import { HealthBadge } from "@/components/admin/HealthBadge";
+import { ConnectionBanner } from "@/components/admin/ConnectionBanner";
+import { RealtimeSync } from "@/components/admin/RealtimeSync";
+import { SessionExpiredDialog } from "@/components/admin/SessionExpiredDialog";
 import { SignOutButton } from "@/components/admin/SignOutButton";
+import { AdminSessionSync } from "@/components/admin/AdminSessionSync";
 import { buildCommandItems } from "@/lib/admin/command-items";
 import { getAdminContent } from "@/lib/admin/data";
 import { getAdminEmail } from "@/lib/admin/session";
@@ -38,6 +42,7 @@ export default function AdminPanelLayout({
         }
       />
       <div className="flex min-w-0 flex-1 flex-col gap-6">
+        <ConnectionBanner />
         <header className="flex items-center justify-end gap-2">
           <Suspense fallback={<AdminCommand items={[]} />}>
             <CommandLoader />
@@ -51,6 +56,12 @@ export default function AdminPanelLayout({
         </header>
         {children}
       </div>
+      <SessionExpiredDialog />
+      <AdminSessionSync />
+      {/* Reads the current path (request data), so it renders inside Suspense. */}
+      <Suspense>
+        <RealtimeSync />
+      </Suspense>
     </div>
   );
 }

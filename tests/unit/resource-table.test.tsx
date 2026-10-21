@@ -8,14 +8,18 @@ const push = vi.fn();
 const refresh = vi.fn();
 const duplicateResource = vi.fn();
 const deleteResource = vi.fn();
+const togglePublished = vi.fn();
 const undoDelete = vi.fn();
 const toast = { success: vi.fn(), error: vi.fn() };
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push, refresh }) }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push, refresh, replace: vi.fn() }),
+  usePathname: () => "/admin/certificates",
+}));
 vi.mock("@/app/admin/actions", () => ({
   deleteResource,
   undoDelete,
   reorderResource: vi.fn(),
-  togglePublished: vi.fn(),
+  togglePublished,
   duplicateResource,
 }));
 vi.mock("sonner", () => ({ toast }));
@@ -148,5 +152,101 @@ describe("ResourceTable", () => {
     expect(undoDelete).toHaveBeenCalledWith("certificates", rows[0].id);
     // The restored item is back in the list at once, without waiting for a reload.
     expect(screen.getByText(rows[0].label)).toBeTruthy();
+  });
+
+  it("shows rows that arrive from the server", () => {
+    const rows = listRows("certificates", content);
+    const { rerender } = render(
+      <ResourceTable resourceKey="certificates" initialRows={rows.slice(1)} />,
+    );
+    expect(screen.queryByText(rows[0].label)).toBeNull();
+    rerender(<ResourceTable resourceKey="certificates" initialRows={rows} />);
+    expect(screen.getByText(rows[0].label)).toBeTruthy();
+  });
+
+  it("keeps a toggle that is still saving when server data arrives", async () => {
+    let finish: (v: { ok: true }) => void = () => {};
+    togglePublished.mockReturnValue(new Promise((r) => (finish = r)));
+    const rows = listRows("certificates", content);
+    const { rerender } = render(
+      <ResourceTable resourceKey="certificates" initialRows={rows} />,
+    );
+    const toggle = screen.getByRole("switch", {
+      name: `Hiển thị ${rows[0].label}`,
+    });
+    await act(async () => fireEvent.click(toggle));
+    expect(toggle.getAttribute("aria-checked")).toBe("false");
+    expect(toggle.hasAttribute("disabled")).toBe(true);
+    // Unrelated server data arrives (an extra row) while the toggle is saving.
+    const extra = { ...rows[0], id: "new-one", label: "New one" };
+    rerender(
+      <ResourceTable
+        resourceKey="certificates"
+        initialRows={[...rows, extra]}
+      />,
+    );
+    expect(screen.getByText("New one")).toBeTruthy();
+    expect(
+      screen
+        .getByRole("switch", { name: `Hiển thị ${rows[0].label}` })
+        .getAttribute("aria-checked"),
+    ).toBe("false");
+    await act(async () => finish({ ok: true }));
+  });
+
+  it("brings the item just saved into view and marks it", () => {
+    const rows = listRows("certificates", content);
+    render(
+      <ResourceTable
+        resourceKey="certificates"
+        initialRows={rows}
+        highlightId={rows[2].id}
+      />,
+    );
+    const marked = document.querySelector('[data-highlight="true"]');
+    expect(marked?.textContent).toContain(rows[2].label);
+  });
+
+  it("keeps the mark for a moment after the URL drops ?highlight", async () => {
+    vi.useFakeTimers();
+    const rows = listRows("certificates", content);
+    const { rerender } = render(
+      <ResourceTable
+        resourceKey="certificates"
+        initialRows={rows}
+        highlightId={rows[2].id}
+      />,
+    );
+    // The page re-renders without the param after router.replace.
+    rerender(<ResourceTable resourceKey="certificates" initialRows={rows} />);
+    expect(
+      document.querySelector('[data-highlight="true"]')?.textContent,
+    ).toContain(rows[2].label);
+    await act(async () => vi.advanceTimersByTime(2000));
+    expect(document.querySelector('[data-highlight="true"]')).toBeNull();
+    vi.useRealTimers();
+  });
+
+  it("runs Hoàn tác only once however often it is clicked", async () => {
+    let finish: (v: { ok: true }) => void = () => {};
+    deleteResource.mockResolvedValue({ ok: true });
+    undoDelete.mockReturnValue(new Promise((r) => (finish = r)));
+    const rows = listRows("certificates", content);
+    render(<ResourceTable resourceKey="certificates" initialRows={rows} />);
+    await act(async () =>
+      fireEvent.click(screen.getAllByRole("button", { name: /^Xóa / })[0]),
+    );
+    await act(async () =>
+      fireEvent.click(
+        within(screen.getByRole("dialog")).getByRole("button", { name: "Xóa" }),
+      ),
+    );
+    const [, options] = toast.success.mock.calls.at(-1)!;
+    await act(async () => {
+      options.action.onClick();
+      options.action.onClick();
+    });
+    expect(undoDelete).toHaveBeenCalledTimes(1);
+    await act(async () => finish({ ok: true }));
   });
 });

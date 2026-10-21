@@ -1,9 +1,11 @@
 "use client";
+import { useAdminRouter as useRouter } from "@/lib/admin/use-admin-router";
 
+import { runAction } from "@/lib/admin/action-errors";
 import { Copy, Search, Trash2, TriangleAlert } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
   deleteResource,
@@ -31,6 +33,7 @@ import {
   type ListRow,
   type RowStatus,
 } from "@/lib/admin/list-view";
+import { mergeRows, signature } from "@/lib/admin/sync";
 import type { ResourceKey } from "@/lib/admin/resources";
 import { tableFor } from "@/lib/admin/versions";
 import { cn } from "@/lib/utils";
@@ -63,18 +66,76 @@ function chipsFor(
   ];
 }
 
+/** Rows in a given id order (a reorder still saving); rows not in it keep their place at the end. */
+function inOrder(rows: ListRow[], ids: string[]): ListRow[] {
+  const at = new Map(ids.map((id, i) => [id, i]));
+  return [...rows].sort(
+    (a, b) => (at.get(a.id) ?? ids.length) - (at.get(b.id) ?? ids.length),
+  );
+}
+
 export function ResourceTable({
   resourceKey,
   initialRows,
   impacts = {},
+  highlightId,
 }: {
   resourceKey: ResourceKey;
   initialRows: ListRow[];
   /** What deleting each item takes with it (skill links, why cards, role order). */
   impacts?: Record<string, string[]>;
+  /** The item just saved: scrolled into view and marked for a moment. */
+  highlightId?: string;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const [flash, setFlash] = useState<string | null>(highlightId ?? null);
+  const [seenHighlight, setSeenHighlight] = useState(highlightId);
+  if (highlightId !== seenHighlight) {
+    setSeenHighlight(highlightId);
+    // The URL drops ?highlight right away; the mark stays until its own timer ends.
+    if (highlightId) setFlash(highlightId);
+  }
+  useEffect(() => {
+    if (!highlightId) return;
+    const reduce = window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    document.getElementById(`row-${highlightId}`)?.scrollIntoView?.({
+      block: "center",
+      behavior: reduce ? "auto" : "smooth",
+    });
+    // Drop ?highlight so a reload or Back does not mark it again.
+    router.replace(pathname, { scroll: false });
+  }, [highlightId, pathname, router]);
+  useEffect(() => {
+    if (!flash) return;
+    const timer = window.setTimeout(() => setFlash(null), 1800);
+    return () => window.clearTimeout(timer);
+  }, [flash]);
   const [rows, setRows] = useState(initialRows);
+  const undoing = useRef(new Set<string>());
+  // Changes this tab is still saving: they win over server data until their action settles.
+  const [inflight, setInflight] = useState<
+    Map<string, Partial<ListRow> | "deleted">
+  >(() => new Map());
+  const [inflightOrder, setInflightOrder] = useState<string[] | null>(null);
+  // New server data (after any write, here or elsewhere) replaces the rows, pending changes kept.
+  const serverSignature = signature(initialRows);
+  const [seenSignature, setSeenSignature] = useState(serverSignature);
+  if (serverSignature !== seenSignature) {
+    setSeenSignature(serverSignature);
+    const merged = mergeRows(initialRows, inflight);
+    setRows(inflightOrder ? inOrder(merged, inflightOrder) : merged);
+  }
+  const track = (id: string, change: Partial<ListRow> | "deleted") =>
+    setInflight((m) => new Map(m).set(id, change));
+  const settle = (id: string) =>
+    setInflight((m) => {
+      const next = new Map(m);
+      next.delete(id);
+      return next;
+    });
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<RowStatus>("all");
   const [toDelete, setToDelete] = useState<ListRow | null>(null);
@@ -87,22 +148,21 @@ export function ResourceTable({
     action: () => Promise<ActionResult>,
     done: string,
     undo?: () => void,
+    finish?: () => void,
+    retry?: () => void,
   ) {
     startTransition(async () => {
-      const result = await action();
-      if (result.ok) {
-        toast.success(done);
-        router.refresh();
-      } else {
-        undo?.();
-        toast.error(result.error);
-      }
+      const result = await runAction(action, { retry });
+      finish?.();
+      if (result.ok) toast.success(done);
+      else undo?.();
     });
   }
 
   function reorder(next: ListRow[]) {
     const previous = rows;
     setRows(next);
+    setInflightOrder(next.map((r) => r.id));
     run(
       () =>
         reorderResource(
@@ -111,16 +171,23 @@ export function ResourceTable({
         ),
       "Đã lưu thứ tự",
       () => setRows(previous),
+      () => setInflightOrder(null),
+      () => reorder(next),
     );
   }
 
   function setPublished(row: ListRow, value: boolean) {
-    const previous = rows;
     setRows(rows.map((r) => (r.id === row.id ? { ...r, hidden: !value } : r)));
+    track(row.id, { hidden: !value });
     run(
       () => togglePublished(resourceKey, row.id, value),
       value ? "Đã hiện" : "Đã ẩn",
-      () => setRows(previous),
+      () =>
+        setRows((current) =>
+          current.map((r) => (r.id === row.id ? { ...r, hidden: value } : r)),
+        ),
+      () => settle(row.id),
+      () => setPublished(row, value),
     );
   }
 
@@ -133,12 +200,13 @@ export function ResourceTable({
       return;
     }
     startTransition(async () => {
-      const result = await duplicateResource(resourceKey, row.id);
-      if (result.ok) {
+      const result = await runAction(
+        () => duplicateResource(resourceKey, row.id),
+        { retry: () => duplicate(row) },
+      );
+      if (result.ok && "id" in result) {
         toast.success(`Đã tạo bản sao ${result.id} (đang ẩn)`);
         router.push(`/admin/${resourceKey}/${result.id}`);
-      } else {
-        toast.error(result.error);
       }
     });
   }
@@ -147,16 +215,23 @@ export function ResourceTable({
     if (!toDelete) return;
     const target = toDelete;
     setToDelete(null);
+    remove(target);
+  }
+
+  function remove(target: ListRow) {
     const previous = rows;
     setRows(rows.filter((r) => r.id !== target.id));
+    track(target.id, "deleted");
     startTransition(async () => {
-      const result = await deleteResource(resourceKey, target.id);
+      const result = await runAction(
+        () => deleteResource(resourceKey, target.id),
+        { retry: () => remove(target) },
+      );
+      settle(target.id);
       if (!result.ok) {
         setRows(previous);
-        toast.error(result.error);
         return;
       }
-      router.refresh();
       // The delete happens at once; for 10 s the toast can bring the item (and its links) back.
       toast.success(`Đã xóa ${target.label}`, {
         duration: 10000,
@@ -169,7 +244,13 @@ export function ResourceTable({
   }
 
   async function undo(target: ListRow, index: number) {
-    const result = await undoDelete(tableFor(resourceKey), target.id);
+    // The toast button can be clicked again while the first undo is still running.
+    if (undoing.current.has(target.id)) return;
+    undoing.current.add(target.id);
+    const result = await runAction(
+      () => undoDelete(tableFor(resourceKey), target.id),
+      { retry: () => void undo(target, index) },
+    );
     if (result.ok) {
       // Put the row back where it was right away; the refresh then brings the saved data.
       setRows((current) =>
@@ -178,14 +259,16 @@ export function ResourceTable({
           : [...current.slice(0, index), target, ...current.slice(index)],
       );
       toast.success(`Đã khôi phục ${target.label}`);
-      router.refresh();
-    } else {
-      toast.error(result.error);
     }
+    undoing.current.delete(target.id);
   }
 
   const renderRow = (row: ListRow, handle: React.ReactNode) => (
-    <div className="flex items-center gap-2 px-2 py-2 text-sm sm:gap-3">
+    <div
+      id={`row-${row.id}`}
+      data-highlight={flash === row.id || undefined}
+      className="flex items-center gap-2 px-2 py-2 text-sm transition-colors duration-700 data-[highlight=true]:bg-primary/15 sm:gap-3"
+    >
       {handle}
       <div className="min-w-0 flex-1">
         <p
@@ -219,6 +302,8 @@ export function ResourceTable({
       {row.canHide && (
         <Switch
           checked={!row.hidden}
+          // One change at a time per item: no second click while the first is saving.
+          disabled={inflight.has(row.id)}
           onCheckedChange={(v) => setPublished(row, v)}
           aria-label={`Hiển thị ${row.label}`}
         />

@@ -85,9 +85,14 @@ export function renderSchemaSql(): string {
     tableSql(name, table),
   );
   return (
-    [HEADER, ...tables, storageSql(), VERSIONS_SQL, VERSIONS_SECURITY_SQL].join(
-      "\n\n",
-    ) + "\n"
+    [
+      HEADER,
+      ...tables,
+      storageSql(),
+      VERSIONS_SQL,
+      VERSIONS_SECURITY_SQL,
+      REALTIME_SQL,
+    ].join("\n\n") + "\n"
   );
 }
 
@@ -237,3 +242,37 @@ alter function public.admin_list_versions(text, text) security invoker;
 alter function public.admin_restore_version(bigint) security invoker;
 grant select on private.content_versions to authenticated;
 create policy "content_versions_admin_read" on private.content_versions for select to authenticated using (private.is_admin());`;
+
+/**
+ * supabase/migrations/0006_admin_realtime.sql. Every content change sends a tiny note
+ * (table, operation, key; never the row) on the private topic `admin:content`, which only the
+ * admin may receive. Open admin tabs and devices refresh on it. A failed send never blocks a save.
+ */
+export const REALTIME_SQL = `-- Live admin updates: a change note on a private Realtime topic only the admin can receive.
+create or replace function private.broadcast_content_change() returns trigger
+language plpgsql security definer set search_path = '' as $$
+declare
+  r jsonb := case when tg_op = 'DELETE' then to_jsonb(old) else to_jsonb(new) end;
+begin
+  begin
+    perform realtime.send(
+      jsonb_build_object('table', tg_table_name, 'op', lower(tg_op), 'key', coalesce(r ->> 'id', r ->> 'key', r ->> 'skill_id')),
+      'change',
+      'admin:content',
+      true
+    );
+  exception when others then
+    -- Live updates are a convenience; the save itself must always go through.
+    null;
+  end;
+  return null;
+end;
+$$;
+revoke execute on function private.broadcast_content_change() from public, anon, authenticated;
+
+${VERSIONED_TABLES.map(
+  (t) =>
+    `create trigger ${t}_broadcast after insert or update or delete on public.${t} for each row execute function private.broadcast_content_change();`,
+).join("\n")}
+
+create policy "admin_content_receive" on realtime.messages for select to authenticated using (realtime.topic() = 'admin:content' and private.is_admin());`;
