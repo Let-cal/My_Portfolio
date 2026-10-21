@@ -52,3 +52,6 @@ next-env.d.ts
 .superpowers/
 lighthouse*.json
 .lighthouseci/
+
+# Supabase CLI local state
+supabase/.temp/

@@ -15,6 +15,23 @@ beforeEach(() => {
 });
 
 describe("runAction", () => {
+  it("does not suppress other tabs' updates while reading the media library", async () => {
+    const { isRecentOwnWrite, resetOwnWrites } =
+      await import("@/lib/admin/own-writes");
+    resetOwnWrites();
+    let finish: () => void = () => {};
+    const running = runAction(
+      () =>
+        new Promise<{ ok: true }>((resolve) => {
+          finish = () => resolve({ ok: true });
+        }),
+      { write: false },
+    );
+    expect(isRecentOwnWrite()).toBe(false);
+    finish();
+    await running;
+    expect(isRecentOwnWrite()).toBe(false);
+  });
   it("opens the sign-in-again dialog when the session expired, keeping the page", async () => {
     render(<SessionExpiredDialog />);
     await act(async () => {

@@ -71,6 +71,8 @@ npm run start
 
 After changing `columns.ts`, run `npm run db:schema` and add a migration for the live database. The `Supabase keep-alive` workflow reads one row twice a week so a free project does not pause; it uses the `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` repository variables.
 
+The admin [media library](docs/admin-media-library.md) lists uploads in `media` and `files`, links them to current content (including hidden items), and lets upload fields reuse existing files. Apply its additive Storage SELECT policy before using `/admin/media`. Built-in `public/` files are outside this library. Storage deletion is permanent and does not restore through content history.
+
 The `@swc/core` override preserves an existing Windows tooling workaround. Review Windows and Linux behavior before changing it. Builds also need network access for `next/font/google` font downloads.
 
 ## Verification

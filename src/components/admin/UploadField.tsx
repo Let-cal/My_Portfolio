@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { a11yProps, FieldError, RequiredMark } from "./FieldShell";
@@ -12,6 +12,18 @@ import {
   type UploadKind,
 } from "@/lib/admin/upload";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
+const MediaBrowser = lazy(() =>
+  import("./MediaBrowser").then((module) => ({ default: module.MediaBrowser })),
+);
 
 /**
  * Uploads straight from the browser to Supabase Storage with the admin's session, so large
@@ -36,6 +48,7 @@ export function UploadField({
   onChange: (url: string | null) => void;
 }) {
   const [busy, setBusy] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
 
   async function upload(file: File) {
     const check = validateUpload(file, kind);
@@ -44,19 +57,30 @@ export function UploadField({
       return;
     }
     setBusy(true);
-    const supabase = createBrowserSupabase();
-    const bucket = bucketFor(kind);
-    const path = storagePath(kind, file.name, crypto.randomUUID().slice(0, 8));
-    const { error } = await supabase.storage
-      .from(bucket)
-      .upload(path, file, { contentType: file.type });
-    setBusy(false);
-    if (error) {
-      toast.error(`Tải lên thất bại: ${error.message}`);
-      return;
+    try {
+      const supabase = createBrowserSupabase();
+      const bucket = bucketFor(kind);
+      const path = storagePath(
+        kind,
+        file.name,
+        crypto.randomUUID().slice(0, 8),
+      );
+      const { error } = await supabase.storage
+        .from(bucket)
+        .upload(path, file, { contentType: file.type });
+      if (error) {
+        toast.error(`Tải lên thất bại: ${error.message}`);
+        return;
+      }
+      onChange(supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl);
+      toast.success("Đã tải lên");
+    } catch (error) {
+      toast.error(
+        `Tải lên thất bại: ${error instanceof Error ? error.message : "Không kết nối được Storage."}`,
+      );
+    } finally {
+      setBusy(false);
     }
-    onChange(supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl);
-    toast.success("Đã tải lên");
   }
 
   return (
@@ -88,6 +112,7 @@ export function UploadField({
             type="button"
             variant="ghost"
             size="sm"
+            disabled={busy}
             onClick={() => onChange(null)}
           >
             Gỡ
@@ -109,6 +134,38 @@ export function UploadField({
           if (file) void upload(file);
         }}
       />
+      <Dialog open={libraryOpen} onOpenChange={setLibraryOpen}>
+        <DialogTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={busy}
+            className="self-start"
+          >
+            Chọn từ thư viện
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Chọn tệp cho {label}</DialogTitle>
+            <DialogDescription>
+              Dùng lại tệp đã tải lên. Lựa chọn chỉ được áp dụng sau khi bạn lưu
+              form.
+            </DialogDescription>
+          </DialogHeader>
+          {libraryOpen && (
+            <Suspense fallback={<p role="status">Đang mở thư viện…</p>}>
+              <MediaBrowser
+                kind={kind}
+                onSelect={(url) => {
+                  onChange(url);
+                  setLibraryOpen(false);
+                }}
+              />
+            </Suspense>
+          )}
+        </DialogContent>
+      </Dialog>
       {busy && (
         <span className="text-xs text-muted-foreground">Đang tải lên…</span>
       )}
