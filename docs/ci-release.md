@@ -4,19 +4,31 @@
 
 PR #16's first count-based candidate at `847e7f8` completed three Linux measurements. Every run passed all 63 cases without skipped or flaky cases, but elapsed median fell only from the historical 18m32s to 16m32s while summed runner occupancy rose 16.6%. All six expensive veil cases still landed together. That is insufficient evidence to retain count-based sharding as a performance improvement. See [the measurements and limitations](ci-runtime-baseline.md).
 
-The next local candidate uses the supported Playwright `--test-list` interface to assign two groups using measured durations. A committed, sanitized timing seed records its source revision and runs; timing data influences scheduling only, never which tests are required. Every runner discovers the current inventory, so new and renamed tests receive a fallback estimate and remain included. Non-veil files stay together; the independent veil cases may split between groups. Keep `veil.spec.ts` in parallel mode without shared lifecycle hooks or serial suites; a regression test guards that contract. Do not combine the generated test lists with native `--shard`: that would partition a second time and omit tests.
+The duration-balanced candidate uses the supported Playwright `--test-list` interface to assign two groups using measured durations. A committed, sanitized timing seed records its source revision and runs; timing data influences scheduling only, never which tests are required. Every runner discovers the current inventory, so new and renamed tests receive a fallback estimate and remain included. Non-veil files stay together; the independent veil cases may split between groups. Keep `veil.spec.ts` in parallel mode without shared lifecycle hooks or serial suites; a regression test guards that contract. Do not combine the generated test lists with native `--shard`: that would partition a second time and omit tests.
 
-The new candidate remains local until the owner approves its concrete CI/CD diff. Predicted loads and local Windows runs do not demonstrate Linux acceleration. Required test assertions, frame samples, timeouts, one worker per runner, check names and release thresholds are preserved. The no-JavaScript motion test uses the configured server URL so verification can run on an owned alternate port.
+Publishing each concrete CI/CD revision requires owner approval. Predicted loads and local Windows runs do not demonstrate Linux acceleration. Required test assertions, frame samples, timeouts, one worker per runner, check names and release thresholds are preserved. The no-JavaScript motion test uses the configured server URL so verification can run on an owned alternate port.
 
 ### Follow-up: browser runtime preparation
 
 The approved three-run experiment at `f607552` exposed another bottleneck: one job fetched 25.9 MB of Ubuntu packages in 8m38s, while Chrome downloads took only seconds. Count this startup cost in the end-to-end result; do not present balanced test sums as a complete CI improvement.
 
-A separately prepared local follow-up uses the official `mcr.microsoft.com/playwright:v1.64.0-noble` image for the browser and Lighthouse jobs. The version must equal the locked Playwright version; a contract test enforces both job images. The image supplies browsers and their system/font dependencies, so the jobs still install locked npm packages but do not run apt/Chromium installation again. Explicit Bash retains the previous shell semantics, including `pipefail`; `--ipc=host --init` follows the upstream Chromium guidance. Quality and aggregate jobs stay on the existing standard runner.
+The version-tagged follow-up at `40974b1` uses the official `mcr.microsoft.com/playwright:v1.64.0-noble` image for the browser and Lighthouse jobs. The version must equal the locked Playwright version; a contract test enforces both job images. The image supplies browsers and their system/font dependencies, so the jobs still install locked npm packages but do not run apt/Chromium installation again. Explicit Bash retains the previous shell semantics, including `pipefail`; `--ipc=host --init` follows the upstream Chromium guidance. Quality and aggregate jobs stay on the existing standard runner.
 
-This is not yet a measured or retained optimization. Container pull/setup costs replace the old apt cost and must be included in the next measurement. The public Microsoft registry reset connections from this workstation, and Docker is unavailable here: the image has not been pulled or executed locally, and its immutable digest has not been independently resolved. The current proposal uses the documented exact version tag, not a claim of digest-pinned provenance. A registry outage or image/version mismatch must fail the job, never fall back to skipped browser checks. No secrets or hosted admin session enter these synthetic jobs. Concrete owner approval is required before publishing this changed workflow; the three existing `f607552` trials do not validate it.
+At the pre-publication checkpoint for `40974b1`, container execution and the immutable digest were unverified: the public Microsoft registry reset workstation connections and Docker was unavailable locally. That checkpoint used the documented version tag. The approved Linux results and subsequent local digest pin are described below; no local Docker execution is claimed. Container pull/setup costs replace the old apt cost and must be included in measurements. A registry outage or image/version mismatch must fail the job, never fall back to skipped browser checks. No secrets or hosted admin session enter these synthetic jobs. The three `f607552` trials do not validate the container follow-up.
 
 Reference: [official Playwright Docker image and runtime guidance](https://playwright.dev/docs/docker).
+
+### Immutable runtime pin for release preparation
+
+The first approved Linux run `39810563429` passed all 63 browser cases and required checks. Its runner-generated Docker pull logs for both browser groups and Lighthouse resolve the official version tag to the same digest:
+
+```text
+mcr.microsoft.com/playwright:v1.64.0-noble@sha256:06a9939e57531807f8d5fd76ce44b53165ffb7d7501d87ab10e285c20b1e971f
+```
+
+The local release preparation locks that measured runtime rather than allowing the tag to resolve differently on a later run. The script contract requires both jobs to use the same digest and a version matching the SDK lockfile. This is not a new measured runtime or a claim of a local Docker execution. Additional benchmark runs stay on the approved remote `40974b1`; confirm their actual image digests before claiming all measurements used the same environment. Publishing the concrete pin and merging the CI change still require owner approval and green checks on the final revision.
+
+When updating Playwright, deliberately refresh the SDK lock and both official image references together, verify the pulled digest and run the existing regressions. A passing npm audit does not scan the container's operating-system packages.
 
 ## Checks
 

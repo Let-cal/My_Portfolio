@@ -324,7 +324,7 @@ test("workflow uses exactly two duration groups with one worker and the stable a
   assert.match(workflow, /needs: \[quality, browser-shards\]/);
 });
 
-test("browser and Lighthouse jobs use the official image matching locked Playwright", () => {
+test("browser and Lighthouse use one immutable official image matching locked Playwright", () => {
   const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
   const workflow = readFileSync(join(root, ".github/workflows/ci.yml"), "utf8");
   const lock = JSON.parse(
@@ -334,9 +334,14 @@ test("browser and Lighthouse jobs use the official image matching locked Playwri
   const images = [
     ...workflow.matchAll(/image: (mcr\.microsoft\.com\/playwright:\S+)/g),
   ].map((m) => m[1]);
-  assert.deepEqual(
-    images,
-    [1, 2].map(() => `mcr.microsoft.com/playwright:v${version}-noble`),
+  assert.equal(images.length, 2);
+  assert.equal(images[0], images[1]);
+  assert.match(
+    images[0],
+    new RegExp(
+      `^mcr\\.microsoft\\.com/playwright:v${version.replaceAll(".", "\\.")}` +
+        "-noble@sha256:[a-f0-9]{64}$",
+    ),
   );
   for (const job of ["performance", "browser-shards"]) {
     const body = workflow.split(`\n  ${job}:\n`)[1]?.split(/\n  [a-z-]+:\n/)[0];
