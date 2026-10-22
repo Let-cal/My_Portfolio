@@ -86,6 +86,12 @@ The owner has already approved planning followed by implementation and previousl
 - [ ] Run service integration and actual browser tests only with Docker available. This machine currently lacks Docker; do not silently substitute mocked tests or install/start a system-wide service. Prepare the concrete Linux CI change for approval and mark real service verification BLOCKED until that run occurs.
 - [ ] Run full unit/script/build checks for changes that can be verified locally; commit `test(admin): add isolated Supabase integration coverage`. Owner approval precedes workflow publication/application.
 
+### Task 2/3 amendment: rebalance after the count-based experiment
+
+The three approved runs at `847e7f8` passed complete coverage but left every veil case in one shard. The owner requested continued optimization on 2026-10-22. Prepare a duration-balanced candidate locally without changing the two-runner limit, assertions, frame samples or mandatory checks. Use Playwright's supported test-list interface, with a reviewed timing seed from successful first attempts in the three measured runs. Preserve file grouping except for explicitly independent veil cases; new tests must remain included even without a timing history. Validate the complete, disjoint real CLI inventory and actual JSON/blob aggregation. Mixing native sharding with selected groups must fail closed.
+
+Separate publication approval and three new Linux measurements are required for this new concrete workflow revision; prior measurements do not establish its speed. Keep Task 4 safety preparation on a separate local branch from the CI-only PR. Absence of Docker blocks actual local-service verification, not safe preparation; no mocked test is to be represented as a real CRUD/Auth/RLS integration result.
+
 ### Task 5: Read-only preview authorization, separate security increment
 
 **Files:** Create `src/lib/admin/access.ts`, `src/components/admin/ReadOnlyNotice.tsx`, dedicated access tests under `tests/unit/`, and a CLI-generated migration plus verification/rollback SQL under `supabase/migrations/` and `docs/`; modify proxy guard, admin layout/pages/read actions and persistent UI controls only where necessary.

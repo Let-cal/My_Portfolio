@@ -9,6 +9,8 @@ export default defineConfig({
     ciRevision: process.env.GITHUB_SHA ?? null,
     ciRun: process.env.GITHUB_RUN_ID ?? null,
     ciAttempt: process.env.GITHUB_RUN_ATTEMPT ?? null,
+    ciGroup: process.env.CI_BROWSER_GROUP ?? null,
+    ciGroupTotal: process.env.CI_BROWSER_GROUP ? "2" : null,
   },
   testDir: "./tests/e2e",
   fullyParallel: true,

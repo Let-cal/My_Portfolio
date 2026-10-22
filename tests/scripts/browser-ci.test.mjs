@@ -164,7 +164,40 @@ test("discovery errors and malformed evidence fail closed", () => {
   }
 });
 
-test("the real Playwright CLI produces two compatible reports and mergeable blobs", (t) => {
+function grouped(current, id) {
+  const value = report(current, id);
+  value.config.shard = null;
+  value.config.metadata.ciGroup = String(current);
+  value.config.metadata.ciGroupTotal = "2";
+  return value;
+}
+
+test("duration-selected groups cover the full inventory without native re-sharding", () => {
+  const result = api.verifyShardReports(
+    [grouped(1, "a"), grouped(2, "b")],
+    inventory,
+    identity,
+  );
+  assert.equal(result.length, 2);
+});
+
+test("invalid, duplicated, mixed or doubly sharded group evidence is rejected", () => {
+  const invalid = [
+    [grouped(1, "a"), grouped(1, "b")],
+    [grouped(1, "a"), report(2, "b")],
+    [grouped(1, "a"), grouped(3, "b")],
+  ];
+  const twice = grouped(2, "b");
+  twice.config.shard = { current: 2, total: 2 };
+  invalid.push([grouped(1, "a"), twice]);
+  const wrongTotal = grouped(2, "b");
+  wrongTotal.config.metadata.ciGroupTotal = "3";
+  invalid.push([grouped(1, "a"), wrongTotal]);
+  for (const value of invalid)
+    assert.throws(() => api.verifyShardReports(value, inventory, identity));
+});
+
+test("the real Playwright test-list CLI produces complete group reports and mergeable blobs", (t) => {
   const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
   const scratch = join(root, ".superpowers");
   mkdirSync(scratch, { recursive: true });
@@ -178,7 +211,7 @@ test("the real Playwright CLI produces two compatible reports and mergeable blob
   const config = join(fixture, "playwright.config.mjs");
   writeFileSync(
     config,
-    `export default ${JSON.stringify({ testDir: fixture, testMatch: "cases.spec.mjs", fullyParallel: true, workers: 1, projects: [{ name: "chromium" }], metadata: { ciRevision: revision, ciRun: "10", ciAttempt: "1" } })};`,
+    `const config = ${JSON.stringify({ testDir: fixture, testMatch: "cases.spec.mjs", fullyParallel: true, workers: 1, projects: [{ name: "chromium" }], metadata: { ciRevision: revision, ciRun: "10", ciAttempt: "1" } })}; config.metadata.ciGroup = process.env.CI_BROWSER_GROUP ?? null; config.metadata.ciGroupTotal = process.env.CI_BROWSER_GROUP ? "2" : null; export default config;`,
   );
   writeFileSync(
     join(fixture, "cases.spec.mjs"),
@@ -204,6 +237,11 @@ test("the real Playwright CLI produces two compatible reports and mergeable blob
   for (const index of [1, 2]) {
     const directory = join(fixture, `playwright-shard-10-1-${index}`);
     mkdirSync(join(directory, "reports"), { recursive: true });
+    const list = join(fixture, `group-${index}.txt`);
+    writeFileSync(
+      list,
+      `[chromium] › cases.spec.mjs › ${index === 1 ? "first" : "second"}\n`,
+    );
     execFileSync(
       process.execPath,
       [
@@ -211,7 +249,7 @@ test("the real Playwright CLI produces two compatible reports and mergeable blob
         "test",
         "--config",
         config,
-        `--shard=${index}/2`,
+        `--test-list=${list}`,
         "--fail-on-flaky-tests",
         "--reporter=json,blob",
       ],
@@ -219,6 +257,7 @@ test("the real Playwright CLI produces two compatible reports and mergeable blob
         cwd: root,
         env: {
           ...env,
+          CI_BROWSER_GROUP: String(index),
           PLAYWRIGHT_JSON_OUTPUT_NAME: join(
             directory,
             "reports",
@@ -268,4 +307,19 @@ test("the real Playwright CLI produces two compatible reports and mergeable blob
     1,
     "stale blobs must not be reused by a second aggregate invocation",
   );
+});
+
+test("workflow uses exactly two duration groups with one worker and the stable aggregate gate", () => {
+  const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+  const workflow = readFileSync(join(root, ".github/workflows/ci.yml"), "utf8");
+  assert.match(workflow, /shard: \[1, 2\]/);
+  assert.match(
+    workflow,
+    /plan-browser-groups\.mjs reports\/browser-inventory\.json/,
+  );
+  assert.match(workflow, /--workers=1 --test-list=reports\/groups\/group-/);
+  assert.doesNotMatch(workflow, /--shard=/);
+  assert.match(workflow, /CI_BROWSER_GROUP: \$\{\{ matrix\.shard \}\}/);
+  assert.match(workflow, /name: Playwright Chromium on Linux/);
+  assert.match(workflow, /needs: \[quality, browser-shards\]/);
 });

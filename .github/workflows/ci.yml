@@ -145,11 +145,18 @@ jobs:
         run: npm ci
       - name: Install locked Playwright Chromium and Linux libraries
         run: npx --no-install playwright install --with-deps chromium
+      - name: Plan duration-balanced groups from the full inventory
+        run: |
+          mkdir -p reports
+          npx --no-install playwright test --project=chromium --list --reporter=json > reports/browser-inventory.json
+          node .github/scripts/plan-browser-groups.mjs reports/browser-inventory.json .github/browser-timings.json reports/groups
       - name: Browser shard against the production server
         # The existing config builds and starts port 3100; CI disables server reuse.
         # Run one browser at a time: SwiftShader rendering competes for the runner CPU.
-        run: npx --no-install playwright test --project=chromium --workers=1 --shard=${{ matrix.shard }}/2 --fail-on-flaky-tests --reporter=list,json,blob
+        # --test-list already partitions the inventory; native --shard would omit cases.
+        run: npx --no-install playwright test --project=chromium --workers=1 --test-list=reports/groups/group-${{ matrix.shard }}.txt --fail-on-flaky-tests --reporter=list,json,blob
         env:
+          CI_BROWSER_GROUP: ${{ matrix.shard }}
           PLAYWRIGHT_JSON_OUTPUT_NAME: reports/browser-${{ matrix.shard }}.json
       - name: Upload this run's synthetic browser evidence
         if: always() && !cancelled()
@@ -158,6 +165,7 @@ jobs:
           name: playwright-shard-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.shard }}
           path: |
             reports/browser-${{ matrix.shard }}.json
+            reports/groups/plan.json
             blob-report/*.zip
           if-no-files-found: error
           retention-days: 3

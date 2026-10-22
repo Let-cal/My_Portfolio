@@ -63,21 +63,31 @@ export function verifyShardReports(reports, inventory, identity) {
   const expected = testIds(inventory);
   const seen = new Set();
   const indices = new Set();
+  let mode;
   return reports.map((report, position) => {
     const shard = report?.config?.shard;
     const metadata = report?.config?.metadata;
+    const grouped =
+      metadata?.ciGroup !== undefined && metadata.ciGroup !== null;
+    const current = grouped ? Number(metadata.ciGroup) : shard?.current;
+    const reportMode = grouped ? "duration" : "native";
     if (
-      !shard ||
-      shard.total !== 2 ||
-      ![1, 2].includes(shard.current) ||
-      indices.has(shard.current) ||
+      (mode !== undefined && mode !== reportMode) ||
+      (grouped
+        ? shard != null ||
+          !["1", "2"].includes(metadata.ciGroup) ||
+          metadata.ciGroupTotal !== "2"
+        : !shard || shard.total !== 2) ||
+      ![1, 2].includes(current) ||
+      indices.has(current) ||
       !metadata ||
       metadata.ciRevision !== identity.revision ||
       metadata.ciRun !== identity.runId ||
       metadata.ciAttempt !== identity.runAttempt
     )
       reject();
-    indices.add(shard.current);
+    mode = reportMode;
+    indices.add(current);
     const summary = summarizePlaywright(report);
     if (
       summary.errors.length ||
