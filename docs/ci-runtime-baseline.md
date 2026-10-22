@@ -58,3 +58,19 @@ Median elapsed is 992s versus historical 1112s: 120s / 10.8% lower. Median runne
 `.github/browser-timings.json` contains only synthetic public test names, durations and source-run provenance. It is a reviewed input, not an executable artifact downloaded from an arbitrary PR. To refresh it, use successful complete reports from the same source revision, verify their identity and zero skipped/flaky/unexpected cases, and take the median first-attempt duration per portable file/project/title path. Do not learn from retried failures or inflate weights with installation/build time. Refresh in a normal reviewed change when profiles drift; a stale seed can worsen balance but cannot remove current discovered tests. Renamed/new tests use the planner's positive fallback estimate. No recurring benchmark or additional workflow is introduced.
 
 References: [Playwright test lists](https://playwright.dev/docs/test-cli#test-list), [sharding and report merging](https://playwright.dev/docs/test-sharding).
+
+## Duration-balanced candidate: measured 2026-10-22
+
+All three approved trials use head `f607552d1e20c128843908fb9defcf98c910d3cf`, unchanged base `7bd27ee262fc215b4f99286cd6d499756d733b0b`. The PR checkout `c42c54edc119fb8b4dacf1c783aca8696e570d85` and head have the same source tree `4d7c16847b914be67094e5d8c351cfe28239df5a`. Actual report metadata, full discovered identity union and generated plan artifacts were reconciled for each run: 56 + 7 tests, all 63 passed, no skipped/flaky/unexpected cases. The public application and browser assertions are unchanged from the previous candidate.
+
+| Run | Workflow elapsed | Summed job occupancy |
+| --- | --- | --- |
+| [39784704537](https://github.com/Let-cal/My_Portfolio/actions/runs/39784704537) | 1387s (23m07s) | 2023s (33m43s) |
+| [39784816468](https://github.com/Let-cal/My_Portfolio/actions/runs/39784816468) | 777s (12m57s) | 1794s (29m54s) |
+| [39786829665](https://github.com/Let-cal/My_Portfolio/actions/runs/39786829665) | 1077s (17m57s) | 2057s (34m17s) |
+
+The median is **17m57s elapsed / 33m43s runner occupancy**, versus the previous candidate's 16m32s / 25m11s: 85s (8.6%) slower and 512s (33.9%) more occupancy. Against the older historical main baseline, elapsed is only 35s lower while occupancy is 727s higher. The shared runners and different workflow revisions prevent a controlled causal claim. No slow trial was excluded or silently rerun; the first two workflows overlapped, and the third started only after the second completed.
+
+**Observed bottleneck:** job `119846541197` ran apt at 13:16 UTC. Its log records `Fetched 25.9 MB in 8min 38s (50.0 kB/s)` before system/font package setup. Chrome and its headless-shell archives then downloaded in seconds. This delay is included in the first run's 23m07s total. Better distribution of expensive cases alone did not deliver a stable workflow improvement.
+
+**Decision:** do not merge `f607552` as a completed CI performance optimization. Keep main unchanged and address repeated browser-runtime preparation before a new approved measurement. The official preinstalled Playwright image is a separately prepared follow-up, with its own container pull/runtime verification pending. Passing the correctness gates does not establish the performance goal.

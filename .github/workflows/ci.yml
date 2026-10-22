@@ -24,6 +24,13 @@ jobs:
     needs: quality
     if: github.event.repository.private == false
     runs-on: ubuntu-24.04
+    # Keep this version equal to package-lock.json; the script contract checks it.
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.0-noble
+      options: --ipc=host --init
+    defaults:
+      run:
+        shell: bash
     timeout-minutes: 25
     steps:
       - name: Checkout
@@ -36,10 +43,8 @@ jobs:
           node-version: "22"
           cache: npm
           package-manager-cache: false
-      - name: Install locked dependencies and Chromium
-        run: |
-          npm ci
-          npx --no-install playwright install --with-deps chromium
+      - name: Install locked dependencies
+        run: npm ci
       - name: Build production
         run: npm run build
       - name: Measure all three locales (median of three runs)
@@ -124,6 +129,13 @@ jobs:
     needs: quality
     if: github.event.repository.private == false
     runs-on: ubuntu-24.04
+    # Browsers/fonts/system libraries are preinstalled; avoid repeating apt downloads.
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.0-noble
+      options: --ipc=host --init
+    defaults:
+      run:
+        shell: bash
     timeout-minutes: 35
     strategy:
       fail-fast: false
@@ -143,8 +155,6 @@ jobs:
           package-manager-cache: false
       - name: Install locked dependencies
         run: npm ci
-      - name: Install locked Playwright Chromium and Linux libraries
-        run: npx --no-install playwright install --with-deps chromium
       - name: Plan duration-balanced groups from the full inventory
         run: |
           mkdir -p reports

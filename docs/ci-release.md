@@ -8,6 +8,16 @@ The next local candidate uses the supported Playwright `--test-list` interface t
 
 The new candidate remains local until the owner approves its concrete CI/CD diff. Predicted loads and local Windows runs do not demonstrate Linux acceleration. Required test assertions, frame samples, timeouts, one worker per runner, check names and release thresholds are preserved. The no-JavaScript motion test uses the configured server URL so verification can run on an owned alternate port.
 
+### Follow-up: browser runtime preparation
+
+The approved three-run experiment at `f607552` exposed another bottleneck: one job fetched 25.9 MB of Ubuntu packages in 8m38s, while Chrome downloads took only seconds. Count this startup cost in the end-to-end result; do not present balanced test sums as a complete CI improvement.
+
+A separately prepared local follow-up uses the official `mcr.microsoft.com/playwright:v1.64.0-noble` image for the browser and Lighthouse jobs. The version must equal the locked Playwright version; a contract test enforces both job images. The image supplies browsers and their system/font dependencies, so the jobs still install locked npm packages but do not run apt/Chromium installation again. Explicit Bash retains the previous shell semantics, including `pipefail`; `--ipc=host --init` follows the upstream Chromium guidance. Quality and aggregate jobs stay on the existing standard runner.
+
+This is not yet a measured or retained optimization. Container pull/setup costs replace the old apt cost and must be included in the next measurement. The public Microsoft registry reset connections from this workstation, and Docker is unavailable here: the image has not been pulled or executed locally, and its immutable digest has not been independently resolved. The current proposal uses the documented exact version tag, not a claim of digest-pinned provenance. A registry outage or image/version mismatch must fail the job, never fall back to skipped browser checks. No secrets or hosted admin session enter these synthetic jobs. Concrete owner approval is required before publishing this changed workflow; the three existing `f607552` trials do not validate it.
+
+Reference: [official Playwright Docker image and runtime guidance](https://playwright.dev/docs/docker).
+
 ## Checks
 
 The 200 KB JavaScript check measures scripts referenced by the prerendered HTML, including script preloads. It does not measure every subsequent network request: Motion's feature chunks can load on mount, while scene and dialog chunks have separate loading gates. Lighthouse exercises the real page and includes that subsequent work. Treat the static-script result as a bundle scope, not as total startup transfer size.

@@ -323,3 +323,30 @@ test("workflow uses exactly two duration groups with one worker and the stable a
   assert.match(workflow, /name: Playwright Chromium on Linux/);
   assert.match(workflow, /needs: \[quality, browser-shards\]/);
 });
+
+test("browser and Lighthouse jobs use the official image matching locked Playwright", () => {
+  const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+  const workflow = readFileSync(join(root, ".github/workflows/ci.yml"), "utf8");
+  const lock = JSON.parse(
+    readFileSync(join(root, "package-lock.json"), "utf8"),
+  );
+  const version = lock.packages["node_modules/@playwright/test"].version;
+  const images = [
+    ...workflow.matchAll(/image: (mcr\.microsoft\.com\/playwright:\S+)/g),
+  ].map((m) => m[1]);
+  assert.deepEqual(
+    images,
+    [1, 2].map(() => `mcr.microsoft.com/playwright:v${version}-noble`),
+  );
+  for (const job of ["performance", "browser-shards"]) {
+    const body = workflow.split(`\n  ${job}:\n`)[1]?.split(/\n  [a-z-]+:\n/)[0];
+    assert.ok(body);
+    assert.match(
+      body,
+      /container:\n\s+image: mcr\.microsoft\.com\/playwright:/,
+    );
+    assert.match(body, /options: --ipc=host --init/);
+    assert.match(body, /defaults:\n\s+run:\n\s+shell: bash/);
+    assert.doesNotMatch(body, /playwright install|--privileged|SYS_ADMIN/);
+  }
+});
