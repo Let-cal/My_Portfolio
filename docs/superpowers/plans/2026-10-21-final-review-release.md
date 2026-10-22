@@ -32,7 +32,7 @@
 
 ## Delivery boundaries
 
-The initial branch is stacked on PR #15 (`9dfd3ed`) because its media implementation is needed by later integration checks. Do not merge or duplicate PR #15 implicitly. Before opening an implementation PR, either target its branch explicitly or rebase the isolated new commits onto `main` after #15 is merged; inspect the resulting diff. Keep optimization, integration, and authorization increments separate rather than shipping all through one sensitive PR.
+The isolated worktree was initially based on PR #15 (`9dfd3ed`). The first CI/reporting/runbook increment is independent of media and must be rebased onto current `main` before publication, with fresh verification, so it neither duplicates nor implicitly merges #15. Later media integration checks depend on #15 being merged explicitly. Keep optimization, integration, and authorization increments separate rather than shipping all through one sensitive PR.
 
 The owner has already approved planning followed by implementation and previously chose subagent-driven execution. Do not request that decision again. Stop only at the named sensitive-operation approval gates or a genuine external prerequisite.
 
@@ -50,13 +50,16 @@ The owner has already approved planning followed by implementation and previousl
 
 ### Task 2: Prepare a two-runner browser candidate without losing regressions
 
-**Files:** Modify `.github/workflows/ci.yml`, `tests/e2e/veil.spec.ts`, `docs/ci-release.md`, `.gitignore`; create `tests/scripts/browser-ci.test.mjs`.
+**Files:** Modify `.github/workflows/ci.yml`, `playwright.config.ts`, `tests/e2e/veil.spec.ts`, `tests/e2e/motion.spec.ts`, `docs/ci-release.md`, `.gitignore`; create `.github/scripts/merge-browser-reports.mjs`, `tests/scripts/browser-ci.test.mjs`.
 
 **Interfaces:** Keep the required job name `Playwright Chromium on Linux` for a final aggregate job. Two internal matrix jobs use `shard: [1, 2]`, one Playwright worker per runner, `--shard=${{ matrix.shard }}/2`, `--fail-on-flaky-tests`, JSON and blob reports. Aggregate only the same run/attempt's expected two artifacts. Validate complete shard coverage before considering outcomes. Keep only synthetic reports in public artifacts with short retention. Task 1 is the report-summary API.
+
+`verifyShardReports(reports, inventory, { revision, runId, runAttempt })` returns validated per-shard summaries after checking the exact two shard indices, revision/run metadata, and disjoint complete discovered spec/project IDs. `playwright.config.ts` records nonsecret GitHub revision/run metadata. Its CLI reads only the two exact artifact paths, emits summaries and copies their validated blob paths for Playwright's existing merge command. Tests exercise this behavior and actual shard discovery rather than source-text snapshots of YAML.
 
 - [ ] Write failing configuration-contract tests for two shards, one worker, fail-on-flaky, preserved required aggregate check name, missing-shard rejection and no privileged workflow/token. Validate shard manifests against actual `playwright test --list --shard=1/2` / `2/2` IDs: union equals baseline, intersection empty.
 - [ ] Observe RED, then implement the matrix candidate and a fail-closed aggregate job, still depending on quality. Keep Lighthouse/quality/security semantics unchanged. Do not add a duplicate full browser workflow or change protection. Use existing pinned action SHAs. Limit artifacts to the current workflow run/attempt and ensure aggregate fails when a shard was cancelled/failed/skipped.
 - [ ] Make independent `veil.spec.ts` cases shardable while preserving all assertions, frame counts, live WebGL checks, viewport/theme cases, timeouts and scroll interactions. Retain one worker per runner. Do not reduce frame samples or disable the scene as an optimization.
+- [ ] If the no-JavaScript motion case uses a hardcoded server port, reproduce it on an owned alternate-port server and pass the configured `baseURL` into its explicit browser context. Preserve all animation assertions.
 - [ ] Run targeted configuration tests, shard discovery checks, formatting/lint/types, full unit/script suites, production build/budgets and the full browser suite on an owned non-3000 port. On Windows use actual local GPU configuration and explicitly distinguish it from Linux SwiftShader.
 - [ ] Commit `ci: prepare two-shard browser checks with complete reports`. Prepare a concise local diff for owner approval before pushing a workflow change. The candidate is not declared faster until Task 3.
 

@@ -1,5 +1,9 @@
 # CI and release flow
 
+## Pending browser optimization
+
+This branch prepares a two-shard candidate for owner approval. It has not been applied to GitHub or benchmarked on Linux. Local shard discovery must preserve the complete inventory as two disjoint sets; no regression assertions, frame samples, or release thresholds are removed. That inventory check does not establish a speed improvement. The current hosted workflow still uses one browser job until this change is explicitly approved and published. The no-JavaScript motion test uses the configured server URL so verification can run on an owned alternate port.
+
 ## Checks
 
 The 200 KB JavaScript check measures scripts referenced by the prerendered HTML, including script preloads. It does not measure every subsequent network request: Motion's feature chunks can load on mount, while scene and dialog chunks have separate loading gates. Lighthouse exercises the real page and includes that subsequent work. Treat the static-script result as a bundle scope, not as total startup transfer size.
@@ -8,13 +12,14 @@ Font artifact tests regenerate priority subsets in memory and compare hashes, cm
 
 PRs targeting `main` and pushes to `main` run:
 
-- **CI:** Node.js 22, `npm ci`, ESLint, unit tests, production build, `tsc --noEmit` after Next.js generates route types, the existing 200 KB initial-JavaScript gate, and artifact/script budgets. A second job runs the complete Chromium suite with one worker. The existing Playwright config builds and starts the production server on port 3100; CI never reuses an existing server. The build occurs in each job so browser tests exercise their own clean install.
+- **CI:** Node.js 22, `npm ci`, ESLint, unit tests, production build, `tsc --noEmit` after Next.js generates route types, the existing 200 KB initial-JavaScript gate, and artifact/script budgets. The browser candidate splits the complete Chromium suite over two independent standard runners, one worker each. Each builds and starts its own production server on port 3100; CI never reuses an existing server. Lighthouse remains parallel with browser jobs after quality. This adds one browser setup/build and an aggregate job, so compare total runner time as well as elapsed time before retaining the candidate.
+- **Browser completeness:** the required check remains **Playwright Chromium on Linux**. It requires both shard jobs to succeed, then validates JSON report revision/run/attempt metadata and the disjoint union against a fresh discovery of the full test inventory. Missing, duplicated, unexpected, skipped, interrupted or flaky mandatory evidence fails. Playwright also runs with `--fail-on-flaky-tests`; retry-only success cannot silently release. Verified blob reports are merged into one HTML report; no promoted build or production credential is used.
 - **Lighthouse mobile:** a separate job builds production and collects three mobile Lighthouse runs for each of EN/JA/VI, using the median of each metric. Accessibility ≥95, SEO ≥90 and CLS ≤0.1 fail the job. Performance ≥85, LCP ≤2500 ms and TBT ≤200 ms are advisory: misses appear as warnings and in the job summary table, but do not block the merge, because lab loading metrics vary between runs on shared runners. Reports are uploaded with seven-day retention.
 - **Security:** checksum-pinned Gitleaks CLI scans all fetched branches/tags and the PR merge history with default rules and redacted reports. Deleting a secret from the current tree does not clear its history finding. Production `npm audit --omit=dev --audit-level=high` fails on high/critical advisories or an audit-service error; it never runs `audit fix`.
 - **CodeQL:** JavaScript/TypeScript with `security-extended` queries and no application build. PR jobs have read-only permissions, save SARIF for review, and fail on errors or security severity at least 7. Lower-severity findings still need review. Only the separate trusted `main` job can publish code-scanning results with `security-events: write`. A successful upload does not mean there are no alerts: review the Security tab before release. Avoid enabling a duplicate default-setup CodeQL workflow.
 - **Dependabot:** weekly npm and GitHub Actions PRs, bounded to three and two open update PRs respectively. Minor/patch npm updates are grouped; major updates remain separate. Updates receive the same PR checks; no automatic merging is configured. The standalone Gitleaks binary/checksum needs a reviewed manual update.
 
-Security and CodeQL also run weekly. Failure artifacts expire after three days. Playwright uploads its HTML report and `test-results`, including traces supplied by the existing first-retry trace setting. Unit failures upload JUnit output. Logs remain available in Actions when a command fails before a report exists.
+Security and CodeQL also run weekly. Failure artifacts expire after three days. The browser candidate uploads each shard's JSON/blob evidence even on failure, then uploads a merged HTML report after successful aggregation, with three-day retention. These runs use public seed content only. Never reuse this artifact policy for real signed-in preview sessions; keep their raw traces/auth state private and ignored. Unit failures upload JUnit output. Logs remain available in Actions when a command fails before a report exists.
 
 ## Cost and trust boundaries
 
@@ -29,6 +34,7 @@ Security and CodeQL also run weekly. Failure artifacts expire after three days. 
 | `actions/checkout` | `v7.0.1` | `3d3c42e5aac5ba805825da76410c181273ba90b1` |
 | `actions/setup-node` | `v7.1.0` | `949feb2413d6458794dcd2491c4babbbce0c15c1` |
 | `actions/upload-artifact` | `v7.0.2` | `cf430e030ddbb5b0abf93d22962f4752f3646cd9` |
+| `actions/download-artifact` | `v8.0.2` | `9000827ccba6bdab643e8b6fd33ac0654aef8333` |
 | `github/codeql-action` | `v4` | `6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee` |
 | `astral-sh/setup-uv` | `v10.3.0` | `1c37ad07a6a961277cf70c0d37d6f313000f5884` |
 
@@ -41,6 +47,8 @@ Resolve updates with `gh api repos/OWNER/REPO/commits/TAG --jq .sha`; inspect ac
 3. After the required checks pass, merge the reviewed PR. The connected Vercel project deploys `main` to production automatically. Verify the production revision, domain and routes, then check field Core Web Vitals in Vercel Speed Insights once real traffic has accumulated.
 
 These workflows do not deploy the application. Production release follows the reviewed merge and Vercel verification steps above.
+
+See [runtime baseline](ci-runtime-baseline.md) for observed historical timings and the still-pending Linux experiment. The owner-started [final review runbook](final-review-release.md) reuses exact-revision CI evidence and performs targeted actual-preview checks; it does not rerun the entire browser suite or configure an unattended merge service. CI/CD and Auth/RLS increments still require concrete owner approval before integration/application.
 
 ## Committed visual assets
 
