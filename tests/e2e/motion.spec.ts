@@ -83,14 +83,16 @@ test.describe("motion preference and scene fallbacks", () => {
   });
   test("without JavaScript, OS reduced motion still disables decorative CSS animation", async ({
     browser,
+    baseURL,
   }) => {
     const context = await browser.newContext({
+      baseURL,
       javaScriptEnabled: false,
       reducedMotion: "reduce",
     });
     try {
       const page = await context.newPage();
-      await page.goto("http://localhost:3100/en");
+      await page.goto("/en");
       expect(
         await page
           .locator("#hero-heading .fx-char")

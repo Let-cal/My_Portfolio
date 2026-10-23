@@ -24,6 +24,13 @@ jobs:
     needs: quality
     if: github.event.repository.private == false
     runs-on: ubuntu-24.04
+    # Lock the exact runtime pulled in the approved benchmark; keep SDK version aligned.
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.0-noble@sha256:06a9939e57531807f8d5fd76ce44b53165ffb7d7501d87ab10e285c20b1e971f
+      options: --ipc=host --init
+    defaults:
+      run:
+        shell: bash
     timeout-minutes: 25
     steps:
       - name: Checkout
@@ -36,10 +43,8 @@ jobs:
           node-version: "22"
           cache: npm
           package-manager-cache: false
-      - name: Install locked dependencies and Chromium
-        run: |
-          npm ci
-          npx --no-install playwright install --with-deps chromium
+      - name: Install locked dependencies
+        run: npm ci
       - name: Build production
         run: npm run build
       - name: Measure all three locales (median of three runs)
@@ -119,12 +124,23 @@ jobs:
           if-no-files-found: ignore
           retention-days: 3
 
-  browser:
-    name: Playwright Chromium on Linux
+  browser-shards:
+    name: Playwright shard ${{ matrix.shard }}/2
     needs: quality
     if: github.event.repository.private == false
     runs-on: ubuntu-24.04
+    # Browsers/fonts/system libraries are preinstalled; avoid repeating apt downloads.
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.0-noble@sha256:06a9939e57531807f8d5fd76ce44b53165ffb7d7501d87ab10e285c20b1e971f
+      options: --ipc=host --init
+    defaults:
+      run:
+        shell: bash
     timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -139,21 +155,76 @@ jobs:
           package-manager-cache: false
       - name: Install locked dependencies
         run: npm ci
-      - name: Install locked Playwright Chromium and Linux libraries
-        run: npx --no-install playwright install --with-deps chromium
-      - name: Full browser suite against the production server
+      - name: Plan duration-balanced groups from the full inventory
+        run: |
+          mkdir -p reports
+          npx --no-install playwright test --project=chromium --list --reporter=json > reports/browser-inventory.json
+          node .github/scripts/plan-browser-groups.mjs reports/browser-inventory.json .github/browser-timings.json reports/groups
+      - name: Browser shard against the production server
         # The existing config builds and starts port 3100; CI disables server reuse.
         # Run one browser at a time: SwiftShader rendering competes for the runner CPU.
-        run: npx --no-install playwright test --project=chromium --workers=1 --reporter=list,html
+        # --test-list already partitions the inventory; native --shard would omit cases.
+        run: npx --no-install playwright test --project=chromium --workers=1 --test-list=reports/groups/group-${{ matrix.shard }}.txt --fail-on-flaky-tests --reporter=list,json,blob
         env:
-          PLAYWRIGHT_HTML_OPEN: never
-      - name: Upload browser failure reports and traces
-        if: failure()
+          CI_BROWSER_GROUP: ${{ matrix.shard }}
+          PLAYWRIGHT_JSON_OUTPUT_NAME: reports/browser-${{ matrix.shard }}.json
+      - name: Upload this run's synthetic browser evidence
+        if: always() && !cancelled()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: playwright-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          name: playwright-shard-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.shard }}
           path: |
-            playwright-report/
-            test-results/
-          if-no-files-found: ignore
+            reports/browser-${{ matrix.shard }}.json
+            reports/groups/plan.json
+            blob-report/*.zip
+          if-no-files-found: error
+          retention-days: 3
+
+  browser:
+    # Preserve the existing required-check name; a matrix alone cannot prove completeness.
+    name: Playwright Chromium on Linux
+    needs: [quality, browser-shards]
+    if: always() && github.event.repository.private == false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Require successful shard jobs
+        env:
+          SHARD_RESULT: ${{ needs.browser-shards.result }}
+        run: test "$SHARD_RESULT" = success
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node.js 22
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+          package-manager-cache: false
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Download only this run and attempt's shard reports
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: playwright-shard-${{ github.run_id }}-${{ github.run_attempt }}-*
+          path: browser-reports
+          merge-multiple: false
+      - name: Discover the complete unchanged test inventory
+        run: |
+          mkdir -p reports
+          npx --no-install playwright test --project=chromium --list --reporter=json > reports/browser-inventory.json
+      - name: Reject missing, stale, duplicated, skipped or flaky evidence
+        run: node .github/scripts/merge-browser-reports.mjs browser-reports reports/browser-inventory.json
+      - name: Merge verified blob reports
+        run: npx --no-install playwright merge-reports --reporter=html browser-reports/verified-blobs
+        env:
+          PLAYWRIGHT_HTML_OPEN: never
+      - name: Upload merged synthetic browser report
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: playwright-report/
+          if-no-files-found: error
           retention-days: 3

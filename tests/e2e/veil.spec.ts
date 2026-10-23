@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test";
 
-// Each case starts a live WebGL scene. Run this file sequentially, but retry only
-// the failed independent case rather than replaying every earlier GPU check.
-test.describe.configure({ mode: "default" });
+// Independent pages can be distributed across CI shards. Each runner still uses
+// one worker so live WebGL scenes never compete with another test on that CPU.
+test.describe.configure({ mode: "parallel" });
 
 for (const theme of ["light", "dark"]) {
   test(`${theme}: Skills backgrounds follow their groups during wheel scrolling under the pointer`, async ({

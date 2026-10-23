@@ -46,6 +46,28 @@ test.describe("home page", () => {
     await expect(page.getByRole("dialog")).toBeHidden();
     await expect(trigger).toBeFocused();
   });
+  test("command palette returns focus after Escape for its button and keyboard shortcut", async ({
+    page,
+  }) => {
+    await page.goto("/en");
+    await hydrated(page, 'header button[aria-label="Open command palette"]');
+    const trigger = page.getByRole("button", {
+      name: "Open command palette",
+      exact: true,
+    });
+    await trigger.press("Enter");
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await page.getByRole("combobox").press("Escape");
+    await expect(page.getByRole("dialog")).toBeHidden();
+    await expect(trigger).toBeFocused();
+
+    const role = page.getByRole("radio", { name: "TECH LEAD", exact: true });
+    await role.press("Control+k");
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await page.getByRole("combobox").press("Escape");
+    await expect(page.getByRole("dialog")).toBeHidden();
+    await expect(role).toBeFocused();
+  });
   test("/en renders the seven sections", async ({ page }) => {
     await page.goto("/en");
     for (const id of SECTION_IDS) {

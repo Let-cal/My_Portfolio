@@ -183,6 +183,24 @@ afterEach(() => {
 });
 
 describe("CommandPalette", () => {
+  it("returns focus to the current opener after Escape on the first and later opens", async () => {
+    render(palette());
+    const svg = mount(
+      document.createElementNS("http://www.w3.org/2000/svg", "svg"),
+    );
+    const arc = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    arc.setAttribute("tabindex", "0");
+    svg.append(arc);
+    for (const opener of [mount(document.createElement("button")), arc]) {
+      opener.focus();
+      openPalette();
+      await screen.findByRole("dialog", { name: "Command palette" });
+      fireEvent.keyDown(screen.getByRole("combobox"), { key: "Escape" });
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      await waitFor(() => expect(opener).toHaveFocus());
+    }
+  });
+
   it("is closed until Ctrl+K opens it, and Esc closes it", async () => {
     render(palette());
     expect(screen.queryByRole("dialog")).toBeNull();

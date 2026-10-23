@@ -1,0 +1,512 @@
+{
+  "version": 1,
+  "samples": [
+    {
+      "file": "tests/e2e/accessibility.spec.ts",
+      "titlePath": ["dark /en passes the required accessibility audits"],
+      "projectId": "chromium",
+      "durationMs": 2999
+    },
+    {
+      "file": "tests/e2e/accessibility.spec.ts",
+      "titlePath": ["dark /en/quick passes the required accessibility audits"],
+      "projectId": "chromium",
+      "durationMs": 1170
+    },
+    {
+      "file": "tests/e2e/accessibility.spec.ts",
+      "titlePath": ["dark /ja passes the required accessibility audits"],
+      "projectId": "chromium",
+      "durationMs": 3528
+    },
+    {
+      "file": "tests/e2e/accessibility.spec.ts",
+      "titlePath": ["light /en passes the required accessibility audits"],
+      "projectId": "chromium",
+      "durationMs": 2871
+    },
+    {
+      "file": "tests/e2e/accessibility.spec.ts",
+      "titlePath": ["light /en/quick passes the required accessibility audits"],
+      "projectId": "chromium",
+      "durationMs": 809
+    },
+    {
+      "file": "tests/e2e/accessibility.spec.ts",
+      "titlePath": ["light /ja passes the required accessibility audits"],
+      "projectId": "chromium",
+      "durationMs": 2841
+    },
+    {
+      "file": "tests/e2e/accessibility.spec.ts",
+      "titlePath": [
+        "selected certificate tab text has AA contrast against its actual accent fill"
+      ],
+      "projectId": "chromium",
+      "durationMs": 1430
+    },
+    {
+      "file": "tests/e2e/accessibility.spec.ts",
+      "titlePath": [
+        "static technology marquees can be scrolled with the keyboard"
+      ],
+      "projectId": "chromium",
+      "durationMs": 2132
+    },
+    {
+      "file": "tests/e2e/admin.spec.ts",
+      "titlePath": [
+        "an admin link with a filter survives the trip through the login page"
+      ],
+      "projectId": "chromium",
+      "durationMs": 132
+    },
+    {
+      "file": "tests/e2e/admin.spec.ts",
+      "titlePath": [
+        "preview entry remains protected and cannot mint a draft cookie for an anonymous visitor"
+      ],
+      "projectId": "chromium",
+      "durationMs": 15
+    },
+    {
+      "file": "tests/e2e/admin.spec.ts",
+      "titlePath": [
+        "preview exit rejects cross-origin requests and redirects a local POST safely"
+      ],
+      "projectId": "chromium",
+      "durationMs": 18
+    },
+    {
+      "file": "tests/e2e/admin.spec.ts",
+      "titlePath": [
+        "the admin area sends visitors to the login page and stays out of search results"
+      ],
+      "projectId": "chromium",
+      "durationMs": 147
+    },
+    {
+      "file": "tests/e2e/font-loading.spec.ts",
+      "titlePath": [
+        "Vietnamese text uses the original small subsets instead of overlapping Latin Extended files"
+      ],
+      "projectId": "chromium",
+      "durationMs": 374
+    },
+    {
+      "file": "tests/e2e/font-loading.spec.ts",
+      "titlePath": [
+        "hero role panel titles retain the approved heading font stack"
+      ],
+      "projectId": "chromium",
+      "durationMs": 298
+    },
+    {
+      "file": "tests/e2e/garden-theme.spec.ts",
+      "titlePath": [
+        "the obsidian garden shares its fog and water palette and restores daylight and adjacent cyber scenes"
+      ],
+      "projectId": "chromium",
+      "durationMs": 43609
+    },
+    {
+      "file": "tests/e2e/local-time.spec.ts",
+      "titlePath": [
+        "offscreen clocks activate on approach without changing their reserved width"
+      ],
+      "projectId": "chromium",
+      "durationMs": 20675
+    },
+    {
+      "file": "tests/e2e/metadata.spec.ts",
+      "titlePath": [
+        "en exposes its canonical title, language links and person identity"
+      ],
+      "projectId": "chromium",
+      "durationMs": 1080
+    },
+    {
+      "file": "tests/e2e/metadata.spec.ts",
+      "titlePath": [
+        "ja exposes its canonical title, language links and person identity"
+      ],
+      "projectId": "chromium",
+      "durationMs": 745
+    },
+    {
+      "file": "tests/e2e/metadata.spec.ts",
+      "titlePath": [
+        "robots, sitemap and manifest expose the public portfolio identity"
+      ],
+      "projectId": "chromium",
+      "durationMs": 69
+    },
+    {
+      "file": "tests/e2e/metadata.spec.ts",
+      "titlePath": [
+        "the printable view is noindex and points to the main locale page"
+      ],
+      "projectId": "chromium",
+      "durationMs": 338
+    },
+    {
+      "file": "tests/e2e/metadata.spec.ts",
+      "titlePath": ["the share card is a real 1200 by 630 image"],
+      "projectId": "chromium",
+      "durationMs": 767
+    },
+    {
+      "file": "tests/e2e/metadata.spec.ts",
+      "titlePath": [
+        "vi exposes its canonical title, language links and person identity"
+      ],
+      "projectId": "chromium",
+      "durationMs": 542
+    },
+    {
+      "file": "tests/e2e/mobile-layout.spec.ts",
+      "titlePath": [
+        "mobile defers offscreen rendering while native section navigation and printing retain content"
+      ],
+      "projectId": "chromium",
+      "durationMs": 936
+    },
+    {
+      "file": "tests/e2e/motion.spec.ts",
+      "titlePath": [
+        "motion preference and scene fallbacks",
+        "Japanese body-font CSS loads on interaction rather than initial mobile rendering"
+      ],
+      "projectId": "chromium",
+      "durationMs": 1982
+    },
+    {
+      "file": "tests/e2e/motion.spec.ts",
+      "titlePath": [
+        "motion preference and scene fallbacks",
+        "Motion on overrides OS reduce and canvas never catches page controls"
+      ],
+      "projectId": "chromium",
+      "durationMs": 13363
+    },
+    {
+      "file": "tests/e2e/motion.spec.ts",
+      "titlePath": [
+        "motion preference and scene fallbacks",
+        "deferred scroll effects keep all cards visible and start with their original scroll ranges"
+      ],
+      "projectId": "chromium",
+      "durationMs": 1345
+    },
+    {
+      "file": "tests/e2e/motion.spec.ts",
+      "titlePath": [
+        "motion preference and scene fallbacks",
+        "hero CSS text swaps retain their approved timing and offsets"
+      ],
+      "projectId": "chromium",
+      "durationMs": 3077
+    },
+    {
+      "file": "tests/e2e/motion.spec.ts",
+      "titlePath": [
+        "motion preference and scene fallbacks",
+        "mobile hydration does not fetch desktop smooth-scrolling code"
+      ],
+      "projectId": "chromium",
+      "durationMs": 2762
+    },
+    {
+      "file": "tests/e2e/motion.spec.ts",
+      "titlePath": [
+        "motion preference and scene fallbacks",
+        "mobile keeps the static scene after idle and interaction"
+      ],
+      "projectId": "chromium",
+      "durationMs": 4058
+    },
+    {
+      "file": "tests/e2e/motion.spec.ts",
+      "titlePath": [
+        "motion preference and scene fallbacks",
+        "reduced motion keeps the 3D canvas off and shows a static fallback"
+      ],
+      "projectId": "chromium",
+      "durationMs": 684
+    },
+    {
+      "file": "tests/e2e/motion.spec.ts",
+      "titlePath": [
+        "motion preference and scene fallbacks",
+        "the mobile greeting leaves the hero portrait unobstructed"
+      ],
+      "projectId": "chromium",
+      "durationMs": 366
+    },
+    {
+      "file": "tests/e2e/motion.spec.ts",
+      "titlePath": [
+        "motion preference and scene fallbacks",
+        "without JavaScript, OS reduced motion still disables decorative CSS animation"
+      ],
+      "projectId": "chromium",
+      "durationMs": 246
+    },
+    {
+      "file": "tests/e2e/public.spec.ts",
+      "titlePath": ["home page", "/en renders the seven sections"],
+      "projectId": "chromium",
+      "durationMs": 4702
+    },
+    {
+      "file": "tests/e2e/public.spec.ts",
+      "titlePath": ["home page", "/en?role=pm shows the project manager title"],
+      "projectId": "chromium",
+      "durationMs": 925
+    },
+    {
+      "file": "tests/e2e/public.spec.ts",
+      "titlePath": ["home page", "/fr is a 404"],
+      "projectId": "chromium",
+      "durationMs": 309
+    },
+    {
+      "file": "tests/e2e/public.spec.ts",
+      "titlePath": [
+        "home page",
+        "/ja renders the name heading and no \"undefined\""
+      ],
+      "projectId": "chromium",
+      "durationMs": 1044
+    },
+    {
+      "file": "tests/e2e/public.spec.ts",
+      "titlePath": [
+        "home page",
+        "/vi renders the name heading and no \"undefined\""
+      ],
+      "projectId": "chromium",
+      "durationMs": 954
+    },
+    {
+      "file": "tests/e2e/public.spec.ts",
+      "titlePath": ["home page", "Ctrl+K opens the command palette"],
+      "projectId": "chromium",
+      "durationMs": 982
+    },
+    {
+      "file": "tests/e2e/public.spec.ts",
+      "titlePath": [
+        "home page",
+        "a lazily loaded project case study opens and returns focus after Escape"
+      ],
+      "projectId": "chromium",
+      "durationMs": 3044
+    },
+    {
+      "file": "tests/e2e/public.spec.ts",
+      "titlePath": ["home page", "an unknown role falls back to Full-stack"],
+      "projectId": "chromium",
+      "durationMs": 818
+    },
+    {
+      "file": "tests/e2e/public.spec.ts",
+      "titlePath": [
+        "home page",
+        "choosing Tech Lead on the role wheel puts role=techlead in the URL"
+      ],
+      "projectId": "chromium",
+      "durationMs": 1273
+    },
+    {
+      "file": "tests/e2e/public.spec.ts",
+      "titlePath": [
+        "home page",
+        "only fetches the active role portrait before interaction"
+      ],
+      "projectId": "chromium",
+      "durationMs": 1470
+    },
+    {
+      "file": "tests/e2e/public.spec.ts",
+      "titlePath": ["quick view", "/en/quick has no canvas and a Print button"],
+      "projectId": "chromium",
+      "durationMs": 1243
+    },
+    {
+      "file": "tests/e2e/public.spec.ts",
+      "titlePath": ["quick view", "/ja/quick renders without \"undefined\""],
+      "projectId": "chromium",
+      "durationMs": 439
+    },
+    {
+      "file": "tests/e2e/public.spec.ts",
+      "titlePath": ["quick view", "/vi/quick renders without \"undefined\""],
+      "projectId": "chromium",
+      "durationMs": 401
+    },
+    {
+      "file": "tests/e2e/public.spec.ts",
+      "titlePath": [
+        "quick view",
+        "going back from the 60-second view brings the site chrome back"
+      ],
+      "projectId": "chromium",
+      "durationMs": 2483
+    },
+    {
+      "file": "tests/e2e/public.spec.ts",
+      "titlePath": [
+        "quick view",
+        "print layout drops the site chrome and fits one A4 page"
+      ],
+      "projectId": "chromium",
+      "durationMs": 569
+    },
+    {
+      "file": "tests/e2e/public.spec.ts",
+      "titlePath": [
+        "quick view",
+        "shows four experiences, four certificates, no phone number and a way back"
+      ],
+      "projectId": "chromium",
+      "durationMs": 630
+    },
+    {
+      "file": "tests/e2e/public.spec.ts",
+      "titlePath": [
+        "quick view",
+        "the title follows ?role= and the CV link follows the role"
+      ],
+      "projectId": "chromium",
+      "durationMs": 625
+    },
+    {
+      "file": "tests/e2e/site-fonts.spec.ts",
+      "titlePath": [
+        "en: initial page uses the smaller site Latin fonts without fetching full Latin"
+      ],
+      "projectId": "chromium",
+      "durationMs": 288
+    },
+    {
+      "file": "tests/e2e/site-fonts.spec.ts",
+      "titlePath": [
+        "ja: initial page uses the smaller site Latin fonts without fetching full Latin"
+      ],
+      "projectId": "chromium",
+      "durationMs": 525
+    },
+    {
+      "file": "tests/e2e/site-fonts.spec.ts",
+      "titlePath": [
+        "new Latin characters outside the site subset still load the complete original face"
+      ],
+      "projectId": "chromium",
+      "durationMs": 984
+    },
+    {
+      "file": "tests/e2e/site-fonts.spec.ts",
+      "titlePath": [
+        "site font subsets render the original glyphs, spacing and variable weights exactly"
+      ],
+      "projectId": "chromium",
+      "durationMs": 2176
+    },
+    {
+      "file": "tests/e2e/site-fonts.spec.ts",
+      "titlePath": [
+        "vi: initial page uses the smaller site Latin fonts without fetching full Latin"
+      ],
+      "projectId": "chromium",
+      "durationMs": 487
+    },
+    {
+      "file": "tests/e2e/toast-loading.spec.ts",
+      "titlePath": [
+        "toast library waits for the first copy and that first notification is delivered"
+      ],
+      "projectId": "chromium",
+      "durationMs": 2441
+    },
+    {
+      "file": "tests/e2e/veil.spec.ts",
+      "titlePath": ["chapter seals stay above the padded primary headings"],
+      "projectId": "chromium",
+      "durationMs": 19767
+    },
+    {
+      "file": "tests/e2e/veil.spec.ts",
+      "titlePath": [
+        "dark: Skills backgrounds follow their groups during wheel scrolling under the pointer"
+      ],
+      "projectId": "chromium",
+      "durationMs": 183525
+    },
+    {
+      "file": "tests/e2e/veil.spec.ts",
+      "titlePath": [
+        "dark: moving Why cards and hero marquee never stretch the text backdrop across the sidebar"
+      ],
+      "projectId": "chromium",
+      "durationMs": 20803
+    },
+    {
+      "file": "tests/e2e/veil.spec.ts",
+      "titlePath": [
+        "light: Skills backgrounds follow their groups during wheel scrolling under the pointer"
+      ],
+      "projectId": "chromium",
+      "durationMs": 168605
+    },
+    {
+      "file": "tests/e2e/veil.spec.ts",
+      "titlePath": [
+        "light: moving Why cards and hero marquee never stretch the text backdrop across the sidebar"
+      ],
+      "projectId": "chromium",
+      "durationMs": 25253
+    },
+    {
+      "file": "tests/e2e/veil.spec.ts",
+      "titlePath": [
+        "scrolling Skills does not reassign existing backdrop nodes across the screen"
+      ],
+      "projectId": "chromium",
+      "durationMs": 171065
+    },
+    {
+      "file": "tests/e2e/why-gesture.spec.ts",
+      "titlePath": [
+        "the first mouse carousel drag works even before its approach observer reports"
+      ],
+      "projectId": "chromium",
+      "durationMs": 8859
+    },
+    {
+      "file": "tests/e2e/why-gesture.spec.ts",
+      "titlePath": [
+        "the first touch carousel drag works even before its approach observer reports"
+      ],
+      "projectId": "chromium",
+      "durationMs": 3973
+    }
+  ],
+  "provenance": {
+    "revision": "847e7f893a28eef5b26eabf4a546263f6742375f",
+    "runs": [
+      {
+        "id": "39754274021",
+        "revision": "99f2e941c9e76914ce33c19594a81e03b06ea25f"
+      },
+      {
+        "id": "39754407212",
+        "revision": "847e7f893a28eef5b26eabf4a546263f6742375f"
+      },
+      {
+        "id": "39756641052",
+        "revision": "847e7f893a28eef5b26eabf4a546263f6742375f"
+      }
+    ]
+  }
+}
