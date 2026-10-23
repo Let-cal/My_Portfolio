@@ -20,13 +20,15 @@ Reference: [official Playwright Docker image and runtime guidance](https://playw
 
 ### Immutable runtime pin for release preparation
 
-The first approved Linux run `39810563429` passed all 63 browser cases and required checks. Its runner-generated Docker pull logs for both browser groups and Lighthouse resolve the official version tag to the same digest:
+All three approved Linux runs (`39810563429`, `39812889932`, `39816113639`) passed all 63 browser cases and five CI jobs. Required PR checks pass at the measured head. Runner-generated Docker pull logs from all nine browser/Lighthouse jobs resolve the official version tag to the same digest:
 
 ```text
 mcr.microsoft.com/playwright:v1.64.0-noble@sha256:06a9939e57531807f8d5fd76ce44b53165ffb7d7501d87ab10e285c20b1e971f
 ```
 
-The local release preparation locks that measured runtime rather than allowing the tag to resolve differently on a later run. The script contract requires both jobs to use the same digest and a version matching the SDK lockfile. This is not a new measured runtime or a claim of a local Docker execution. Additional benchmark runs stay on the approved remote `40974b1`; confirm their actual image digests before claiming all measurements used the same environment. Publishing the concrete pin and merging the CI change still require owner approval and green checks on the final revision.
+The local release preparation locks that measured runtime rather than allowing the tag to resolve differently on a later run. The script contract requires both jobs to use the same digest and a version matching the SDK lockfile. This is not a new measured runtime or a claim of a local Docker execution. All three measurements stayed on the approved remote `40974b1`. Publishing the concrete pin and merging the CI change still require owner approval and green checks on the final revision; the old head's checks do not authorize a newer head.
+
+The [completed experiment](ci-runtime-baseline.md#official-container-runtime-candidate-measured-2026-10-22) has official elapsed times 13m49s / 22m45s / 11m23s, with a median of 13m49s (25.4% below the historical single-browser baseline). Median summed job occupancy is 24m46s, 14.7% above that baseline and 26.5% below the previous duration candidate. GitHub reported Actions degradation during the experiment; trial 2 includes a retained 9m35s post-job status/finalization gap. These shared-runner observations support keeping the runtime candidate for owner review, not a fixed completion-time promise or healthy-service stability claim. No fourth measurement, new workflow, automatic merger or production release is part of this increment.
 
 When updating Playwright, deliberately refresh the SDK lock and both official image references together, verify the pulled digest and run the existing regressions. A passing npm audit does not scan the container's operating-system packages.
 
