@@ -1,0 +1,357 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { execFileSync, spawnSync } from "node:child_process";
+import {
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { dirname, join, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const api =
+  await import("../../.github/scripts/merge-browser-reports.mjs").catch(
+    () => ({}),
+  );
+const revision = "a".repeat(40);
+const identity = { revision, runId: "10", runAttempt: "1" };
+
+function spec(id) {
+  return {
+    id,
+    title: `case ${id}`,
+    file: "example.spec.ts",
+    line: id === "a" ? 1 : 2,
+    column: 1,
+    ok: true,
+    tests: [
+      {
+        projectId: "chromium",
+        projectName: "chromium",
+        expectedStatus: "passed",
+        status: "expected",
+        results: [{ status: "passed", duration: 100, retry: 0 }],
+      },
+    ],
+  };
+}
+
+function report(current, id) {
+  return {
+    config: {
+      shard: { current, total: 2 },
+      metadata: { ciRevision: revision, ciRun: "10", ciAttempt: "1" },
+    },
+    suites: [
+      {
+        title: "example",
+        file: "example.spec.ts",
+        line: 0,
+        column: 0,
+        specs: [spec(id)],
+      },
+    ],
+    errors: [],
+    stats: {
+      startTime: "2026-10-21T15:00:00.000Z",
+      duration: 110,
+      expected: 1,
+      unexpected: 0,
+      flaky: 0,
+      skipped: 0,
+    },
+  };
+}
+
+const inventory = {
+  suites: [
+    {
+      title: "example",
+      file: "example.spec.ts",
+      specs: [spec("a"), spec("b")],
+    },
+  ],
+  errors: [],
+};
+
+test("two successful shards cover the complete discovered suite exactly once", () => {
+  assert.equal(typeof api.verifyShardReports, "function");
+  const result = api.verifyShardReports(
+    [report(1, "a"), report(2, "b")],
+    inventory,
+    identity,
+  );
+  assert.equal(result.length, 2);
+  assert.equal(result[0].counts.expected, 1);
+  assert.equal(result[1].counts.expected, 1);
+});
+
+test("a missing, repeated or unexpected shard cannot satisfy the aggregate", () => {
+  for (const reports of [
+    [],
+    [report(1, "a")],
+    [report(1, "a"), report(1, "b")],
+    [report(1, "a"), report(3, "b")],
+  ]) {
+    assert.throws(() => api.verifyShardReports(reports, inventory, identity));
+  }
+});
+
+test("reports from a different revision, run or retry are rejected", () => {
+  for (const key of ["ciRevision", "ciRun", "ciAttempt"]) {
+    const stale = report(2, "b");
+    stale.config.metadata[key] = "wrong";
+    assert.throws(() =>
+      api.verifyShardReports([report(1, "a"), stale], inventory, identity),
+    );
+  }
+});
+
+test("missing cases, duplicate cases and added undiscovered cases are rejected", () => {
+  for (const id of ["a", "other"]) {
+    assert.throws(() =>
+      api.verifyShardReports(
+        [report(1, "a"), report(2, id)],
+        inventory,
+        identity,
+      ),
+    );
+  }
+  const empty = structuredClone(inventory);
+  empty.suites[0].specs = [];
+  assert.throws(() =>
+    api.verifyShardReports([report(1, "a"), report(2, "b")], empty, identity),
+  );
+});
+
+test("flaky, skipped and unexpectedly failed mandatory tests block the aggregate", () => {
+  for (const outcome of ["flaky", "skipped", "unexpected"]) {
+    const bad = report(2, "b");
+    bad.suites[0].specs[0].tests[0].status = outcome;
+    bad.stats.expected = 0;
+    bad.stats[outcome] = 1;
+    bad.suites[0].specs[0].tests[0].results =
+      outcome === "flaky"
+        ? [
+            { status: "failed", duration: 100, retry: 0 },
+            { status: "passed", duration: 100, retry: 1 },
+          ]
+        : [
+            {
+              status: outcome === "skipped" ? "skipped" : "failed",
+              duration: 1,
+              retry: 0,
+            },
+          ];
+    assert.throws(() =>
+      api.verifyShardReports([report(1, "a"), bad], inventory, identity),
+    );
+  }
+});
+
+test("discovery errors and malformed evidence fail closed", () => {
+  const errored = { ...inventory, errors: [{ message: "discovery failed" }] };
+  assert.throws(() =>
+    api.verifyShardReports([report(1, "a"), report(2, "b")], errored, identity),
+  );
+  for (const bad of [null, {}, { ...identity, revision: "" }]) {
+    assert.throws(() =>
+      api.verifyShardReports([report(1, "a"), report(2, "b")], inventory, bad),
+    );
+  }
+});
+
+function grouped(current, id) {
+  const value = report(current, id);
+  value.config.shard = null;
+  value.config.metadata.ciGroup = String(current);
+  value.config.metadata.ciGroupTotal = "2";
+  return value;
+}
+
+test("duration-selected groups cover the full inventory without native re-sharding", () => {
+  const result = api.verifyShardReports(
+    [grouped(1, "a"), grouped(2, "b")],
+    inventory,
+    identity,
+  );
+  assert.equal(result.length, 2);
+});
+
+test("invalid, duplicated, mixed or doubly sharded group evidence is rejected", () => {
+  const invalid = [
+    [grouped(1, "a"), grouped(1, "b")],
+    [grouped(1, "a"), report(2, "b")],
+    [grouped(1, "a"), grouped(3, "b")],
+  ];
+  const twice = grouped(2, "b");
+  twice.config.shard = { current: 2, total: 2 };
+  invalid.push([grouped(1, "a"), twice]);
+  const wrongTotal = grouped(2, "b");
+  wrongTotal.config.metadata.ciGroupTotal = "3";
+  invalid.push([grouped(1, "a"), wrongTotal]);
+  for (const value of invalid)
+    assert.throws(() => api.verifyShardReports(value, inventory, identity));
+});
+
+test("the real Playwright test-list CLI produces complete group reports and mergeable blobs", (t) => {
+  const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+  const scratch = join(root, ".superpowers");
+  mkdirSync(scratch, { recursive: true });
+  const fixture = mkdtempSync(join(scratch, "shard-contract-"));
+  t.after(() => {
+    if (!resolve(fixture).startsWith(resolve(scratch) + sep))
+      throw new Error("Unsafe fixture cleanup");
+    rmSync(fixture, { recursive: true, force: true });
+  });
+  const cli = join(root, "node_modules/@playwright/test/cli.js");
+  const config = join(fixture, "playwright.config.mjs");
+  writeFileSync(
+    config,
+    `const config = ${JSON.stringify({ testDir: fixture, testMatch: "cases.spec.mjs", fullyParallel: true, workers: 1, projects: [{ name: "chromium" }], metadata: { ciRevision: revision, ciRun: "10", ciAttempt: "1" } })}; config.metadata.ciGroup = process.env.CI_BROWSER_GROUP ?? null; config.metadata.ciGroupTotal = process.env.CI_BROWSER_GROUP ? "2" : null; export default config;`,
+  );
+  writeFileSync(
+    join(fixture, "cases.spec.mjs"),
+    'import { test, expect } from "@playwright/test";\ntest("first", () => expect(1).toBe(1));\ntest("second", () => expect(2).toBe(2));\n',
+  );
+  const env = {
+    ...process.env,
+    GITHUB_SHA: revision,
+    GITHUB_RUN_ID: "10",
+    GITHUB_RUN_ATTEMPT: "1",
+  };
+  delete env.FORCE_COLOR;
+  delete env.NO_COLOR;
+  const inventoryPath = join(fixture, "inventory.json");
+  writeFileSync(
+    inventoryPath,
+    execFileSync(
+      process.execPath,
+      [cli, "test", "--config", config, "--list", "--reporter=json"],
+      { cwd: root, env },
+    ),
+  );
+  for (const index of [1, 2]) {
+    const directory = join(fixture, `playwright-shard-10-1-${index}`);
+    mkdirSync(join(directory, "reports"), { recursive: true });
+    const list = join(fixture, `group-${index}.txt`);
+    writeFileSync(
+      list,
+      `[chromium] › cases.spec.mjs › ${index === 1 ? "first" : "second"}\n`,
+    );
+    execFileSync(
+      process.execPath,
+      [
+        cli,
+        "test",
+        "--config",
+        config,
+        `--test-list=${list}`,
+        "--fail-on-flaky-tests",
+        "--reporter=json,blob",
+      ],
+      {
+        cwd: root,
+        env: {
+          ...env,
+          CI_BROWSER_GROUP: String(index),
+          PLAYWRIGHT_JSON_OUTPUT_NAME: join(
+            directory,
+            "reports",
+            `browser-${index}.json`,
+          ),
+          PLAYWRIGHT_BLOB_OUTPUT_DIR: join(directory, "blob-report"),
+        },
+      },
+    );
+  }
+  const aggregate = join(root, ".github/scripts/merge-browser-reports.mjs");
+  const result = spawnSync(
+    process.execPath,
+    [aggregate, fixture, inventoryPath],
+    { cwd: root, env, encoding: "utf8" },
+  );
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /Both shards match/);
+  assert.deepEqual(readdirSync(join(fixture, "verified-blobs")).sort(), [
+    "shard-1.zip",
+    "shard-2.zip",
+  ]);
+  const html = join(fixture, "html");
+  execFileSync(
+    process.execPath,
+    [cli, "merge-reports", "--reporter=html", join(fixture, "verified-blobs")],
+    {
+      cwd: root,
+      env: {
+        ...env,
+        PLAYWRIGHT_HTML_OUTPUT_DIR: html,
+        PLAYWRIGHT_HTML_OPEN: "never",
+      },
+    },
+  );
+  assert.match(
+    readFileSync(join(html, "index.html"), "utf8"),
+    /<!DOCTYPE html>/i,
+  );
+  const repeat = spawnSync(
+    process.execPath,
+    [aggregate, fixture, inventoryPath],
+    { cwd: root, env, encoding: "utf8" },
+  );
+  assert.equal(
+    repeat.status,
+    1,
+    "stale blobs must not be reused by a second aggregate invocation",
+  );
+});
+
+test("workflow uses exactly two duration groups with one worker and the stable aggregate gate", () => {
+  const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+  const workflow = readFileSync(join(root, ".github/workflows/ci.yml"), "utf8");
+  assert.match(workflow, /shard: \[1, 2\]/);
+  assert.match(
+    workflow,
+    /plan-browser-groups\.mjs reports\/browser-inventory\.json/,
+  );
+  assert.match(workflow, /--workers=1 --test-list=reports\/groups\/group-/);
+  assert.doesNotMatch(workflow, /--shard=/);
+  assert.match(workflow, /CI_BROWSER_GROUP: \$\{\{ matrix\.shard \}\}/);
+  assert.match(workflow, /name: Playwright Chromium on Linux/);
+  assert.match(workflow, /needs: \[quality, browser-shards\]/);
+});
+
+test("browser and Lighthouse use one immutable official image matching locked Playwright", () => {
+  const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+  const workflow = readFileSync(join(root, ".github/workflows/ci.yml"), "utf8");
+  const lock = JSON.parse(
+    readFileSync(join(root, "package-lock.json"), "utf8"),
+  );
+  const version = lock.packages["node_modules/@playwright/test"].version;
+  const images = [
+    ...workflow.matchAll(/image: (mcr\.microsoft\.com\/playwright:\S+)/g),
+  ].map((m) => m[1]);
+  assert.equal(images.length, 2);
+  assert.equal(images[0], images[1]);
+  assert.match(
+    images[0],
+    new RegExp(
+      `^mcr\\.microsoft\\.com/playwright:v${version.replaceAll(".", "\\.")}` +
+        "-noble@sha256:[a-f0-9]{64}$",
+    ),
+  );
+  for (const job of ["performance", "browser-shards"]) {
+    const body = workflow.split(`\n  ${job}:\n`)[1]?.split(/\n  [a-z-]+:\n/)[0];
+    assert.ok(body);
+    assert.match(
+      body,
+      /container:\n\s+image: mcr\.microsoft\.com\/playwright:/,
+    );
+    assert.match(body, /options: --ipc=host --init/);
+    assert.match(body, /defaults:\n\s+run:\n\s+shell: bash/);
+    assert.doesNotMatch(body, /playwright install|--privileged|SYS_ADMIN/);
+  }
+});

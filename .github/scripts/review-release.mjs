@@ -1,0 +1,303 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const statuses = new Set(["passed", "failed", "skipped", "pending", "blocked"]);
+const record = (value) =>
+  value !== null && typeof value === "object" && !Array.isArray(value);
+const boolean = (value) => typeof value === "boolean";
+const timestamp = (value) => Number.isSafeInteger(value) && value >= 0;
+const sha = (value) =>
+  typeof value === "string" && /^[a-f0-9]{40}$/.test(value);
+const label = (value) =>
+  typeof value === "string" &&
+  value.length > 0 &&
+  value === value.trim() &&
+  !/[\u0000-\u001f\u007f-\u009f]/u.test(value);
+const revision = (value) =>
+  record(value) && sha(value.headSha) && sha(value.baseSha);
+const unique = (values) => new Set(values).size === values.length;
+
+function safeUrl(value) {
+  if (
+    typeof value !== "string" ||
+    value !== value.trim() ||
+    /[\s\u0000-\u001f\u007f-\u009f]/u.test(value)
+  )
+    return false;
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === "https:" &&
+      Boolean(url.hostname) &&
+      !url.username &&
+      !url.password &&
+      !url.search &&
+      !url.hash
+    );
+  } catch {
+    return false;
+  }
+}
+
+// This validates the small v1 JSON contract, not provenance or external policy.
+// Reasons use only fixed labels/indexes; never echo evidence, URLs or exceptions.
+function malformed(e) {
+  if (!record(e) || e.version !== 1)
+    return "Evidence must use the v1 object schema.";
+  const p = e.policy;
+  if (
+    !record(p) ||
+    !boolean(p.sensitive) ||
+    !timestamp(p.now) ||
+    !Number.isSafeInteger(p.maxReviewAgeMs) ||
+    p.maxReviewAgeMs <= 0 ||
+    !Number.isSafeInteger(p.maxEvidenceAgeMs) ||
+    p.maxEvidenceAgeMs <= 0
+  ) {
+    return "Trusted policy or review freshness bounds are malformed.";
+  }
+  if (
+    !Array.isArray(p.requiredChecks) ||
+    p.requiredChecks.length === 0 ||
+    !p.requiredChecks.every(label) ||
+    !unique(p.requiredChecks)
+  ) {
+    return "Trusted required check names must be nonempty and unique.";
+  }
+  if (
+    !Array.isArray(p.requiredChecklist) ||
+    p.requiredChecklist.length === 0 ||
+    !p.requiredChecklist.every(
+      (item) => record(item) && label(item.id) && boolean(item.authenticated),
+    ) ||
+    !unique(p.requiredChecklist.map((item) => item.id))
+  ) {
+    return "Trusted required checklist IDs and authentication flags are malformed.";
+  }
+  if (!revision(e.reviewed) || !revision(e.current))
+    return "Reviewed/current head and base must be full lowercase Git SHAs.";
+  const d = e.deployment;
+  if (
+    !record(d) ||
+    !sha(d.sha) ||
+    !timestamp(d.observedAt) ||
+    !boolean(d.immutable) ||
+    !safeUrl(d.url) ||
+    !["ready", "pending", "failed", "blocked"].includes(d.status)
+  ) {
+    return "Deployment SHA, status, immutable flag or sanitized HTTPS URL is malformed.";
+  }
+  if (
+    !Array.isArray(e.checks) ||
+    !e.checks.every(
+      (check) =>
+        revision(check) &&
+        timestamp(check.observedAt) &&
+        label(check.name) &&
+        statuses.has(check.status) &&
+        boolean(check.flaky) &&
+        Array.isArray(check.attempts) &&
+        check.attempts.length > 0 &&
+        check.attempts.every((s) => statuses.has(s)),
+    )
+  ) {
+    return "Check records require revision, name, status, flaky flag and complete attempt statuses.";
+  }
+  if (!unique(e.checks.map((check) => check.name)))
+    return "Duplicate observed check names are ambiguous.";
+  const v = e.preview;
+  if (
+    !revision(v) ||
+    !timestamp(v.observedAt) ||
+    !sha(v.deploymentSha) ||
+    !safeUrl(v.deploymentUrl) ||
+    !boolean(v.readOnly) ||
+    !Array.isArray(v.results) ||
+    !v.results.every(
+      (item) =>
+        record(item) &&
+        label(item.id) &&
+        statuses.has(item.status) &&
+        boolean(item.authenticated),
+    )
+  ) {
+    return "Preview revision, deployment, read-only flag or checklist observations are malformed.";
+  }
+  if (!unique(v.results.map((item) => item.id)))
+    return "Duplicate observed checklist IDs are ambiguous.";
+  const r = e.review;
+  if (
+    !revision(r) ||
+    !timestamp(r.reviewedAt) ||
+    !boolean(r.independent) ||
+    !statuses.has(r.status) ||
+    !Array.isArray(r.findings) ||
+    !r.findings.every(
+      (finding) =>
+        record(finding) &&
+        ["critical", "important", "minor"].includes(finding.severity) &&
+        boolean(finding.resolved),
+    )
+  ) {
+    return "Independent review revision, time, status or findings are malformed.";
+  }
+  if (!boolean(e.flaky))
+    return "Global flaky state must be an explicit boolean.";
+  if (
+    e.approval !== null &&
+    (!revision(e.approval) ||
+      !boolean(e.approval.explicitOwnerApproval) ||
+      !label(e.approval.scope) ||
+      !label(e.approval.reference))
+  ) {
+    return "Approval must be null or contain a revision, explicit owner approval flag, concrete scope and owner instruction reference.";
+  }
+  return null;
+}
+
+/**
+ * Conservative helper over agent-gathered JSON evidence. See the runbook for v1.
+ * PASS is neither cryptographic attestation, GitHub approval nor merge authority.
+ * No clock, mutation, external lookup, credential use or release action occurs.
+ */
+export function evaluateRelease(evidence) {
+  const invalid = malformed(evidence);
+  if (invalid) return { decision: "FAIL", reasons: [invalid] };
+  const e = evidence;
+  const failures = [];
+  const blockers = [];
+  const fail = (reason) => failures.push(reason);
+  const block = (reason) => blockers.push(reason);
+  const sameRevision = (value) =>
+    value.headSha === e.current.headSha && value.baseSha === e.current.baseSha;
+  const fresh = (observedAt, context) => {
+    if (
+      observedAt > e.policy.now ||
+      e.policy.now - observedAt > e.policy.maxEvidenceAgeMs
+    ) {
+      fail(`${context} evidence is stale or dated in the future.`);
+    }
+  };
+  const outcome = (status, context) => {
+    if (status === "failed" || status === "skipped")
+      fail(`${context} failed or was skipped.`);
+    if (status === "pending" || status === "blocked")
+      block(`${context} is pending or blocked.`);
+  };
+
+  if (!sameRevision(e.reviewed))
+    fail("Reviewed head/base no longer matches current head/base.");
+  fresh(e.deployment.observedAt, "Deployment");
+  fresh(e.preview.observedAt, "Preview");
+  if (e.deployment.sha !== e.current.headSha)
+    fail("Deployment SHA does not match current head.");
+  if (!e.deployment.immutable)
+    fail("Deployment URL is not confirmed immutable.");
+  if (e.deployment.status === "failed") fail("Deployment failed.");
+  if (e.deployment.status !== "ready" && e.deployment.status !== "failed")
+    block("Deployment is not ready.");
+  if (e.flaky) fail("Unresolved flaky evidence is present.");
+
+  e.policy.requiredChecks.forEach((name, index) => {
+    if (!e.checks.some((check) => check.name === name))
+      block(`Required check ${index + 1} is missing.`);
+  });
+  e.checks.forEach((check, index) => {
+    const context = `Check ${index + 1}`;
+    fresh(check.observedAt, context);
+    if (!sameRevision(check)) fail(`${context} is for a different head/base.`);
+    if (check.status !== check.attempts.at(-1))
+      fail(`${context} status disagrees with its final attempt.`);
+    if (
+      check.flaky ||
+      check.attempts.some((s) => s === "failed" || s === "skipped")
+    ) {
+      fail(`${context} has flaky, failed or skipped attempt history.`);
+    }
+    check.attempts.forEach((status) => outcome(status, `${context} attempt`));
+    outcome(check.status, context);
+  });
+
+  if (
+    !sameRevision(e.preview) ||
+    e.preview.deploymentSha !== e.deployment.sha ||
+    e.preview.deploymentUrl !== e.deployment.url
+  )
+    fail("Preview evidence is for a different revision or deployment URL.");
+  if (!e.preview.readOnly)
+    fail("Hosted preview content checks were not read-only.");
+  e.policy.requiredChecklist.forEach((required, index) => {
+    const result = e.preview.results.find((item) => item.id === required.id);
+    if (!result) block(`Required checklist item ${index + 1} is missing.`);
+    else if (required.authenticated && !result.authenticated)
+      block(
+        `Required checklist item ${index + 1} lacks authenticated preview evidence.`,
+      );
+  });
+  e.preview.results.forEach((result, index) =>
+    outcome(result.status, `Checklist item ${index + 1}`),
+  );
+
+  if (!sameRevision(e.review))
+    fail("Independent review is for a different head/base.");
+  if (!e.review.independent) block("Fresh independent review is required.");
+  if (
+    e.review.reviewedAt > e.policy.now ||
+    e.policy.now - e.review.reviewedAt > e.policy.maxReviewAgeMs
+  ) {
+    fail("Independent review is stale or dated in the future.");
+  }
+  outcome(e.review.status, "Independent review");
+  if (
+    e.review.findings.some(
+      (finding) => !finding.resolved && finding.severity !== "minor",
+    )
+  ) {
+    fail("Independent review has unresolved important or critical findings.");
+  }
+  if (e.approval !== null && !sameRevision(e.approval))
+    fail("Owner approval is for a different head/base.");
+  if (e.policy.sensitive && e.approval?.explicitOwnerApproval !== true)
+    block(
+      "Sensitive change requires explicit owner approval of this head/base.",
+    );
+
+  return {
+    decision: failures.length ? "FAIL" : blockers.length ? "BLOCKED" : "PASS",
+    reasons: [...new Set([...failures, ...blockers])],
+  };
+}
+
+// CLI only reads one local JSON file and prints the sanitized decision.
+if (
+  process.argv[1] &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
+  let result;
+  const args = process.argv.slice(2);
+  if (
+    args.length !== 1 ||
+    !args[0] ||
+    args[0].startsWith("-") ||
+    /[a-z][a-z0-9+.-]*:\/\//iu.test(args[0])
+  ) {
+    result = {
+      decision: "FAIL",
+      reasons: [
+        "Usage: node .github/scripts/review-release.mjs LOCAL_EVIDENCE.json",
+      ],
+    };
+  } else {
+    try {
+      result = evaluateRelease(JSON.parse(readFileSync(args[0], "utf8")));
+    } catch {
+      result = {
+        decision: "FAIL",
+        reasons: ["Unable to read or parse local evidence JSON."],
+      };
+    }
+  }
+  process.stdout.write(`${JSON.stringify(result)}\n`);
+  process.exitCode = result.decision === "PASS" ? 0 : 1;
+}
