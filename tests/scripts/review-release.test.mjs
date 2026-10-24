@@ -1,8 +1,14 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
@@ -65,6 +71,7 @@ function ordinary() {
       names: ["quality", "browser"],
     },
     deployment: {
+      id: "dpl_synthetic123",
       sha: HEAD,
       status: "ready",
       immutable: true,
@@ -87,6 +94,7 @@ function ordinary() {
       deploymentUrl: PREVIEW_URL,
       readOnly: true,
       observedAt: NOW - 60_000,
+      lastObservedAt: NOW - 60_000,
       results: [...BASELINE, "changed-flow"].map((id) => ({
         id,
         status: "passed",
@@ -484,6 +492,31 @@ test("local JSON CLI emits PASS/FAIL/BLOCKED and distinct nonzero rejection", ()
   }
 });
 
+test("CLI still decides when executed through a symlinked directory", (t) => {
+  const directory = mkdtempSync(join(tmpdir(), "review-release-"));
+  try {
+    const linked = join(directory, "scripts");
+    try {
+      // "junction" needs no privilege on Windows; POSIX ignores the type.
+      symlinkSync(dirname(fileURLToPath(script)), linked, "junction");
+    } catch {
+      t.skip("symlink or junction creation is not permitted here");
+      return;
+    }
+    const path = join(directory, "ordinary.json");
+    writeFileSync(path, JSON.stringify(ordinary()));
+    const result = spawnSync(
+      process.execPath,
+      [join(linked, "review-release.mjs"), path],
+      { encoding: "utf8", shell: false },
+    );
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(JSON.parse(result.stdout).decision, "PASS");
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 for (const field of ["deployment", "preview"]) {
   for (const age of [3_600_001, -1]) {
     test(`rejects stale or future ${field} observation at age ${age}`, () => {
@@ -515,6 +548,40 @@ test("rejects invalid evidence freshness policy", () => {
   const evidence = ordinary();
   evidence.policy.maxEvidenceAgeMs = 0;
   assert.equal(evaluate(evidence).decision, "FAIL");
+});
+
+const TIME_FIELDS = new Set([
+  "now",
+  "observedAt",
+  "lastObservedAt",
+  "reviewedAt",
+  "verifiedBefore",
+  "verifiedAfter",
+]);
+function toSeconds(value) {
+  if (Array.isArray(value)) value.forEach(toSeconds);
+  else if (value !== null && typeof value === "object")
+    for (const [key, item] of Object.entries(value)) {
+      if (TIME_FIELDS.has(key)) value[key] = Math.floor(item / 1000);
+      else toSeconds(item);
+    }
+}
+
+test("epoch-seconds times fail closed instead of stretching freshness", () => {
+  for (const evidence of [ordinary(), aliasEvidence()]) {
+    toSeconds(evidence);
+    assert.equal(evaluate(evidence).decision, "FAIL");
+  }
+});
+
+test("age limits are capped at 24 hours", () => {
+  for (const key of ["maxEvidenceAgeMs", "maxReviewAgeMs"]) {
+    const evidence = ordinary();
+    evidence.policy[key] = 86_400_000;
+    assert.equal(evaluate(evidence).decision, "PASS");
+    evidence.policy[key] = 86_400_001;
+    assert.equal(evaluate(evidence).decision, "FAIL");
+  }
 });
 
 test("sensitive approval requires concrete scope and owner instruction reference", () => {
@@ -707,7 +774,10 @@ for (const kind of ["check", "checklist"]) {
   const decisions = (e) =>
     kind === "check" ? e.policy.optionalChecks : e.policy.optionalChecklist;
   test(`explicit nonapplicable optional ${kind} may be absent`, () => {
-    assert.equal(evaluate(optionalEvidence(kind)).decision, "PASS");
+    const evidence = optionalEvidence(kind);
+    // Only a name not reported in the inventory may lack an observation.
+    if (kind === "check") evidence.inventory.names.pop();
+    assert.equal(evaluate(evidence).decision, "PASS");
   });
   test(`explicit nonapplicable optional ${kind} may be skipped`, () => {
     const evidence = optionalEvidence(kind);
@@ -760,6 +830,10 @@ for (const kind of ["check", "checklist"]) {
     assert.equal(evaluate(evidence).decision, "FAIL");
   });
 }
+
+test("nonapplicable optional check in the inventory needs an observed result", () => {
+  assert.equal(evaluate(optionalEvidence("check")).decision, "BLOCKED");
+});
 
 test("optional applicable authenticated preview cannot pass anonymously", () => {
   const evidence = optionalEvidence("checklist", true);
@@ -856,6 +930,16 @@ const aliasCases = [
     "FAIL",
   ],
   ["future alias verification", (a) => (a.verifiedAfter = NOW + 1), "FAIL"],
+  [
+    "last preview observation after alias verification",
+    (a, e) => (e.preview.lastObservedAt = NOW - 29_999),
+    "FAIL",
+  ],
+  [
+    "alias for another deployment",
+    (a) => (a.deploymentId = "dpl_other"),
+    "FAIL",
+  ],
   ["missing deployment ID", (a) => delete a.deploymentId, "FAIL"],
   ["empty deployment ID", (a) => (a.deploymentId = ""), "FAIL"],
   [
@@ -889,6 +973,26 @@ for (const [name, mutate, want] of aliasCases) {
     const result = evaluate(evidence);
     assert.equal(result.decision, want);
     assert.doesNotMatch(JSON.stringify(result), /token=secret|dpl_synthetic/);
+  });
+}
+
+for (const [name, mutate] of [
+  ["missing deployment id", (e) => delete e.deployment.id],
+  ["empty deployment id", (e) => (e.deployment.id = "")],
+  ["missing last preview observation", (e) => delete e.preview.lastObservedAt],
+  [
+    "last preview observation before the first",
+    (e) => (e.preview.lastObservedAt = NOW - 60_001),
+  ],
+  [
+    "future last preview observation",
+    (e) => (e.preview.lastObservedAt = NOW + 1),
+  ],
+]) {
+  test(`deployment and preview window: ${name} -> FAIL`, () => {
+    const evidence = ordinary();
+    mutate(evidence);
+    assert.equal(evaluate(evidence).decision, "FAIL");
   });
 }
 

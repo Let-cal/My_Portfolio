@@ -1,12 +1,15 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { readFileSync, realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const statuses = new Set(["passed", "failed", "skipped", "pending", "blocked"]);
 const record = (value) =>
   value !== null && typeof value === "object" && !Array.isArray(value);
 const boolean = (value) => typeof value === "boolean";
-const timestamp = (value) => Number.isSafeInteger(value) && value >= 0;
+// Millisecond scale only: epoch seconds would silently stretch age limits.
+const timestamp = (value) =>
+  Number.isSafeInteger(value) && value >= 1_500_000_000_000;
+const ageLimit = (value) =>
+  Number.isSafeInteger(value) && value > 0 && value <= 86_400_000;
 const sha = (value) =>
   typeof value === "string" && /^[a-f0-9]{40}$/.test(value);
 const label = (value) =>
@@ -61,10 +64,8 @@ function malformed(e) {
     !record(p) ||
     !boolean(p.sensitive) ||
     !timestamp(p.now) ||
-    !Number.isSafeInteger(p.maxReviewAgeMs) ||
-    p.maxReviewAgeMs <= 0 ||
-    !Number.isSafeInteger(p.maxEvidenceAgeMs) ||
-    p.maxEvidenceAgeMs <= 0
+    !ageLimit(p.maxReviewAgeMs) ||
+    !ageLimit(p.maxEvidenceAgeMs)
   ) {
     return "Trusted policy or review freshness bounds are malformed.";
   }
@@ -139,13 +140,14 @@ function malformed(e) {
   const d = e.deployment;
   if (
     !record(d) ||
+    !label(d.id) ||
     !sha(d.sha) ||
     !timestamp(d.observedAt) ||
     !boolean(d.immutable) ||
     !safeUrl(d.url) ||
     !["ready", "pending", "failed", "blocked"].includes(d.status)
   ) {
-    return "Deployment SHA, status, immutable flag or sanitized HTTPS URL is malformed.";
+    return "Deployment ID, SHA, status, immutable flag or sanitized HTTPS URL is malformed.";
   }
   const a = d.aliasVerification;
   if (
@@ -182,6 +184,7 @@ function malformed(e) {
   if (
     !revision(v) ||
     !timestamp(v.observedAt) ||
+    !timestamp(v.lastObservedAt) ||
     !sha(v.deploymentSha) ||
     !safeUrl(v.deploymentUrl) ||
     !boolean(v.readOnly) ||
@@ -269,6 +272,9 @@ export function evaluateRelease(evidence) {
   if (!e.inventory.complete) block("Check inventory is incomplete.");
   fresh(e.deployment.observedAt, "Deployment");
   fresh(e.preview.observedAt, "Preview");
+  fresh(e.preview.lastObservedAt, "Preview");
+  if (e.preview.lastObservedAt < e.preview.observedAt)
+    fail("Preview observation window is reversed.");
   if (e.deployment.sha !== e.current.headSha)
     fail("Deployment SHA does not match current head.");
   const alias = e.deployment.aliasVerification;
@@ -281,12 +287,15 @@ export function evaluateRelease(evidence) {
     fresh(alias.verifiedAfter, "Alias verification");
     if (
       alias.sha !== e.current.headSha ||
-      alias.url !== e.preview.deploymentUrl
+      alias.url !== e.preview.deploymentUrl ||
+      alias.deploymentId !== e.deployment.id
     )
-      fail("Branch alias verification is for a different SHA or URL.");
+      fail(
+        "Branch alias verification is for a different SHA, URL or deployment.",
+      );
     if (
       alias.verifiedBefore > e.preview.observedAt ||
-      e.preview.observedAt > alias.verifiedAfter
+      e.preview.lastObservedAt > alias.verifiedAfter
     )
       fail("Preview checks were not bracketed by alias verification.");
   }
@@ -300,6 +309,8 @@ export function evaluateRelease(evidence) {
   e.inventory.names.forEach((name, index) => {
     if (!e.policy.requiredChecks.includes(name) && !optionalCheck(name))
       block(`Inventory check ${index + 1} is unclassified.`);
+    if (!e.checks.some((check) => check.name === name))
+      block(`Inventory check ${index + 1} has no observed result.`);
   });
   e.policy.requiredChecks.forEach((name, index) => {
     if (!e.inventory.names.includes(name))
@@ -400,10 +411,22 @@ export function evaluateRelease(evidence) {
 }
 
 // CLI only reads one local JSON file and prints the sanitized decision.
-if (
-  process.argv[1] &&
-  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
-) {
+// Real paths defeat symlinks/junctions; an undecidable run exits nonzero.
+let main = false;
+if (process.argv[1]) {
+  try {
+    const [entry, self] = [process.argv[1], fileURLToPath(import.meta.url)].map(
+      (path) => {
+        const real = realpathSync(path);
+        return process.platform === "win32" ? real.toLowerCase() : real;
+      },
+    );
+    main = entry === self;
+  } catch {
+    process.exitCode = 1;
+  }
+}
+if (main) {
   let result;
   const args = process.argv.slice(2);
   if (
