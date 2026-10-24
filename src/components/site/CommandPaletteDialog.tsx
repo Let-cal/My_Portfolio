@@ -113,6 +113,7 @@ export function CommandPaletteDialog({
   const [open, setOpen] = useState(initialOpen);
   // A go-to waits for the dialog to close so the focus it moves is not taken back by the dialog's focus return.
   const pending = useRef<(() => void) | null>(null);
+  const opener = useRef<HTMLElement | SVGElement | null>(null);
 
   const flush = useCallback(() => {
     const run = pending.current;
@@ -189,11 +190,22 @@ export function CommandPaletteDialog({
         showCloseButton={false}
         data-lenis-prevent=""
         className="top-1/4 translate-y-0 overflow-hidden rounded-xl! p-0 sm:max-w-xl"
+        onOpenAutoFocus={() => {
+          opener.current =
+            document.activeElement instanceof HTMLElement ||
+            document.activeElement instanceof SVGElement
+              ? document.activeElement
+              : null;
+        }}
         onCloseAutoFocus={(event) => {
-          // Only take over the focus when a go-to is waiting; otherwise the dialog returns it to where it was.
-          if (!pending.current) return;
-          event.preventDefault();
-          requestAnimationFrame(flush);
+          if (pending.current) {
+            event.preventDefault();
+            requestAnimationFrame(flush);
+          } else if (opener.current?.isConnected) {
+            // This controlled dialog has no Radix Trigger to restore focus to.
+            event.preventDefault();
+            opener.current.focus({ preventScroll: true });
+          }
         }}
       >
         <DialogHeader className="sr-only">

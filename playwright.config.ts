@@ -4,6 +4,14 @@ import { defineConfig, devices } from "@playwright/test";
 const PORT = 3100;
 
 export default defineConfig({
+  // Nonsecret provenance lets the aggregate reject reports from another run/revision.
+  metadata: {
+    ciRevision: process.env.GITHUB_SHA ?? null,
+    ciRun: process.env.GITHUB_RUN_ID ?? null,
+    ciAttempt: process.env.GITHUB_RUN_ATTEMPT ?? null,
+    ciGroup: process.env.CI_BROWSER_GROUP ?? null,
+    ciGroupTotal: process.env.CI_BROWSER_GROUP ? "2" : null,
+  },
   testDir: "./tests/e2e",
   fullyParallel: true,
   // SwiftShader shares the runner CPU with the scene; concurrent browsers starve frame-driven checks.

@@ -17,5 +17,6 @@
 - [ ] Relevant validation is recorded; assertions, frame loops, and release thresholds are preserved.
 - [ ] Documentation and both READMEs are updated where applicable.
 - [ ] Secrets, private photos, and unreviewed traces are excluded; third-party notices are preserved.
+- [ ] For release review, follow [the runbook](../docs/final-review-release.md): record exact head/base/deployment evidence and remaining blockers; obtain concrete owner approval for sensitive changes. Helper PASS grants no merge authority.
 
 <!-- Report vulnerabilities through SECURITY.md. This PR does not authorize separate deployment or settings changes. -->
