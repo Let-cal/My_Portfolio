@@ -36,7 +36,7 @@ như hai tài liệu đó.
   - Thu hồi quyền tức thì bằng cách xóa một dòng.
   - **[Chủ dự án]** Đã chọn cách này thay vì JWT Auth hook hoặc biến `REVIEWER_EMAIL`. Lý do: thu hồi tức thì, không cấu hình Auth, test được trong CI database tạm.
 - **Tài khoản:**
-  - Chủ dự án tự tạo `letcal2003+reviewer@gmail.com` trong Supabase, tự đăng nhập một lần trong trình duyệt của app, rồi thêm UID vào bảng bằng SQL đã được duyệt.
+  - Chủ dự án tự tạo một tài khoản reviewer riêng (định danh chỉ ghi trong `.superpowers/`, không commit) trong Supabase, tự đăng nhập một lần trong trình duyệt của app, rồi thêm UID vào bảng bằng SQL đã được duyệt.
   - AI không giữ mật khẩu hay cookie, không đưa vào CI.
 - **Phạm vi đọc (SELECT):**
   - 10 bảng nội dung, kể cả dòng đang ẩn;
