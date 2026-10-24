@@ -11,6 +11,11 @@ updates:
     groups:
       npm-patch-and-minor:
         update-types: [minor, patch]
+        # Playwright must move together with the pinned CI container image
+        # (.github/workflows/ci.yml), so it gets its own PR and is never auto-merged.
+        exclude-patterns: ["@playwright/test"]
+      playwright:
+        patterns: ["@playwright/test"]
     # Majors that need a planned migration: ESLint 10 (eslint-config-next support) and
     # @types/node beyond the Node 22 runtime pinned in engines and .nvmrc.
     ignore:
