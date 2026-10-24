@@ -47,3 +47,27 @@ Local follow-up verification and its reviewed commit are recorded in the PR befo
 - Backend diagnostics demonstrated three failing tests before implementation, then passed the targeted helper/denial/launcher checks. The artifact projection accepts only fixed checkpoint IDs, a bounded integer count and fixed category; original errors are not retained as causes.
 - Independent scoped review found no blocking issues in the diagnostics or reader fix. One minor remains: opening a FIFO at the private fixture path could wait for a writer before file-type inspection. The owned launcher generates a fresh regular fixture and does not accept a user-provided path; unexpected runner resource replacement is outside this trusted-runner consistency model. Job timeouts remain unchanged. Record this robustness limitation rather than claiming protection against malicious same-UID runner code.
 - CodeQL and real backend acceptance on the follow-up revision are still pending. No thresholds, workflow permissions, Auth/RLS policy, test inventory or production source was relaxed to obtain a pass.
+
+## Second approved Linux trial — diagnostic result
+
+[CI run 40088922519](https://github.com/Let-cal/My_Portfolio/actions/runs/40088922519) tested PR head `4c0f9623db697bba7728ba33e4f0ee775e625560`, merge revision `11eab2744c285d5e92450710298dc3ebe974dfc5`.
+
+- [CodeQL 40088922486](https://github.com/Let-cal/My_Portfolio/actions/runs/40088922486) passed: the original file-system race no longer blocks this revision.
+- Linux quality passed **115 files / 1,250 unit tests, zero skipped tests**. Both native symlink checks therefore executed rather than receiving a Windows skip.
+- The real backend again failed before the browser, now specifically at `realtime-anonymous-join-denial`, after **19 completed checks**. This includes admin/member authentication, hidden/public RLS controls, private schema/history/Storage checks and successful admin private-channel subscription. It does not establish negative Realtime authorization or delivery.
+- Launcher duration: 102.543 seconds including cleanup. All six migrations, fixture setup and both scoped cleanup steps passed again. The complete admin job took 2m18s. Actual full browser/admin runtime is still unknown.
+
+### Realtime contract correction prepared locally
+
+The failure checkpoint led to a source-level contract defect in the test classifier. The pinned CLI's Dockerfile selects `supabase/realtime:v2.147.1`. That server constructs the authorization message in its channel module, then `Logging.build_msg` prefixes it with `Unauthorized: `. Installed `realtime-js` 2.117.3 preserves the complete reply reason in `Error.message`. The original test classifier expected only the inner message and consequently rejected the server's documented authorization response.
+
+The local correction requires the exact **prefixed** message for `admin:content` and `CHANNEL_ERROR`. Bare inner text, other topics, timeouts, transport and JWT/setup errors remain failures. This is not a broad substring match or an authorization-policy change. The checkpoint and source evidence support this defect diagnosis; only a subsequent real Linux run can establish that it resolves the observed integration failure and allows the remaining cases to pass.
+
+Pinned primary sources:
+
+- [CLI 2.122.0 service image](https://github.com/supabase/cli/blob/v2.122.0/apps/cli-go/pkg/config/templates/Dockerfile#L36)
+- [Realtime 2.147.1 authorization handling](https://github.com/supabase/realtime/blob/v2.147.1/lib/realtime_web/channels/realtime_channel.ex#L179)
+- [Realtime 2.147.1 reason prefix](https://github.com/supabase/realtime/blob/v2.147.1/lib/realtime_web/channels/realtime_channel/logging.ex#L65)
+- Installed SDK: `node_modules/@supabase/realtime-js/src/RealtimeChannel.ts`, receive-error handler.
+
+Targeted RED: 52 passed / 2 failed before correction. Targeted GREEN: 57 passed including sanitized-progress tests; independent reviewer reran them with the same result and reported no blocking findings. Fresh quick checks and the full **618 script/budget tests** passed. No application, workflow, timeout, permission, gate threshold or mandatory scenario was changed. Full application build/unit results remain those of the unchanged application on the second Linux trial; they were not rerun locally for this helper-only correction.

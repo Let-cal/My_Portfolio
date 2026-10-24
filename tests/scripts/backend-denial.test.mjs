@@ -79,7 +79,7 @@ for (const [index, error] of [
 }
 
 const deniedReason =
-  "You do not have permissions to read from this Channel topic: admin:content";
+  "Unauthorized: You do not have permissions to read from this Channel topic: admin:content";
 test("Realtime denial requires CHANNEL_ERROR and the server topic authorization reason", () => {
   assert.equal(
     api.isRealtimeJoinDenied?.(
@@ -109,7 +109,13 @@ for (const [index, [status, error]] of [
   [
     "CHANNEL_ERROR",
     new Error(
-      "You do not have permissions to read from this Channel topic: other",
+      "You do not have permissions to read from this Channel topic: admin:content",
+    ),
+  ],
+  [
+    "CHANNEL_ERROR",
+    new Error(
+      "Unauthorized: You do not have permissions to read from this Channel topic: other",
     ),
   ],
 ].entries()) {

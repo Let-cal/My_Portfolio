@@ -22,11 +22,13 @@ export function isStorageUploadDenied(error) {
 }
 
 export function isRealtimeJoinDenied(status, error) {
-  // realtime-js 2.117.3 wraps the server join reply's reason in Error.message.
+  // CLI 2.122.0 pins Realtime 2.147.1: Logging.build_msg prefixes the
+  // authorization reason with "Unauthorized: ". realtime-js 2.117.3 preserves
+  // that full wire reason in Error.message, not just its inner channel text.
   // Transport errors also use CHANNEL_ERROR; JWT/setup failures are not RLS proof.
   return (
     status === "CHANNEL_ERROR" &&
     error?.message ===
-      "You do not have permissions to read from this Channel topic: admin:content"
+      "Unauthorized: You do not have permissions to read from this Channel topic: admin:content"
   );
 }
