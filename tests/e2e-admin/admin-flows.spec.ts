@@ -320,11 +320,11 @@ test("network simulation: offline edits recover and save to the real backend", a
     await Promise.all([
       page.waitForEvent(
         "requestfailed",
-        (request) =>
+        async (request) =>
           request.url() ===
             `${suite.settings.appOrigin}/admin/certificates/${id}` &&
           request.method() === "POST" &&
-          !!request.headers()["next-action"],
+          !!(await request.headerValue("next-action")),
       ),
       page.getByRole("button", { name: "Lưu", exact: true }).click(),
     ]);

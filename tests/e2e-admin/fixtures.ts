@@ -7,7 +7,12 @@ import {
   type WebSocket,
 } from "@playwright/test";
 import { z } from "zod";
+import { createServerClient } from "@supabase/ssr";
 import { readTask4Settings, type Task4Settings } from "./settings";
+import {
+  captureLoginResponse,
+  assertReadOnlyUserRequest,
+} from "./login-response";
 
 export {
   readTask4Settings,
@@ -136,28 +141,23 @@ export class AdminHarness {
     await page
       .getByLabel("Mật khẩu", { exact: true })
       .fill(credentials.password);
-    const [response] = await Promise.all([
-      page.waitForResponse(
-        (response) =>
-          response.url() ===
-            `${this.settings.apiUrl}/auth/v1/token?grant_type=password` &&
-          response.request().method() === "POST",
-      ),
+    const [captured] = await Promise.all([
+      page
+        .waitForResponse(
+          (response) =>
+            response.url() ===
+              `${this.settings.apiUrl}/auth/v1/token?grant_type=password` &&
+            response.request().method() === "POST",
+        )
+        .then(captureLoginResponse),
       // Login uses location.replace. Even the denied member must finish a new
       // document load; its final URL equals the starting login URL.
       page.waitForEvent("domcontentloaded"),
       page.getByRole("button", { name: "Đăng nhập", exact: true }).click(),
     ]);
-    if (!response.ok()) throw new Error("Local UI authentication failed");
-    const body = await response.json();
-    const apiKey = response.request().headers()["apikey"];
+    if (!captured.ok) throw new Error("Local UI authentication failed");
+    const apiKey = captured.apiKey;
     if (!apiKey) throw new Error("Missing local browser API key");
-    if (typeof body.access_token !== "string")
-      throw new Error("Missing local browser access token");
-    if (body.user?.email !== credentials.email)
-      throw new Error("Unexpected local browser identity");
-    if (body.user?.role !== "authenticated")
-      throw new Error("Unexpected local browser user role");
     try {
       const claims = JSON.parse(
         Buffer.from(apiKey.split(".")[1], "base64url").toString("utf8"),
@@ -167,7 +167,39 @@ export class AdminHarness {
     } catch {
       throw new Error("Browser requests must use the disposable anonymous key");
     }
-    const access = { apiKey, token: body.access_token };
+    // Read the actual UI-created cookies after navigation. The SSR SDK handles
+    // chunking/encoding; Auth verifies the user rather than trusting cookie claims.
+    const cookies = await page.context().cookies(this.settings.appOrigin);
+    const verifier = createServerClient(this.settings.apiUrl, apiKey, {
+      cookies: {
+        getAll: () => cookies.map(({ name, value }) => ({ name, value })),
+        setAll: () => {
+          throw new Error("Local UI session must not require repair");
+        },
+      },
+      global: {
+        fetch: (input, init) => {
+          assertReadOnlyUserRequest(input, init, this.settings.apiUrl);
+          return fetch(input, {
+            ...init,
+            redirect: "error",
+            signal: AbortSignal.timeout(10000),
+          });
+        },
+      },
+    });
+    const session = await verifier.auth.getSession();
+    const token = session.data.session?.access_token;
+    if (session.error || typeof token !== "string")
+      throw new Error("Missing local browser access token");
+    const identity = await verifier.auth.getUser(token);
+    if (identity.error)
+      throw new Error("Local browser identity verification failed");
+    if (identity.data.user?.email !== credentials.email)
+      throw new Error("Unexpected local browser identity");
+    if (identity.data.user?.role !== "authenticated")
+      throw new Error("Unexpected local browser user role");
+    const access = { apiKey, token };
     if (role === "admin") {
       this.adminAccess = access;
       await this.list(page);
