@@ -1,5 +1,11 @@
 # CI and release flow
 
+## Disposable admin integration candidate
+
+The separately reviewed [Task 4 candidate](local-admin-integration.md) adds only missing signed-in Auth/CRUD/RLS coverage to this workflow. Its native Docker job runs in parallel with existing work, uses synthetic data and no hosted secrets, and uploads only a sanitized summary. The current required check names, public 64-case suite and thresholds remain unchanged. Branch protection is not modified by YAML; once activated, the final-review agent must also require the scoped admin result before proposing this increment's merge.
+
+PR #18 was published under explicit owner approval. The [first Linux trial](admin-integration-linux-trial-2026-10-24.md) passed setup/migration replay but failed backend probes and CodeQL; it is not ready to merge. The diagnostic and fixture-reader follow-up is prepared locally for concrete publication approval. Full local-service verification is blocked while Docker is absent; media-library coverage depends on PR #15 and reviewer authorization remains a separate security increment. Phase timings will establish the added setup/build/browser cost. No faster total pipeline is promised for new coverage.
+
 ## Browser optimization experiment
 
 PR #16's first count-based candidate at `847e7f8` completed three Linux measurements. Every run passed all 63 cases without skipped or flaky cases, but elapsed median fell only from the historical 18m32s to 16m32s while summed runner occupancy rose 16.6%. All six expensive veil cases still landed together. That is insufficient evidence to retain count-based sharding as a performance improvement. See [the measurements and limitations](ci-runtime-baseline.md).
