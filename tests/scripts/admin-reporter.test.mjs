@@ -331,6 +331,29 @@ test("onTestEnd retains only bounded annotations for each mandatory scenario", (
   assert.ok(!JSON.stringify(result).includes("SECRET-SENTINEL"));
 });
 
+test("fixed login helper categories survive independent report projection", () => {
+  for (const category of [
+    "auth-response",
+    "auth-identity",
+    "anon-key",
+    "seed-fixture",
+    "auth-api-key-missing",
+    "auth-token-missing",
+    "auth-email-mismatch",
+    "auth-role-mismatch",
+  ]) {
+    const records = rows();
+    records[0] = { ...records[0], status: "failed", category };
+    const result = summarize(records);
+    assert.equal(result.status, "FAIL");
+    assert.equal(
+      projectAdminSummary(result, meta).diagnostics[0].category,
+      category,
+    );
+    assert.equal(result.passed, 5);
+  }
+});
+
 test("reporter drops invalid annotation values and uses a fixed fallback category", () => {
   for (const description of [
     "fixtures.ts:0:1",

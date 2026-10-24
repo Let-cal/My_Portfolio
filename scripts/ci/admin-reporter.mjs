@@ -21,6 +21,14 @@ const categories = [
   "navigation",
   "assertion",
   "settings",
+  "auth-response",
+  "auth-identity",
+  "anon-key",
+  "seed-fixture",
+  "auth-api-key-missing",
+  "auth-token-missing",
+  "auth-email-mismatch",
+  "auth-role-mismatch",
   "other",
 ];
 

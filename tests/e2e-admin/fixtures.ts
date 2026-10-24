@@ -151,15 +151,13 @@ export class AdminHarness {
     if (!response.ok()) throw new Error("Local UI authentication failed");
     const body = await response.json();
     const apiKey = response.request().headers()["apikey"];
-    if (
-      !apiKey ||
-      typeof body.access_token !== "string" ||
-      body.user?.email !== credentials.email ||
-      body.user?.role !== "authenticated"
-    )
-      throw new Error(
-        "Local authentication did not return the expected synthetic identity",
-      );
+    if (!apiKey) throw new Error("Missing local browser API key");
+    if (typeof body.access_token !== "string")
+      throw new Error("Missing local browser access token");
+    if (body.user?.email !== credentials.email)
+      throw new Error("Unexpected local browser identity");
+    if (body.user?.role !== "authenticated")
+      throw new Error("Unexpected local browser user role");
     try {
       const claims = JSON.parse(
         Buffer.from(apiKey.split(".")[1], "base64url").toString("utf8"),
@@ -331,10 +329,8 @@ function safeFailureLocation(stack: string | undefined): string | undefined {
       );
     return match ? [`${match[1]}.ts:${match[2]}:${match[3]}`] : [];
   });
-  return (
-    locations.find((location) => location.startsWith("admin-flows.spec.ts:")) ??
-    locations[0]
-  );
+  // The first allowlisted frame is the failing helper, not merely its caller.
+  return locations[0];
 }
 
 function safeFailureCategory(message: string | undefined) {
@@ -343,6 +339,23 @@ function safeFailureCategory(message: string | undefined) {
   if (prefix.startsWith("browser.newContext:")) return "browser-context";
   if (prefix.startsWith("page.goto:")) return "navigation";
   if (/^(?:expect[(:.]|AssertionError:)/.test(prefix)) return "assertion";
+  if (prefix === "Local UI authentication failed") return "auth-response";
+  if (
+    prefix ===
+    "Local authentication did not return the expected synthetic identity"
+  )
+    return "auth-identity";
+  if (prefix === "Browser requests must use the disposable anonymous key")
+    return "anon-key";
+  if (prefix === "Expected the hidden disposable seed certificates")
+    return "seed-fixture";
+  if (prefix === "Missing local browser API key") return "auth-api-key-missing";
+  if (prefix === "Missing local browser access token")
+    return "auth-token-missing";
+  if (prefix === "Unexpected local browser identity")
+    return "auth-email-mismatch";
+  if (prefix === "Unexpected local browser user role")
+    return "auth-role-mismatch";
   if (
     prefix.startsWith(
       "Task4 browser environment contains forbidden settings",

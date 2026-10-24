@@ -14,6 +14,17 @@ describe("bounded private browser failure diagnostics", () => {
     ["expect(received).toBe(expected) SECRET-SENTINEL", "assertion"],
     ["AssertionError: SECRET-SENTINEL", "assertion"],
     ["Task4 browser environment contains forbidden settings", "settings"],
+    ["Local UI authentication failed", "auth-response"],
+    [
+      "Local authentication did not return the expected synthetic identity",
+      "auth-identity",
+    ],
+    ["Browser requests must use the disposable anonymous key", "anon-key"],
+    ["Expected the hidden disposable seed certificates", "seed-fixture"],
+    ["Missing local browser API key", "auth-api-key-missing"],
+    ["Missing local browser access token", "auth-token-missing"],
+    ["Unexpected local browser identity", "auth-email-mismatch"],
+    ["Unexpected local browser user role", "auth-role-mismatch"],
     [
       "Task4 requires an explicit owned local app and valid private fixture",
       "settings",
@@ -62,7 +73,7 @@ describe("bounded private browser failure diagnostics", () => {
     };
     suppressPrivateFailures(info);
     expect(info.annotations).toEqual([
-      { type: "task4-source", description: "admin-flows.spec.ts:31:7" },
+      { type: "task4-source", description: "fixtures.ts:20:3" },
       { type: "task4-category", description: "assertion" },
     ]);
     expect(info.attachments).toEqual([]);
