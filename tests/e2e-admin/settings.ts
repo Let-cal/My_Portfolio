@@ -1,4 +1,11 @@
-import { lstatSync, readFileSync, realpathSync } from "node:fs";
+import {
+  closeSync,
+  constants,
+  fstatSync,
+  openSync,
+  readFileSync,
+  realpathSync,
+} from "node:fs";
 import { isAbsolute, resolve } from "node:path";
 import { z } from "zod";
 import { assertLocalSupabase } from "../../scripts/ci/local-supabase.mjs";
@@ -65,29 +72,34 @@ export function readTask4Settings(
     // The launcher runs from the fresh private source copy, with node_modules
     // symlinked. Never resolve this boundary relative to the dependency tree.
     const root = realpathSync(process.cwd());
-    const actual = realpathSync(path);
-    const stat = lstatSync(actual);
-    // This exact path is ignored by the committed .gitignore. The seed emits
-    // two distinct 24-byte base64url passwords, and the launcher writes mode 0600.
-    if (
-      actual !== resolve(root, ".superpowers/task4-fixture.json") ||
-      lstatSync(path).isSymbolicLink() ||
-      !stat.isFile() ||
-      stat.size === 0 ||
-      stat.size > 16_384 ||
-      stat.nlink !== 1 ||
-      (process.platform === "linux" &&
-        ((stat.mode & 0o7777) !== 0o600 || stat.uid !== process.getuid?.()))
-    )
-      throw new Error();
-    const fixture = fixtureSchema.parse(
-      JSON.parse(readFileSync(actual, "utf8")),
-    );
-    if (fixture.admin.password === fixture.member.password) throw new Error();
-    if (env.TASK4_RUN_ID !== undefined && env.TASK4_RUN_ID !== fixture.runId)
-      throw new Error();
-    assertLocalSupabase(fixture.apiUrl);
-    return { ...fixture, appOrigin };
+    const expected = resolve(root, ".superpowers/task4-fixture.json");
+    if (path !== expected) throw new Error();
+    // Open before checking metadata. O_NOFOLLOW rejects a final symlink on Linux;
+    // validation and reading must use this same descriptor if the path changes.
+    const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+    try {
+      const stat = fstatSync(fd);
+      // This exact path is ignored by the committed .gitignore. The seed emits
+      // two distinct 24-byte base64url passwords; the launcher writes mode 0600.
+      if (
+        realpathSync(path) !== expected ||
+        !stat.isFile() ||
+        stat.size === 0 ||
+        stat.size > 16_384 ||
+        stat.nlink !== 1 ||
+        (process.platform === "linux" &&
+          ((stat.mode & 0o7777) !== 0o600 || stat.uid !== process.getuid?.()))
+      )
+        throw new Error();
+      const fixture = fixtureSchema.parse(JSON.parse(readFileSync(fd, "utf8")));
+      if (fixture.admin.password === fixture.member.password) throw new Error();
+      if (env.TASK4_RUN_ID !== undefined && env.TASK4_RUN_ID !== fixture.runId)
+        throw new Error();
+      assertLocalSupabase(fixture.apiUrl);
+      return { ...fixture, appOrigin };
+    } finally {
+      closeSync(fd);
+    }
   } catch {
     // Do not print rejected JSON, paths, endpoints, passwords or Zod errors.
     throw new Error(

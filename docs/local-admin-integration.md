@@ -1,8 +1,8 @@
 # Disposable admin integration candidate
 
-Status: **local implementation candidate; real service verification is BLOCKED until the owner-approved Linux run**.
+Status: **PR #18 published; the first approved Linux trial failed before the admin browser cases. Not ready to merge.** See [actual Linux evidence and investigation](admin-integration-linux-trial-2026-10-24.md).
 
-This separately reviewable branch extends the Task 4 validation foundation with an owned ephemeral runner, synthetic provisioning, backend checks, six actual browser scenarios and one scoped job in the existing CI workflow. The source application, deployed migrations, Auth/RLS, public UI and current required checks are unchanged. Docker is unavailable on this workstation; real Auth/CRUD/Storage/Realtime and the new Linux job have not been run. Pure tests and static review do not substitute for that evidence.
+This separately reviewable branch extends the Task 4 validation foundation with an owned ephemeral runner, synthetic provisioning, backend checks, six actual browser scenarios and one scoped job in the existing CI workflow. The source application, deployed migrations, Auth/RLS, public UI and current required checks are unchanged. Docker is unavailable on this workstation. The first Linux run verified stack setup, migration replay and provisioning, then failed during backend probes; real Auth/CRUD/Storage/Realtime and browser acceptance are still incomplete. Pure tests and static review do not substitute for that evidence.
 
 ## Delivery boundary
 

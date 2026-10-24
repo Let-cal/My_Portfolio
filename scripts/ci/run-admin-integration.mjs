@@ -29,6 +29,7 @@ import {
 import { seedAdmin } from "./seed-admin.mjs";
 import { verifyAdminBackend } from "./verify-admin-backend.mjs";
 import { projectAdminSummary } from "./admin-reporter.mjs";
+import { projectBackendFailure } from "./backend-progress.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const summaryPath = join(root, "reports/admin-integration-summary.json");
@@ -503,7 +504,9 @@ export async function runAdminIntegration() {
       throw new Error("Browser evidence did not match current run");
     report.status = "PASS";
     setPhase("complete");
-  } catch {
+  } catch (error) {
+    const failure = projectBackendFailure(error);
+    if (failure) report.backendFailure = failure;
     report.status = report.phase === "bootstrap" ? "BLOCKED" : "FAIL";
   } finally {
     if (server) {
