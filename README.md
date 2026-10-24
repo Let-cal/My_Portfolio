@@ -64,6 +64,7 @@ npm run start
 ### Database and admin (optional)
 
 1. Create a Supabase project and apply `supabase/migrations/` in order (SQL editor or `supabase db push`).
+   The live project was migrated through reviewed SQL, so its migration history versions differ from these file names. Do not run `supabase db push` against it until that history is reconciled.
 2. Copy [.env.example](.env.example) to `.env.local` and fill in the project URL, publishable key, secret key and `ADMIN_EMAIL`. Never commit it, and never expose `SUPABASE_SERVICE_ROLE_KEY` through a `NEXT_PUBLIC_` variable.
 3. `npm run db:seed` loads `seed.json`; `npm run db:verify` reads it back with the public key and compares every section.
 4. In Supabase Auth, create the admin user, then run `insert into private.app_admins (email) values ('<email>');`.

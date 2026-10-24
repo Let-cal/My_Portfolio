@@ -29,7 +29,7 @@ describe("admin media SELECT policy", () => {
   it("the migration adds only this policy and matches the canonical export", () => {
     const migration = executableSql(
       readFileSync(
-        "supabase/migrations/20261021124334_admin_media_select.sql",
+        "supabase/migrations/20261021141852_admin_media_select.sql",
         "utf8",
       ),
     );

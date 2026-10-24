@@ -67,7 +67,7 @@ $$;
 revoke execute on function private.is_admin() from public;
 grant execute on function private.is_admin() to anon, authenticated;`;
 
-/** Batch 5: admin listing, mirrored in 20261021124334_admin_media_select.sql. */
+/** Batch 5: admin listing, mirrored in 20261021141852_admin_media_select.sql. */
 export const ADMIN_MEDIA_SELECT_SQL = `-- Only admins may list objects in the media library buckets.
 create policy "admin_media_select" on storage.objects for select to authenticated using (bucket_id in ('media', 'files') and private.is_admin());`;
 

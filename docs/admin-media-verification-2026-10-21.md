@@ -5,7 +5,7 @@
 - Date: 2026-10-21.
 - Confirmed project: `letcal-portfolio` (`uptfqrntfrelilwjfznk`), matching the application's configured Supabase hostname.
 - Applied through the authenticated Supabase integration: migration **`admin_media_select`**, recorded remotely as **`20261021141852`**.
-- SQL matches [the reviewed local migration](../supabase/migrations/20261021124334_admin_media_select.sql). Supabase generated the remote history timestamp at application time; the local CLI-generated timestamp is different. Do not blindly replay the local migration with `db push` against this existing database or apply the policy twice. Reconcile migration history first if moving deployment to the CLI.
+- SQL matches [the reviewed local migration](../supabase/migrations/20261021141852_admin_media_select.sql). Supabase generated the remote history timestamp at application time; the local file was first created as `20261021124334` and renamed on 2026-10-25 to the remote version `20261021141852` so both histories agree for this migration. Earlier migrations (`0001`–`0006`) still use different local names than their hosted history versions, so never `db push` against this existing database; reconcile the history first (separately approved follow-up).
 - Added only `admin_media_select`: SELECT to `authenticated`, scoped to `media`/`files` and `private.is_admin()`.
 
 ## Before/after catalog comparison

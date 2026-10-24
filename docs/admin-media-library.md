@@ -14,7 +14,7 @@ Preview and production share a database. Apply only this migration to the existi
 
 1. Confirm the intended project is the existing Letcal portfolio project.
 2. Run the read-only queries in [admin-media-storage.sql](admin-media-storage.sql) and retain the policy snapshot. Confirm no conflicting existing policy grants broader listing access.
-3. Apply [20261021124334_admin_media_select.sql](../supabase/migrations/20261021124334_admin_media_select.sql). It adds only `admin_media_select`: SELECT to `authenticated` for `media`/`files`, requiring `private.is_admin()`.
+3. Apply [20261021141852_admin_media_select.sql](../supabase/migrations/20261021141852_admin_media_select.sql). It adds only `admin_media_select`: SELECT to `authenticated` for `media`/`files`, requiring `private.is_admin()`.
 4. Rerun the verification queries. Confirm the one added policy, existing RLS, helper permissions and unchanged previous policies.
 5. Check real Storage listing using existing admin, non-admin and anonymous sessions. Only the admin may list these buckets; public URLs for known files stay readable. A denied SELECT can look like an empty list, so an empty grid alone does not prove that the policy is installed.
 6. Run Supabase's security advisor and compare findings to the pre-migration baseline. The migration must introduce no new warnings.
