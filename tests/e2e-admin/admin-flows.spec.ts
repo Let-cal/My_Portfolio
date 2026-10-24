@@ -328,11 +328,11 @@ test("network simulation: offline edits recover and save to the real backend", a
       ),
       page.getByRole("button", { name: "Lưu", exact: true }).click(),
     ]);
-    await expect(
-      page.getByText("Không kết nối được máy chủ. Thay đổi chưa được lưu.", {
-        exact: true,
-      }),
-    ).toBeVisible();
+    const networkToast = page.getByText(
+      "Không kết nối được máy chủ. Thay đổi chưa được lưu.",
+      { exact: true },
+    );
+    await expect(networkToast).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Lưu", exact: true }),
     ).toBeEnabled();
@@ -340,13 +340,19 @@ test("network simulation: offline edits recover and save to the real backend", a
       page.getByRole("textbox", { name: "Tên chứng chỉ" }),
     ).toHaveValue(name);
     await expect(page).toHaveURL(new RegExp(`/admin/certificates/${id}$`));
+    // Sonner intentionally pauses expiry while hovered. The preceding Save
+    // click can leave the pointer beneath the new bottom-right toast. Move away
+    // normally, then require natural expiry before clicking the Save bar again.
+    await page.mouse.move(0, 0);
     await context.setOffline(false);
     await expect(banner).toHaveCount(0);
     await expect(
       page.getByRole("textbox", { name: "Tên chứng chỉ" }),
     ).toHaveValue(name);
     expect((await suite.read(id))[0].name).toBe(id);
-    await suite.save();
+    await expect(networkToast).toHaveCount(0);
+    await page.getByRole("button", { name: "Lưu", exact: true }).click();
+    await suite.list();
     await expect.poll(async () => (await suite.read(id))[0]?.name).toBe(name);
   } finally {
     await context.setOffline(false);
