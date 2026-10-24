@@ -36,6 +36,9 @@ describe("buildCommandItems", () => {
   it("offers screens, quick creates, the public site and the orphan filter", () => {
     const labels = items.map((i) => i.label);
     expect(labels).toContain("Tổng quan");
+    expect(items.find((i) => i.label === "Thư viện media")?.href).toBe(
+      "/admin/media",
+    );
     expect(labels).toContain("Tạo chứng chỉ mới");
     expect(labels).toContain("Trang công khai (EN)");
     expect(

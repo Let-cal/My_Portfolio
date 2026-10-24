@@ -94,20 +94,25 @@ function thrownFailure(error: unknown): Failure {
 /**
  * Runs a server action. A thrown request (offline, server down) becomes a NETWORK failure, and
  * every failure is shown unless `silent` (callers that show errors inline, e.g. form fields).
+ * Read-only actions pass `write: false` so they do not suppress other tabs' Realtime updates.
  */
 export async function runAction<R extends { ok: boolean }>(
   action: () => Promise<R>,
-  { retry, silent = false }: { retry?: () => void; silent?: boolean } = {},
+  {
+    retry,
+    silent = false,
+    write = true,
+  }: { retry?: () => void; silent?: boolean; write?: boolean } = {},
 ): Promise<R | Failure> {
   let result: R | Failure;
-  beginOwnWrite();
+  if (write) beginOwnWrite();
   try {
     result = await action();
   } catch (error) {
     result = thrownFailure(error);
   } finally {
     // The echo of this write arrives over Realtime around now: not news for this tab.
-    endOwnWrite();
+    if (write) endOwnWrite();
   }
   if (result.ok) {
     if (state.networkDown) set({ networkDown: false });

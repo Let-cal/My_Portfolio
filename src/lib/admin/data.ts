@@ -11,14 +11,44 @@ export type Item = Record<string, unknown> & { id: string; sortIndex: number };
  * Reads a list as the signed-in admin, so unpublished rows are included.
  * Call inside <Suspense>: it reads the session cookie.
  */
-export async function listItems(key: ResourceKey): Promise<Item[]> {
+export async function listItems(
+  key: ResourceKey,
+  complete = false,
+): Promise<Item[]> {
   const resource = resources[key];
   const supabase = await createServerSupabase();
-  const { data, error } = await supabase
-    .from(resource.table)
-    .select("*")
-    .order("sort_index");
-  if (error) throw new Error(`${resource.table}: ${error.message}`);
+  const data: Record<string, unknown>[] = [];
+  if (complete) {
+    // Media deletion must see references after the API's first page, including hidden rows.
+    for (let offset = 0; ; offset += 100) {
+      if (offset >= 10000)
+        throw new Error(
+          `${resource.table}: quá nhiều mục để kiểm tra đầy đủ tham chiếu media.`,
+        );
+      const page = await supabase
+        .from(resource.table)
+        .select("*")
+        .order("sort_index")
+        .order("id")
+        .range(offset, offset + 99);
+      if (page.error)
+        throw new Error(`${resource.table}: ${page.error.message}`);
+      if (!page.data)
+        throw new Error(
+          `${resource.table}: thiếu dữ liệu kiểm tra tham chiếu media.`,
+        );
+      data.push(...page.data);
+      if (page.data.length < 100) break;
+    }
+  } else {
+    const result = await supabase
+      .from(resource.table)
+      .select("*")
+      .order("sort_index");
+    if (result.error)
+      throw new Error(`${resource.table}: ${result.error.message}`);
+    data.push(...(result.data ?? []));
+  }
   let links: SkillLinkRow[] = [];
   if (key === "skills") {
     const res = await supabase
@@ -102,10 +132,14 @@ export async function countRows(): Promise<
  * Everything, hidden items included, in the public content shape (for health checks and the
  * matrix). Null while the database has no profile row yet (run `npm run db:seed`).
  */
-export async function getAdminContent(): Promise<AdminContent | null> {
+export async function getAdminContent(
+  complete = false,
+): Promise<AdminContent | null> {
   const [lists, { profile, roles }] = await Promise.all([
     Promise.all(
-      RESOURCE_KEYS.map(async (key) => [key, await listItems(key)] as const),
+      RESOURCE_KEYS.map(
+        async (key) => [key, await listItems(key, complete)] as const,
+      ),
     ),
     getProfileAndRoles(),
   ]);

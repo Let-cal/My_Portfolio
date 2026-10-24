@@ -73,6 +73,8 @@ npm run start
 
 `@swc/core` のバージョン固定は、既存のWindows環境向けの対処です。変更時はWindowsとLinuxの両方で確認してください。また、本番ビルドでは `next/font/google` によるフォント取得のため、ネットワーク接続が必要です。
 
+管理画面の `/admin/media` では、Storageの画像・動画・PDFと使用先を確認でき、各フォームで既存のファイルを選択できます。利用前に管理者用のSELECTポリシーを適用してください。削除したファイルは内容の履歴からも復元できません。適用手順・制約・確認項目は [運用ガイド（英語）](docs/admin-media-library.md) を参照してください。
+
 ## 検証手順
 
 フォント成果物の検証には、[uv](https://docs.astral.sh/uv/getting-started/installation/)とPython 3.11以降も必要です。FontToolsとBrotliのバージョンはスクリプト内で固定し、分離した環境で実行します。通常の開発・本番ビルドはNode.jsとnpmのみで実行できます。CIではuvを明示的に準備します。

@@ -82,6 +82,12 @@ export function buildCommandItems(c: AdminContent): CommandItem[] {
     })),
     {
       group: "Đi tới",
+      label: "Thư viện media",
+      href: "/admin/media",
+      keywords: "storage files images video pdf",
+    },
+    {
+      group: "Đi tới",
       label: "Kỹ năng chưa có bằng chứng",
       href: "/admin/skills?filter=orphan",
       keywords: "orphan matrix",
