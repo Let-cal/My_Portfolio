@@ -17,6 +17,17 @@ const label = (value) =>
 const revision = (value) =>
   record(value) && sha(value.headSha) && sha(value.baseSha);
 const unique = (values) => new Set(values).size === values.length;
+const baseline = [
+  "desktop",
+  "mobile",
+  "locale-en",
+  "locale-ja",
+  "locale-vi",
+  "theme-light",
+  "theme-dark",
+  "keyboard",
+  "reduced-motion",
+];
 
 function safeUrl(value) {
   if (
@@ -58,6 +69,12 @@ function malformed(e) {
     return "Trusted policy or review freshness bounds are malformed.";
   }
   if (
+    !revision(p.resolution) ||
+    !timestamp(p.resolution.observedAt) ||
+    !label(p.resolution.reference)
+  )
+    return "Trusted policy resolution must bind a revision, time and resolver reference.";
+  if (
     !Array.isArray(p.requiredChecks) ||
     p.requiredChecks.length === 0 ||
     !p.requiredChecks.every(label) ||
@@ -75,8 +92,50 @@ function malformed(e) {
   ) {
     return "Trusted required checklist IDs and authentication flags are malformed.";
   }
+  if (
+    !Array.isArray(p.optionalChecks) ||
+    !p.optionalChecks.every(
+      (item) =>
+        record(item) &&
+        label(item.name) &&
+        boolean(item.applicable) &&
+        label(item.reason),
+    ) ||
+    !unique([...p.requiredChecks, ...p.optionalChecks.map((item) => item.name)])
+  ) {
+    return "Trusted optional check decisions are malformed, duplicated or overlap required checks.";
+  }
+  if (
+    !Array.isArray(p.optionalChecklist) ||
+    !p.optionalChecklist.every(
+      (item) =>
+        record(item) &&
+        label(item.id) &&
+        boolean(item.authenticated) &&
+        boolean(item.applicable) &&
+        label(item.reason),
+    ) ||
+    !unique([
+      ...p.requiredChecklist.map((item) => item.id),
+      ...p.optionalChecklist.map((item) => item.id),
+    ])
+  ) {
+    return "Trusted optional checklist decisions are malformed, duplicated or overlap required items.";
+  }
   if (!revision(e.reviewed) || !revision(e.current))
     return "Reviewed/current head and base must be full lowercase Git SHAs.";
+  const i = e.inventory;
+  if (
+    !revision(i) ||
+    !timestamp(i.observedAt) ||
+    !boolean(i.complete) ||
+    !Array.isArray(i.names) ||
+    i.names.length === 0 ||
+    !i.names.every(label) ||
+    !unique(i.names)
+  ) {
+    return "Check inventory requires a revision, time, completeness flag and nonempty unique names.";
+  }
   const d = e.deployment;
   if (
     !record(d) ||
@@ -87,6 +146,19 @@ function malformed(e) {
     !["ready", "pending", "failed", "blocked"].includes(d.status)
   ) {
     return "Deployment SHA, status, immutable flag or sanitized HTTPS URL is malformed.";
+  }
+  const a = d.aliasVerification;
+  if (
+    a !== undefined &&
+    a !== null &&
+    (!record(a) ||
+      !safeUrl(a.url) ||
+      !label(a.deploymentId) ||
+      !sha(a.sha) ||
+      !timestamp(a.verifiedBefore) ||
+      !timestamp(a.verifiedAfter))
+  ) {
+    return "Alias verification must be null or contain a sanitized HTTPS URL, deployment ID, SHA and verification times.";
   }
   if (
     !Array.isArray(e.checks) ||
@@ -179,8 +251,8 @@ export function evaluateRelease(evidence) {
       fail(`${context} evidence is stale or dated in the future.`);
     }
   };
-  const outcome = (status, context) => {
-    if (status === "failed" || status === "skipped")
+  const outcome = (status, context, skipAllowed = false) => {
+    if (status === "failed" || (status === "skipped" && !skipAllowed))
       fail(`${context} failed or was skipped.`);
     if (status === "pending" || status === "blocked")
       block(`${context} is pending or blocked.`);
@@ -188,35 +260,75 @@ export function evaluateRelease(evidence) {
 
   if (!sameRevision(e.reviewed))
     fail("Reviewed head/base no longer matches current head/base.");
+  if (!sameRevision(e.policy.resolution))
+    fail("Trusted policy resolution is for a different head/base.");
+  fresh(e.policy.resolution.observedAt, "Policy resolution");
+  if (!sameRevision(e.inventory))
+    fail("Check inventory is for a different head/base.");
+  fresh(e.inventory.observedAt, "Check inventory");
+  if (!e.inventory.complete) block("Check inventory is incomplete.");
   fresh(e.deployment.observedAt, "Deployment");
   fresh(e.preview.observedAt, "Preview");
   if (e.deployment.sha !== e.current.headSha)
     fail("Deployment SHA does not match current head.");
-  if (!e.deployment.immutable)
+  const alias = e.deployment.aliasVerification;
+  if (!e.deployment.immutable && alias === undefined)
     fail("Deployment URL is not confirmed immutable.");
+  if (!e.deployment.immutable && alias === null)
+    block("Branch alias verification is missing.");
+  if (!e.deployment.immutable && record(alias)) {
+    fresh(alias.verifiedBefore, "Alias verification");
+    fresh(alias.verifiedAfter, "Alias verification");
+    if (
+      alias.sha !== e.current.headSha ||
+      alias.url !== e.preview.deploymentUrl
+    )
+      fail("Branch alias verification is for a different SHA or URL.");
+    if (
+      alias.verifiedBefore > e.preview.observedAt ||
+      e.preview.observedAt > alias.verifiedAfter
+    )
+      fail("Preview checks were not bracketed by alias verification.");
+  }
   if (e.deployment.status === "failed") fail("Deployment failed.");
   if (e.deployment.status !== "ready" && e.deployment.status !== "failed")
     block("Deployment is not ready.");
   if (e.flaky) fail("Unresolved flaky evidence is present.");
 
+  const optionalCheck = (name) =>
+    e.policy.optionalChecks.find((item) => item.name === name);
+  e.inventory.names.forEach((name, index) => {
+    if (!e.policy.requiredChecks.includes(name) && !optionalCheck(name))
+      block(`Inventory check ${index + 1} is unclassified.`);
+  });
   e.policy.requiredChecks.forEach((name, index) => {
+    if (!e.inventory.names.includes(name))
+      fail(`Required check ${index + 1} is absent from the inventory.`);
     if (!e.checks.some((check) => check.name === name))
       block(`Required check ${index + 1} is missing.`);
   });
+  e.policy.optionalChecks.forEach((item, index) => {
+    if (item.applicable && !e.checks.some((check) => check.name === item.name))
+      block(`Applicable optional check ${index + 1} is missing.`);
+  });
   e.checks.forEach((check, index) => {
     const context = `Check ${index + 1}`;
+    const retries = check.attempts.slice(0, -1);
     fresh(check.observedAt, context);
     if (!sameRevision(check)) fail(`${context} is for a different head/base.`);
+    if (!e.inventory.names.includes(check.name))
+      fail(`${context} is absent from the inventory.`);
     if (check.status !== check.attempts.at(-1))
       fail(`${context} status disagrees with its final attempt.`);
-    if (
-      check.flaky ||
-      check.attempts.some((s) => s === "failed" || s === "skipped")
-    ) {
+    if (check.flaky || retries.some((s) => s === "failed" || s === "skipped")) {
       fail(`${context} has flaky, failed or skipped attempt history.`);
     }
-    check.attempts.forEach((status) => outcome(status, `${context} attempt`));
-    outcome(check.status, context);
+    retries.forEach((status) => outcome(status, `${context} attempt`));
+    outcome(
+      check.status,
+      context,
+      optionalCheck(check.name)?.applicable === false,
+    );
   });
 
   if (
@@ -227,7 +339,16 @@ export function evaluateRelease(evidence) {
     fail("Preview evidence is for a different revision or deployment URL.");
   if (!e.preview.readOnly)
     fail("Hosted preview content checks were not read-only.");
-  e.policy.requiredChecklist.forEach((required, index) => {
+  if (
+    !baseline.every((id) =>
+      e.policy.requiredChecklist.some((item) => item.id === id),
+    )
+  )
+    fail("Trusted required checklist omits the baseline matrix.");
+  [
+    ...e.policy.requiredChecklist,
+    ...e.policy.optionalChecklist.filter((item) => item.applicable),
+  ].forEach((required, index) => {
     const result = e.preview.results.find((item) => item.id === required.id);
     if (!result) block(`Required checklist item ${index + 1} is missing.`);
     else if (required.authenticated && !result.authenticated)
@@ -235,9 +356,18 @@ export function evaluateRelease(evidence) {
         `Required checklist item ${index + 1} lacks authenticated preview evidence.`,
       );
   });
-  e.preview.results.forEach((result, index) =>
-    outcome(result.status, `Checklist item ${index + 1}`),
-  );
+  e.preview.results.forEach((result, index) => {
+    const context = `Checklist item ${index + 1}`;
+    const optional = e.policy.optionalChecklist.find(
+      (item) => item.id === result.id,
+    );
+    if (
+      !optional &&
+      !e.policy.requiredChecklist.some((item) => item.id === result.id)
+    )
+      fail(`${context} is unclassified.`);
+    outcome(result.status, context, optional?.applicable === false);
+  });
 
   if (!sameRevision(e.review))
     fail("Independent review is for a different head/base.");
