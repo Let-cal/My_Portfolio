@@ -28,6 +28,7 @@ const executions = {
   session: 1,
   offline: 1,
 };
+const diagnostics = selected.map((id) => ({ id, outcome: "passed" }));
 const file = fileURLToPath(
   new URL("../e2e-admin/admin-flows.spec.ts", import.meta.url),
 );
@@ -58,6 +59,7 @@ test("all six exact identities pass once with current run metadata and safe evid
     rejected: 0,
     selected,
     executions,
+    diagnostics,
     revision: meta.revision,
     runId: meta.runId,
     runAttempt: meta.attempt,
@@ -259,11 +261,203 @@ test("projection validates exact manifest identities after JSON read and drops u
   );
   assert.equal(
     projectAdminSummary(
-      { ...source, status: "FAIL", passed: 5, rejected: 1 },
+      summarize(
+        rows().map((row, i) => ({ ...row, status: i ? "passed" : "failed" })),
+      ),
       meta,
     ).status,
     "FAIL",
   );
+});
+
+test("onTestEnd retains only bounded annotations for each mandatory scenario", () => {
+  const reporter = new AdminReporter();
+  const tests = discovered().map((r) => ({
+    id: r.testId,
+    title: r.title,
+    location: { file: r.file },
+    expectedStatus: r.expectedStatus,
+    parent: { project: () => ({ name: r.project }) },
+  }));
+  reporter.onBegin({}, { allTests: () => tests });
+  const categories = [
+    "assertion",
+    "browser-launch",
+    "browser-context",
+    "navigation",
+    "settings",
+    "other",
+  ];
+  for (const [i, entry] of tests.entries()) {
+    reporter.onTestEnd(entry, {
+      status: "failed",
+      retry: 0,
+      annotations: [
+        {
+          type: "task4-source",
+          description: "/SECRET-SENTINEL/fixtures.ts:1:1",
+        },
+        ...(i === 0
+          ? [{ type: "task4-source", description: "admin-flows.spec.ts:31:7" }]
+          : []),
+        { type: "task4-category", description: categories[i] },
+        { type: "SECRET-SENTINEL", description: "SECRET-SENTINEL" },
+      ],
+      errors: [{ message: "SECRET-SENTINEL", stack: "SECRET-SENTINEL" }],
+      attachments: [{ path: "/SECRET-SENTINEL" }],
+    });
+  }
+  const result = summarize(reporter.records);
+  assert.deepEqual(result.diagnostics, [
+    {
+      id: "auth",
+      outcome: "failed",
+      source: "admin-flows.spec.ts:31:7",
+      category: "assertion",
+    },
+    { id: "crud", outcome: "failed", category: "browser-launch" },
+    { id: "drafts", outcome: "failed", category: "browser-context" },
+    { id: "realtime", outcome: "failed", category: "navigation" },
+    { id: "session", outcome: "failed", category: "settings" },
+    { id: "offline", outcome: "failed", category: "other" },
+  ]);
+  assert.equal(result.status, "FAIL");
+  assert.equal(result.rejected, 6);
+  assert.deepEqual(
+    projectAdminSummary(JSON.parse(JSON.stringify(result)), meta),
+    result,
+  );
+  assert.ok(!JSON.stringify(reporter.records).includes("SECRET-SENTINEL"));
+  assert.ok(!JSON.stringify(result).includes("SECRET-SENTINEL"));
+});
+
+test("reporter drops invalid annotation values and uses a fixed fallback category", () => {
+  for (const description of [
+    "fixtures.ts:0:1",
+    "fixtures.ts:1:0",
+    "fixtures.ts:1000000:1",
+    "settings.ts:1:100000",
+    "fixtures.ts:1:1\n",
+    "fixtures.ts:1:1 SECRET-SENTINEL",
+    "other.ts:1:1",
+    "../fixtures.ts:1:1",
+    { secret: "SECRET-SENTINEL" },
+    null,
+  ]) {
+    const reporter = new AdminReporter();
+    const r = discovered()[0];
+    reporter.onTestEnd(
+      {
+        id: r.testId,
+        title: r.title,
+        location: { file: r.file },
+        expectedStatus: r.expectedStatus,
+        parent: { project: () => ({ name: r.project }) },
+      },
+      {
+        status: "failed",
+        retry: 0,
+        annotations: [
+          { type: "task4-source", description },
+          { type: "task4-category", description: "SECRET-SENTINEL" },
+        ],
+      },
+    );
+    const result = summarize([reporter.records[0], ...rows().slice(1)]);
+    assert.deepEqual(result.diagnostics[0], {
+      id: "auth",
+      outcome: "failed",
+      category: "other",
+    });
+    assert.ok(!JSON.stringify(result).includes("SECRET-SENTINEL"));
+  }
+});
+
+test("projection independently rejects malicious diagnostics and inconsistent outcomes", () => {
+  const failed = rows();
+  failed[0].status = "failed";
+  const source = summarize(failed);
+  const mutations = [
+    (r) => {
+      delete r.diagnostics;
+    },
+    (r) => {
+      r.diagnostics = {};
+    },
+    (r) => {
+      r.diagnostics.pop();
+    },
+    (r) => {
+      r.diagnostics.push(r.diagnostics[0]);
+    },
+    (r) => {
+      r.diagnostics[0] = null;
+    },
+    (r) => {
+      r.diagnostics[0].id = "SECRET-SENTINEL";
+    },
+    (r) => {
+      r.diagnostics[0].id = "crud";
+    },
+    (r) => {
+      r.diagnostics[0].outcome = "SECRET-SENTINEL";
+    },
+    (r) => {
+      r.diagnostics[0].outcome = "passed";
+    },
+    (r) => {
+      r.diagnostics[0].category = "SECRET-SENTINEL";
+    },
+    (r) => {
+      delete r.diagnostics[0].category;
+    },
+    (r) => {
+      r.diagnostics[1].category = "other";
+    },
+    (r) => {
+      r.diagnostics[0].source = { file: "SECRET-SENTINEL" };
+    },
+    ...[
+      "/SECRET-SENTINEL/fixtures.ts:1:1",
+      "fixtures.ts:0:1",
+      "fixtures.ts:1:0",
+      "fixtures.ts:1000000:1",
+      "fixtures.ts:1:100000",
+      "fixtures.ts:1:1\n",
+      "other.ts:1:1",
+    ].map((value) => (r) => {
+      r.diagnostics[0].source = value;
+    }),
+  ];
+  for (const mutate of mutations) {
+    const report = JSON.parse(JSON.stringify(source));
+    mutate(report);
+    assert.throws(
+      () => projectAdminSummary(report, meta),
+      (error) => {
+        assert.ok(!error.message.includes("SECRET-SENTINEL"));
+        return true;
+      },
+    );
+  }
+  for (const coordinate of [
+    "fixtures.ts:999999:99999",
+    "settings.ts:1:1",
+    "admin-flows.spec.ts:1:1",
+  ]) {
+    const report = JSON.parse(JSON.stringify(source));
+    Object.assign(report.diagnostics[0], {
+      source: coordinate,
+      originalError: "SECRET-SENTINEL",
+      cause: "SECRET-SENTINEL",
+      stack: "SECRET-SENTINEL",
+      DOM: "SECRET-SENTINEL",
+      testId: "SECRET-SENTINEL",
+    });
+    const projected = projectAdminSummary(report, meta);
+    assert.equal(projected.diagnostics[0].source, coordinate);
+    assert.ok(!JSON.stringify(projected).includes("SECRET-SENTINEL"));
+  }
 });
 
 test("projection rejects a malicious unknown identity even when all counts claim PASS", () => {

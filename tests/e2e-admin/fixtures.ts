@@ -3,6 +3,7 @@ import {
   test as base,
   expect,
   type Page,
+  type TestInfo,
   type WebSocket,
 } from "@playwright/test";
 import { z } from "zod";
@@ -336,6 +337,50 @@ function safeFailureLocation(stack: string | undefined): string | undefined {
   );
 }
 
+function safeFailureCategory(message: string | undefined) {
+  const prefix = message?.replace(/^Error: /, "") ?? "";
+  if (prefix.startsWith("browserType.launch:")) return "browser-launch";
+  if (prefix.startsWith("browser.newContext:")) return "browser-context";
+  if (prefix.startsWith("page.goto:")) return "navigation";
+  if (/^(?:expect[(:.]|AssertionError:)/.test(prefix)) return "assertion";
+  if (
+    prefix.startsWith(
+      "Task4 browser environment contains forbidden settings",
+    ) ||
+    prefix.startsWith(
+      "Task4 requires an explicit owned local app and valid private fixture",
+    )
+  )
+    return "settings";
+  return "other";
+}
+
+export function suppressPrivateFailures(
+  testInfo: Pick<TestInfo, "errors" | "annotations" | "attachments">,
+) {
+  for (const error of testInfo.errors) {
+    const source = safeFailureLocation(error.stack);
+    const category = safeFailureCategory(error.message);
+    for (const key of Object.keys(error))
+      delete (error as Record<string, unknown>)[key];
+    error.message = "Task4 failure; private diagnostics suppressed";
+    for (const [type, description] of [
+      ["task4-source", source],
+      ["task4-category", category],
+    ] as const) {
+      if (
+        description &&
+        !testInfo.annotations.some(
+          (annotation) =>
+            annotation.type === type && annotation.description === description,
+        )
+      )
+        testInfo.annotations.push({ type, description });
+    }
+  }
+  testInfo.attachments.splice(0);
+}
+
 export const test = base.extend<{
   suite: AdminHarness;
   _privateFailures: void;
@@ -348,25 +393,7 @@ export const test = base.extend<{
       try {
         await provide();
       } finally {
-        for (const error of testInfo.errors) {
-          const source = safeFailureLocation(error.stack);
-          for (const key of Object.keys(error))
-            delete (error as Record<string, unknown>)[key];
-          error.message = `Task4 failure in ${testInfo.title}${source ? ` at ${source}` : ""}; private diagnostics suppressed`;
-          if (
-            source &&
-            !testInfo.annotations.some(
-              (annotation) =>
-                annotation.type === "task4-source" &&
-                annotation.description === source,
-            )
-          )
-            testInfo.annotations.push({
-              type: "task4-source",
-              description: source,
-            });
-        }
-        testInfo.attachments.splice(0);
+        suppressPrivateFailures(testInfo);
       }
     },
     { auto: true, box: true },

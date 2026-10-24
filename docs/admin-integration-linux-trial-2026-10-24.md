@@ -71,3 +71,13 @@ Pinned primary sources:
 - Installed SDK: `node_modules/@supabase/realtime-js/src/RealtimeChannel.ts`, receive-error handler.
 
 Targeted RED: 52 passed / 2 failed before correction. Targeted GREEN: 57 passed including sanitized-progress tests; independent reviewer reran them with the same result and reported no blocking findings. Fresh quick checks and the full **618 script/budget tests** passed. No application, workflow, timeout, permission, gate threshold or mandatory scenario was changed. Full application build/unit results remain those of the unchanged application on the second Linux trial; they were not rerun locally for this helper-only correction.
+
+## Third approved Linux trial — backend accepted, browser blocked
+
+[CI 40090057834](https://github.com/Let-cal/My_Portfolio/actions/runs/40090057834), head `82623ff`, merge revision `432396d7196c8d27c522dfe0394a8f27a984d768`, confirmed the Realtime contract correction: **22 real backend checks passed**. All six migrations, provisioning, the production build and scoped cleanup also passed. The six browser cases each executed once, but **zero passed**; the browser phase lasted 29.429 seconds including teardown. This identifies a common early browser/fixture problem but not its cause. No signed-in raw logs were exported.
+
+Quality, CodeQL, Gitleaks, production audit, Lighthouse gate, public browser aggregation and Vercel preview passed at this head. That does not override the mandatory admin failure. Launcher total: 168.301 seconds; complete admin job: 3m28s. This remains a failed partial run, not a successful end-to-end benchmark.
+
+Under the owner's explicit ordinary-test repair/rerun approval, the next diagnostic increment records each mandatory scenario's fixed outcome, allowlisted source coordinates and a fixed failure category. The artifact projection validates those fields independently and drops arbitrary data. Privacy regression tests use sentinel secrets to verify that raw errors, causes, stacks, assertion values and attachments are not retained in the exported diagnostics. No signed-in DOM, trace, screenshot, password or token is published.
+
+Local verification: quick checks, all **621 script/budget tests** and **13 privacy unit tests** passed. Independent review reran 11 reporter tests and 13 privacy tests and found no blocker or false-PASS/raw-data export path. Actual browser recovery still requires Linux. A provisional selector diagnosis was withdrawn after review confirmed `ResourcePage` already renders `<main>`; the original selector and readiness assertion are retained. No UI/source app, workflow, policy, permission, threshold or test coverage was changed.

@@ -6,6 +6,81 @@ import {
 } from "./admin-scenarios.mjs";
 
 const scenarioIds = adminScenarios.map(({ id }) => id);
+const outcomes = [
+  "passed",
+  "failed",
+  "timedOut",
+  "skipped",
+  "interrupted",
+  "missing",
+  "invalid",
+];
+const categories = [
+  "browser-launch",
+  "browser-context",
+  "navigation",
+  "assertion",
+  "settings",
+  "other",
+];
+
+function validSource(value) {
+  return (
+    typeof value === "string" &&
+    /^(?:admin-flows\.spec|fixtures|settings)\.ts:[1-9][0-9]{0,5}:[1-9][0-9]{0,4}$/.exec(
+      value,
+    )?.[0] === value
+  );
+}
+
+function diagnostic(id, records) {
+  const matches = records.filter((record) => scenarioId(record) === id);
+  const record = matches.length === 1 ? matches[0] : undefined;
+  const outcome = !matches.length
+    ? "missing"
+    : record?.retry === 0 && outcomes.includes(record.status)
+      ? record.status
+      : "invalid";
+  return {
+    id,
+    outcome,
+    ...(outcome !== "passed"
+      ? {
+          ...(validSource(record?.source) ? { source: record.source } : {}),
+          category: categories.includes(record?.category)
+            ? record.category
+            : "other",
+        }
+      : {}),
+  };
+}
+
+function projectDiagnostics(source) {
+  if (
+    !Array.isArray(source.diagnostics) ||
+    !exactIds(source.diagnostics.map((entry) => entry?.id)) ||
+    source.diagnostics.filter((entry) => entry?.outcome === "passed").length !==
+      source.passed
+  )
+    throw new Error("Invalid admin browser diagnostics");
+  return scenarioIds.map((id) => {
+    const entry = source.diagnostics.find((entry) => entry.id === id);
+    if (
+      !outcomes.includes(entry.outcome) ||
+      (entry.source !== undefined && !validSource(entry.source)) ||
+      (entry.outcome === "passed"
+        ? entry.category !== undefined || entry.source !== undefined
+        : !categories.includes(entry.category))
+    )
+      throw new Error("Invalid admin browser diagnostics");
+    return {
+      id,
+      outcome: entry.outcome,
+      ...(entry.source !== undefined ? { source: entry.source } : {}),
+      ...(entry.category !== undefined ? { category: entry.category } : {}),
+    };
+  });
+}
 
 function validMeta(meta) {
   return (
@@ -80,6 +155,7 @@ export function adminSummary(records, expected, status, meta, discovered = []) {
     rejected: records.length - passed,
     selected: scenarioIds.filter((id) => selected.includes(id)),
     executions,
+    diagnostics: scenarioIds.map((id) => diagnostic(id, records)),
     revision: valid ? meta.revision : null,
     runId: valid ? meta.runId : null,
     runAttempt: valid ? meta.attempt : null,
@@ -129,6 +205,7 @@ export function projectAdminSummary(source, meta) {
     rejected: source.rejected,
     selected: [...scenarioIds],
     executions: Object.fromEntries(scenarioIds.map((id) => [id, 1])),
+    diagnostics: projectDiagnostics(source),
     revision: meta.revision,
     runId: meta.runId,
     runAttempt: meta.attempt,
@@ -145,11 +222,26 @@ export default class AdminReporter {
     this.expected = this.discovered.length;
   }
   onTestEnd(test, result) {
+    const annotations = Array.isArray(result.annotations)
+      ? result.annotations
+      : [];
+    const source = annotations.find(
+      (annotation) =>
+        annotation?.type === "task4-source" &&
+        validSource(annotation.description),
+    )?.description;
+    const category = annotations.find(
+      (annotation) =>
+        annotation?.type === "task4-category" &&
+        categories.includes(annotation.description),
+    )?.description;
     this.records.push({
       ...testIdentity(test),
       status: result.status,
       retry: result.retry,
       expectedStatus: test.expectedStatus,
+      ...(source !== undefined ? { source } : {}),
+      ...(category !== undefined ? { category } : {}),
     });
   }
   onError() {
