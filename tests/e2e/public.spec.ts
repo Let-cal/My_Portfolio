@@ -50,10 +50,9 @@ test.describe("home page", () => {
     page,
   }) => {
     await page.goto("/en");
-    await hydrated(page, 'header button[aria-label="Open command palette"]');
+    await hydrated(page, 'header button[aria-label^="Open command palette"]');
     const trigger = page.getByRole("button", {
-      name: "Open command palette",
-      exact: true,
+      name: /^Open command palette, (Ctrl K|⌘K)$/,
     });
     await trigger.press("Enter");
     await expect(page.getByRole("dialog")).toBeVisible();
