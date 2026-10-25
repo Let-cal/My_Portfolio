@@ -34,6 +34,19 @@ for (const [name, allowed, rejected] of [
     { code: "42501", message: "not allowed" },
     [{ code: "PGRST106" }, { code: "PGRST301", message: "JWT expired" }],
   ],
+  [
+    "isRestoreDenied",
+    { code: "42501", message: "not allowed" },
+    [
+      // Reached the version lookup: the admin gate did not deny the caller.
+      { code: "P0001", message: "version 0 not found" },
+      { code: "P0001", message: "cannot restore skill_links" },
+      { code: "PGRST106" },
+      { code: "PGRST301", message: "JWT expired" },
+      { code: "42501 " },
+      { code: 42501 },
+    ],
+  ],
 ]) {
   test(`${name} accepts only its explicit server denial`, () => {
     assert.equal(api[name]?.(allowed), true);

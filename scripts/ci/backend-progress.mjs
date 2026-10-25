@@ -3,12 +3,16 @@ export const backendCheckpoints = Object.freeze([
   "bootstrap",
   "auth-admin",
   "auth-member",
+  "auth-reviewer",
+  "access-kind",
   "hidden-admin",
   "hidden-anonymous",
   "hidden-member",
+  "hidden-reviewer",
   "insert-member-denial",
+  "insert-reviewer-denial",
   "public-admin",
-  ...["anonymous", "member"].flatMap((role) => [
+  ...["anonymous", "member", "reviewer"].flatMap((role) => [
     `public-${role}`,
     ...["update", "delete"].flatMap((operation) => [
       `${operation}-${role}-denial`,
@@ -16,18 +20,28 @@ export const backendCheckpoints = Object.freeze([
     ]),
   ]),
   "private-schema-denial",
+  "private-schema-reviewer-denial",
   "history-admin",
   "history-member-denial",
+  "history-reviewer",
+  "restore-reviewer-denial",
   "storage-admin",
   "storage-member-denial",
+  "storage-reviewer-list",
+  "storage-reviewer-denial",
   "realtime-admin-auth",
   "realtime-admin-join",
   "realtime-anonymous-session",
   "realtime-anonymous-join-denial",
   "realtime-member-join-denial",
+  "realtime-reviewer-join",
   "realtime-write",
   "realtime-delivery",
   "fixture-restore",
+  // verifyReviewerRevoked, after the launcher deletes the private.app_reviewers row.
+  "revoked-reviewer-auth",
+  "revoked-reviewer-access-kind",
+  "revoked-reviewer-hidden",
 ]);
 const categories = new Set(["assertion-failed", "request-failed"]);
 

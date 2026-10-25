@@ -9,6 +9,13 @@ export function isHistoryDenied(error) {
   return error?.code === "42501";
 }
 
+// admin_restore_version (0004) checks private.is_admin() before reading the version id,
+// so a reviewer gets insufficient_privilege for any id, existing or not. A
+// "version % not found" (P0001) or missing-function error would NOT prove the boundary.
+export function isRestoreDenied(error) {
+  return error?.code === "42501";
+}
+
 export function isStorageUploadDenied(error) {
   // storage-js preserves the JSON payload statusCode separately from HTTP status
   // (Storage can send HTTP 400 for a Postgres RLS violation with statusCode 403).
