@@ -1,8 +1,8 @@
 # Read-only reviewer access
 
-Status: prepared for owner security approval. Nothing in this document is applied to the hosted
-project until the owner approves the concrete change. Account identifiers are deliberately absent
-from this public file.
+Status: the owner approved the change, and the migration was applied to the hosted project on
+2026-10-25 as version `20261025103300`. The reviewer allowlist stays empty until the owner adds
+the dedicated account. Account identifiers are deliberately absent from this public file.
 
 ## Why
 
@@ -56,7 +56,7 @@ change real content. The reviewer role sees everything an editor sees and cannot
 
 ## Rollout (after approval)
 
-1. Apply the migration `supabase/migrations/20261025065340_reviewer_read_only.sql` with its exact version, through `apply_migration` or the CLI, which run it as one transaction. Do not paste it into the SQL editor: a partial run cannot simply be repeated.
+1. Apply the migration `supabase/migrations/20261025103300_reviewer_read_only.sql` with its exact version, through `apply_migration` or the CLI, which run it as one transaction. Do not paste it into the SQL editor: a partial run cannot simply be repeated.
 2. Verify, read-only:
    - `public.admin_access_kind()` is `security invoker`, executable by `authenticated` only;
    - the 10 `*_reviewer_read` policies, `reviewer_media_select`, `content_versions_reviewer_read` and `reviewer_content_receive` exist;
@@ -115,7 +115,7 @@ Then mark the migration as reverted, so a later migration run applies it again i
 skipping it:
 
 ```bash
-supabase migration repair --status reverted 20261025065340
+supabase migration repair --status reverted 20261025103300
 ```
 
 Rolling back only the database is safe for the app: when `admin_access_kind()` is missing, the
