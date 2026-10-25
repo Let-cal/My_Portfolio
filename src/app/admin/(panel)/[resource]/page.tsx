@@ -2,6 +2,7 @@ import { ListSkeleton } from "@/components/admin/Skeletons";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { AdminOnly } from "@/components/admin/AdminAccessProvider";
 import { ResourceTable } from "@/components/admin/ResourceTable";
 import { SkillMatrix } from "@/components/admin/SkillMatrix";
 import { Button } from "@/components/ui/button";
@@ -37,9 +38,11 @@ async function ResourceList({
               </Link>
             </Button>
           )}
-          <Button asChild>
-            <Link href={`/admin/${key}/new`}>Thêm mới</Link>
-          </Button>
+          <AdminOnly>
+            <Button asChild>
+              <Link href={`/admin/${key}/new`}>Thêm mới</Link>
+            </Button>
+          </AdminOnly>
         </div>
       </header>
       {!content ? (

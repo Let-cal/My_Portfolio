@@ -54,7 +54,11 @@ const LIST_OF: Record<ResourceKey, keyof AdminContent> = {
   why_cards: "whyCards",
 };
 
-export function buildCommandItems(c: AdminContent): CommandItem[] {
+/** `readOnly` (the reviewer): no "Tạo mới" entries, everything else to read stays. */
+export function buildCommandItems(
+  c: AdminContent,
+  { readOnly = false }: { readOnly?: boolean } = {},
+): CommandItem[] {
   const screens: CommandItem[] = [
     {
       group: "Đi tới",
@@ -93,7 +97,7 @@ export function buildCommandItems(c: AdminContent): CommandItem[] {
       keywords: "orphan matrix",
     },
   ];
-  const create = RESOURCE_KEYS.map((key) => ({
+  const create = (readOnly ? [] : RESOURCE_KEYS).map((key) => ({
     group: "Tạo mới",
     label: `Tạo ${SINGULAR[key]} mới`,
     href: `/admin/${key}/new`,

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ResourceForm } from "@/components/admin/ResourceForm";
+import { getAdminAccess } from "@/lib/admin/access";
 import { emptyItem } from "@/lib/admin/empty-item";
 import type { Options } from "@/components/admin/ResourceForm";
 import type { Skill } from "@/content/schema";
@@ -27,6 +28,19 @@ async function Editor({
   const isNew = id === "new";
   // "Nhân bản" for lists that cannot hide items: a new, unsaved item pre-filled from `from`.
   const from = isNew && typeof sp.from === "string" ? sp.from : null;
+  // Creating (new or a copy) is the admin's only; the reviewer gets a way back instead of a form.
+  if (isNew && (await getAdminAccess())?.kind !== "admin")
+    return (
+      <p
+        role="status"
+        className="flex flex-wrap items-center gap-3 rounded-lg border border-sky-500/40 bg-sky-500/10 px-4 py-3 text-sm"
+      >
+        Chế độ chỉ đọc: không tạo mục mới.
+        <Link href={`/admin/${key}`} className="font-medium underline">
+          ← {resources[key].label}
+        </Link>
+      </p>
+    );
   const needsSkills =
     key === "experiences" ||
     key === "projects" ||

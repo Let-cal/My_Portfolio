@@ -30,6 +30,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { useAdminAccess } from "./AdminAccessProvider";
 
 const TYPE_LABELS = { image: "Ảnh", video: "Video", pdf: "PDF", other: "Khác" };
 type Props =
@@ -38,6 +39,8 @@ type Props =
 
 /** One inventory for the library and picker. No autoplay, previews load only images on demand. */
 export function MediaBrowser({ kind, onSelect }: Props) {
+  // The reviewer browses (and opens) files; picking one or deleting is for the admin.
+  const { readOnly } = useAdminAccess();
   const [library, setLibrary] = useState<MediaLibrarySnapshot | null>(null);
   const [error, setError] = useState(""),
     [revision, setRevision] = useState(0);
@@ -186,7 +189,7 @@ export function MediaBrowser({ kind, onSelect }: Props) {
           Tải lại
         </Button>
       </div>
-      {kind && (
+      {kind && !readOnly && (
         <p className="text-sm text-muted-foreground">
           Chọn {TYPE_LABELS[kind].toLowerCase()} có sẵn, tối đa{" "}
           {formatMediaBytes(UPLOAD_RULES[kind].maxBytes)}. Chỉ thay đổi form;
@@ -283,7 +286,7 @@ export function MediaBrowser({ kind, onSelect }: Props) {
                       </p>
                     )}
                     <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-2">
-                      {kind && onSelect ? (
+                      {!readOnly && kind && onSelect ? (
                         <>
                           <Button
                             type="button"
@@ -313,7 +316,7 @@ export function MediaBrowser({ kind, onSelect }: Props) {
                           >
                             Mở tệp
                           </a>
-                          {!file.uses.length && (
+                          {!file.uses.length && !readOnly && (
                             <Button
                               type="button"
                               variant="ghost"
