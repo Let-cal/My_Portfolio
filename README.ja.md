@@ -45,6 +45,52 @@ Server Componentsは `src/lib/data/get-content.ts` を通してコンテンツ�
 
 3Dシーンはページ本文とは別に読み込みます。モバイルは静止画を使用し、対応するデスクトップ環境ではページの読み込み後にライブシーンを開始します。本番ビルドでは、コミット済みのポートレート画像、背景画像、アイコン、SVGスプライトを検査して使用し、ビルド環境ごとの再エンコードを避けます。元データを変更した場合は `npm run generate:assets` を実行し、生成差分を確認してコミットしてください。依存パッケージの正確なバージョンは `package-lock.json` を参照してください。
 
+## アーキテクチャと開発プロセス
+
+システムの構成と、変更が本番環境に反映されるまでの流れの要約です。図と根拠へのリンクは[英語版README](README.md#architecture--engineering-process)に掲載しています。
+
+### 実行時の構成
+
+- 閲覧者のリクエストはVercel上のNext.js 16（Server Components）が処理し、`content` タグ付きのキャッシュから表示します。Supabaseが未設定、または応答が不正な場合は [`seed.json`](src/content/seed.json) を使用します（[`get-content.ts`](src/lib/data/get-content.ts)）。
+- 管理画面の操作は、プロキシ → Server Actions（`requireAdmin()`）→ Supabaseの行レベルセキュリティの順に確認します。保存時には `updateTag('content')` で公開ページのキャッシュを更新します。
+- Supabaseでは、Postgres（行レベルセキュリティ）、Storage（`media`・`files`）、Realtime（非公開トピック `admin:content`）を使用します。
+
+### セキュリティモデル
+
+- 最終的な防御はデータベースの行レベルセキュリティです。プロキシとServer Actionsでの確認は、多層防御として位置付けています。
+- 管理者の許可リストと変更履歴は、Data APIに公開していない `private` スキーマに置いています（[マイグレーション](supabase/migrations)）。
+- 拒否されることの確認は、本番データではなく、CI上の使い捨てSupabase環境で実施しています。
+- プレビューの確認には読み取り専用のレビュー用アカウントを使います。UIDの許可リストとSELECTのみのポリシーで制御し、書き込みはすべて `requireAdmin()` で拒否します（[セキュリティ資料](docs/security/reviewer-access.md)）。
+
+### 変更から本番反映まで
+
+1. 規模の大きい作業では、仕様と計画（[docs/superpowers/](docs/superpowers)）を先にコミットします。
+2. ブランチ上でテストと合わせて小さな単位でコミットします。push前に `npm run verify:quick` が実行されます。
+3. [PRテンプレート](.github/pull_request_template.md)に沿って、課題、実際に実行したコマンド、残る確認事項を記載します。
+4. CIのチェック（下表）とVercelのプレビューを確認します。
+5. オーナーが開始するレビューで証跡を収集し、[`review-release.mjs`](.github/scripts/review-release.mjs) で判定します（[手順書](docs/final-review-release.md)）。Auth/RLS、CI/CD、権限、マイグレーションの変更には、オーナーの承認が必要です。
+6. レビューしたhead SHAに限定してマージし、Vercelが `main` を本番環境へ反映します。「マージ済み」「デプロイ済み」「確認済み」は分けて報告します。
+
+| チェック | 扱い |
+| --- | --- |
+| Lint、型、ユニットテスト、予算 | 必須。失敗するとマージをブロック |
+| Playwright Chromium on Linux | 必須。欠落・スキップ・flakyな結果もブロック |
+| Lighthouse mobile | 必須。Accessibility・SEO・CLSはブロック、Performance・LCP・TBTは警告のみ |
+| 使い捨てSupabaseでの管理画面テスト | 失敗するとCIは失敗しますが、必須チェックではありません |
+| Gitleaks、npm audit、CodeQL | 必須。失敗するとマージをブロック |
+| Vercel | 必須 |
+
+「必須」は、2026-10-25時点でGitHub APIから確認した `main` のブランチ保護設定に基づきます。
+
+### 設計判断の記録（ADR）
+
+[ADR一覧](docs/adr/README.md)に、各判断の背景・トレードオフ・根拠を英語で記録しています。
+
+- データと表示：[0001 3言語と単一のコンテンツモデル](docs/adr/0001-three-locales-one-content-model.md)、[0002 キャッシュとseedフォールバック](docs/adr/0002-cached-content-loader-with-seed-fallback.md)、[0003 3Dシーンが本文を妨げない構成](docs/adr/0003-3d-scene-never-blocks-content.md)、[0009 下書きプレビューと公開キャッシュの分離](docs/adr/0009-draft-preview-outside-the-public-cache.md)
+- セキュリティ：[0004 RLSを最終防御とする構成](docs/adr/0004-rls-as-the-final-guard.md)、[0008 メディアライブラリ](docs/adr/0008-media-library-on-supabase-storage.md)、[0013 読み取り専用のレビュー用ロール（提案中）](docs/adr/0013-read-only-reviewer-role.md)
+- 管理画面：[0006 トリガーによる変更履歴](docs/adr/0006-content-history-with-triggers.md)、[0007 非公開のRealtime Broadcast](docs/adr/0007-private-realtime-broadcast.md)
+- 品質とリリース：[0005 CIのブロック基準](docs/adr/0005-pragmatic-ci-gates.md)、[0010 使い捨てSupabaseでの結合テスト](docs/adr/0010-disposable-supabase-integration-tests.md)、[0011 リリース証跡の判定](docs/adr/0011-fail-closed-release-evaluator.md)、[0012 レビュー済みSQLによるマイグレーション](docs/adr/0012-hosted-migrations-through-reviewed-sql.md)
+
 ## ローカルで起動する
 
 **Node.js 22.xの22.19以降**とnpmを使用します。Lighthouse 13.5.0の実行にはNode.js 22.19以上が必要です。
