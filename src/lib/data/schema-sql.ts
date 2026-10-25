@@ -109,7 +109,8 @@ const tableList = VERSIONED_TABLES.map((t) => `'${t}'`).join(", ");
 
 /**
  * Content history (supabase/migrations/0004_content_versions.sql). Updates and deletes keep the
- * old row; admins list and restore through two security-definer functions, nobody else can.
+ * old row; admins list and restore through two security-invoker functions (the read-only reviewer
+ * may also list), nobody else can.
  */
 export const VERSIONS_SQL = `-- Content history: each update or delete keeps the old row, so the admin can see and undo changes.
 create table private.content_versions (

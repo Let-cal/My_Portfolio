@@ -31,7 +31,7 @@ change real content. The reviewer role sees everything an editor sees and cannot
    - The reviewer is a UID listed in `private.app_reviewers`. That schema is not exposed through the Data API.
    - `private.is_reviewer()` checks `auth.uid()`.
    - User metadata, email and request headers are never trusted.
-   - Revocation is one `delete`, and it takes effect on the next request.
+   - Revocation is one `delete`. Pages, actions and the Data API refuse the reviewer on the next request. A Realtime channel that is already open keeps receiving change notes (table, operation and key only) until it rejoins or its access token refreshes, about an hour at most; for an immediate cut-off, also sign the reviewer out.
 2. **Proxy** (`src/lib/admin/guard.ts`) lets the admin or the reviewer into `/admin/**`.
    - It decides through `public.admin_access_kind()`, a `security invoker` function that is not covered by Supabase lint 0029.
    - A lookup error means no access.
@@ -56,7 +56,7 @@ change real content. The reviewer role sees everything an editor sees and cannot
 
 ## Rollout (after approval)
 
-1. Apply the migration `supabase/migrations/20261025065340_reviewer_read_only.sql` with its exact version.
+1. Apply the migration `supabase/migrations/20261025065340_reviewer_read_only.sql` with its exact version, through `apply_migration` or the CLI, which run it as one transaction. Do not paste it into the SQL editor: a partial run cannot simply be repeated.
 2. Verify, read-only:
    - `public.admin_access_kind()` is `security invoker`, executable by `authenticated` only;
    - the 10 `*_reviewer_read` policies, `reviewer_media_select`, `content_versions_reviewer_read` and `reviewer_content_receive` exist;
@@ -111,8 +111,19 @@ drop function if exists private.is_reviewer();
 drop table if exists private.app_reviewers;
 ```
 
-Rolling back the code without the database is safe: an unknown reviewer is simply refused,
-because the app falls back to admin-only access when `admin_access_kind()` is missing.
+Then mark the migration as reverted, so a later migration run applies it again instead of
+skipping it:
+
+```bash
+supabase migration repair --status reverted 20261025065340
+```
+
+Rolling back only the database is safe for the app: when `admin_access_kind()` is missing, the
+lookup fails and the app falls back to admin-only access.
+
+Rolling back only the code is **not** enough. The reviewer's session could still read hidden
+rows, history, media listings and change notes directly through the Data API, Storage and
+Realtime. Run the Revoke `delete` above too, or the full database rollback.
 
 ## Evidence
 
