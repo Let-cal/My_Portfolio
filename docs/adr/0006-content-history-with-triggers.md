@@ -10,14 +10,14 @@ The admin needed undo for deletes and a way to see and restore earlier versions 
 
 ## Decision
 
-- `private.content_versions` stores the old row as `jsonb` for every update or delete, with table, item key, operation, the editor's JWT email, time and transaction ID (`0004_content_versions.sql`).
+- `private.content_versions` stores the old row as `jsonb` for every update or delete, with table, item key, operation, the editor's JWT email, time and transaction ID (`20261020074656_content_versions.sql`).
 - An `after update or delete` trigger on each of the 10 content tables calls `private.record_version()`:
   - changes to `sort_index` or `updated_at` only are not versions;
   - each item keeps its newest 50 versions.
 - The table sits in the `private` schema with RLS on and all grants revoked from `public`, `anon` and `authenticated`.
 - `public.admin_list_versions` and `public.admin_restore_version` check `private.is_admin()` and raise `42501` otherwise.
 - A restore writes the old row back with an upsert, never delete-and-insert, so the restore is itself a new version and can be undone. Restoring a delete also restores the skill links deleted in the same transaction when both ends still exist.
-- Follow-up `0005_versions_security_invoker.sql` (Supabase lint 0029): both functions now run as `security invoker`, and a `content_versions_admin_read` policy grants SELECT to the admin only. Restores therefore also pass the normal table write policies.
+- Follow-up `20261020074657_versions_security_invoker.sql` (Supabase lint 0029): both functions now run as `security invoker`, and a `content_versions_admin_read` policy grants SELECT to the admin only. Restores therefore also pass the normal table write policies.
 - Both migrations are additive and list their rollback statements in the file header.
 
 ## Consequences
@@ -38,7 +38,7 @@ Negative / trade-offs:
 
 ## Evidence
 
-- Migrations: [0004_content_versions.sql](../../supabase/migrations/0004_content_versions.sql), [0005_versions_security_invoker.sql](../../supabase/migrations/0005_versions_security_invoker.sql), [0003_updated_at_ignores_order.sql](../../supabase/migrations/0003_updated_at_ignores_order.sql)
+- Migrations: [20261020074656_content_versions.sql](../../supabase/migrations/20261020074656_content_versions.sql), [20261020074657_versions_security_invoker.sql](../../supabase/migrations/20261020074657_versions_security_invoker.sql), [20261019155349_updated_at_ignores_order.sql](../../supabase/migrations/20261019155349_updated_at_ignores_order.sql)
 - Check script: [supabase/checks/content-versions-check.sql](../../supabase/checks/content-versions-check.sql)
 - App: [src/lib/admin/versions.ts](../../src/lib/admin/versions.ts), history actions in [src/app/admin/actions.ts](../../src/app/admin/actions.ts)
 - Tests: [tests/unit/admin-versions.test.ts](../../tests/unit/admin-versions.test.ts), [tests/unit/version-history.test.tsx](../../tests/unit/version-history.test.tsx), [tests/unit/db-schema.test.ts](../../tests/unit/db-schema.test.ts)

@@ -84,7 +84,7 @@ The database is the boundary. The proxy and server actions are defense in depth:
 | Proxy | `/admin/**` admits the configured admin and the read-only reviewer; anyone else goes to login | [`src/proxy.ts`](src/proxy.ts), [`guard.ts`](src/lib/admin/guard.ts) |
 | Server actions | `requireAdmin()` runs before every write; `SESSION_EXPIRED` and `FORBIDDEN` are distinct | [`session.ts`](src/lib/admin/session.ts), [`actions.ts`](src/app/admin/actions.ts) |
 | Postgres RLS | Visitors read published rows; writes, history, bucket listing and Realtime notes require `private.is_admin()` | [`supabase/migrations/`](supabase/migrations) |
-| Private schema | The admin allowlist and history live in `private`, which the Data API does not expose | [`0002_private_admin.sql`](supabase/migrations/0002_private_admin.sql), [`config.toml`](supabase/config.toml) |
+| Private schema | The admin allowlist and history live in `private`, which the Data API does not expose | [`20261018185337_private_admin.sql`](supabase/migrations/20261018185337_private_admin.sql), [`config.toml`](supabase/config.toml) |
 | Public cache | The anonymous `"use cache"` scope never reads cookies or admin data | [`get-content.ts`](src/lib/data/get-content.ts), [`preview-content.ts`](src/lib/data/preview-content.ts) |
 | CI | Read-only default token, SHA-pinned actions, no `pull_request_target`, no repository secrets; only the Dependabot auto-merge job can write | [`.github/workflows/`](.github/workflows), [CI procedure](docs/ci-release.md) |
 
@@ -137,7 +137,7 @@ Dependabot patch and minor updates merge automatically after the required checks
 - [0009](docs/adr/0009-draft-preview-outside-the-public-cache.md) Draft preview of hidden content stays outside the public cache
 - [0010](docs/adr/0010-disposable-supabase-integration-tests.md) Disposable local Supabase integration tests in CI
 - [0011](docs/adr/0011-fail-closed-release-evaluator.md) A fail-closed evaluator for preview review evidence
-- [0012](docs/adr/0012-hosted-migrations-through-reviewed-sql.md) Hosted migrations through reviewed SQL; no `db push` until reconciled
+- [0012](docs/adr/0012-hosted-migrations-through-reviewed-sql.md) Hosted migrations through reviewed SQL; file names match the hosted history
 - [0013](docs/adr/0013-read-only-reviewer-role.md) Read-only reviewer role
 
 ## Local setup
@@ -159,7 +159,7 @@ npm run start
 ### Database and admin (optional)
 
 1. Create a Supabase project and apply `supabase/migrations/` in order (SQL editor or `supabase db push`).
-   The live project was migrated through reviewed SQL, so its migration history versions differ from these file names. Do not run `supabase db push` against it until that history is reconciled.
+   File names match the live project's migration history, so `supabase migration list` agrees with it. A migration for the live project still needs the owner's approval of the concrete SQL first ([ADR-0012](docs/adr/0012-hosted-migrations-through-reviewed-sql.md)).
 2. Copy [.env.example](.env.example) to `.env.local` and fill in the project URL, publishable key, secret key and `ADMIN_EMAIL`. Never commit it, and never expose `SUPABASE_SERVICE_ROLE_KEY` through a `NEXT_PUBLIC_` variable.
 3. `npm run db:seed` loads `seed.json`; `npm run db:verify` reads it back with the public key and compares every section.
 4. In Supabase Auth, create the admin user, then run `insert into private.app_admins (email) values ('<email>');`.

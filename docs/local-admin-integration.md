@@ -1,6 +1,6 @@
-# Disposable admin integration candidate
+# Disposable admin integration
 
-Status: **PR #18 published; the first approved Linux trial failed before the admin browser cases. Not ready to merge.** See [actual Linux evidence and investigation](admin-integration-linux-trial-2026-10-24.md).
+Status: **Merged in PR #18; the job runs on every pull request.** The first Linux trial failed before the admin browser cases; that run and its investigation are kept in [actual Linux evidence and investigation](admin-integration-linux-trial-2026-10-24.md), and later runs pass. Since then it also covers the read-only reviewer (PR #20). The sections below are the design record written for that PR, kept as written.
 
 This separately reviewable branch extends the Task 4 validation foundation with an owned ephemeral runner, synthetic provisioning, backend checks, six actual browser scenarios and one scoped job in the existing CI workflow. The source application, deployed migrations, Auth/RLS, public UI and current required checks are unchanged. Docker is unavailable on this workstation. The first Linux run verified stack setup, migration replay and provisioning, then failed during backend probes; real Auth/CRUD/Storage/Realtime and browser acceptance are still incomplete. Pure tests and static review do not substitute for that evidence.
 
