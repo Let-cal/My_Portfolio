@@ -48,7 +48,9 @@ export function Header({ cvUrls }: { cvUrls: Record<RoleKey, string> }) {
             type="button"
             variant="outline"
             size="sm"
-            aria-label={t("header.openCommand")}
+            // The visible shortcut is part of the name (WCAG 2.5.3 Label in Name).
+            aria-label={`${t("header.openCommand")}, ${shortcut}`}
+            aria-keyshortcuts={shortcut === "⌘K" ? "Meta+K" : "Control+K"}
             onClick={openCommand}
             className="hidden sm:inline-flex"
           >
