@@ -147,7 +147,7 @@ describe("content versions", () => {
 
   it("the migration is exactly the versions section", () => {
     const migration = readFileSync(
-      "supabase/migrations/0004_content_versions.sql",
+      "supabase/migrations/20261020074656_content_versions.sql",
       "utf8",
     ).replace(/\r\n/g, "\n");
     expect(migration).toContain(VERSIONS_SQL);
@@ -165,7 +165,7 @@ describe("content versions", () => {
     );
     expect(renderSchemaSql()).toContain(VERSIONS_SECURITY_SQL);
     const migration = readFileSync(
-      "supabase/migrations/0005_versions_security_invoker.sql",
+      "supabase/migrations/20261020074657_versions_security_invoker.sql",
       "utf8",
     ).replace(/\r\n/g, "\n");
     expect(migration).toContain(VERSIONS_SECURITY_SQL);
@@ -199,7 +199,7 @@ describe("admin realtime", () => {
 
   it("the migration is exactly the realtime section", () => {
     const migration = readFileSync(
-      "supabase/migrations/0006_admin_realtime.sql",
+      "supabase/migrations/20261020160958_admin_realtime.sql",
       "utf8",
     ).replace(/\r\n/g, "\n");
     expect(migration).toContain(REALTIME_SQL);

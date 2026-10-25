@@ -15,7 +15,7 @@ Supabase offers two mechanisms. Postgres Changes was rejected for two reasons re
 
 ## Decision
 
-- `private.broadcast_content_change()` runs `after insert or update or delete` on each of the 10 content tables and calls `realtime.send` on the private topic `admin:content` (`0006_admin_realtime.sql`).
+- `private.broadcast_content_change()` runs `after insert or update or delete` on each of the 10 content tables and calls `realtime.send` on the private topic `admin:content` (`20261020160958_admin_realtime.sql`).
 - The payload is only `{ table, op, key }`, never the row.
 - A send failure is swallowed inside the trigger: live updates are a convenience, and the save must always succeed.
 - The policy `admin_content_receive` on `realtime.messages` allows SELECT only when the topic is `admin:content` and `private.is_admin()` is true.
@@ -41,7 +41,7 @@ Negative / trade-offs:
 
 ## Evidence
 
-- Migration: [0006_admin_realtime.sql](../../supabase/migrations/0006_admin_realtime.sql)
+- Migration: [20261020160958_admin_realtime.sql](../../supabase/migrations/20261020160958_admin_realtime.sql)
 - Client: [src/components/admin/RealtimeSync.tsx](../../src/components/admin/RealtimeSync.tsx), [src/lib/admin/sync.ts](../../src/lib/admin/sync.ts), [src/lib/admin/own-writes.ts](../../src/lib/admin/own-writes.ts)
 - Tests: [tests/unit/realtime-sync.test.tsx](../../tests/unit/realtime-sync.test.tsx), [tests/unit/form-incoming.test.tsx](../../tests/unit/form-incoming.test.tsx); private-topic rejection for anonymous and member sessions plus admin delivery run against a real local stack in the disposable admin job ([ADR-0010](0010-disposable-supabase-integration-tests.md))
 - Design and plan: [spec](../superpowers/specs/2026-10-20-admin-realtime-design.md), [plan](../superpowers/plans/2026-10-20-admin-realtime.md)

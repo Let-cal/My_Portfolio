@@ -10,11 +10,11 @@ Visitors read content with the publishable key, which ships to every browser. Th
 
 ## Decision
 
-- Every content table has RLS enabled (`supabase/migrations/0001_init.sql`):
+- Every content table has RLS enabled (`supabase/migrations/20261018185208_init.sql`):
   - read: all rows for `anon` and `authenticated`; on `experiences`, `projects` and `certificates`, only `published` rows unless the caller is the admin;
   - write: `for all to authenticated` with `private.is_admin()` in both `using` and `with check`.
 - Storage `media` and `files` buckets are publicly readable; insert, update and delete require `private.is_admin()`.
-- The allowlist `private.app_admins` and `private.is_admin()` live in the `private` schema (`0002_private_admin.sql`). The Data API exposes only `public` and `graphql_public` (`supabase/config.toml`), and the table grants nothing to `anon` or `authenticated`.
+- The allowlist `private.app_admins` and `private.is_admin()` live in the `private` schema (`20261018185337_private_admin.sql`). The Data API exposes only `public` and `graphql_public` (`supabase/config.toml`), and the table grants nothing to `anon` or `authenticated`.
 - `is_admin()` is `security definer` with an empty `search_path`, so it can read the allowlist without exposing it.
 - App-level checks are defense in depth, not the boundary:
   1. the proxy (`src/proxy.ts` → `adminGuard`) sends anyone except the configured `ADMIN_EMAIL` from `/admin` to login;
@@ -39,7 +39,7 @@ Negative / trade-offs:
 
 ## Evidence
 
-- Policies: [0001_init.sql](../../supabase/migrations/0001_init.sql), [0002_private_admin.sql](../../supabase/migrations/0002_private_admin.sql), [supabase/config.toml](../../supabase/config.toml)
+- Policies: [20261018185208_init.sql](../../supabase/migrations/20261018185208_init.sql), [20261018185337_private_admin.sql](../../supabase/migrations/20261018185337_private_admin.sql), [supabase/config.toml](../../supabase/config.toml)
 - App guards: [src/proxy.ts](../../src/proxy.ts), [src/lib/admin/guard.ts](../../src/lib/admin/guard.ts), [src/lib/admin/session.ts](../../src/lib/admin/session.ts), [src/lib/admin/auth.ts](../../src/lib/admin/auth.ts)
 - Tests: [tests/unit/admin-guard.test.ts](../../tests/unit/admin-guard.test.ts), [tests/unit/proxy.test.ts](../../tests/unit/proxy.test.ts), [tests/unit/admin-session.test.ts](../../tests/unit/admin-session.test.ts), [tests/unit/db-schema.test.ts](../../tests/unit/db-schema.test.ts)
 - Real denial probes against a disposable database: [ADR-0010](0010-disposable-supabase-integration-tests.md)

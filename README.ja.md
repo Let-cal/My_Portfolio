@@ -110,6 +110,7 @@ npm run start
 ### データベースと管理画面（任意）
 
 1. Supabaseのプロジェクトを作成し、`supabase/migrations/` を順番に適用します（SQLエディターまたは `supabase db push`）。
+   ファイル名は本番プロジェクトのマイグレーション履歴と一致しており、`supabase migration list` でも差分は出ません。本番へ適用するマイグレーションは、事前にオーナーが具体的なSQLを承認します（[ADR-0012](docs/adr/0012-hosted-migrations-through-reviewed-sql.md)）。
 2. [.env.example](.env.example) を `.env.local` にコピーし、プロジェクトURL、公開用キー、シークレットキー、`ADMIN_EMAIL` を設定します。このファイルはコミットせず、`SUPABASE_SERVICE_ROLE_KEY` を `NEXT_PUBLIC_` で始まる変数に入れないでください。
 3. `npm run db:seed` で `seed.json` を投入し、`npm run db:verify` で公開用キーから読み戻して全セクションを照合します。
 4. Supabase Authで管理者ユーザーを作成し、`insert into private.app_admins (email) values ('<email>');` を実行します。

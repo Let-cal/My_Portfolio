@@ -17,7 +17,7 @@ Format: a lightweight [MADR](https://adr.github.io/madr/) variant with Status, D
 | [0009](0009-draft-preview-outside-the-public-cache.md) | Draft preview of hidden content stays outside the public cache | Accepted | 2026-10-21 |
 | [0010](0010-disposable-supabase-integration-tests.md) | Test Auth, RLS, Storage and Realtime against a disposable local Supabase in CI | Accepted | 2026-10-22 |
 | [0011](0011-fail-closed-release-evaluator.md) | A fail-closed evaluator for preview review evidence | Accepted | 2026-10-22 |
-| [0012](0012-hosted-migrations-through-reviewed-sql.md) | Hosted migrations go through reviewed SQL; no `supabase db push` until history is reconciled | Accepted | 2026-10-25 |
+| [0012](0012-hosted-migrations-through-reviewed-sql.md) | Hosted migrations go through reviewed SQL; file names match the hosted history | Accepted | 2026-10-25 |
 | [0013](0013-read-only-reviewer-role.md) | A read-only reviewer role for signed-in preview checks | Accepted | 2026-10-25 |
 
 ## Adding a record

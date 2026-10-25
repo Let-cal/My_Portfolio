@@ -40,5 +40,5 @@ Negative / trade-offs:
 
 - Schema and fallback: [src/content/schema.ts](../../src/content/schema.ts), [src/lib/i18n-text.ts](../../src/lib/i18n-text.ts)
 - Routing and messages: [src/i18n/routing.ts](../../src/i18n/routing.ts), [next.config.ts](../../next.config.ts), [src/messages/](../../src/messages)
-- Storage: `jsonb` text columns in [supabase/migrations/0001_init.sql](../../supabase/migrations/0001_init.sql)
+- Storage: `jsonb` text columns in [supabase/migrations/20261018185208_init.sql](../../supabase/migrations/20261018185208_init.sql)
 - Tests: [tests/unit/messages.test.ts](../../tests/unit/messages.test.ts) (same keys, no empty values), [tests/unit/i18n-text.test.ts](../../tests/unit/i18n-text.test.ts), [tests/unit/translation-progress.test.tsx](../../tests/unit/translation-progress.test.tsx)

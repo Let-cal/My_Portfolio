@@ -108,7 +108,7 @@ export const VERSIONED_TABLES = Object.keys(TABLES) as (keyof typeof TABLES)[];
 const tableList = VERSIONED_TABLES.map((t) => `'${t}'`).join(", ");
 
 /**
- * Content history (supabase/migrations/0004_content_versions.sql). Updates and deletes keep the
+ * Content history (supabase/migrations/20261020074656_content_versions.sql). Updates and deletes keep the
  * old row; admins list and restore through two security-invoker functions (the read-only reviewer
  * may also list), nobody else can.
  */
@@ -239,7 +239,7 @@ revoke execute on function public.admin_restore_version(bigint) from public, ano
 grant execute on function public.admin_restore_version(bigint) to authenticated;`;
 
 /**
- * supabase/migrations/0005_versions_security_invoker.sql (Supabase lint 0029). The history
+ * supabase/migrations/20261020074657_versions_security_invoker.sql (Supabase lint 0029). The history
  * functions run with the caller's rights instead of the owner's: reading history goes through an
  * admin-only RLS policy, and a restore writes through the existing admin-only write policies.
  * Their own is_admin() check stays as a clear error for everyone else.
@@ -251,7 +251,7 @@ grant select on private.content_versions to authenticated;
 create policy "content_versions_admin_read" on private.content_versions for select to authenticated using (private.is_admin());`;
 
 /**
- * supabase/migrations/0006_admin_realtime.sql. Every content change sends a tiny note
+ * supabase/migrations/20261020160958_admin_realtime.sql. Every content change sends a tiny note
  * (table, operation, key; never the row) on the private topic `admin:content`, which only the
  * admin may receive. Open admin tabs and devices refresh on it. A failed send never blocks a save.
  */
