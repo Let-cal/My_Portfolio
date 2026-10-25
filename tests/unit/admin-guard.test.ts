@@ -47,6 +47,17 @@ describe("adminGuard", () => {
     expect(res.headers.get("location")).toContain("/admin/login");
   });
 
+  it("tells a signed-in user without access why they are back at the login page", async () => {
+    getUser.mockResolvedValue({
+      data: { user: { email: "someone@x.com" } },
+      error: null,
+    });
+    const res = await adminGuard(request("/admin/projects"), env);
+    expect(res.headers.get("location")).toBe(
+      "https://letcal.test/admin/login?next=%2Fadmin%2Fprojects&denied=1",
+    );
+  });
+
   it("lets the admin through", async () => {
     getUser.mockResolvedValue({
       data: { user: { email: "Admin@x.com" } },

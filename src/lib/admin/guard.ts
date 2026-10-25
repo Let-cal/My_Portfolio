@@ -18,9 +18,11 @@ export async function adminGuard(
   const { pathname, search } = request.nextUrl;
   if (pathname === "/admin/login") return NextResponse.next();
 
-  const toLogin = () => {
+  // `denied` tells a signed-in user without access why they are back here instead of failing silently.
+  const toLogin = (denied = false) => {
     const url = new URL("/admin/login", request.url);
     url.searchParams.set("next", pathname + search);
+    if (denied) url.searchParams.set("denied", "1");
     return NextResponse.redirect(url);
   };
   if (!isSupabaseConfigured(env)) return toLogin();
@@ -52,7 +54,7 @@ export async function adminGuard(
     return response;
   }
   // The admin, or the read-only reviewer (listed in the database's private allowlist).
-  const { access } = await accessFor(supabase, env.ADMIN_EMAIL);
-  if (!access) return toLogin();
+  const { access, signedIn } = await accessFor(supabase, env.ADMIN_EMAIL);
+  if (!access) return toLogin(signedIn);
   return response;
 }

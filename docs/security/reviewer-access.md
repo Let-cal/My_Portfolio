@@ -15,7 +15,7 @@ change real content. The reviewer role sees everything an editor sees and cannot
 
 | Surface | Admin | Reviewer | Signed-in non-member | Anonymous |
 | --- | --- | --- | --- | --- |
-| Admin pages (proxy) | yes | yes (read-only UI) | redirected to login | redirected to login |
+| Admin pages (proxy) | yes | yes (read-only UI) | back to login with an explanation; signed out on that device | redirected to login |
 | Content tables, published rows | read/write | read | read | read |
 | Content tables, hidden rows | read/write | read | no | no |
 | Media/files bucket listing | list, upload, delete | list | no | no |

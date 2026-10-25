@@ -10,8 +10,18 @@ import { createBrowserSupabase } from "@/lib/supabase/browser";
 import { replaceAuthPage } from "@/lib/admin/auth-navigation";
 
 export function LoginForm() {
-  const next = safeNextPath(useSearchParams().get("next"));
-  const [error, setError] = useState<string | null>(null);
+  const params = useSearchParams();
+  const next = safeNextPath(params.get("next"));
+  const denied = params.get("denied") === "1";
+  const [error, setError] = useState<string | null>(
+    denied
+      ? "Tài khoản vừa đăng nhập không có quyền vào trang quản trị. Hãy đăng nhập bằng tài khoản khác."
+      : null,
+  );
+  // The proxy sent back a signed-in account it refused: end that session on this device only.
+  useEffect(() => {
+    if (denied) void createBrowserSupabase().auth.signOut({ scope: "local" });
+  }, [denied]);
   const [pending, setPending] = useState(false);
   const busy = useRef(false);
   const attempt = useRef(0);
