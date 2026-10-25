@@ -1,13 +1,31 @@
 import assert from "node:assert/strict";
+import { setTimeout as delay } from "node:timers/promises";
 import { assertLocalSupabase } from "./local-supabase.mjs";
 import { backendFailure } from "./backend-progress.mjs";
 import {
+  isBroadcastAckWithheld,
+  isBroadcastHttpAnswered,
   isHistoryDenied,
   isPrivateSchemaDenied,
   isRealtimeJoinDenied,
   isRestoreDenied,
+  isStorageMoveDenied,
+  isStorageRemoveDenied,
   isStorageUploadDenied,
 } from "./backend-denial.mjs";
+
+// Bounded so a withheld ack and the no-delivery window cost seconds, not the job timeout.
+const broadcastAckTimeoutMs = 3000;
+const broadcastSilenceMs = 2500;
+
+async function mediaImageExists(client, name) {
+  const listed = await client.storage
+    .from("media")
+    .list("images", { search: name });
+  assert.equal(listed.error, null);
+  assert.ok(Array.isArray(listed.data));
+  return listed.data.some((object) => object.name === name);
+}
 
 function subscribe(channel, expectDenial = false) {
   return new Promise((resolve, reject) => {
@@ -274,12 +292,40 @@ export async function verifyAdminBackend(fixture, anonKey) {
       });
     assert.equal(isStorageUploadDenied(reviewerUpload.error), true);
     checks++;
+    // The reviewer is the first non-admin that can SELECT these rows, so remove/move
+    // now reach them and only admin_delete/admin_update stand in the way.
+    const adminObject = `test-item-backend-${fixture.runId}.png`;
+    checkpoint = "storage-reviewer-remove-denial";
+    const removed = await reviewer.storage
+      .from("media")
+      .remove([`images/${adminObject}`]);
+    assert.equal(isStorageRemoveDenied(removed), true);
+    checkpoint = "storage-reviewer-remove-integrity";
+    assert.equal(await mediaImageExists(admin, adminObject), true);
+    checks++;
+    const movedObject = `test-item-moved-${fixture.runId}.png`;
+    checkpoint = "storage-reviewer-move-denial";
+    const moved = await reviewer.storage
+      .from("media")
+      .move(`images/${adminObject}`, `images/${movedObject}`);
+    assert.equal(isStorageMoveDenied(moved.error), true);
+    checkpoint = "storage-reviewer-move-integrity";
+    assert.equal(await mediaImageExists(admin, adminObject), true);
+    assert.equal(await mediaImageExists(admin, movedObject), false);
+    checks++;
     checkpoint = "realtime-admin-auth";
     await admin.realtime.setAuth(sessions.get(admin).access_token);
     let resolveBroadcast;
     const broadcast = new Promise((resolve) => {
       resolveBroadcast = resolve;
     });
+    // A forged change note: same shape as the trigger's, but a key no row has.
+    const forgedChange = {
+      table: "certificates",
+      op: "update",
+      key: `test-item-reviewer-probe-${fixture.runId}`,
+    };
+    let forgedReceived = false;
     const channel = admin
       .channel("admin:content", { config: { private: true } })
       .on("broadcast", { event: "change" }, (message) => {
@@ -288,6 +334,9 @@ export async function verifyAdminBackend(fixture, anonKey) {
           message.payload?.key === target
         )
           resolveBroadcast();
+      })
+      .on("broadcast", { event: "*" }, (message) => {
+        if (message.payload?.key === forgedChange.key) forgedReceived = true;
       });
     checkpoint = "realtime-admin-join";
     await subscribe(channel);
@@ -316,11 +365,38 @@ export async function verifyAdminBackend(fixture, anonKey) {
     }
     checkpoint = "realtime-reviewer-join";
     await reviewer.realtime.setAuth(sessions.get(reviewer).access_token);
+    // ack makes Realtime reply to an authorized send, so a withheld reply is observable.
     const reviewerChannel = reviewer
-      .channel("admin:content", { config: { private: true } })
+      .channel("admin:content", {
+        config: { private: true, broadcast: { ack: true } },
+      })
       .on("broadcast", { event: "change" }, () => {});
     try {
       await subscribe(reviewerChannel);
+      checks++;
+      // No INSERT policy on realtime.messages exists for anyone; the reviewer may
+      // receive admin:content but must not be able to inject change notes into it.
+      checkpoint = "realtime-reviewer-send-denial";
+      // Joined, so send() uses the socket rather than its implicit REST fallback.
+      assert.equal(reviewerChannel.state, "joined");
+      const sent = await reviewerChannel.send(
+        { type: "broadcast", event: "change", payload: forgedChange },
+        { timeout: broadcastAckTimeoutMs },
+      );
+      assert.equal(isBroadcastAckWithheld(sent), true);
+      checkpoint = "realtime-reviewer-http-send-denial";
+      // realtime-js 2.117.3 has httpSend; fail loudly rather than skip if it vanishes.
+      assert.equal(typeof reviewerChannel.httpSend, "function");
+      const [httpSent] = await Promise.allSettled([
+        reviewerChannel.httpSend("change", forgedChange, {
+          timeout: broadcastAckTimeoutMs,
+        }),
+      ]);
+      assert.equal(isBroadcastHttpAnswered(httpSent), true);
+      checkpoint = "realtime-reviewer-send-silence";
+      // The admin channel joined above is live (realtime-delivery below re-proves it).
+      await delay(broadcastSilenceMs);
+      assert.equal(forgedReceived, false);
       checks++;
     } finally {
       await reviewer.removeChannel(reviewerChannel);
