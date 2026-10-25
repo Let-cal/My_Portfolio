@@ -205,7 +205,8 @@ describe("ResourceForm / FieldsForm", () => {
     localStorage.setItem(
       key,
       JSON.stringify({
-        values: { ...cert, name: "Bản nháp" },
+        // Only the edited field, as real drafts restore over the server values.
+        values: { name: "Bản nháp" },
         savedAt: new Date().toISOString(),
         baseSignature: "old",
       }),
