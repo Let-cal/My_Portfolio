@@ -6,7 +6,7 @@ This personal portfolio is maintained by Lê Trần Cát Lâm. Focused bug repor
 
 Read the [README](README.md), [design specification](docs/superpowers/specs/2026-10-13-portfolio-koi-redesign-design.md), and [repository maintenance record](docs/repository-maintenance.md). Open an issue before substantial UI, animation, architecture, or dependency changes so the scope can be agreed first.
 
-Keep professional content factual and supported by an owner-reviewed source. Database provisioning, policies, authentication, and admin CRUD are planned separately; the existing read adapter and guard stub are not completed access control. Report vulnerabilities through [SECURITY.md](SECURITY.md).
+Keep professional content factual and supported by an owner-reviewed source. Changes to authentication, row level security, CI/CD or permissions need the maintainer's approval of the concrete diff; see [SECURITY.md](SECURITY.md) and the [decision records](docs/adr/README.md). Report vulnerabilities through [SECURITY.md](SECURITY.md).
 
 ## Development and checks
 
@@ -40,4 +40,4 @@ PRs target `main`. Required checks and review conversations must be resolved bef
 
 ## Reuse
 
-No repository-wide license is currently supplied. This document grants no additional reuse rights. Third-party terms remain applicable; personal portraits, CVs, and brand assets are not reusable template content. Discuss intended reuse with the maintainer.
+The code is available under the [MIT License](LICENSE). Third-party terms remain applicable; personal portraits, CVs, and brand assets are not reusable template content. Discuss intended reuse with the maintainer.

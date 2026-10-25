@@ -8,7 +8,9 @@ Include the affected URL or revision, reproducible steps, expected impact, and a
 
 ## Current scope
 
-This redesign is a frontend release candidate. The seed-backed site runs without service credentials. A Supabase read adapter exists; provisioning, database policies, admin authentication, and CRUD remain planned work. The current admin guard is a stub and must not be used as an authentication boundary for sensitive functionality.
+The public site and the admin are in scope: Next.js on Vercel, Supabase Auth, Postgres row level security, Storage and Realtime. Row level security is the authentication boundary; the proxy and server actions are defense in depth. The access model, including the read-only reviewer, is described in [docs/security/reviewer-access.md](docs/security/reviewer-access.md) and [ADR-0004](docs/adr/0004-rls-as-the-final-guard.md). Without Supabase configured, the site falls back to seed content and the admin is unavailable.
+
+Known residual risk: the admin signs in with the same address as the public contact email, so the login name is not secret. Protection rests on the password, Supabase Auth rate limits and row level security. A separate login address or multi-factor authentication would reduce this risk; neither is in place yet.
 
 There is no versioned support schedule. Include the revision in reports about `main`, a deployed site, or an active candidate, because these can differ. Support for historical snapshots is not promised.
 

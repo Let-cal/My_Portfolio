@@ -16,7 +16,7 @@ This document records the repository configuration verified on **2026-10-16**. G
 
 1. `Lint, types, unit tests and budgets`
 2. `Playwright Chromium on Linux`
-3. `Mobile Lighthouse release budgets`
+3. `Lighthouse mobile (a11y, SEO and CLS gate; performance advisory)`
 4. `Gitleaks full history`
 5. `Production npm audit (high and critical)`
 6. `Read-only JavaScript and TypeScript analysis`
@@ -41,7 +41,7 @@ The following settings were enabled and read back through GitHub's API:
 | Workflows can approve pull requests | Disabled |
 | Actions must use full commit SHAs | Required |
 
-Scheduled dependency updates are defined in [Dependabot configuration](../.github/dependabot.yml). Security updates create reviewable PRs; they are not automatically merged. CodeQL is configured in source; do not enable duplicate default setup. A scanner passing is evidence about that run, not a guarantee that the application has no vulnerabilities.
+Scheduled dependency updates are defined in [Dependabot configuration](../.github/dependabot.yml). Patch and minor updates, including security updates, merge on their own once every required check passes ([workflow](../.github/workflows/dependabot-auto-merge.yml)); major updates and `@playwright/test` wait for a person. CodeQL is configured in source; do not enable duplicate default setup. A scanner passing is evidence about that run, not a guarantee that the application has no vulnerabilities.
 
 Use [private reporting](https://github.com/Let-cal/My_Portfolio/security/advisories/new) for sensitive findings. See [SECURITY.md](../SECURITY.md). Never paste credentials or personal data into public issues, logs or screenshots.
 
