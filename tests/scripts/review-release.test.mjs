@@ -1,8 +1,14 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
@@ -20,17 +26,36 @@ const BASE = "b".repeat(40);
 const OTHER = "c".repeat(40);
 const PREVIEW_URL = "https://portfolio-synthetic-123.vercel.app/";
 const NOW = 1_792_540_800_000;
+const BASELINE = [
+  "desktop",
+  "mobile",
+  "locale-en",
+  "locale-ja",
+  "locale-vi",
+  "theme-light",
+  "theme-dark",
+  "keyboard",
+  "reduced-motion",
+];
 
 // Synthetic resolver policy is deliberately separate from observed results.
 function ordinary() {
   return {
     version: 1,
     policy: {
+      resolution: {
+        headSha: HEAD,
+        baseSha: BASE,
+        observedAt: NOW - 60_000,
+        reference: "Synthetic trusted scope and protection review",
+      },
       requiredChecks: ["quality", "browser"],
+      optionalChecks: [],
       requiredChecklist: [
-        { id: "public-baseline", authenticated: false },
+        ...BASELINE.map((id) => ({ id, authenticated: false })),
         { id: "changed-flow", authenticated: false },
       ],
+      optionalChecklist: [],
       sensitive: false,
       now: NOW,
       maxReviewAgeMs: 3_600_000,
@@ -38,7 +63,15 @@ function ordinary() {
     },
     reviewed: { headSha: HEAD, baseSha: BASE },
     current: { headSha: HEAD, baseSha: BASE },
+    inventory: {
+      headSha: HEAD,
+      baseSha: BASE,
+      observedAt: NOW - 60_000,
+      complete: true,
+      names: ["quality", "browser"],
+    },
     deployment: {
+      id: "dpl_synthetic123",
       sha: HEAD,
       status: "ready",
       immutable: true,
@@ -61,7 +94,8 @@ function ordinary() {
       deploymentUrl: PREVIEW_URL,
       readOnly: true,
       observedAt: NOW - 60_000,
-      results: ["public-baseline", "changed-flow"].map((id) => ({
+      lastObservedAt: NOW - 60_000,
+      results: [...BASELINE, "changed-flow"].map((id) => ({
         id,
         status: "passed",
         authenticated: false,
@@ -458,6 +492,31 @@ test("local JSON CLI emits PASS/FAIL/BLOCKED and distinct nonzero rejection", ()
   }
 });
 
+test("CLI still decides when executed through a symlinked directory", (t) => {
+  const directory = mkdtempSync(join(tmpdir(), "review-release-"));
+  try {
+    const linked = join(directory, "scripts");
+    try {
+      // "junction" needs no privilege on Windows; POSIX ignores the type.
+      symlinkSync(dirname(fileURLToPath(script)), linked, "junction");
+    } catch {
+      t.skip("symlink or junction creation is not permitted here");
+      return;
+    }
+    const path = join(directory, "ordinary.json");
+    writeFileSync(path, JSON.stringify(ordinary()));
+    const result = spawnSync(
+      process.execPath,
+      [join(linked, "review-release.mjs"), path],
+      { encoding: "utf8", shell: false },
+    );
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(JSON.parse(result.stdout).decision, "PASS");
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 for (const field of ["deployment", "preview"]) {
   for (const age of [3_600_001, -1]) {
     test(`rejects stale or future ${field} observation at age ${age}`, () => {
@@ -489,6 +548,40 @@ test("rejects invalid evidence freshness policy", () => {
   const evidence = ordinary();
   evidence.policy.maxEvidenceAgeMs = 0;
   assert.equal(evaluate(evidence).decision, "FAIL");
+});
+
+const TIME_FIELDS = new Set([
+  "now",
+  "observedAt",
+  "lastObservedAt",
+  "reviewedAt",
+  "verifiedBefore",
+  "verifiedAfter",
+]);
+function toSeconds(value) {
+  if (Array.isArray(value)) value.forEach(toSeconds);
+  else if (value !== null && typeof value === "object")
+    for (const [key, item] of Object.entries(value)) {
+      if (TIME_FIELDS.has(key)) value[key] = Math.floor(item / 1000);
+      else toSeconds(item);
+    }
+}
+
+test("epoch-seconds times fail closed instead of stretching freshness", () => {
+  for (const evidence of [ordinary(), aliasEvidence()]) {
+    toSeconds(evidence);
+    assert.equal(evaluate(evidence).decision, "FAIL");
+  }
+});
+
+test("age limits are capped at 24 hours", () => {
+  for (const key of ["maxEvidenceAgeMs", "maxReviewAgeMs"]) {
+    const evidence = ordinary();
+    evidence.policy[key] = 86_400_000;
+    assert.equal(evaluate(evidence).decision, "PASS");
+    evidence.policy[key] = 86_400_001;
+    assert.equal(evaluate(evidence).decision, "FAIL");
+  }
 });
 
 test("sensitive approval requires concrete scope and owner instruction reference", () => {
@@ -534,4 +627,379 @@ test("runbook synthetic JSON example conforms to the executable schema", () => {
     decision: "PASS",
     reasons: [],
   });
+});
+
+// Dropping any of these guards would allow incomplete or reclassified evidence
+// to authorize the next release step. Expectations do not reuse evaluator logic.
+const inventoryCases = [
+  ["missing inventory", (e) => delete e.inventory, "FAIL"],
+  ["incomplete inventory", (e) => (e.inventory.complete = false), "BLOCKED"],
+  [
+    "string inventory completeness",
+    (e) => (e.inventory.complete = "true"),
+    "FAIL",
+  ],
+  ["empty inventory", (e) => (e.inventory.names = []), "FAIL"],
+  [
+    "duplicate inventory name",
+    (e) => e.inventory.names.push("quality"),
+    "FAIL",
+  ],
+  ["malformed inventory name", (e) => e.inventory.names.push(null), "FAIL"],
+  ["missing inventory entry", (e) => e.inventory.names.pop(), "FAIL"],
+  [
+    "unclassified inventory entry",
+    (e) => e.inventory.names.push("security"),
+    "BLOCKED",
+  ],
+  ["old inventory head", (e) => (e.inventory.headSha = OTHER), "FAIL"],
+  ["old inventory base", (e) => (e.inventory.baseSha = OTHER), "FAIL"],
+  [
+    "expired inventory",
+    (e) => (e.inventory.observedAt = NOW - 3_600_001),
+    "FAIL",
+  ],
+  ["future inventory", (e) => (e.inventory.observedAt = NOW + 1), "FAIL"],
+  ["missing inventory time", (e) => delete e.inventory.observedAt, "FAIL"],
+  ["missing policy resolution", (e) => delete e.policy.resolution, "FAIL"],
+  ["old policy head", (e) => (e.policy.resolution.headSha = OTHER), "FAIL"],
+  ["old policy base", (e) => (e.policy.resolution.baseSha = OTHER), "FAIL"],
+  [
+    "expired policy",
+    (e) => (e.policy.resolution.observedAt = NOW - 3_600_001),
+    "FAIL",
+  ],
+  ["future policy", (e) => (e.policy.resolution.observedAt = NOW + 1), "FAIL"],
+  [
+    "missing resolver reference",
+    (e) => delete e.policy.resolution.reference,
+    "FAIL",
+  ],
+  [
+    "empty resolver reference",
+    (e) => (e.policy.resolution.reference = ""),
+    "FAIL",
+  ],
+  [
+    "missing optional check decisions",
+    (e) => delete e.policy.optionalChecks,
+    "FAIL",
+  ],
+  [
+    "missing optional checklist decisions",
+    (e) => delete e.policy.optionalChecklist,
+    "FAIL",
+  ],
+  [
+    "unclassified observed check",
+    (e) => e.checks.push({ ...e.checks[0], name: "unclassified" }),
+    "FAIL",
+  ],
+  [
+    "unclassified preview result",
+    (e) =>
+      e.preview.results.push({
+        id: "unclassified",
+        status: "passed",
+        authenticated: false,
+      }),
+    "FAIL",
+  ],
+];
+for (const [name, mutate, want] of inventoryCases) {
+  test(`inventory and scope: ${name}`, () => {
+    const evidence = ordinary();
+    mutate(evidence);
+    assert.equal(evaluate(evidence).decision, want);
+  });
+}
+
+for (const id of BASELINE) {
+  test(`baseline ${id} cannot be omitted from policy and observations`, () => {
+    const evidence = ordinary();
+    evidence.policy.requiredChecklist =
+      evidence.policy.requiredChecklist.filter((item) => item.id !== id);
+    evidence.preview.results = evidence.preview.results.filter(
+      (item) => item.id !== id,
+    );
+    assert.equal(evaluate(evidence).decision, "FAIL");
+  });
+  test(`baseline ${id} needs an actual observation`, () => {
+    const evidence = ordinary();
+    evidence.preview.results = evidence.preview.results.filter(
+      (item) => item.id !== id,
+    );
+    assert.equal(evaluate(evidence).decision, "BLOCKED");
+  });
+}
+
+function optionalEvidence(kind, applicable = false) {
+  const evidence = ordinary();
+  if (kind === "check") {
+    evidence.inventory.names.push("optional-check");
+    evidence.policy.optionalChecks.push({
+      name: "optional-check",
+      applicable,
+      reason: "Synthetic scope decision",
+    });
+  } else {
+    evidence.policy.optionalChecklist.push({
+      id: "optional-flow",
+      authenticated: true,
+      applicable,
+      reason: "Synthetic scope decision",
+    });
+  }
+  return evidence;
+}
+
+function optionalResult(evidence, kind, status) {
+  if (kind === "check") {
+    evidence.checks.push({
+      ...evidence.checks[0],
+      name: "optional-check",
+      status,
+      attempts: [status],
+    });
+  } else {
+    evidence.preview.results.push({
+      id: "optional-flow",
+      authenticated: true,
+      status,
+    });
+  }
+}
+
+for (const kind of ["check", "checklist"]) {
+  const decisions = (e) =>
+    kind === "check" ? e.policy.optionalChecks : e.policy.optionalChecklist;
+  test(`explicit nonapplicable optional ${kind} may be absent`, () => {
+    const evidence = optionalEvidence(kind);
+    // Only a name not reported in the inventory may lack an observation.
+    if (kind === "check") evidence.inventory.names.pop();
+    assert.equal(evaluate(evidence).decision, "PASS");
+  });
+  test(`explicit nonapplicable optional ${kind} may be skipped`, () => {
+    const evidence = optionalEvidence(kind);
+    optionalResult(evidence, kind, "skipped");
+    assert.equal(evaluate(evidence).decision, "PASS");
+  });
+  test(`applicable optional ${kind} must be observed`, () => {
+    assert.equal(evaluate(optionalEvidence(kind, true)).decision, "BLOCKED");
+  });
+  test(`applicable optional ${kind} passes with evidence`, () => {
+    const evidence = optionalEvidence(kind, true);
+    optionalResult(evidence, kind, "passed");
+    assert.equal(evaluate(evidence).decision, "PASS");
+  });
+  for (const applicable of [true, false]) {
+    for (const [status, want] of [
+      ["failed", "FAIL"],
+      ["pending", "BLOCKED"],
+      ["blocked", "BLOCKED"],
+      ["skipped", applicable ? "FAIL" : "PASS"],
+    ]) {
+      test(`optional ${kind} applicable=${applicable} ${status} -> ${want}`, () => {
+        const evidence = optionalEvidence(kind, applicable);
+        optionalResult(evidence, kind, status);
+        assert.equal(evaluate(evidence).decision, want);
+      });
+    }
+  }
+  for (const [name, mutate] of [
+    ["missing applicability", (d) => delete d.applicable],
+    ["string applicability", (d) => (d.applicable = "false")],
+    ["missing reason", (d) => delete d.reason],
+    ["empty reason", (d) => (d.reason = "")],
+  ]) {
+    test(`optional ${kind} ${name} fails closed`, () => {
+      const evidence = optionalEvidence(kind);
+      mutate(decisions(evidence)[0]);
+      assert.equal(evaluate(evidence).decision, "FAIL");
+    });
+  }
+  test(`duplicate optional ${kind} fails closed`, () => {
+    const evidence = optionalEvidence(kind);
+    decisions(evidence).push({ ...decisions(evidence)[0] });
+    assert.equal(evaluate(evidence).decision, "FAIL");
+  });
+  test(`required ${kind} cannot also be optional`, () => {
+    const evidence = optionalEvidence(kind);
+    if (kind === "check") decisions(evidence)[0].name = "quality";
+    else decisions(evidence)[0].id = "desktop";
+    assert.equal(evaluate(evidence).decision, "FAIL");
+  });
+}
+
+test("nonapplicable optional check in the inventory needs an observed result", () => {
+  assert.equal(evaluate(optionalEvidence("check")).decision, "BLOCKED");
+});
+
+test("optional applicable authenticated preview cannot pass anonymously", () => {
+  const evidence = optionalEvidence("checklist", true);
+  optionalResult(evidence, "checklist", "passed");
+  evidence.preview.results.at(-1).authenticated = false;
+  assert.equal(evaluate(evidence).decision, "BLOCKED");
+});
+
+test("optional waiver cannot erase failed attempts or flaky state", () => {
+  for (const attempts of [
+    ["failed", "skipped"],
+    ["skipped", "passed"],
+  ]) {
+    const evidence = optionalEvidence("check");
+    optionalResult(evidence, "check", attempts.at(-1));
+    evidence.checks.at(-1).attempts = attempts;
+    assert.equal(evaluate(evidence).decision, "FAIL");
+  }
+  const evidence = optionalEvidence("check");
+  optionalResult(evidence, "check", "skipped");
+  evidence.checks.at(-1).flaky = true;
+  assert.equal(evaluate(evidence).decision, "FAIL");
+});
+
+test("nonapplicable optional evidence still needs current revision and time", () => {
+  const evidence = optionalEvidence("check");
+  optionalResult(evidence, "check", "skipped");
+  evidence.checks.at(-1).headSha = OTHER;
+  evidence.checks.at(-1).observedAt = NOW - 3_600_001;
+  assert.equal(evaluate(evidence).decision, "FAIL");
+});
+
+// A mutable branch alias is acceptable only when verified around the checks.
+function aliasEvidence() {
+  const evidence = ordinary();
+  evidence.deployment.immutable = false;
+  evidence.deployment.aliasVerification = {
+    url: PREVIEW_URL,
+    deploymentId: "dpl_synthetic123",
+    sha: HEAD,
+    verifiedBefore: NOW - 120_000,
+    verifiedAfter: NOW - 30_000,
+  };
+  return evidence;
+}
+
+test("verified branch alias permits PASS", () => {
+  assert.deepEqual(evaluate(aliasEvidence()), {
+    decision: "PASS",
+    reasons: [],
+  });
+});
+
+test("verification may coincide with the preview observation", () => {
+  const evidence = aliasEvidence();
+  evidence.deployment.aliasVerification.verifiedBefore = NOW - 60_000;
+  evidence.deployment.aliasVerification.verifiedAfter = NOW - 60_000;
+  assert.equal(evaluate(evidence).decision, "PASS");
+});
+
+const aliasCases = [
+  [
+    "missing alias verification",
+    (a, e) => (e.deployment.aliasVerification = null),
+    "BLOCKED",
+  ],
+  ["alias for another SHA", (a) => (a.sha = OTHER), "FAIL"],
+  [
+    "alias for another URL",
+    (a) => (a.url = "https://other.vercel.app/"),
+    "FAIL",
+  ],
+  [
+    "preview before alias verification",
+    (a) => (a.verifiedBefore = NOW - 59_999),
+    "FAIL",
+  ],
+  [
+    "preview after alias verification",
+    (a) => (a.verifiedAfter = NOW - 60_001),
+    "FAIL",
+  ],
+  [
+    "reversed verification window",
+    (a) => (
+      (a.verifiedBefore = NOW - 30_000),
+      (a.verifiedAfter = NOW - 120_000)
+    ),
+    "FAIL",
+  ],
+  [
+    "stale alias verification",
+    (a) => (a.verifiedBefore = NOW - 3_600_001),
+    "FAIL",
+  ],
+  ["future alias verification", (a) => (a.verifiedAfter = NOW + 1), "FAIL"],
+  [
+    "last preview observation after alias verification",
+    (a, e) => (e.preview.lastObservedAt = NOW - 29_999),
+    "FAIL",
+  ],
+  [
+    "alias for another deployment",
+    (a) => (a.deploymentId = "dpl_other"),
+    "FAIL",
+  ],
+  ["missing deployment ID", (a) => delete a.deploymentId, "FAIL"],
+  ["empty deployment ID", (a) => (a.deploymentId = ""), "FAIL"],
+  [
+    "credential-bearing alias URL",
+    (a) => (a.url = `${PREVIEW_URL}?token=secret`),
+    "FAIL",
+  ],
+  ["short alias SHA", (a) => (a.sha = "abc123"), "FAIL"],
+  [
+    "string verification time",
+    (a) => (a.verifiedBefore = String(NOW - 120_000)),
+    "FAIL",
+  ],
+  ["negative verification time", (a) => (a.verifiedAfter = -1), "FAIL"],
+  ["missing verification time", (a) => delete a.verifiedAfter, "FAIL"],
+  [
+    "nonobject alias verification",
+    (a, e) => (e.deployment.aliasVerification = "verified"),
+    "FAIL",
+  ],
+  [
+    "array alias verification",
+    (a, e) => (e.deployment.aliasVerification = []),
+    "FAIL",
+  ],
+];
+for (const [name, mutate, want] of aliasCases) {
+  test(`branch alias: ${name} -> ${want}`, () => {
+    const evidence = aliasEvidence();
+    mutate(evidence.deployment.aliasVerification, evidence);
+    const result = evaluate(evidence);
+    assert.equal(result.decision, want);
+    assert.doesNotMatch(JSON.stringify(result), /token=secret|dpl_synthetic/);
+  });
+}
+
+for (const [name, mutate] of [
+  ["missing deployment id", (e) => delete e.deployment.id],
+  ["empty deployment id", (e) => (e.deployment.id = "")],
+  ["missing last preview observation", (e) => delete e.preview.lastObservedAt],
+  [
+    "last preview observation before the first",
+    (e) => (e.preview.lastObservedAt = NOW - 60_001),
+  ],
+  [
+    "future last preview observation",
+    (e) => (e.preview.lastObservedAt = NOW + 1),
+  ],
+]) {
+  test(`deployment and preview window: ${name} -> FAIL`, () => {
+    const evidence = ordinary();
+    mutate(evidence);
+    assert.equal(evaluate(evidence).decision, "FAIL");
+  });
+}
+
+test("immutable deployment accepts a valid alias record but rejects a malformed one", () => {
+  const evidence = aliasEvidence();
+  evidence.deployment.immutable = true;
+  assert.equal(evaluate(evidence).decision, "PASS");
+  evidence.deployment.aliasVerification.deploymentId = "";
+  assert.equal(evaluate(evidence).decision, "FAIL");
 });
