@@ -60,6 +60,59 @@ test("unknown checkpoints and arbitrary credential fields never reach artifacts"
   });
 });
 
+test("reviewer and revocation checkpoints are allowlisted alongside the existing labels", () => {
+  const reviewerLabels = [
+    "auth-reviewer",
+    "access-kind",
+    "hidden-reviewer",
+    "insert-reviewer-denial",
+    "public-reviewer",
+    "update-reviewer-denial",
+    "update-reviewer-integrity",
+    "delete-reviewer-denial",
+    "delete-reviewer-integrity",
+    "private-schema-reviewer-denial",
+    "history-reviewer",
+    "restore-reviewer-denial",
+    "storage-reviewer-list",
+    "storage-reviewer-denial",
+    "storage-reviewer-remove-denial",
+    "storage-reviewer-remove-integrity",
+    "storage-reviewer-move-denial",
+    "storage-reviewer-move-integrity",
+    "realtime-reviewer-join",
+    "realtime-reviewer-send-denial",
+    "realtime-reviewer-http-send-denial",
+    "realtime-reviewer-send-silence",
+    "revoked-reviewer-auth",
+    "revoked-reviewer-access-kind",
+    "revoked-reviewer-hidden",
+  ];
+  for (const label of reviewerLabels)
+    assert.ok(api.backendCheckpoints.includes(label), label);
+  // 31 pre-reviewer labels are kept; 25 reviewer/revocation labels are added.
+  assert.equal(api.backendCheckpoints.length, 31 + reviewerLabels.length);
+  assert.ok(Object.isFrozen(api.backendCheckpoints));
+});
+
+test("every literal checkpoint assigned by the backend verifier is allowlisted", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(
+    new URL("../../scripts/ci/verify-admin-backend.mjs", import.meta.url),
+    "utf8",
+  );
+  const assigned = new Set();
+  for (const [, expression] of source.matchAll(/checkpoint\s*=([^;]+);/g))
+    for (const [, label] of expression.matchAll(/"([^"]+)"/g))
+      assigned.add(label);
+  assert.ok(assigned.size >= 30);
+  for (const label of assigned)
+    assert.ok(api.backendCheckpoints.includes(label), label);
+  // Map-driven labels are not literal checkpoint assignments; pin them separately.
+  for (const label of ["auth-admin", "auth-member", "auth-reviewer"])
+    assert.ok(source.includes(`"${label}"`), label);
+});
+
 test("all declared checkpoints are projectable and counts remain bounded", () => {
   assert.ok(Array.isArray(api.backendCheckpoints));
   assert.equal(
@@ -84,4 +137,38 @@ test("all declared checkpoints are projectable and counts remain bounded", () =>
       }),
       undefined,
     );
+});
+
+test("reviewer write-denial probes run in the reviewer phase, before the live-delivery control", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(
+    new URL("../../scripts/ci/verify-admin-backend.mjs", import.meta.url),
+    "utf8",
+  );
+  const order = [
+    'checkpoint = "storage-admin"',
+    'checkpoint = "storage-reviewer-denial"',
+    'checkpoint = "storage-reviewer-remove-denial"',
+    'checkpoint = "storage-reviewer-remove-integrity"',
+    'checkpoint = "storage-reviewer-move-denial"',
+    'checkpoint = "storage-reviewer-move-integrity"',
+    'checkpoint = "realtime-admin-join"',
+    'checkpoint = "realtime-reviewer-join"',
+    'checkpoint = "realtime-reviewer-send-denial"',
+    'checkpoint = "realtime-reviewer-http-send-denial"',
+    'checkpoint = "realtime-reviewer-send-silence"',
+    "await reviewer.removeChannel(reviewerChannel)",
+    // The admin listener must still receive the real change note afterwards.
+    'checkpoint = "realtime-delivery"',
+    "export async function verifyReviewerRevoked",
+  ].map((needle) => {
+    const index = source.indexOf(needle);
+    assert.notEqual(index, -1, needle);
+    assert.equal(source.indexOf(needle, index + 1), -1, `duplicate ${needle}`);
+    return index;
+  });
+  assert.deepEqual(
+    order,
+    [...order].sort((a, b) => a - b),
+  );
 });

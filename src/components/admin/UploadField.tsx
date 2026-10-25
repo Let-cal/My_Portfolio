@@ -20,6 +20,7 @@ import {
   DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useAdminAccess } from "./AdminAccessProvider";
 
 const MediaBrowser = lazy(() =>
   import("./MediaBrowser").then((module) => ({ default: module.MediaBrowser })),
@@ -49,6 +50,8 @@ export function UploadField({
 }) {
   const [busy, setBusy] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  // The reviewer sees the current file; uploading, removing and picking change the form.
+  const { readOnly } = useAdminAccess();
 
   async function upload(file: File) {
     const check = validateUpload(file, kind);
@@ -85,7 +88,10 @@ export function UploadField({
 
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor={id} className="text-sm font-medium">
+      <label
+        htmlFor={readOnly ? undefined : id}
+        className="text-sm font-medium"
+      >
         {label}
         {required && <RequiredMark />}
       </label>
@@ -108,64 +114,70 @@ export function UploadField({
           >
             {value}
           </a>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            disabled={busy}
-            onClick={() => onChange(null)}
-          >
-            Gỡ
-          </Button>
+          {!readOnly && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={busy}
+              onClick={() => onChange(null)}
+            >
+              Gỡ
+            </Button>
+          )}
         </div>
       ) : (
         <span className="text-sm text-muted-foreground">Chưa có tệp</span>
       )}
-      <input
-        {...(id ? a11yProps(id, error) : {})}
-        type="file"
-        accept={UPLOAD_RULES[kind].types.join(",")}
-        disabled={busy}
-        aria-label={`${label}: chọn tệp`}
-        className="text-sm"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          e.target.value = "";
-          if (file) void upload(file);
-        }}
-      />
-      <Dialog open={libraryOpen} onOpenChange={setLibraryOpen}>
-        <DialogTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
+      {!readOnly && (
+        <>
+          <input
+            {...(id ? a11yProps(id, error) : {})}
+            type="file"
+            accept={UPLOAD_RULES[kind].types.join(",")}
             disabled={busy}
-            className="self-start"
-          >
-            Chọn từ thư viện
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>Chọn tệp cho {label}</DialogTitle>
-            <DialogDescription>
-              Dùng lại tệp đã tải lên. Lựa chọn chỉ được áp dụng sau khi bạn lưu
-              form.
-            </DialogDescription>
-          </DialogHeader>
-          {libraryOpen && (
-            <Suspense fallback={<p role="status">Đang mở thư viện…</p>}>
-              <MediaBrowser
-                kind={kind}
-                onSelect={(url) => {
-                  onChange(url);
-                  setLibraryOpen(false);
-                }}
-              />
-            </Suspense>
-          )}
-        </DialogContent>
-      </Dialog>
+            aria-label={`${label}: chọn tệp`}
+            className="text-sm"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (file) void upload(file);
+            }}
+          />
+          <Dialog open={libraryOpen} onOpenChange={setLibraryOpen}>
+            <DialogTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={busy}
+                className="self-start"
+              >
+                Chọn từ thư viện
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-4xl">
+              <DialogHeader>
+                <DialogTitle>Chọn tệp cho {label}</DialogTitle>
+                <DialogDescription>
+                  Dùng lại tệp đã tải lên. Lựa chọn chỉ được áp dụng sau khi bạn
+                  lưu form.
+                </DialogDescription>
+              </DialogHeader>
+              {libraryOpen && (
+                <Suspense fallback={<p role="status">Đang mở thư viện…</p>}>
+                  <MediaBrowser
+                    kind={kind}
+                    onSelect={(url) => {
+                      onChange(url);
+                      setLibraryOpen(false);
+                    }}
+                  />
+                </Suspense>
+              )}
+            </DialogContent>
+          </Dialog>
+        </>
+      )}
       {busy && (
         <span className="text-xs text-muted-foreground">Đang tải lên…</span>
       )}

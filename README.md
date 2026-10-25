@@ -81,14 +81,14 @@ The database is the boundary. The proxy and server actions are defense in depth:
 
 | Layer | What it enforces | Where |
 | --- | --- | --- |
-| Proxy | `/admin/**` sends anyone except the configured admin to login | [`src/proxy.ts`](src/proxy.ts), [`guard.ts`](src/lib/admin/guard.ts) |
+| Proxy | `/admin/**` admits the configured admin and the read-only reviewer; anyone else goes to login | [`src/proxy.ts`](src/proxy.ts), [`guard.ts`](src/lib/admin/guard.ts) |
 | Server actions | `requireAdmin()` runs before every write; `SESSION_EXPIRED` and `FORBIDDEN` are distinct | [`session.ts`](src/lib/admin/session.ts), [`actions.ts`](src/app/admin/actions.ts) |
 | Postgres RLS | Visitors read published rows; writes, history, bucket listing and Realtime notes require `private.is_admin()` | [`supabase/migrations/`](supabase/migrations) |
 | Private schema | The admin allowlist and history live in `private`, which the Data API does not expose | [`0002_private_admin.sql`](supabase/migrations/0002_private_admin.sql), [`config.toml`](supabase/config.toml) |
 | Public cache | The anonymous `"use cache"` scope never reads cookies or admin data | [`get-content.ts`](src/lib/data/get-content.ts), [`preview-content.ts`](src/lib/data/preview-content.ts) |
 | CI | Read-only default token, SHA-pinned actions, no `pull_request_target`, no repository secrets; only the Dependabot auto-merge job can write | [`.github/workflows/`](.github/workflows), [CI procedure](docs/ci-release.md) |
 
-RLS denials are tested against a real, disposable Supabase stack in CI, never against hosted data. Hosted previews share the production database, so review there is read-only. A read-only reviewer role for signed-in preview checks is proposed in [PR #20](https://github.com/Let-cal/My_Portfolio/pull/20), which includes its security note (access matrix, guards, residual risks, revocation); it is not on `main` yet. Vulnerability reports: [SECURITY.md](SECURITY.md).
+RLS denials are tested against a real, disposable Supabase stack in CI, never against hosted data. Hosted previews share the production database, so review there is read-only. Signed-in preview checks use a dedicated read-only reviewer: a UID allowlist with SELECT-only policies, while every write keeps `requireAdmin()` ([security note](docs/security/reviewer-access.md), [ADR-0013](docs/adr/0013-read-only-reviewer-role.md)). Vulnerability reports: [SECURITY.md](SECURITY.md).
 
 ### How a change ships
 
@@ -138,7 +138,7 @@ Dependabot patch and minor updates merge automatically after the required checks
 - [0010](docs/adr/0010-disposable-supabase-integration-tests.md) Disposable local Supabase integration tests in CI
 - [0011](docs/adr/0011-fail-closed-release-evaluator.md) A fail-closed evaluator for preview review evidence
 - [0012](docs/adr/0012-hosted-migrations-through-reviewed-sql.md) Hosted migrations through reviewed SQL; no `db push` until reconciled
-- [0013](docs/adr/0013-read-only-reviewer-role.md) Read-only reviewer role (proposed, [PR #20](https://github.com/Let-cal/My_Portfolio/pull/20))
+- [0013](docs/adr/0013-read-only-reviewer-role.md) Read-only reviewer role
 
 ## Local setup
 

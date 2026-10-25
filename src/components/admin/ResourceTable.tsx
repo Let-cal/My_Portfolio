@@ -38,6 +38,7 @@ import { mergeRows, signature } from "@/lib/admin/sync";
 import type { ResourceKey } from "@/lib/admin/resources";
 import { tableFor } from "@/lib/admin/versions";
 import { cn } from "@/lib/utils";
+import { useAdminAccess } from "./AdminAccessProvider";
 import { SortableList } from "./SortableList";
 
 /** The status chips a list offers: show/hide only where items can be hidden, skills only where they link. */
@@ -90,6 +91,8 @@ export function ResourceTable({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  // The reviewer reads the list and opens items; no visibility, copy, delete or reorder.
+  const { readOnly } = useAdminAccess();
   const [flash, setFlash] = useState<string | null>(highlightId ?? null);
   const [seenHighlight, setSeenHighlight] = useState(highlightId);
   if (highlightId !== seenHighlight) {
@@ -301,7 +304,7 @@ export function ResourceTable({
           </Badge>
         ))}
       </div>
-      {row.canHide && (
+      {row.canHide && !readOnly && (
         <Switch
           checked={!row.hidden}
           // One change at a time per item: no second click while the first is saving.
@@ -311,29 +314,35 @@ export function ResourceTable({
         />
       )}
       <Button asChild variant="outline" size="sm">
-        <Link href={`/admin/${resourceKey}/${row.id}`}>Sửa</Link>
+        <Link href={`/admin/${resourceKey}/${row.id}`}>
+          {readOnly ? "Xem" : "Sửa"}
+        </Link>
       </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="size-8"
-        title="Nhân bản"
-        aria-label={`Nhân bản ${row.label}`}
-        onClick={() => duplicate(row)}
-        disabled={pending}
-      >
-        <Copy aria-hidden className="size-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="size-8 text-muted-foreground hover:text-destructive"
-        title="Xóa"
-        aria-label={`Xóa ${row.label}`}
-        onClick={() => setToDelete(row)}
-      >
-        <Trash2 aria-hidden className="size-4" />
-      </Button>
+      {!readOnly && (
+        <>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            title="Nhân bản"
+            aria-label={`Nhân bản ${row.label}`}
+            onClick={() => duplicate(row)}
+            disabled={pending}
+          >
+            <Copy aria-hidden className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8 text-muted-foreground hover:text-destructive"
+            title="Xóa"
+            aria-label={`Xóa ${row.label}`}
+            onClick={() => setToDelete(row)}
+          >
+            <Trash2 aria-hidden className="size-4" />
+          </Button>
+        </>
+      )}
     </div>
   );
 
@@ -387,9 +396,11 @@ export function ResourceTable({
       </div>
 
       <p className="text-xs text-muted-foreground" aria-live="polite">
-        {isFiltered
-          ? `${filtered.length}/${rows.length} mục · bỏ lọc để kéo đổi thứ tự`
-          : "Kéo biểu tượng ⠿ để đổi thứ tự hiển thị trên trang."}
+        {readOnly
+          ? `${filtered.length}/${rows.length} mục`
+          : isFiltered
+            ? `${filtered.length}/${rows.length} mục · bỏ lọc để kéo đổi thứ tự`
+            : "Kéo biểu tượng ⠿ để đổi thứ tự hiển thị trên trang."}
       </p>
 
       {rows.length === 0 ? (
@@ -400,7 +411,7 @@ export function ResourceTable({
         <p className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
           Không có mục nào khớp bộ lọc.
         </p>
-      ) : isFiltered ? (
+      ) : isFiltered || readOnly ? (
         <ul className="flex flex-col divide-y rounded-md border">
           {filtered.map((row) => (
             <li key={row.id}>{renderRow(row, null)}</li>

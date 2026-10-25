@@ -1,10 +1,7 @@
 # ADR-0013: A read-only reviewer role for signed-in preview checks
 
-- Status: Proposed ([PR #20](https://github.com/Let-cal/My_Portfolio/pull/20), open; not on `main`)
+- Status: Accepted ([PR #20](https://github.com/Let-cal/My_Portfolio/pull/20))
 - Date: 2026-10-25
-- Branch: `feat/reviewer-read-only`
-
-The code, tests and security note for this decision exist only in PR #20. Links below point to the PR, not to files on `main`.
 
 ## Context
 
@@ -12,7 +9,6 @@ Release review of admin changes needs signed-in checks on the Vercel preview ([A
 
 ## Decision
 
-Proposed in PR #20:
 
 - **Identity.** A UID allowlist `private.app_reviewers` (primary key referencing `auth.users`, cascade on delete) and `private.is_reviewer()`, which checks `auth.uid()`. The schema is not exposed by the Data API. Email, user metadata and request headers are never trusted. The allowlist and function follow the same pattern as `private.app_admins` and `private.is_admin()` ([ADR-0004](0004-rls-as-the-final-guard.md)).
 - **Database, the last guard.** The reviewer gets only `for select` policies:
@@ -45,6 +41,8 @@ Negative / trade-offs (recorded in the PR's security note):
 
 ## Evidence
 
-- Pull request: [PR #20](https://github.com/Let-cal/My_Portfolio/pull/20). It contains the migration `20261025103300_reviewer_read_only.sql`, `docs/security/reviewer-access.md` (access matrix, guards, residual risks, rollout, revoke and rollback SQL), unit tests for the access resolver, guard, actions and read-only UI, and real-backend reviewer checks in `scripts/ci/verify-admin-backend.mjs`.
-- The PR's security note states that the owner approved the change and that the migration was applied to the hosted project on 2026-10-25 under that version, with the allowlist left empty until the dedicated account is added. The application code is not merged.
+- Pull request: [PR #20](https://github.com/Let-cal/My_Portfolio/pull/20).
+- Migration: [`20261025103300_reviewer_read_only.sql`](../../supabase/migrations/20261025103300_reviewer_read_only.sql). Security note: [`reviewer-access.md`](../security/reviewer-access.md) (access matrix, guards, residual risks, rollout, revoke and rollback SQL).
+- Code: [`access-core.ts`](../../src/lib/admin/access-core.ts), [`guard.ts`](../../src/lib/admin/guard.ts), [`AdminAccessProvider.tsx`](../../src/components/admin/AdminAccessProvider.tsx). Tests: [`admin-access.test.ts`](../../tests/unit/admin-access.test.ts), [`admin-read-only.test.tsx`](../../tests/unit/admin-read-only.test.tsx); real-backend reviewer checks in [`verify-admin-backend.mjs`](../../scripts/ci/verify-admin-backend.mjs).
+- The owner approved the change; the migration was applied to the hosted project on 2026-10-25 under that version, and the dedicated account was added to the allowlist the same day.
 - Decisions behind the design: section 3 of [docs/superpowers/specs/2026-10-25-continuation-design.md](../superpowers/specs/2026-10-25-continuation-design.md) (in Vietnamese).

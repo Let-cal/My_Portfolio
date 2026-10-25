@@ -28,6 +28,7 @@ import {
 import { slugify } from "@/lib/admin/slug";
 import { signature } from "@/lib/admin/sync";
 import { cn } from "@/lib/utils";
+import { useAdminAccess } from "./AdminAccessProvider";
 import { useUnsavedGuard } from "./SaveBar";
 
 const cellId = (skillId: string, colKey: string) => `${skillId}|${colKey}`;
@@ -46,6 +47,8 @@ export function SkillMatrix({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  // The reviewer reads the grid (filters, arrow keys, links) but cannot toggle or add skills.
+  const { readOnly } = useAdminAccess();
   const [filter, setFilter] = useState(initialFilter);
   // Unsaved changes: cell id → wanted state (only cells that differ from the saved data).
   const [draft, setDraft] = useState<Map<string, boolean>>(new Map());
@@ -87,6 +90,7 @@ export function SkillMatrix({
   }
 
   function toggle(skillId: string, col: MatrixColumn) {
+    if (readOnly) return;
     const key = columnKey(col);
     const id = cellId(skillId, key);
     const next = !isLinked(skillId, key);
@@ -319,10 +323,12 @@ export function SkillMatrix({
                   label={`${g.group} (${g.rows.length})`}
                   span={view.columns.length + 2}
                   footer={
-                    <AddSkillRow
-                      group={g.group}
-                      span={view.columns.length + 2}
-                    />
+                    readOnly ? null : (
+                      <AddSkillRow
+                        group={g.group}
+                        span={view.columns.length + 2}
+                      />
+                    )
                   }
                 >
                   {g.rows.map((row) => {
@@ -375,6 +381,7 @@ export function SkillMatrix({
                                 type="button"
                                 role="checkbox"
                                 aria-checked={on}
+                                aria-disabled={readOnly || undefined}
                                 data-changed={changed || undefined}
                                 aria-label={`${row.skill.name} × ${col.label}`}
                                 data-cell={`${r}:${c}`}
@@ -436,11 +443,12 @@ export function SkillMatrix({
         </div>
       )}
       <p className="text-xs text-muted-foreground">
-        Chấm xanh: đã gắn. Vòng cam: gắn với mục đang ẩn (khách không thấy).
-        Viền xanh dương: thay đổi chưa lưu. Phím mũi tên để di chuyển, Space để
-        bật/tắt, Ctrl/⌘+S để lưu.
+        Chấm xanh: đã gắn. Vòng cam: gắn với mục đang ẩn (khách không thấy).{" "}
+        {readOnly
+          ? "Phím mũi tên để di chuyển."
+          : "Viền xanh dương: thay đổi chưa lưu. Phím mũi tên để di chuyển, Space để bật/tắt, Ctrl/⌘+S để lưu."}
       </p>
-      {draft.size > 0 && (
+      {draft.size > 0 && !readOnly && (
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}

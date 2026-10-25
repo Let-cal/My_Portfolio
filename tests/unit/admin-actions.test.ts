@@ -5,8 +5,10 @@ import seed from "@/content/seed.json";
 const updateTag = vi.fn();
 const refresh = vi.fn();
 const requireAdmin = vi.fn();
+const requireContentRead = vi.fn();
 vi.mock("next/cache", () => ({ updateTag, refresh }));
 vi.mock("@/lib/admin/session", () => ({ requireAdmin }));
+vi.mock("@/lib/admin/access", () => ({ requireContentRead }));
 
 type Call = { table: string; op: string; args: unknown[] };
 let calls: Call[] = [];
@@ -105,6 +107,9 @@ beforeEach(() => {
   updateTag.mockReset();
   refresh.mockReset();
   requireAdmin.mockReset().mockResolvedValue({ email: "admin@x.com" });
+  requireContentRead
+    .mockReset()
+    .mockResolvedValue({ kind: "admin", email: "admin@x.com" });
 });
 
 describe("admin actions", () => {
@@ -113,7 +118,8 @@ describe("admin actions", () => {
     expect(calls).toEqual([]);
     expect(refresh).not.toHaveBeenCalled();
     expect(updateTag).not.toHaveBeenCalled();
-    requireAdmin.mockRejectedValue(new Error("SESSION_EXPIRED"));
+    // The session check reads only, so it uses the read gate (open to the reviewer too).
+    requireContentRead.mockRejectedValue(new Error("SESSION_EXPIRED"));
     expect(await checkAdminSession()).toMatchObject({
       ok: false,
       code: "SESSION_EXPIRED",
@@ -513,6 +519,57 @@ describe("admin actions", () => {
       ok: false,
       error: "Phiên đăng nhập đã hết hạn.",
       code: "SESSION_EXPIRED",
+    });
+  });
+
+  describe("the read-only reviewer", () => {
+    beforeEach(() => {
+      requireAdmin.mockRejectedValue(new Error("FORBIDDEN"));
+      requireContentRead.mockResolvedValue({
+        kind: "reviewer",
+        email: "r@x.com",
+      });
+    });
+    const { sortIndex: _s, ...cert } = content.certificates[0];
+    void _s;
+    const writes: [string, () => Promise<{ ok: boolean; code?: string }>][] = [
+      ["saveResource", () => saveResource("certificates", cert, false)],
+      ["deleteResource", () => deleteResource("certificates", "a")],
+      ["duplicateResource", () => duplicateResource("certificates", "a")],
+      ["reorderResource", () => reorderResource("certificates", ["b", "a"])],
+      ["togglePublished", () => togglePublished("certificates", "a", false)],
+      [
+        "saveSkillLinks",
+        () =>
+          saveSkillLinks([
+            { skillId: "react", projectId: "siteplus", linked: true },
+          ]),
+      ],
+      ["saveProfile", () => saveProfile(content.profile)],
+      ["setOpenToWork", () => setOpenToWork(true)],
+      ["saveRole", () => saveRole(content.roles[0])],
+      ["restoreVersion", () => restoreVersion(5)],
+      ["undoDelete", () => undoDelete("certificates", "a")],
+    ];
+    it.each(writes)(
+      "cannot %s, and nothing reaches the database",
+      async (_n, write) => {
+        const result = await write();
+        expect(result.ok).toBe(false);
+        expect(result.code).toBe("FORBIDDEN");
+        expect(calls).toEqual([]);
+        expect(updateTag).not.toHaveBeenCalled();
+      },
+    );
+
+    it("can read version history", async () => {
+      rpcResults.admin_list_versions = [];
+      tableRows.certificates = [{ id: "a", name: "A" }];
+      expect((await listVersions("certificates", "a")).ok).toBe(true);
+    });
+
+    it("keeps a valid session check", async () => {
+      expect(await checkAdminSession()).toEqual({ ok: true });
     });
   });
 });

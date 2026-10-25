@@ -54,6 +54,7 @@ import {
   type FormSection,
 } from "./FormSections";
 import { SaveBar, useUnsavedGuard } from "./SaveBar";
+import { useAdminAccess } from "./AdminAccessProvider";
 import { a11yProps, FieldError, FieldShell } from "./FieldShell";
 import {
   EMPTY_I18N,
@@ -118,7 +119,7 @@ export function FieldsForm({
   onSave,
   doneHref,
   onSaved,
-  draftId,
+  draftId: draftIdProp,
   table,
   itemKey,
   onSaveAsNew,
@@ -149,6 +150,9 @@ export function FieldsForm({
   /** Saves the form as a new item, for when the edited item was deleted elsewhere. */
   onSaveAsNew?: (values: Values) => Promise<ActionResult>;
 }) {
+  // The reviewer: every value readable in a disabled fieldset; no save, drafts or leave prompt.
+  const { readOnly } = useAdminAccess();
+  const draftId = readOnly ? undefined : draftIdProp;
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [focusKey, setFocusKey] = useState(0);
@@ -856,7 +860,7 @@ export function FieldsForm({
   }
 
   const dirty = formState.isDirty;
-  useUnsavedGuard(dirty);
+  useUnsavedGuard(dirty && !readOnly);
 
   // Server data that changed while the form is open (own save, another tab, a restore): taken
   // as is when nothing is edited, otherwise offered, never forced over unsaved edits.
@@ -1003,7 +1007,7 @@ export function FieldsForm({
 
   const placed = new Set(sections?.flatMap((s) => s.fields));
   const byName = new Map(fields.map((f) => [f.name, f]));
-  const body = sections?.length ? (
+  const editable = sections?.length ? (
     <>
       {sections.map((section) => (
         <FormSectionBlock key={section.id} section={section}>
@@ -1017,6 +1021,13 @@ export function FieldsForm({
     </>
   ) : (
     fields.map(renderField)
+  );
+  const body = readOnly ? (
+    <fieldset disabled className="contents">
+      {editable}
+    </fieldset>
+  ) : (
+    editable
   );
 
   const translated = fields.some(
@@ -1034,7 +1045,7 @@ export function FieldsForm({
           {translated && <LocaleModeSwitch errorLocales={errorLocales} />}
           <TranslationProgress value={translationValues} />
         </div>
-        {deletedElsewhere && (
+        {deletedElsewhere && !readOnly && (
           <div
             role="alert"
             className="flex flex-col gap-3 rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm"
@@ -1104,7 +1115,7 @@ export function FieldsForm({
             </span>
           </div>
         )}
-        {serverMoved && dirty && (
+        {serverMoved && dirty && !readOnly && (
           <div
             role="status"
             className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-sky-500/40 bg-sky-500/10 px-4 py-3 text-sm"
@@ -1141,18 +1152,20 @@ export function FieldsForm({
         ) : (
           body
         )}
-        <SaveBar
-          dirty={dirty}
-          pending={pending}
-          saved={saved}
-          errorCount={shownErrors.length}
-          onSave={() => void onSubmit()}
-          onShowErrors={() =>
-            shownErrors[0] && focusField(errorTarget(shownErrors[0]))
-          }
-          active={active}
-          onCancel={doneHref ? () => router.push(doneHref) : undefined}
-        />
+        {!readOnly && (
+          <SaveBar
+            dirty={dirty}
+            pending={pending}
+            saved={saved}
+            errorCount={shownErrors.length}
+            onSave={() => void onSubmit()}
+            onShowErrors={() =>
+              shownErrors[0] && focusField(errorTarget(shownErrors[0]))
+            }
+            active={active}
+            onCancel={doneHref ? () => router.push(doneHref) : undefined}
+          />
+        )}
       </form>
     </LocaleModeProvider>
   );
