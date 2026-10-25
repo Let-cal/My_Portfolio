@@ -16,6 +16,7 @@ import {
 import { ADMIN_DISCARD_EVENT } from "@/lib/admin/sync";
 import { diffRow, type Version } from "@/lib/admin/versions";
 import { cn } from "@/lib/utils";
+import { useAdminAccess } from "./AdminAccessProvider";
 import { confirmLeave } from "./SaveBar";
 
 type Loaded = { versions: Version[]; current: Record<string, unknown> | null };
@@ -46,6 +47,8 @@ export function VersionHistory({
   const [selected, setSelected] = useState<Version | null>(null);
   const [loading, startLoading] = useTransition();
   const [restoring, startRestoring] = useTransition();
+  // The reviewer compares versions; restoring is a write.
+  const { readOnly } = useAdminAccess();
 
   function load() {
     setError(null);
@@ -219,15 +222,17 @@ export function VersionHistory({
                         </table>
                       </div>
                     )}
-                    <Button
-                      type="button"
-                      className="gap-1.5 self-start"
-                      disabled={restoring || lines.length === 0}
-                      onClick={() => restore(selected)}
-                    >
-                      <RotateCcw aria-hidden className="size-4" />
-                      {restoring ? "Đang khôi phục…" : "Khôi phục bản này"}
-                    </Button>
+                    {!readOnly && (
+                      <Button
+                        type="button"
+                        className="gap-1.5 self-start"
+                        disabled={restoring || lines.length === 0}
+                        onClick={() => restore(selected)}
+                      >
+                        <RotateCcw aria-hidden className="size-4" />
+                        {restoring ? "Đang khôi phục…" : "Khôi phục bản này"}
+                      </Button>
+                    )}
                   </section>
                 )}
               </>

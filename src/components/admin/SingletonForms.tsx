@@ -4,12 +4,13 @@ import { draftKey } from "@/lib/admin/drafts";
 import { runAction } from "@/lib/admin/action-errors";
 import { VersionHistory } from "./VersionHistory";
 import { rovingKey } from "./roving";
-import { useTransition, useState } from "react";
+import { useId, useTransition, useState } from "react";
 import { toast } from "sonner";
 import { saveProfile, saveRole, setOpenToWork } from "@/app/admin/actions";
 import { Switch } from "@/components/ui/switch";
 import { profileSchema, roleSchema, type Role } from "@/content/schema";
 import { PROFILE_FIELDS, ROLE_FIELDS } from "@/lib/admin/singletons";
+import { useAdminAccess } from "./AdminAccessProvider";
 import { FieldsForm, type Options } from "./ResourceForm";
 
 export function ProfileForm({ initial }: { initial: Record<string, unknown> }) {
@@ -128,6 +129,8 @@ export function RoleTabs({
 export function OpenToWorkSwitch({ initial }: { initial: boolean }) {
   const [value, setValue] = useState(initial);
   const [pending, startTransition] = useTransition();
+  const { readOnly } = useAdminAccess();
+  const hintId = useId();
   // Follow the server (another tab may switch it) unless this tab's own change is still saving.
   const [seen, setSeen] = useState(initial);
   if (initial !== seen && !pending) {
@@ -135,23 +138,32 @@ export function OpenToWorkSwitch({ initial }: { initial: boolean }) {
     setValue(initial);
   }
   return (
-    <label className="flex items-center gap-3 text-sm font-medium">
-      <Switch
-        checked={value}
-        disabled={pending}
-        onCheckedChange={(next) => {
-          setValue(next);
-          startTransition(async () => {
-            const result = await runAction(() => setOpenToWork(next));
-            if (result.ok)
-              toast.success(
-                next ? "Đang hiện Open to work" : "Đã tắt Open to work",
-              );
-            else setValue(!next);
-          });
-        }}
-      />
-      Open to work
-    </label>
+    <>
+      <label className="flex items-center gap-3 text-sm font-medium">
+        <Switch
+          checked={value}
+          disabled={pending || readOnly}
+          aria-describedby={readOnly ? hintId : undefined}
+          onCheckedChange={(next) => {
+            if (readOnly) return;
+            setValue(next);
+            startTransition(async () => {
+              const result = await runAction(() => setOpenToWork(next));
+              if (result.ok)
+                toast.success(
+                  next ? "Đang hiện Open to work" : "Đã tắt Open to work",
+                );
+              else setValue(!next);
+            });
+          }}
+        />
+        Open to work
+      </label>
+      {readOnly && (
+        <p id={hintId} className="text-xs text-muted-foreground">
+          Chế độ chỉ đọc: không thể bật/tắt.
+        </p>
+      )}
+    </>
   );
 }

@@ -41,7 +41,7 @@ Motionオフで撮影したデスクトップ画面です。[ダーク](docs/ima
 
 Server Componentsは `src/lib/data/get-content.ts` を通してコンテンツを読み込み、`content` タグでキャッシュします。管理画面で保存すると `updateTag('content')` が呼ばれ、次の閲覧者には変更後の内容が表示されます。SupabaseのURLが未設定の場合は `src/content/seed.json` を使用し、Supabaseの応答に問題がある場合もseedに切り替えます（キャッシュ期間は短くなります）。
 
-閲覧者は公開用キーで読み込み、行レベルセキュリティにより公開中の行だけが返ります。書き込みには `private.app_admins` に登録されたメールアドレスが必要で、このスキーマはData APIに公開していません。さらにプロキシが `/admin` へのアクセスを確認し、`ADMIN_EMAIL` 以外はログイン画面へ移動させます。各テーブルの定義は `src/lib/data/columns.ts` に一か所でまとめ、テストでマッパーと照合し、`supabase/schema.sql` もここから生成します。
+閲覧者は公開用キーで読み込み、行レベルセキュリティにより公開中の行だけが返ります。書き込みには `private.app_admins` に登録されたメールアドレスが必要で、このスキーマはData APIに公開していません。さらにプロキシが `/admin` へのアクセスを確認し、`ADMIN_EMAIL` と `private.app_reviewers` に登録された閲覧専用レビュアー以外はログイン画面へ移動させます。レビュアーは管理画面のすべてを閲覧できますが、変更はできません（[docs/security/reviewer-access.md](docs/security/reviewer-access.md)）。各テーブルの定義は `src/lib/data/columns.ts` に一か所でまとめ、テストでマッパーと照合し、`supabase/schema.sql` もここから生成します。
 
 3Dシーンはページ本文とは別に読み込みます。モバイルは静止画を使用し、対応するデスクトップ環境ではページの読み込み後にライブシーンを開始します。本番ビルドでは、コミット済みのポートレート画像、背景画像、アイコン、SVGスプライトを検査して使用し、ビルド環境ごとの再エンコードを避けます。元データを変更した場合は `npm run generate:assets` を実行し、生成差分を確認してコミットしてください。依存パッケージの正確なバージョンは `package-lock.json` を参照してください。
 

@@ -1,5 +1,6 @@
 "use server";
 
+import { requireContentRead } from "@/lib/admin/access";
 import { refresh, updateTag } from "next/cache";
 import { z } from "zod";
 import { profileToRow, roleToRow } from "@/lib/data/mappers";
@@ -70,7 +71,8 @@ const fail = (error: unknown): Extract<ActionResult, { ok: false }> => {
 /** Revalidate reauthentication without refreshing the editor or writing content. */
 export async function checkAdminSession(): Promise<ActionResult> {
   try {
-    await requireAdmin();
+    // The read-only reviewer has a valid session too; only writes need requireAdmin().
+    await requireContentRead();
     return { ok: true };
   } catch (error) {
     return fail(error);
@@ -341,7 +343,7 @@ export async function deleteResource(key: string, id: string) {
 export async function duplicateResource(
   key: string,
   id: string,
-): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+): Promise<{ ok: true; id: string } | Extract<ActionResult, { ok: false }>> {
   let newId = "";
   const result = await adminWrite(key, async (k) => {
     const resource = resources[k];
@@ -372,9 +374,8 @@ export async function duplicateResource(
     copy.published = false;
     check((await supabase.from(resource.table).insert(copy)).error);
   });
-  return result.ok
-    ? { ok: true, id: newId }
-    : { ok: false, error: result.error };
+  // Keep the failure's code (e.g. FORBIDDEN, SESSION_EXPIRED) so the client can react to it.
+  return result.ok ? { ok: true, id: newId } : result;
 }
 
 /** Saves a new order: each id gets its position in the list as sort_index. */
@@ -482,7 +483,8 @@ export async function listVersions(
   | { ok: false; error: string }
 > {
   try {
-    await requireAdmin();
+    // Reading history is open to the read-only reviewer; restoring stays admin-only.
+    await requireContentRead();
     if (!(VERSIONED_TABLES as string[]).includes(table))
       throw new Error(`Unknown table: ${table}`);
     const supabase = await createServerSupabase();
@@ -529,6 +531,12 @@ export async function undoDelete(
   table: string,
   itemKey: string,
 ): Promise<ActionResult> {
+  // A write: refuse non-admins (the read-only reviewer too) before reading anything.
+  try {
+    await requireAdmin();
+  } catch (error) {
+    return fail(error);
+  }
   const listed = await listVersions(table, itemKey);
   if (!listed.ok) return listed;
   const deleted = listed.versions.find((v) => v.op === "delete");

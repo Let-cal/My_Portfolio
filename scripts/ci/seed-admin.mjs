@@ -46,6 +46,21 @@ export function syntheticRows() {
   };
 }
 
+// Each becomes `task4-${kind}@example.invalid`. Only the launcher's psql step grants
+// a role (admin by email, reviewer by auth user id); member stays an ordinary user.
+export const syntheticIdentityKinds = Object.freeze([
+  "admin",
+  "member",
+  "reviewer",
+]);
+
+// The browser fixture schema (tests/e2e-admin/settings.ts) is strict and the browser
+// suite never signs in as the reviewer, so its credentials stay in the launcher process.
+export function browserFixture(fixture) {
+  const { version, runId, apiUrl, admin, member, fixtures } = fixture;
+  return { version, runId, apiUrl, admin, member, fixtures };
+}
+
 /** Caller must establish fresh Docker ownership before provisioning. No standalone CLI. */
 export async function seedAdmin({ apiUrl, serviceRoleKey, runId }) {
   const origin = assertLocalSupabase(apiUrl);
@@ -81,7 +96,7 @@ export async function seedAdmin({ apiUrl, serviceRoleKey, runId }) {
   });
   const identities = {};
   try {
-    for (const kind of ["admin", "member"]) {
+    for (const kind of syntheticIdentityKinds) {
       const email = `task4-${kind}@example.invalid`,
         password = randomBytes(24).toString("base64url");
       const { data, error } = await client.auth.admin.createUser({

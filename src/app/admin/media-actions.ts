@@ -1,4 +1,5 @@
 "use server";
+import { requireContentRead } from "@/lib/admin/access";
 import { refresh } from "next/cache";
 import type { ActionResult } from "./actions";
 import { requireAdmin } from "@/lib/admin/session";
@@ -46,7 +47,8 @@ export async function listMedia(): Promise<
   { ok: true; library: MediaLibrarySnapshot } | Failure
 > {
   try {
-    await requireAdmin();
+    // Browsing is open to the read-only reviewer; deleting stays admin-only.
+    await requireContentRead();
     return { ok: true, library: (await snapshot()).library };
   } catch (error) {
     return failure(error);

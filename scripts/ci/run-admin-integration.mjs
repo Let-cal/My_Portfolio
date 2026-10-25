@@ -26,8 +26,16 @@ import {
   validateLocalStatus,
   assertSanitizedLauncherEnv,
 } from "./disposable-runtime.mjs";
-import { seedAdmin } from "./seed-admin.mjs";
-import { verifyAdminBackend } from "./verify-admin-backend.mjs";
+import { browserFixture, seedAdmin } from "./seed-admin.mjs";
+import {
+  verifyAdminBackend,
+  verifyReviewerRevoked,
+} from "./verify-admin-backend.mjs";
+import {
+  assertSingleRowChange,
+  reviewerGrantSql,
+  reviewerRevokeSql,
+} from "./reviewer-access.mjs";
 import { projectAdminSummary } from "./admin-reporter.mjs";
 import { projectBackendFailure } from "./backend-progress.mjs";
 
@@ -184,6 +192,28 @@ function projectContainers(spec, env) {
   if (ids.some((id) => !/^[a-f0-9]{12,64}$/.test(id)))
     throw new Error("Unexpected Docker container identity");
   return JSON.parse(capture("docker", ["inspect", ...ids], { env }));
+}
+// Fixed reviewer grant/revoke SQL only; stdout is the changed-row count, never echoed.
+function changeReviewerAccess(databaseId, sql, env) {
+  assertSingleRowChange(
+    capture(
+      "docker",
+      [
+        "exec",
+        databaseId,
+        "psql",
+        "-U",
+        "postgres",
+        "-d",
+        "postgres",
+        "-v",
+        "ON_ERROR_STOP=1",
+        "-Atc",
+        sql,
+      ],
+      { env },
+    ),
+  );
 }
 function assertCleanupOwnership(containers, spec) {
   for (const c of containers)
@@ -418,15 +448,26 @@ export async function runAdminIntegration() {
       serviceRoleKey: status.SERVICE_ROLE_KEY,
       runId: spec.runId,
     });
+    setPhase("reviewer-grant");
+    changeReviewerAccess(ownership.databaseId, reviewerGrantSql, env);
     mkdirSync(join(app, ".superpowers"), { mode: 0o700 });
     const fixturePath = join(app, ".superpowers/task4-fixture.json");
-    writeFileSync(fixturePath, JSON.stringify(fixture), { mode: 0o600 });
+    // Reviewer credentials stay in this process; the browser schema is strict.
+    writeFileSync(fixturePath, JSON.stringify(browserFixture(fixture)), {
+      mode: 0o600,
+    });
     // Provisioning credentials remain in this process, never in app/browser env or artifacts.
     delete status.SERVICE_ROLE_KEY;
     delete status.JWT_SECRET;
     delete status.SECRET_KEY;
     setPhase("backend");
     report.backend = await verifyAdminBackend(fixture, status.ANON_KEY);
+    setPhase("reviewer-revocation");
+    changeReviewerAccess(ownership.databaseId, reviewerRevokeSql, env);
+    report.reviewerRevocation = await verifyReviewerRevoked(
+      fixture,
+      status.ANON_KEY,
+    );
     report.realServicesVerified = true;
     setPhase("build");
     const appEnv = { ...env, ...appSettings, NODE_ENV: "production" };

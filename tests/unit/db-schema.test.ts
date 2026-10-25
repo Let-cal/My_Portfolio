@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { contentSchema } from "@/content/schema";
 import seed from "@/content/seed.json";
@@ -7,6 +7,7 @@ import {
   renderSchemaSql,
   VERSIONED_TABLES,
   REALTIME_SQL,
+  REVIEWER_SQL,
   VERSIONS_SECURITY_SQL,
   VERSIONS_SQL,
 } from "@/lib/data/schema-sql";
@@ -202,5 +203,81 @@ describe("admin realtime", () => {
       "utf8",
     ).replace(/\r\n/g, "\n");
     expect(migration).toContain(REALTIME_SQL);
+  });
+});
+
+describe("read-only reviewer", () => {
+  it("can read every content table, hidden rows included", () => {
+    for (const name of VERSIONED_TABLES) {
+      expect(REVIEWER_SQL).toContain(
+        `create policy "${name}_reviewer_read" on public.${name} for select to authenticated using (private.is_reviewer());`,
+      );
+    }
+    expect(renderSchemaSql()).toContain(REVIEWER_SQL);
+  });
+
+  it("gets no write path anywhere", () => {
+    const policies = REVIEWER_SQL.match(/create policy[^;]*;/g) ?? [];
+    expect(policies.length).toBeGreaterThan(10);
+    for (const policy of policies)
+      expect(policy).toMatch(/ for select to authenticated /);
+    expect(REVIEWER_SQL).not.toMatch(/grant (insert|update|delete|all)/i);
+    // Restoring a version stays admin-only: its function is not redefined here.
+    expect(REVIEWER_SQL).not.toContain("admin_restore_version");
+  });
+
+  it("is identified by a private UID allowlist, not by editable user data", () => {
+    expect(REVIEWER_SQL).toContain(
+      "user_id uuid primary key references auth.users(id) on delete cascade",
+    );
+    expect(REVIEWER_SQL).toContain("where r.user_id = auth.uid()");
+    expect(REVIEWER_SQL).not.toMatch(
+      /user_metadata|app_metadata|auth\.jwt\(\)/,
+    );
+    expect(REVIEWER_SQL).toContain(
+      "revoke all on private.app_reviewers from public, anon, authenticated;",
+    );
+  });
+
+  it("exposes only an invoker-rights role lookup in the public API (lint 0029)", () => {
+    const fn = REVIEWER_SQL.slice(
+      REVIEWER_SQL.indexOf(
+        "create or replace function public.admin_access_kind",
+      ),
+    );
+    expect(fn).toMatch(/security invoker/);
+    expect(REVIEWER_SQL).toContain(
+      "revoke execute on function public.admin_access_kind() from public, anon;",
+    );
+    expect(REVIEWER_SQL).toContain(
+      "revoke execute on function private.is_reviewer() from public, anon;",
+    );
+  });
+
+  it("can list version history and media, and receive live change notes", () => {
+    expect(REVIEWER_SQL).toContain(
+      'create policy "content_versions_reviewer_read" on private.content_versions for select to authenticated using (private.is_reviewer());',
+    );
+    expect(REVIEWER_SQL).toMatch(
+      /if not \(private\.is_admin\(\) or private\.is_reviewer\(\)\) then/,
+    );
+    expect(REVIEWER_SQL).toContain(
+      `create policy "reviewer_media_select" on storage.objects for select to authenticated using (bucket_id in ('media', 'files') and private.is_reviewer());`,
+    );
+    expect(REVIEWER_SQL).toContain(
+      `create policy "reviewer_content_receive" on realtime.messages for select to authenticated using (realtime.topic() = 'admin:content' and private.is_reviewer());`,
+    );
+  });
+
+  it("the migration is exactly the reviewer section", () => {
+    const file = readdirSync("supabase/migrations").find((f) =>
+      /^\d{14}_reviewer_read_only\.sql$/.test(f),
+    );
+    expect(file, "CLI-generated migration file").toBeTruthy();
+    const migration = readFileSync(
+      `supabase/migrations/${file}`,
+      "utf8",
+    ).replace(/\r\n/g, "\n");
+    expect(migration).toContain(REVIEWER_SQL);
   });
 });
