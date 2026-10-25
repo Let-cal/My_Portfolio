@@ -64,12 +64,15 @@ npm run start
 ### Database and admin (optional)
 
 1. Create a Supabase project and apply `supabase/migrations/` in order (SQL editor or `supabase db push`).
+   The live project was migrated through reviewed SQL, so its migration history versions differ from these file names. Do not run `supabase db push` against it until that history is reconciled.
 2. Copy [.env.example](.env.example) to `.env.local` and fill in the project URL, publishable key, secret key and `ADMIN_EMAIL`. Never commit it, and never expose `SUPABASE_SERVICE_ROLE_KEY` through a `NEXT_PUBLIC_` variable.
 3. `npm run db:seed` loads `seed.json`; `npm run db:verify` reads it back with the public key and compares every section.
 4. In Supabase Auth, create the admin user, then run `insert into private.app_admins (email) values ('<email>');`.
 5. Sign in at `/admin/login`.
 
 After changing `columns.ts`, run `npm run db:schema` and add a migration for the live database. The `Supabase keep-alive` workflow reads one row twice a week so a free project does not pause; it uses the `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` repository variables.
+
+The admin [media library](docs/admin-media-library.md) lists uploads in `media` and `files`, links them to current content (including hidden items), and lets upload fields reuse existing files. Apply its additive Storage SELECT policy before using `/admin/media`. Built-in `public/` files are outside this library. Storage deletion is permanent and does not restore through content history.
 
 The `@swc/core` override preserves an existing Windows tooling workaround. Review Windows and Linux behavior before changing it. Builds also need network access for `next/font/google` font downloads.
 

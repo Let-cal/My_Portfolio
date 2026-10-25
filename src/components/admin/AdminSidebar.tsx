@@ -8,6 +8,7 @@ import {
   FolderKanban,
   GraduationCap,
   LayoutDashboard,
+  Images,
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
@@ -42,6 +43,7 @@ export const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
       { href: "/admin/activities", label: "Hoạt động", icon: CalendarHeart },
       { href: "/admin/education", label: "Học vấn", icon: GraduationCap },
       { href: "/admin/why_cards", label: "Why hire me", icon: Star },
+      { href: "/admin/media", label: "Thư viện media", icon: Images },
     ],
   },
   {
