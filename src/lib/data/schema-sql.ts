@@ -97,6 +97,7 @@ export function renderSchemaSql(): string {
       VERSIONS_SQL,
       VERSIONS_SECURITY_SQL,
       REALTIME_SQL,
+      REVIEWER_SQL,
     ].join("\n\n") + "\n"
   );
 }
@@ -281,3 +282,66 @@ ${VERSIONED_TABLES.map(
 ).join("\n")}
 
 create policy "admin_content_receive" on realtime.messages for select to authenticated using (realtime.topic() = 'admin:content' and private.is_admin());`;
+
+/**
+ * Task 5: a read-only reviewer (supabase/migrations/*_reviewer_read_only.sql). A private UID
+ * allowlist grants SELECT on portfolio content (hidden rows included), media listings, version
+ * history and live change notes. There is no reviewer write policy anywhere; every write stays
+ * behind private.is_admin(). The public role lookup runs with the caller's rights (lint 0029).
+ */
+export const REVIEWER_SQL = `-- Read-only reviewer: may read everything an editor sees, may change nothing.
+create table private.app_reviewers (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+alter table private.app_reviewers enable row level security;
+revoke all on private.app_reviewers from public, anon, authenticated;
+
+create or replace function private.is_reviewer() returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists (
+    select 1 from private.app_reviewers r
+    where r.user_id = auth.uid()
+  );
+$$;
+revoke execute on function private.is_reviewer() from public, anon;
+grant execute on function private.is_reviewer() to authenticated;
+
+-- Which admin role the caller has: 'admin', 'reviewer' or null.
+create or replace function public.admin_access_kind() returns text
+language sql stable security invoker set search_path = '' as $$
+  select case
+    when private.is_admin() then 'admin'
+    when private.is_reviewer() then 'reviewer'
+  end;
+$$;
+revoke execute on function public.admin_access_kind() from public, anon;
+grant execute on function public.admin_access_kind() to authenticated;
+
+${VERSIONED_TABLES.map(
+  (t) =>
+    `create policy "${t}_reviewer_read" on public.${t} for select to authenticated using (private.is_reviewer());`,
+).join("\n")}
+
+create policy "reviewer_media_select" on storage.objects for select to authenticated using (bucket_id in ('media', 'files') and private.is_reviewer());
+
+create policy "content_versions_reviewer_read" on private.content_versions for select to authenticated using (private.is_reviewer());
+
+-- History may be listed by the reviewer too; restoring a version stays admin-only.
+create or replace function public.admin_list_versions(p_table text, p_key text)
+returns table (id bigint, op text, old_row jsonb, changed_by text, changed_at timestamptz)
+language plpgsql stable security invoker set search_path = '' as $$
+begin
+  if not (private.is_admin() or private.is_reviewer()) then
+    raise exception 'not allowed' using errcode = '42501';
+  end if;
+  return query
+    select v.id, v.op, v.old_row, v.changed_by, v.changed_at
+    from private.content_versions v
+    where v.table_name = p_table and v.item_key = p_key
+    order by v.id desc
+    limit 50;
+end;
+$$;
+
+create policy "reviewer_content_receive" on realtime.messages for select to authenticated using (realtime.topic() = 'admin:content' and private.is_reviewer());`;
