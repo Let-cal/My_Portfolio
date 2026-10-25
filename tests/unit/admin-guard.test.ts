@@ -2,8 +2,9 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getUser = vi.fn();
+const rpc = vi.fn();
 vi.mock("@supabase/ssr", () => ({
-  createServerClient: () => ({ auth: { getUser } }),
+  createServerClient: () => ({ auth: { getUser }, rpc }),
 }));
 
 const { adminGuard } = await import("@/lib/admin/guard");
@@ -17,7 +18,10 @@ const request = (path: string) =>
   new NextRequest(new URL(path, "https://letcal.test"));
 
 describe("adminGuard", () => {
-  beforeEach(() => getUser.mockReset());
+  beforeEach(() => {
+    getUser.mockReset();
+    rpc.mockReset().mockResolvedValue({ data: null, error: null });
+  });
 
   it("always lets the login page through", async () => {
     const res = await adminGuard(request("/admin/login"), env);
@@ -82,5 +86,26 @@ describe("adminGuard", () => {
     );
     const res = await adminGuard(req, env);
     expect(res.status).toBe(307);
+  });
+
+  it("lets the read-only reviewer into admin pages", async () => {
+    getUser.mockResolvedValue({
+      data: { user: { email: "r@example.invalid" } },
+      error: null,
+    });
+    rpc.mockResolvedValue({ data: "reviewer", error: null });
+    const res = await adminGuard(request("/admin/projects"), env);
+    expect(res.headers.get("location")).toBeNull();
+    expect(rpc).toHaveBeenCalledWith("admin_access_kind");
+  });
+
+  it("still sends an ordinary signed-in user to login, and fails closed on a lookup error", async () => {
+    getUser.mockResolvedValue({
+      data: { user: { email: "m@example.invalid" } },
+      error: null,
+    });
+    rpc.mockResolvedValue({ data: "reviewer", error: { message: "boom" } });
+    const res = await adminGuard(request("/admin/projects"), env);
+    expect(res.headers.get("location")).toContain("/admin/login");
   });
 });

@@ -1,13 +1,15 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { isAdminEmail, isSupabaseConfigured } from "./auth";
+import { accessFor } from "./access-core";
+import { isSupabaseConfigured } from "./auth";
 
 type Env = Record<string, string | undefined>;
 
 /**
  * Guards `/admin*` in the proxy: refreshes the Supabase session cookie and sends anyone who is
- * not the configured admin to the login page. This is the first line only; row level security
- * in the database rejects writes from anyone missing from private.app_admins.
+ * neither the configured admin nor the read-only reviewer to the login page. This is the first
+ * line only: server actions check again, and row level security rejects every write from anyone
+ * missing from private.app_admins.
  */
 export async function adminGuard(
   request: NextRequest,
@@ -41,12 +43,16 @@ export async function adminGuard(
     },
   );
 
-  const { data } = await supabase.auth.getUser();
   // Server actions (POST with a Next-Action header) are not redirected: a redirect would replace
   // the page and lose the form. requireAdmin() answers them (SESSION_EXPIRED / FORBIDDEN) and
   // row level security still rejects every write from a non-admin.
-  if (request.method === "POST" && request.headers.has("next-action"))
+  if (request.method === "POST" && request.headers.has("next-action")) {
+    // Still refresh the session cookie for the action that follows.
+    await supabase.auth.getUser();
     return response;
-  if (!isAdminEmail(data.user?.email, env.ADMIN_EMAIL)) return toLogin();
+  }
+  // The admin, or the read-only reviewer (listed in the database's private allowlist).
+  const { access } = await accessFor(supabase, env.ADMIN_EMAIL);
+  if (!access) return toLogin();
   return response;
 }
