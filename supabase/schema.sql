@@ -224,6 +224,8 @@ insert into storage.buckets (id, name, public) values ('media', 'media', true), 
 create policy "admin_upload" on storage.objects for insert to authenticated with check (bucket_id in ('media', 'files') and private.is_admin());
 create policy "admin_update" on storage.objects for update to authenticated using (bucket_id in ('media', 'files') and private.is_admin());
 create policy "admin_delete" on storage.objects for delete to authenticated using (bucket_id in ('media', 'files') and private.is_admin());
+-- Only admins may list objects in the media library buckets.
+create policy "admin_media_select" on storage.objects for select to authenticated using (bucket_id in ('media', 'files') and private.is_admin());
 
 -- Content history: each update or delete keeps the old row, so the admin can see and undo changes.
 create table private.content_versions (
