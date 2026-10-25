@@ -39,11 +39,106 @@ Desktop preview with Motion off. [Dark](docs/images/portfolio-dark.webp) · [Lig
 | Verification | Vitest, Testing Library, Playwright/axe, artifact budgets, Lighthouse |
 | Delivery | GitHub Actions checks; Vercel hosting through the repository integration |
 
-Server Components read content through `src/lib/data/get-content.ts`, cached under the `content` tag. Admin saves call `updateTag('content')`, so the next visitor sees the change. Without a configured Supabase URL the site uses `src/content/seed.json`; failed or invalid Supabase responses also fall back to the seed, with a shorter cache lifetime.
-
-Visitors read through the publishable key, and row level security only returns published rows. Writes require an email listed in `private.app_admins`, a schema the Data API does not expose. The proxy also sends anyone other than `ADMIN_EMAIL` from `/admin` to the login page. `src/lib/data/columns.ts` describes every table once: tests check it against the row mappers, and `supabase/schema.sql` is generated from it.
-
 The scene loads separately from the page content. Mobile uses static imagery; capable desktop devices load live scenery after the page load gate. Production builds verify and use committed portraits, fallbacks, icons and the skill sprite without re-encoding them for the build machine. After editing their sources, run `npm run generate:assets`, review the generated diff and commit it. Exact dependency versions are in `package-lock.json`.
+
+## Architecture & engineering process
+
+How the system is built and how a change reaches production. Each point links to the code, workflow, record or pull request that shows it.
+
+### Runtime
+
+```mermaid
+flowchart LR
+  visitor([Visitor]) --> rsc
+  admin([Admin]) --> proxy
+  subgraph vercel [Next.js 16 on Vercel]
+    rsc["Server Components<br/>getContent()"] --> cache[("'use cache'<br/>tag: content")]
+    cache -. "Supabase missing or invalid" .-> seed["seed.json"]
+    proxy["proxy.ts<br/>admin guard"] --> actions["Server actions<br/>requireAdmin()"]
+    actions -- "updateTag('content')" --> cache
+  end
+  subgraph supabase [Supabase]
+    db[("Postgres<br/>row level security")]
+    storage[("Storage<br/>media, files")]
+    realtime["Realtime<br/>private topic admin:content"]
+  end
+  cache -- "publishable key" --> db
+  actions -- "admin session" --> db
+  admin -- "direct upload" --> storage
+  db -- "triggers" --> realtime
+  realtime -- "change notes" --> admin
+```
+
+- **One read path.** Server Components read content only through [`get-content.ts`](src/lib/data/get-content.ts), cached under the `content` tag. Admin saves call `updateTag('content')`, so the next visitor sees the change without a redeploy.
+- **Seed fallback.** Without a Supabase URL the site uses [`seed.json`](src/content/seed.json). A failing or schema-invalid Supabase response also falls back to the seed, cached for minutes only so the site recovers on its own.
+- **One content model.** One Zod schema validates the seed, database rows and admin forms. Text fields hold EN/JA/VI together; JA and VI fall back to EN. [`columns.ts`](src/lib/data/columns.ts) describes every table once: tests check it against the row mappers, and `supabase/schema.sql` is generated from it.
+- **Admin data stays out of the public cache.** Preview of hidden content uses Draft Mode and a request-scoped read that re-checks the admin on every render.
+- **Live admin.** Database triggers send `{ table, op, key }` notes (never row data) on a private Realtime topic only the admin can join. Other admin tabs refresh without overwriting unsaved edits.
+
+### Security model
+
+The database is the boundary. The proxy and server actions are defense in depth: they give clear errors and keep open forms, but a forged request still meets row level security.
+
+| Layer | What it enforces | Where |
+| --- | --- | --- |
+| Proxy | `/admin/**` sends anyone except the configured admin to login | [`src/proxy.ts`](src/proxy.ts), [`guard.ts`](src/lib/admin/guard.ts) |
+| Server actions | `requireAdmin()` runs before every write; `SESSION_EXPIRED` and `FORBIDDEN` are distinct | [`session.ts`](src/lib/admin/session.ts), [`actions.ts`](src/app/admin/actions.ts) |
+| Postgres RLS | Visitors read published rows; writes, history, bucket listing and Realtime notes require `private.is_admin()` | [`supabase/migrations/`](supabase/migrations) |
+| Private schema | The admin allowlist and history live in `private`, which the Data API does not expose | [`0002_private_admin.sql`](supabase/migrations/0002_private_admin.sql), [`config.toml`](supabase/config.toml) |
+| Public cache | The anonymous `"use cache"` scope never reads cookies or admin data | [`get-content.ts`](src/lib/data/get-content.ts), [`preview-content.ts`](src/lib/data/preview-content.ts) |
+| CI | Read-only default token, SHA-pinned actions, no `pull_request_target`, no repository secrets; only the Dependabot auto-merge job can write | [`.github/workflows/`](.github/workflows), [CI procedure](docs/ci-release.md) |
+
+RLS denials are tested against a real, disposable Supabase stack in CI, never against hosted data. Hosted previews share the production database, so review there is read-only. A read-only reviewer role for signed-in preview checks is proposed in [PR #20](https://github.com/Let-cal/My_Portfolio/pull/20), which includes its security note (access matrix, guards, residual risks, revocation); it is not on `main` yet. Vulnerability reports: [SECURITY.md](SECURITY.md).
+
+### How a change ships
+
+```mermaid
+flowchart LR
+  branch[Branch from main] --> pr[Pull request] --> ci[CI gates] --> preview[Vercel preview]
+  preview --> review[Release review] --> merge[Merge bound to reviewed head SHA] --> prod[Vercel production] --> verify[Verify production]
+```
+
+1. **Design first for larger work.** A spec or plan in [docs/superpowers/](docs/superpowers) is committed before the code. For example, the [realtime spec](docs/superpowers/specs/2026-10-20-admin-realtime-design.md) is the first commit of [PR #13](https://github.com/Let-cal/My_Portfolio/pull/13).
+2. **Small commits with tests.** Conventional prefixes (`feat(admin):`, `fix(db):`, `test(admin):`, `ci:`). Behaviour changes carry their tests; fixes start from a failing test where practical, and verification records note the failing-then-passing runs ([example](docs/admin-integration-verification-2026-10-24.md)). A pre-push hook runs `npm run verify:quick`; `npm run verify` mirrors the quality job.
+3. **Pull request.** The [template](.github/pull_request_template.md) asks for the problem, commands actually run, visual evidence and remaining gates. Review findings and their fixes stay in the PR history.
+4. **CI gates** (below). Branch protection requires an up-to-date branch, applies to administrators and blocks force pushes ([maintenance record](docs/repository-maintenance.md)).
+5. **Preview and release review.** Vercel builds every PR. An owner-started review collects exact-revision evidence and evaluates it with the fail-closed [`review-release.mjs`](.github/scripts/review-release.mjs) ([runbook](docs/final-review-release.md)). Auth/RLS, CI/CD, permissions and migrations need the owner's approval of the concrete diff.
+6. **Merge and verify.** A merge commit bound to the reviewed head SHA. Vercel deploys `main`; merged, deployed and verified are reported as separate states. Hosted database migrations are a separate, approved step.
+
+Dependabot patch and minor updates merge automatically after the required checks pass ([workflow](.github/workflows/dependabot-auto-merge.yml)); major updates and Playwright, which must move with the pinned CI image, wait for a person. Representative PRs: [#12](https://github.com/Let-cal/My_Portfolio/pull/12) history and undo, [#13](https://github.com/Let-cal/My_Portfolio/pull/13) realtime, [#15](https://github.com/Let-cal/My_Portfolio/pull/15) media library, [#18](https://github.com/Let-cal/My_Portfolio/pull/18) disposable integration tests, [#19](https://github.com/Let-cal/My_Portfolio/pull/19) release gate v2.
+
+### CI gates
+
+| Check | Runs | Effect |
+| --- | --- | --- |
+| Lint, types, unit tests and budgets | Prettier, ESLint, generated files, Vitest, build, `tsc`, initial JS ≤200 KB gzip, artifact budgets | Required; any failure blocks |
+| Playwright Chromium on Linux | Full Chromium suite in two duration-balanced groups; rejects missing, duplicated, skipped or flaky results | Required; blocks |
+| Lighthouse mobile | Three runs per locale, medians | Required; Accessibility ≥95, SEO ≥90 and CLS ≤0.1 block; Performance ≥85, LCP and TBT warn only |
+| Disposable admin Auth, CRUD and RLS | Local Supabase in Docker: migration replay, real Auth/RLS/Storage/Realtime probes, six admin browser scenarios | Fails the CI workflow; not in the required list |
+| Gitleaks full history | Checksum-pinned Gitleaks over all branches and tags | Required; blocks |
+| Production npm audit (high and critical) | `npm audit --omit=dev --audit-level=high` | Required; blocks |
+| Read-only JavaScript and TypeScript analysis | CodeQL `security-extended`; no upload from PRs | Required; errors or severity ≥7 block, lower findings are reviewed |
+| Vercel | Preview deployment for the PR | Required |
+
+"Required" reflects branch protection on `main` as read from the GitHub API on 2026-10-25; protection is live repository state that the YAML does not set. Workflows: [ci.yml](.github/workflows/ci.yml), [security.yml](.github/workflows/security.yml), [codeql.yml](.github/workflows/codeql.yml). Lab loading metrics vary on shared runners, so they are advisory ([ADR-0005](docs/adr/0005-pragmatic-ci-gates.md)).
+
+### Decision records
+
+[Architecture Decision Records](docs/adr/README.md) give the context, trade-offs and evidence for each choice:
+
+- [0001](docs/adr/0001-three-locales-one-content-model.md) Three locales with one content model
+- [0002](docs/adr/0002-cached-content-loader-with-seed-fallback.md) One cached content loader with a seed fallback
+- [0003](docs/adr/0003-3d-scene-never-blocks-content.md) The 3D scene never blocks content
+- [0004](docs/adr/0004-rls-as-the-final-guard.md) Row level security is the final guard; the admin allowlist is private
+- [0005](docs/adr/0005-pragmatic-ci-gates.md) Block on stable signals; report lab loading metrics as advisory
+- [0006](docs/adr/0006-content-history-with-triggers.md) Content history through database triggers; restore is admin-only
+- [0007](docs/adr/0007-private-realtime-broadcast.md) Live admin updates through a private Realtime Broadcast topic
+- [0008](docs/adr/0008-media-library-on-supabase-storage.md) Media library on Supabase Storage with admin-only listing
+- [0009](docs/adr/0009-draft-preview-outside-the-public-cache.md) Draft preview of hidden content stays outside the public cache
+- [0010](docs/adr/0010-disposable-supabase-integration-tests.md) Disposable local Supabase integration tests in CI
+- [0011](docs/adr/0011-fail-closed-release-evaluator.md) A fail-closed evaluator for preview review evidence
+- [0012](docs/adr/0012-hosted-migrations-through-reviewed-sql.md) Hosted migrations through reviewed SQL; no `db push` until reconciled
+- [0013](docs/adr/0013-read-only-reviewer-role.md) Read-only reviewer role (proposed, [PR #20](https://github.com/Let-cal/My_Portfolio/pull/20))
 
 ## Local setup
 
