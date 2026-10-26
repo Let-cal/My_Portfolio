@@ -107,6 +107,15 @@ flowchart LR
 
 Dependabot patch and minor updates merge automatically after the required checks pass ([workflow](.github/workflows/dependabot-auto-merge.yml)); major updates and Playwright, which must move with the pinned CI image, wait for a person. Representative PRs: [#12](https://github.com/Let-cal/My_Portfolio/pull/12) history and undo, [#13](https://github.com/Let-cal/My_Portfolio/pull/13) realtime, [#15](https://github.com/Let-cal/My_Portfolio/pull/15) media library, [#18](https://github.com/Let-cal/My_Portfolio/pull/18) disposable integration tests, [#19](https://github.com/Let-cal/My_Portfolio/pull/19) release gate v2.
 
+### How I work with AI agents
+
+AI coding agents do much of the typing in this repository, under fixed limits:
+
+- I write or approve every spec and plan before code starts. They are committed in [docs/superpowers/](docs/superpowers), so the reasoning behind each change stays reviewable.
+- Agents implement against those plans test-first where practical; [AGENTS.md](AGENTS.md) holds the project rules they follow.
+- A separate review pass checks each branch against its spec. Security-sensitive work also gets a dedicated audit.
+- I approve every merge, every hosted database change and every production change. CI gates apply to agent work exactly as to my own.
+
 ### CI gates
 
 | Check | Runs | Effect |
