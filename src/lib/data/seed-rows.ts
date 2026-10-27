@@ -1,5 +1,5 @@
 import type { Content } from "@/content/schema";
-import { creationOrder, TABLES, type TableName } from "./columns";
+import { creationOrder, TABLES, type Column, type TableName } from "./columns";
 import {
   activityToRow,
   certificateToRow,
@@ -66,14 +66,22 @@ function literal(value: unknown, type: string): string {
   }
 }
 
-/** The same snapshot as one SQL script, for seeding through the SQL editor or an MCP client. */
-export function renderSeedSql(rows: SeedRows): string {
+/**
+ * The same snapshot as one SQL script, for seeding through the SQL editor or an MCP client.
+ * `omit` leaves columns out (data for a database that does not have them yet).
+ */
+export function renderSeedSql(
+  rows: SeedRows,
+  omit: Partial<Record<TableName, readonly string[]>> = {},
+): string {
   const out = ["begin;"];
   for (const [table, list] of Object.entries(rows) as [
     TableName,
     Record<string, unknown>[],
   ][]) {
-    const columns = TABLES[table].columns;
+    const columns = (TABLES[table].columns as readonly Column[]).filter(
+      (c) => !omit[table]?.includes(c.name),
+    );
     if (table === "skill_links") out.push("delete from public.skill_links;");
     if (!list.length) continue;
     const names = columns.map((c) => c.name);

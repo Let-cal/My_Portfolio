@@ -38,6 +38,7 @@ import {
 } from "./reviewer-access.mjs";
 import { projectAdminSummary } from "./admin-reporter.mjs";
 import { projectBackendFailure } from "./backend-progress.mjs";
+import { runExperienceTreeDryRun } from "./experience-tree-dry-run.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const summaryPath = join(root, "reports/admin-integration-summary.json");
@@ -442,6 +443,46 @@ export async function runAdminIntegration() {
       },
     );
     report.migrations = expectedMigrations.length;
+    setPhase("experience-tree-dry-run");
+    // A scratch database of the same stack; the job's own database is not touched.
+    const dryRunData = JSON.parse(
+      capture(
+        process.execPath,
+        [
+          join(app, "node_modules/tsx/dist/cli.mjs"),
+          "scripts/ci/print-experience-tree-data.ts",
+        ],
+        { cwd: app, env, timeout: 120000 },
+      ),
+    );
+    report.experienceTreeDryRun = runExperienceTreeDryRun({
+      psql: (sql, database) =>
+        capture(
+          "docker",
+          [
+            "exec",
+            "-i",
+            ownership.databaseId,
+            "psql",
+            "-U",
+            "postgres",
+            "-d",
+            database,
+            "-v",
+            "ON_ERROR_STOP=1",
+            "-q",
+            "-At",
+            "-f",
+            "-",
+          ],
+          { env, input: sql, timeout: 120000 },
+        ),
+      read: (path) => readFileSync(join(app, path), "utf8"),
+      migrationFiles: readdirSync(join(app, "supabase/migrations")),
+      data: dryRunData,
+    });
+    if (report.experienceTreeDryRun.status !== "PASS")
+      throw new Error("Experience tree migration dry run failed");
     setPhase("seed");
     const fixture = await seedAdmin({
       apiUrl: spec.apiUrl,
