@@ -91,6 +91,20 @@ describe("buildJourney", () => {
     ]);
   });
 
+  it("carries the school GPA and no GPA on companies", () => {
+    const journey = buildJourney(base(), "en", t);
+    const uni = journey.find((p) => p.kind === "school")!;
+    expect(uni.gpa).toBe("7.66/10");
+    const companies = journey.filter((p) => p.kind === "company");
+    expect(companies.length).toBeGreaterThan(0);
+    for (const c of companies) expect(c.gpa).toBeNull();
+    const c = base();
+    c.education[0].gpa = null;
+    expect(
+      buildJourney(c, "en", t).find((p) => p.kind === "school")!.gpa,
+    ).toBeNull();
+  });
+
   it("FPT Japan has no children and keeps its summary", () => {
     const fpt = buildJourney(base(), "en", t).find(
       (p) => p.anchor === "exp-fpt-japan",

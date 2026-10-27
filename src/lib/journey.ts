@@ -38,6 +38,8 @@ export type JourneyParent = {
   /** Stints (company) or the degree (school), newest first, one line each. */
   lines: { title: string; period: string }[];
   summary: string | null;
+  /** Grade average of a school as entered ("7.66/10"); null for companies. */
+  gpa: string | null;
   tech: string[];
   children: JourneyChild[];
   /** "N projects" when there are children, "internship" for an all-internship company without any, else none. */
@@ -174,6 +176,7 @@ export function buildJourney(
         period: formatPeriod(s.start, s.end, locale),
       })),
       summary: summary.length > 0 ? summary.join("\n\n") : null,
+      gpa: null,
       tech: unique(stints.flatMap((s) => s.tech)),
       children,
       chip:
@@ -209,6 +212,7 @@ export function buildJourney(
         },
       ],
       summary: notes || null,
+      gpa: e.gpa,
       tech: [],
       children,
       chip: children.length > 0 ? { count: children.length } : null,
