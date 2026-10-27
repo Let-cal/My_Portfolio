@@ -41,14 +41,7 @@
       },
       "koiVariety": "kohaku",
       "cvFileUrl": "/cv/LeTranCatLam_CV_TechLead.pdf",
-      "experienceOrder": [
-        "skg-flexybox-p1",
-        "skg-coa",
-        "skg-flexybox-p2",
-        "skg-ai-agent",
-        "skg-intern",
-        "fpt-japan"
-      ],
+      "experienceOrder": ["skg-engineer", "skg-intern", "fpt-japan"],
       "skillGroupOrder": [
         "languages",
         "frameworks",
@@ -69,14 +62,7 @@
       },
       "koiVariety": "showa",
       "cvFileUrl": "/cv/LeTranCatLam_CV_TechLead.pdf",
-      "experienceOrder": [
-        "skg-flexybox-p1",
-        "skg-coa",
-        "skg-flexybox-p2",
-        "skg-ai-agent",
-        "skg-intern",
-        "fpt-japan"
-      ],
+      "experienceOrder": ["skg-engineer", "skg-intern", "fpt-japan"],
       "skillGroupOrder": [
         "languages",
         "frameworks",
@@ -97,14 +83,7 @@
       },
       "koiVariety": "ogon",
       "cvFileUrl": "/cv/LeTranCatLam_CV_TechnicalPM.pdf",
-      "experienceOrder": [
-        "skg-ai-agent",
-        "skg-flexybox-p2",
-        "skg-coa",
-        "skg-flexybox-p1",
-        "skg-intern",
-        "fpt-japan"
-      ],
+      "experienceOrder": ["skg-engineer", "skg-intern", "fpt-japan"],
       "skillGroupOrder": [
         "delivery",
         "cloud",
@@ -119,302 +98,50 @@
   ],
   "experiences": [
     {
-      "id": "skg-ai-agent",
-      "company": "AI Agent",
+      "id": "skg-engineer",
+      "company": "SKG Software (Splus)",
       "parentCompany": "SKG Software (Splus)",
       "location": "Ho Chi Minh City, Vietnam",
       "position": {
-        "en": "Software Engineer, acting Project Manager",
-        "ja": "ソフトウェアエンジニア(プロジェクトマネージャー代行)",
-        "vi": "Kỹ sư phần mềm, kiêm Project Manager"
+        "en": "Software Engineer — acting Project Manager / Tech Lead",
+        "ja": "ソフトウェアエンジニア(プロジェクトマネージャー/テックリード代行)",
+        "vi": "Kỹ sư phần mềm, kiêm Project Manager / Tech Lead"
       },
-      "start": "2026-04",
+      "start": "2025-10",
       "end": "2026-09",
       "employmentType": "full-time",
       "summary": {
-        "en": "Multi-tenant LLM agent service that calls a Japanese client's business system APIs to query data and generate reports. Supports both cloud and local LLMs.",
-        "ja": "日本のお客様の業務システムAPIを呼び出し、データの照会やレポート作成を行うマルチテナントのLLMエージェントサービスです。クラウドとローカルの両方のLLMに対応しています。",
-        "vi": "Dịch vụ LLM agent multi-tenant, gọi API hệ thống nghiệp vụ của khách hàng Nhật để truy vấn dữ liệu và tạo báo cáo. Hỗ trợ cả LLM cloud và local."
+        "en": ""
       },
-      "caseStudy": {
-        "problem": {
-          "en": "The client wanted an agent that could answer questions and build reports from its own business data, on top of about 15 existing business APIs, with both cloud and local model options.",
-          "ja": "お客様は、既存の約15本の業務APIを基に、自社の業務データから質問に答えたりレポートを作成したりできるエージェントを求めていました。クラウドとローカルの両方のモデルを選べることも条件でした。",
-          "vi": "Khách hàng cần một agent trả lời câu hỏi và tạo báo cáo từ dữ liệu nghiệp vụ của họ, dựa trên khoảng 15 API nghiệp vụ có sẵn, chạy được cả với model cloud lẫn local."
-        },
-        "role": {
-          "en": "Acting Project Manager. The team had 3 people until June 2026, then 6. Handled estimates, scheduling, task and progress tracking, and requirements definition with the client in Japanese. Wrote basic design documents and proposals, reviewed test cases and acceptance criteria, and built the PoC admin console and agent chat UI.",
-          "ja": "プロジェクトマネージャー代行として担当しました。チームは2026年6月まで3名、その後6名です。見積もり、スケジュール作成、タスクと進捗の管理、日本語でのお客様との要件定義を行いました。基本設計書と提案書を作成し、テストケースと受け入れ基準をレビューしました。PoCの管理画面とエージェントのチャットUIも自分で開発しました。",
-          "vi": "Đảm nhận vai trò Project Manager. Team có 3 người đến tháng 6/2026, sau đó là 6 người. Phụ trách estimate, lập lịch, quản lý task và tiến độ, lấy và định nghĩa yêu cầu với khách bằng tiếng Nhật. Viết tài liệu thiết kế cơ bản và tài liệu đề xuất, review test case và tiêu chí nghiệm thu, tự build admin console và chat UI cho bản PoC."
-        },
-        "decisions": {
-          "en": "Wrapped about 15 business APIs into about 10 agent tools. Merged the local AI setup into the cloud AI setup to cut cost and simplify security, and restructured the team around it. The trade-off: during UAT, answers from the cloud and local models had to be checked for consistency. Set up Terraform and Docker for the project.",
-          "ja": "約15本の業務APIを約10個のエージェントツールにまとめました。コスト削減とセキュリティの簡素化のため、ローカルAIの構成をクラウドAIに統合し、合わせてチーム体制も見直しました。その代わり、UAT期間中はクラウドとローカルの回答が近い内容になっているかを確認する必要がありました。TerraformとDockerの構成も自分で行いました。",
-          "vi": "Gói khoảng 15 API nghiệp vụ thành khoảng 10 agent tool. Hợp nhất AI Local vào AI Cloud để tiết kiệm chi phí và đơn giản hóa phần bảo mật, đồng thời tái cơ cấu team. Đánh đổi: trong giai đoạn UAT phải kiểm tra để câu trả lời từ cloud và local tương đồng nhau. Tự cấu hình Terraform và Docker cho dự án."
-        },
-        "result": {
-          "en": "The PoC was demoed to the client, and the client agreed to move on to the next phases. When the client's own PoC stage started, the tenant switched to hybrid mode, so the cloud/local consistency check was no longer needed.",
-          "ja": "PoCをお客様にデモし、次のフェーズへ進むことに合意いただきました。お客様側のPoC段階ではテナントがハイブリッドモードに切り替わったため、クラウドとローカルの回答の確認は不要になりました。",
-          "vi": "Bản PoC được demo cho khách và khách đồng ý chuyển sang các giai đoạn tiếp theo. Đến giai đoạn PoC phía khách, tenant chuyển sang chế độ hybrid nên việc kiểm tra câu trả lời giữa cloud và local không còn cần thiết."
-        }
-      },
-      "teamSize": "3 → 6",
-      "tech": [
-        "Python",
-        "FastAPI",
-        "TypeScript",
-        "React",
-        "Vite",
-        "Tailwind CSS",
-        "OpenAI Agents SDK",
-        "LiteLLM",
-        "MCP",
-        "Ollama",
-        "vLLM",
-        "PostgreSQL",
-        "AWS Lambda",
-        "Amazon RDS",
-        "Amazon S3",
-        "CloudFront",
-        "AWS WAF",
-        "Terraform",
-        "Docker",
-        "GitLab",
-        "Redmine"
-      ],
+      "caseStudy": null,
+      "teamSize": null,
+      "tech": [],
       "links": [],
       "published": true,
       "sortIndex": 0
     },
     {
-      "id": "skg-flexybox-p2",
-      "company": "FlexyBox Phase 2",
-      "parentCompany": "SKG Software (Splus)",
-      "location": "Ho Chi Minh City, Vietnam",
-      "position": {
-        "en": "Software Engineer, acting Project Manager / Tech Lead",
-        "ja": "ソフトウェアエンジニア(プロジェクトマネージャー / テックリード代行)",
-        "vi": "Kỹ sư phần mềm, kiêm Project Manager / Tech Lead"
-      },
-      "start": "2026-03",
-      "end": "2026-09",
-      "employmentType": "full-time",
-      "summary": {
-        "en": "Extended the FlexyBox smart-locker system into a multi-tenant platform. Each tenant turns the sales, rental and gacha modules on or off and manages its own lockers in a separate admin console.",
-        "ja": "スマートロッカーシステムFlexyBoxをマルチテナントのプラットフォームに拡張しました。テナントごとに販売・レンタル・ガチャのモジュールを選んで組み合わせ、専用の管理画面で自社のロッカーを管理できます。",
-        "vi": "Mở rộng hệ thống smart locker FlexyBox thành nền tảng multi-tenant. Mỗi tenant bật/tắt các module sales, rental, gacha và tự quản lý chuỗi locker của mình trên admin console riêng."
-      },
-      "caseStudy": {
-        "problem": {
-          "en": "Each tenant needed to run its own locker chain: IoT status for every locker, products and prices per locker, end-user usage history and audit logs, its own accounts and users, and LINE messages on rental, return and login, with payments through fincode.",
-          "ja": "テナントごとに自社のロッカーチェーンを運用できる必要がありました。各ロッカーのIoT状態の監視、ロッカー単位の商品と価格、エンドユーザーの利用履歴と操作ログ、テナント専用のアカウントとユーザー、レンタル・返却・ログイン時のLINE通知、fincodeによる決済が対象です。",
-          "vi": "Mỗi tenant cần tự vận hành chuỗi locker của mình: giám sát trạng thái IoT của từng locker, sản phẩm và giá theo từng locker, lịch sử sử dụng của end user và audit log, tài khoản và user riêng, gửi LINE message khi thuê, trả và đăng nhập, thanh toán qua fincode."
-        },
-        "role": {
-          "en": "Acting Project Manager / Tech Lead. Wrote estimates by phase, by new feature and for SKG's own proposals; wrote basic and detailed design documents and proposals; gathered and defined requirements with the client; solved technical problems for the team; reviewed code; mentored 3 interns (2 developers, 1 tester).",
-          "ja": "プロジェクトマネージャー / テックリード代行として担当しました。フェーズ別、新機能別、SKGからの提案別に見積もりを作成し、基本設計書・詳細設計書・提案書を作成しました。お客様との要件ヒアリングと要件定義、チームの技術課題の解決、コードレビューを行い、インターン3名(開発2名、テスター1名)の指導も担当しました。",
-          "vi": "Đảm nhận vai trò Project Manager / Tech Lead. Viết nhiều bản estimate theo phase, theo tính năng mới và theo đề xuất của SKG; viết tài liệu thiết kế cơ bản, chi tiết và đề xuất; lấy và định nghĩa yêu cầu với khách; giải quyết vấn đề kỹ thuật cho team; review code; mentor 3 intern (2 dev, 1 tester)."
-        },
-        "decisions": {
-          "en": "Sized the team for each phase from the estimate, the effort agreed with the client, the target release date and priority: up to 8 people, then 5 from May 2026. Released to production by phase and by feature, with a version check and risk review before each release. Locker status comes from AWS IoT Core, and LINE message content and settings can be edited from the admin console.",
-          "ja": "フェーズごとの見積もり、お客様と合意した工数、希望リリース日、優先度をもとにチーム規模を調整しました。最大8名で、2026年5月からは5名です。本番リリースはフェーズ・機能単位で行い、リリース前にバージョン確認とリスク管理を行いました。ロッカーの状態はAWS IoT Coreで取得し、LINEメッセージの内容や設定は管理画面から変更できるようにしました。",
-          "vi": "Điều chỉnh quy mô team theo estimate từng phase, effort đã chốt với khách, ngày release mong muốn và độ ưu tiên: tối đa 8 người, từ tháng 5/2026 còn 5 người. Release production theo phase và theo tính năng, kiểm tra version và quản lý rủi ro trước mỗi lần release. Trạng thái locker lấy qua AWS IoT Core; nội dung và setting LINE message chỉnh được ngay trên admin console."
-        },
-        "result": {
-          "en": "Bugs found in UAT were handled in time by the team on duty, with no impact on the client. Each release was followed by a lessons-learned review and process improvements.",
-          "ja": "UATで見つかったバグは担当チームが期限内に対応し、お客様への影響はありませんでした。リリースのたびに振り返りを行い、プロセスを改善しました。",
-          "vi": "Bug phát sinh ở UAT được team trực xử lý kịp thời, không ảnh hưởng tới khách. Sau mỗi lần release đều rút kinh nghiệm và cải tiến quy trình."
-        }
-      },
-      "teamSize": "8 → 5",
-      "tech": [
-        "TypeScript",
-        "Node.js",
-        "Next.js",
-        "React",
-        "Tailwind CSS",
-        "shadcn/ui",
-        "DynamoDB",
-        "AWS Lambda",
-        "API Gateway",
-        "Amazon S3",
-        "AWS IoT Core",
-        "Amazon SES",
-        "AWS Amplify",
-        "AWS SAM",
-        "fincode",
-        "LINE LIFF",
-        "GitLab",
-        "Backlog",
-        "Redmine"
-      ],
-      "links": [],
-      "published": true,
-      "sortIndex": 1
-    },
-    {
-      "id": "skg-coa",
-      "company": "COA (Certificate of Analysis system)",
-      "parentCompany": "SKG Software (Splus)",
-      "location": "Ho Chi Minh City, Vietnam",
-      "position": {
-        "en": "Software Engineer, Tech Lead / Developer",
-        "ja": "ソフトウェアエンジニア(テックリード / 開発)",
-        "vi": "Kỹ sư phần mềm, Tech Lead / Developer"
-      },
-      "start": "2025-10",
-      "end": "2026-03",
-      "employmentType": "full-time",
-      "summary": {
-        "en": "System for issuing Certificates of Analysis, with a 3-level role-based approval workflow. At the final approval it generates the COA PDF from 6 templates and sends it by email.",
-        "ja": "分析証明書(COA)の発行システムです。ロール別の3段階承認ワークフローがあり、最終承認の時点で6種類のテンプレートからCOAのPDFを自動生成し、メールで送信します。",
-        "vi": "Hệ thống phát hành Certificate of Analysis với workflow phê duyệt 3 cấp theo role. Đến bước phê duyệt cuối, hệ thống tự sinh PDF COA (6 mẫu) và gửi email."
-      },
-      "caseStudy": {
-        "problem": {
-          "en": "Every COA had to pass 3 approval levels by role before it was issued, and the final step had to produce the right PDF out of 6 templates and email it.",
-          "ja": "COAは発行前にロール別の3段階承認を通す必要があり、最終段階では6種類のテンプレートから正しいPDFを生成してメールで送る必要がありました。",
-          "vi": "Mỗi COA phải qua 3 cấp phê duyệt theo role trước khi phát hành, và bước cuối phải sinh đúng PDF trong 6 mẫu rồi gửi email."
-        },
-        "role": {
-          "en": "Tech Lead / Developer in a team of 4. Built about 9–10 API endpoints and about 6 main screens. Supported estimates and progress tracking, and proposed and explained solutions in client meetings under the PM's guidance.",
-          "ja": "4名のチームでテックリード / 開発を担当しました。約9〜10本のAPIエンドポイントと約6つの主要画面を開発しました。PMの指導のもとで見積もりと進捗管理を支援し、お客様との会議で提案や説明を行いました。",
-          "vi": "Tech Lead / Developer trong team 4 người. Làm khoảng 9–10 API endpoint và khoảng 6 màn hình chính. Hỗ trợ estimate và quản lý tiến độ, đề xuất và giải thích trong họp với khách dưới sự hướng dẫn của PM."
-        },
-        "decisions": {
-          "en": "Built the APIs in C# .NET 8 with ASP.NET Core Web API and Dapper on Oracle, and the screens in Biz/Designer DT. Designed the Oracle schema. Worked inside the client's environment through AWS WorkSpaces, where source was managed by manual merges and diff checks.",
-          "ja": "APIはC# .NET 8(ASP.NET Core Web API、Dapper)とOracleで、画面はBiz/Designer DTで開発しました。Oracleのスキーマも設計しました。開発はAWS WorkSpaces経由でお客様の環境内で行い、ソースは手動マージと差分比較で管理しました。",
-          "vi": "Làm API bằng C# .NET 8 (ASP.NET Core Web API, Dapper) trên Oracle, màn hình bằng Biz/Designer DT. Thiết kế schema Oracle. Code trong môi trường của khách qua AWS WorkSpaces, quản lý source bằng merge tay và so sánh diff."
-        },
-        "result": {
-          "en": "Wrote and ran about 300 unit test cases. UAT found about 10–20 bugs across all releases combined.",
-          "ja": "約300件の単体テストケースを作成・実施しました。UATで検出されたバグは、全リリース合計で約10〜20件でした。",
-          "vi": "Viết và chạy khoảng 300 unit test case. Bug ở UAT khoảng 10–20 trên tổng tất cả các lần release."
-        }
-      },
-      "teamSize": "4",
-      "tech": [
-        "C#",
-        ".NET 8",
-        "ASP.NET Core Web API",
-        "Dapper",
-        "Oracle",
-        "Biz/Designer DT",
-        "AWS WorkSpaces"
-      ],
-      "links": [],
-      "published": true,
-      "sortIndex": 2
-    },
-    {
-      "id": "skg-flexybox-p1",
-      "company": "FlexyBox Phase 1",
-      "parentCompany": "SKG Software (Splus)",
-      "location": "Ho Chi Minh City, Vietnam",
-      "position": {
-        "en": "Software Engineer, acting Project Manager / Full-stack",
-        "ja": "ソフトウェアエンジニア(プロジェクトマネージャー代行 / フルスタック)",
-        "vi": "Kỹ sư phần mềm, kiêm Project Manager / Full-stack"
-      },
-      "start": "2025-09",
-      "end": "2025-10",
-      "employmentType": "full-time",
-      "summary": {
-        "en": "Sales system for a smart locker with 9 doors: the user picks a product and pays, and the door opens once payment succeeds. Includes admin screens for the tenant admin.",
-        "ja": "9扉のスマートロッカーで商品を販売するシステムです。商品を選んで支払い、決済が完了すると扉が開きます。テナント管理者向けの管理画面もあります。",
-        "vi": "Hệ thống bán hàng qua smart locker 9 ngăn: chọn sản phẩm, thanh toán, thanh toán thành công thì mở ngăn. Kèm màn hình quản trị cho tenant admin."
-      },
-      "caseStudy": {
-        "problem": {
-          "en": "The client wanted to sell products through a smart locker and try it in real use before taking it to market.",
-          "ja": "お客様はスマートロッカーで商品を販売し、商用化の前に実環境で試したいと考えていました。",
-          "vi": "Khách hàng muốn bán sản phẩm qua smart locker và chạy thử thực tế trước khi thương mại hóa."
-        },
-        "role": {
-          "en": "Acting Project Manager / Full-stack in a team of 2, and the author of all Phase 1 code. Wrote basic and detailed design documents, proposals and estimates, and presented in regular meetings with an IT comtor.",
-          "ja": "2名のチームでプロジェクトマネージャー代行 / フルスタックを担当し、Phase 1のコードはすべて自分で書きました。基本設計書・詳細設計書・提案書・見積もりを作成し、定例会議ではITコミュニケーターと一緒に説明しました。",
-          "vi": "Project Manager / Full-stack trong team 2 người, tự viết toàn bộ code Phase 1. Viết tài liệu thiết kế cơ bản, chi tiết, đề xuất và estimate; trình bày trong họp định kỳ cùng IT comtor."
-        },
-        "decisions": {
-          "en": "Serverless API on AWS SAM, Lambda, API Gateway and DynamoDB, with the table and GSI design. fincode payment integration with webhooks, an API to open the locker, and purchase and admin screens in Next.js. Worked to a self-made schedule.",
-          "ja": "AWS SAM、Lambda、API Gateway、DynamoDBによるサーバーレスAPIを構築し、テーブルとGSIを設計しました。fincode決済とWebhookの連携、ロッカー解錠API、Next.jsによる購入画面と管理画面を開発しました。スケジュールは自分で作成しました。",
-          "vi": "API serverless trên AWS SAM, Lambda, API Gateway và DynamoDB (thiết kế table và GSI). Tích hợp thanh toán fincode và webhook, API mở locker, màn hình mua hàng và quản trị bằng Next.js. Làm theo schedule tự lập."
-        },
-        "result": {
-          "en": "Delivered on time, with several items ahead of schedule. Went into a real-world pilot with 1 tenant and 2 lockers, the gate before commercial launch.",
-          "ja": "期限どおりに納品し、いくつかの項目は前倒しで完了しました。商用化前の関門として、1テナント・2台のロッカーで実環境での試験運用に入りました。",
-          "vi": "Giao đúng hạn, nhiều hạng mục xong trước hạn. Đưa vào chạy thử thực tế với 1 tenant và 2 locker, làm cửa ải trước khi thương mại hóa."
-        }
-      },
-      "teamSize": "2",
-      "tech": [
-        "TypeScript",
-        "Next.js",
-        "AWS SAM",
-        "AWS Lambda",
-        "API Gateway",
-        "DynamoDB",
-        "fincode"
-      ],
-      "links": [],
-      "published": true,
-      "sortIndex": 3
-    },
-    {
       "id": "skg-intern",
-      "company": "TONGUE-AI & Driver MS",
+      "company": "SKG Software (Splus)",
       "parentCompany": "SKG Software (Splus)",
       "location": "Ho Chi Minh City, Vietnam",
       "position": {
         "en": "Software Engineer Intern",
-        "ja": "ソフトウェアエンジニア(インターン)",
-        "vi": "Thực tập sinh Kỹ sư phần mềm"
+        "ja": "ソフトウェアエンジニアインターン",
+        "vi": "Thực tập sinh kỹ sư phần mềm"
       },
       "start": "2025-08",
-      "end": "2025-09",
+      "end": "2025-10",
       "employmentType": "internship",
       "summary": {
-        "en": "Two client projects during the internship, each with a team of 4. TONGUE-AI is a mobile web app where AI analyses a tongue photo and questionnaire answers to assess disease risk. Driver MS digitises attendance, daily checks and work records for light-truck drivers.",
-        "ja": "インターン期間中に、それぞれ4名のチームでお客様向けプロジェクト2件に参加しました。TONGUE-AIは舌の写真と問診の回答をAIで分析し、病気の可能性を評価するモバイル向けWebアプリです。Driver MSは軽トラックドライバーの点呼、日常点検、業務記録をデジタル化するシステムです。",
-        "vi": "Hai dự án khách hàng trong thời gian thực tập, mỗi team 4 người. TONGUE-AI là web app trên mobile, dùng AI phân tích ảnh lưỡi và câu trả lời bảng hỏi để đánh giá khả năng mắc bệnh. Driver MS số hóa điểm danh, kiểm tra hằng ngày và ghi nhận công việc cho tài xế xe tải nhẹ."
+        "en": ""
       },
-      "caseStudy": {
-        "problem": {
-          "en": "TONGUE-AI needed a mobile web flow for users plus a multi-tenant admin screen. Driver MS needed attendance, daily checks and work records for drivers in Japanese and English.",
-          "ja": "TONGUE-AIでは、ユーザー向けのモバイルWebの画面フローとマルチテナントの管理画面が必要でした。Driver MSでは、ドライバーの点呼、日常点検、業務記録を日本語と英語で扱う必要がありました。",
-          "vi": "TONGUE-AI cần luồng web trên mobile cho người dùng và màn hình quản trị multi-tenant. Driver MS cần điểm danh, kiểm tra hằng ngày và ghi nhận công việc cho tài xế bằng tiếng Nhật và tiếng Anh."
-        },
-        "role": {
-          "en": "Full-stack Developer. On TONGUE-AI: requirements analysis, sprint planning, UI/UX, the Next.js frontend, and test design and review. On Driver MS: frontend, Japanese/English localisation, Laravel API changes, change requests and bug fixes.",
-          "ja": "フルスタック開発者として参加しました。TONGUE-AIでは要件分析、スプリント計画、UI/UX、Next.jsのフロントエンド、テスト設計とレビューを担当しました。Driver MSではフロントエンド、日本語・英語の多言語対応、Laravel APIの修正、変更要求への対応とバグ修正を担当しました。",
-          "vi": "Full-stack Developer. Ở TONGUE-AI: phân tích yêu cầu, lập kế hoạch sprint, UI/UX, frontend Next.js, thiết kế và review test. Ở Driver MS: frontend, đa ngôn ngữ Nhật/Anh, sửa API Laravel, xử lý CR và sửa bug."
-        },
-        "decisions": {
-          "en": "Built the TONGUE-AI frontend in Next.js and TypeScript. On Driver MS, added Japanese/English support to the frontend and made changes to the existing Laravel API.",
-          "ja": "TONGUE-AIのフロントエンドはNext.jsとTypeScriptで開発しました。Driver MSでは、フロントエンドに日本語・英語対応を追加し、既存のLaravel APIを修正しました。",
-          "vi": "Làm frontend TONGUE-AI bằng Next.js và TypeScript. Ở Driver MS, thêm hỗ trợ tiếng Nhật/Anh cho frontend và sửa API Laravel có sẵn."
-        },
-        "result": {
-          "en": "Moved to a full-time Software Engineer role after the standard 2-month internship.",
-          "ja": "標準の2か月のインターン期間を経て、正社員のソフトウェアエンジニアになりました。",
-          "vi": "Lên nhân viên chính thức (Software Engineer) theo lộ trình thực tập chuẩn 2 tháng."
-        }
-      },
-      "teamSize": "4",
-      "tech": [
-        "TypeScript",
-        "PHP",
-        "Next.js",
-        "Laravel",
-        "SQL Server",
-        "MySQL",
-        "Docker",
-        "Swagger",
-        "Jira"
-      ],
+      "caseStudy": null,
+      "teamSize": null,
+      "tech": [],
       "links": [],
       "published": true,
-      "sortIndex": 4
+      "sortIndex": 1
     },
     {
       "id": "fpt-japan",
@@ -444,6 +171,89 @@
   ],
   "projects": [
     {
+      "id": "skg-ai-agent",
+      "title": "AI Agent",
+      "role": {
+        "en": "Software Engineer, acting Project Manager",
+        "ja": "ソフトウェアエンジニア(プロジェクトマネージャー代行)",
+        "vi": "Kỹ sư phần mềm, kiêm Project Manager"
+      },
+      "start": "2026-04",
+      "end": "2026-09",
+      "summary": {
+        "en": "Multi-tenant LLM agent service that calls a Japanese client's business system APIs to query data and generate reports. Supports both cloud and local LLMs.",
+        "ja": "日本のお客様の業務システムAPIを呼び出し、データの照会やレポート作成を行うマルチテナントのLLMエージェントサービスです。クラウドとローカルの両方のLLMに対応しています。",
+        "vi": "Dịch vụ LLM agent multi-tenant, gọi API hệ thống nghiệp vụ của khách hàng Nhật để truy vấn dữ liệu và tạo báo cáo. Hỗ trợ cả LLM cloud và local."
+      },
+      "caseStudy": {
+        "problem": {
+          "en": "The client wanted an agent that could answer questions and build reports from its own business data, on top of about 15 existing business APIs, with both cloud and local model options.",
+          "ja": "お客様は、既存の約15本の業務APIを基に、自社の業務データから質問に答えたりレポートを作成したりできるエージェントを求めていました。クラウドとローカルの両方のモデルを選べることも条件でした。",
+          "vi": "Khách hàng cần một agent trả lời câu hỏi và tạo báo cáo từ dữ liệu nghiệp vụ của họ, dựa trên khoảng 15 API nghiệp vụ có sẵn, chạy được cả với model cloud lẫn local."
+        },
+        "role": {
+          "en": "Acting Project Manager. The team had 3 people until June 2026, then 6. Handled estimates, scheduling, task and progress tracking, and requirements definition with the client in Japanese. Wrote basic design documents and proposals, reviewed test cases and acceptance criteria, and built the PoC admin console and agent chat UI.",
+          "ja": "プロジェクトマネージャー代行として担当しました。チームは2026年6月まで3名、その後6名です。見積もり、スケジュール作成、タスクと進捗の管理、日本語でのお客様との要件定義を行いました。基本設計書と提案書を作成し、テストケースと受け入れ基準をレビューしました。PoCの管理画面とエージェントのチャットUIも自分で開発しました。",
+          "vi": "Đảm nhận vai trò Project Manager. Team có 3 người đến tháng 6/2026, sau đó là 6 người. Phụ trách estimate, lập lịch, quản lý task và tiến độ, lấy và định nghĩa yêu cầu với khách bằng tiếng Nhật. Viết tài liệu thiết kế cơ bản và tài liệu đề xuất, review test case và tiêu chí nghiệm thu, tự build admin console và chat UI cho bản PoC."
+        },
+        "decisions": {
+          "en": "Wrapped about 15 business APIs into about 10 agent tools. Merged the local AI setup into the cloud AI setup to cut cost and simplify security, and restructured the team around it. The trade-off: during UAT, answers from the cloud and local models had to be checked for consistency. Set up Terraform and Docker for the project.",
+          "ja": "約15本の業務APIを約10個のエージェントツールにまとめました。コスト削減とセキュリティの簡素化のため、ローカルAIの構成をクラウドAIに統合し、合わせてチーム体制も見直しました。その代わり、UAT期間中はクラウドとローカルの回答が近い内容になっているかを確認する必要がありました。TerraformとDockerの構成も自分で行いました。",
+          "vi": "Gói khoảng 15 API nghiệp vụ thành khoảng 10 agent tool. Hợp nhất AI Local vào AI Cloud để tiết kiệm chi phí và đơn giản hóa phần bảo mật, đồng thời tái cơ cấu team. Đánh đổi: trong giai đoạn UAT phải kiểm tra để câu trả lời từ cloud và local tương đồng nhau. Tự cấu hình Terraform và Docker cho dự án."
+        },
+        "result": {
+          "en": "The PoC was demoed to the client, and the client agreed to move on to the next phases. When the client's own PoC stage started, the tenant switched to hybrid mode, so the cloud/local consistency check was no longer needed.",
+          "ja": "PoCをお客様にデモし、次のフェーズへ進むことに合意いただきました。お客様側のPoC段階ではテナントがハイブリッドモードに切り替わったため、クラウドとローカルの回答の確認は不要になりました。",
+          "vi": "Bản PoC được demo cho khách và khách đồng ý chuyển sang các giai đoạn tiếp theo. Đến giai đoạn PoC phía khách, tenant chuyển sang chế độ hybrid nên việc kiểm tra câu trả lời giữa cloud và local không còn cần thiết."
+        }
+      },
+      "tech": [
+        "Python",
+        "FastAPI",
+        "TypeScript",
+        "React",
+        "Vite",
+        "Tailwind CSS",
+        "OpenAI Agents SDK",
+        "LiteLLM",
+        "MCP",
+        "Ollama",
+        "vLLM",
+        "PostgreSQL",
+        "AWS Lambda",
+        "Amazon RDS",
+        "Amazon S3",
+        "CloudFront",
+        "AWS WAF",
+        "Terraform",
+        "Docker",
+        "GitLab",
+        "Redmine"
+      ],
+      "demoUrl": null,
+      "repoUrls": [],
+      "posterUrl": null,
+      "videoUrl": null,
+      "published": true,
+      "sortIndex": 0,
+      "experienceId": "skg-engineer",
+      "educationId": null,
+      "kind": "work",
+      "featured": false,
+      "featuredOrder": null,
+      "roles": ["pm"],
+      "teamSize": "3 → 6",
+      "links": []
+    },
+    {
+      "experienceId": null,
+      "educationId": "fpt-university",
+      "kind": "university",
+      "featured": true,
+      "featuredOrder": 1,
+      "roles": [],
+      "teamSize": null,
+      "links": [],
       "id": "siteplus",
       "title": "SitePlus",
       "role": {
@@ -504,6 +314,87 @@
       "sortIndex": 0
     },
     {
+      "id": "skg-flexybox-p2",
+      "title": "FlexyBox Phase 2",
+      "role": {
+        "en": "Software Engineer, acting Project Manager / Tech Lead",
+        "ja": "ソフトウェアエンジニア(プロジェクトマネージャー / テックリード代行)",
+        "vi": "Kỹ sư phần mềm, kiêm Project Manager / Tech Lead"
+      },
+      "start": "2026-03",
+      "end": "2026-09",
+      "summary": {
+        "en": "Extended the FlexyBox smart-locker system into a multi-tenant platform. Each tenant turns the sales, rental and gacha modules on or off and manages its own lockers in a separate admin console.",
+        "ja": "スマートロッカーシステムFlexyBoxをマルチテナントのプラットフォームに拡張しました。テナントごとに販売・レンタル・ガチャのモジュールを選んで組み合わせ、専用の管理画面で自社のロッカーを管理できます。",
+        "vi": "Mở rộng hệ thống smart locker FlexyBox thành nền tảng multi-tenant. Mỗi tenant bật/tắt các module sales, rental, gacha và tự quản lý chuỗi locker của mình trên admin console riêng."
+      },
+      "caseStudy": {
+        "problem": {
+          "en": "Each tenant needed to run its own locker chain: IoT status for every locker, products and prices per locker, end-user usage history and audit logs, its own accounts and users, and LINE messages on rental, return and login, with payments through fincode.",
+          "ja": "テナントごとに自社のロッカーチェーンを運用できる必要がありました。各ロッカーのIoT状態の監視、ロッカー単位の商品と価格、エンドユーザーの利用履歴と操作ログ、テナント専用のアカウントとユーザー、レンタル・返却・ログイン時のLINE通知、fincodeによる決済が対象です。",
+          "vi": "Mỗi tenant cần tự vận hành chuỗi locker của mình: giám sát trạng thái IoT của từng locker, sản phẩm và giá theo từng locker, lịch sử sử dụng của end user và audit log, tài khoản và user riêng, gửi LINE message khi thuê, trả và đăng nhập, thanh toán qua fincode."
+        },
+        "role": {
+          "en": "Acting Project Manager / Tech Lead. Wrote estimates by phase, by new feature and for SKG's own proposals; wrote basic and detailed design documents and proposals; gathered and defined requirements with the client; solved technical problems for the team; reviewed code; mentored 3 interns (2 developers, 1 tester).",
+          "ja": "プロジェクトマネージャー / テックリード代行として担当しました。フェーズ別、新機能別、SKGからの提案別に見積もりを作成し、基本設計書・詳細設計書・提案書を作成しました。お客様との要件ヒアリングと要件定義、チームの技術課題の解決、コードレビューを行い、インターン3名(開発2名、テスター1名)の指導も担当しました。",
+          "vi": "Đảm nhận vai trò Project Manager / Tech Lead. Viết nhiều bản estimate theo phase, theo tính năng mới và theo đề xuất của SKG; viết tài liệu thiết kế cơ bản, chi tiết và đề xuất; lấy và định nghĩa yêu cầu với khách; giải quyết vấn đề kỹ thuật cho team; review code; mentor 3 intern (2 dev, 1 tester)."
+        },
+        "decisions": {
+          "en": "Sized the team for each phase from the estimate, the effort agreed with the client, the target release date and priority: up to 8 people, then 5 from May 2026. Released to production by phase and by feature, with a version check and risk review before each release. Locker status comes from AWS IoT Core, and LINE message content and settings can be edited from the admin console.",
+          "ja": "フェーズごとの見積もり、お客様と合意した工数、希望リリース日、優先度をもとにチーム規模を調整しました。最大8名で、2026年5月からは5名です。本番リリースはフェーズ・機能単位で行い、リリース前にバージョン確認とリスク管理を行いました。ロッカーの状態はAWS IoT Coreで取得し、LINEメッセージの内容や設定は管理画面から変更できるようにしました。",
+          "vi": "Điều chỉnh quy mô team theo estimate từng phase, effort đã chốt với khách, ngày release mong muốn và độ ưu tiên: tối đa 8 người, từ tháng 5/2026 còn 5 người. Release production theo phase và theo tính năng, kiểm tra version và quản lý rủi ro trước mỗi lần release. Trạng thái locker lấy qua AWS IoT Core; nội dung và setting LINE message chỉnh được ngay trên admin console."
+        },
+        "result": {
+          "en": "Bugs found in UAT were handled in time by the team on duty, with no impact on the client. Each release was followed by a lessons-learned review and process improvements.",
+          "ja": "UATで見つかったバグは担当チームが期限内に対応し、お客様への影響はありませんでした。リリースのたびに振り返りを行い、プロセスを改善しました。",
+          "vi": "Bug phát sinh ở UAT được team trực xử lý kịp thời, không ảnh hưởng tới khách. Sau mỗi lần release đều rút kinh nghiệm và cải tiến quy trình."
+        }
+      },
+      "tech": [
+        "TypeScript",
+        "Node.js",
+        "Next.js",
+        "React",
+        "Tailwind CSS",
+        "shadcn/ui",
+        "DynamoDB",
+        "AWS Lambda",
+        "API Gateway",
+        "Amazon S3",
+        "AWS IoT Core",
+        "Amazon SES",
+        "AWS Amplify",
+        "AWS SAM",
+        "fincode",
+        "LINE LIFF",
+        "GitLab",
+        "Backlog",
+        "Redmine"
+      ],
+      "demoUrl": null,
+      "repoUrls": [],
+      "posterUrl": null,
+      "videoUrl": null,
+      "published": true,
+      "sortIndex": 1,
+      "experienceId": "skg-engineer",
+      "educationId": null,
+      "kind": "work",
+      "featured": false,
+      "featuredOrder": null,
+      "roles": ["techlead", "pm"],
+      "teamSize": "8 → 5",
+      "links": []
+    },
+    {
+      "experienceId": null,
+      "educationId": "fpt-university",
+      "kind": "university",
+      "featured": true,
+      "featuredOrder": 2,
+      "roles": ["fullstack"],
+      "teamSize": null,
+      "links": [],
       "id": "zodiacgems",
       "title": "ZodiacGems",
       "role": {
@@ -539,6 +430,75 @@
       "sortIndex": 1
     },
     {
+      "id": "skg-coa",
+      "title": "COA (Certificate of Analysis system)",
+      "role": {
+        "en": "Software Engineer, Tech Lead / Developer",
+        "ja": "ソフトウェアエンジニア(テックリード / 開発)",
+        "vi": "Kỹ sư phần mềm, Tech Lead / Developer"
+      },
+      "start": "2025-10",
+      "end": "2026-03",
+      "summary": {
+        "en": "System for issuing Certificates of Analysis, with a 3-level role-based approval workflow. At the final approval it generates the COA PDF from 6 templates and sends it by email.",
+        "ja": "分析証明書(COA)の発行システムです。ロール別の3段階承認ワークフローがあり、最終承認の時点で6種類のテンプレートからCOAのPDFを自動生成し、メールで送信します。",
+        "vi": "Hệ thống phát hành Certificate of Analysis với workflow phê duyệt 3 cấp theo role. Đến bước phê duyệt cuối, hệ thống tự sinh PDF COA (6 mẫu) và gửi email."
+      },
+      "caseStudy": {
+        "problem": {
+          "en": "Every COA had to pass 3 approval levels by role before it was issued, and the final step had to produce the right PDF out of 6 templates and email it.",
+          "ja": "COAは発行前にロール別の3段階承認を通す必要があり、最終段階では6種類のテンプレートから正しいPDFを生成してメールで送る必要がありました。",
+          "vi": "Mỗi COA phải qua 3 cấp phê duyệt theo role trước khi phát hành, và bước cuối phải sinh đúng PDF trong 6 mẫu rồi gửi email."
+        },
+        "role": {
+          "en": "Tech Lead / Developer in a team of 4. Built about 9–10 API endpoints and about 6 main screens. Supported estimates and progress tracking, and proposed and explained solutions in client meetings under the PM's guidance.",
+          "ja": "4名のチームでテックリード / 開発を担当しました。約9〜10本のAPIエンドポイントと約6つの主要画面を開発しました。PMの指導のもとで見積もりと進捗管理を支援し、お客様との会議で提案や説明を行いました。",
+          "vi": "Tech Lead / Developer trong team 4 người. Làm khoảng 9–10 API endpoint và khoảng 6 màn hình chính. Hỗ trợ estimate và quản lý tiến độ, đề xuất và giải thích trong họp với khách dưới sự hướng dẫn của PM."
+        },
+        "decisions": {
+          "en": "Built the APIs in C# .NET 8 with ASP.NET Core Web API and Dapper on Oracle, and the screens in Biz/Designer DT. Designed the Oracle schema. Worked inside the client's environment through AWS WorkSpaces, where source was managed by manual merges and diff checks.",
+          "ja": "APIはC# .NET 8(ASP.NET Core Web API、Dapper)とOracleで、画面はBiz/Designer DTで開発しました。Oracleのスキーマも設計しました。開発はAWS WorkSpaces経由でお客様の環境内で行い、ソースは手動マージと差分比較で管理しました。",
+          "vi": "Làm API bằng C# .NET 8 (ASP.NET Core Web API, Dapper) trên Oracle, màn hình bằng Biz/Designer DT. Thiết kế schema Oracle. Code trong môi trường của khách qua AWS WorkSpaces, quản lý source bằng merge tay và so sánh diff."
+        },
+        "result": {
+          "en": "Wrote and ran about 300 unit test cases. UAT found about 10–20 bugs across all releases combined.",
+          "ja": "約300件の単体テストケースを作成・実施しました。UATで検出されたバグは、全リリース合計で約10〜20件でした。",
+          "vi": "Viết và chạy khoảng 300 unit test case. Bug ở UAT khoảng 10–20 trên tổng tất cả các lần release."
+        }
+      },
+      "tech": [
+        "C#",
+        ".NET 8",
+        "ASP.NET Core Web API",
+        "Dapper",
+        "Oracle",
+        "Biz/Designer DT",
+        "AWS WorkSpaces"
+      ],
+      "demoUrl": null,
+      "repoUrls": [],
+      "posterUrl": null,
+      "videoUrl": null,
+      "published": true,
+      "sortIndex": 2,
+      "experienceId": "skg-engineer",
+      "educationId": null,
+      "kind": "work",
+      "featured": false,
+      "featuredOrder": null,
+      "roles": ["fullstack", "techlead"],
+      "teamSize": "4",
+      "links": []
+    },
+    {
+      "experienceId": null,
+      "educationId": "fpt-university",
+      "kind": "university",
+      "featured": true,
+      "featuredOrder": 3,
+      "roles": ["fullstack"],
+      "teamSize": null,
+      "links": [],
       "id": "meet-my-lecturer",
       "title": "Meet My Lecturer",
       "role": {
@@ -569,6 +529,130 @@
       "videoUrl": null,
       "published": true,
       "sortIndex": 2
+    },
+    {
+      "id": "skg-flexybox-p1",
+      "title": "FlexyBox Phase 1",
+      "role": {
+        "en": "Software Engineer, acting Project Manager / Full-stack",
+        "ja": "ソフトウェアエンジニア(プロジェクトマネージャー代行 / フルスタック)",
+        "vi": "Kỹ sư phần mềm, kiêm Project Manager / Full-stack"
+      },
+      "start": "2025-09",
+      "end": "2025-10",
+      "summary": {
+        "en": "Sales system for a smart locker with 9 doors: the user picks a product and pays, and the door opens once payment succeeds. Includes admin screens for the tenant admin.",
+        "ja": "9扉のスマートロッカーで商品を販売するシステムです。商品を選んで支払い、決済が完了すると扉が開きます。テナント管理者向けの管理画面もあります。",
+        "vi": "Hệ thống bán hàng qua smart locker 9 ngăn: chọn sản phẩm, thanh toán, thanh toán thành công thì mở ngăn. Kèm màn hình quản trị cho tenant admin."
+      },
+      "caseStudy": {
+        "problem": {
+          "en": "The client wanted to sell products through a smart locker and try it in real use before taking it to market.",
+          "ja": "お客様はスマートロッカーで商品を販売し、商用化の前に実環境で試したいと考えていました。",
+          "vi": "Khách hàng muốn bán sản phẩm qua smart locker và chạy thử thực tế trước khi thương mại hóa."
+        },
+        "role": {
+          "en": "Acting Project Manager / Full-stack in a team of 2, and the author of all Phase 1 code. Wrote basic and detailed design documents, proposals and estimates, and presented in regular meetings with an IT comtor.",
+          "ja": "2名のチームでプロジェクトマネージャー代行 / フルスタックを担当し、Phase 1のコードはすべて自分で書きました。基本設計書・詳細設計書・提案書・見積もりを作成し、定例会議ではITコミュニケーターと一緒に説明しました。",
+          "vi": "Project Manager / Full-stack trong team 2 người, tự viết toàn bộ code Phase 1. Viết tài liệu thiết kế cơ bản, chi tiết, đề xuất và estimate; trình bày trong họp định kỳ cùng IT comtor."
+        },
+        "decisions": {
+          "en": "Serverless API on AWS SAM, Lambda, API Gateway and DynamoDB, with the table and GSI design. fincode payment integration with webhooks, an API to open the locker, and purchase and admin screens in Next.js. Worked to a self-made schedule.",
+          "ja": "AWS SAM、Lambda、API Gateway、DynamoDBによるサーバーレスAPIを構築し、テーブルとGSIを設計しました。fincode決済とWebhookの連携、ロッカー解錠API、Next.jsによる購入画面と管理画面を開発しました。スケジュールは自分で作成しました。",
+          "vi": "API serverless trên AWS SAM, Lambda, API Gateway và DynamoDB (thiết kế table và GSI). Tích hợp thanh toán fincode và webhook, API mở locker, màn hình mua hàng và quản trị bằng Next.js. Làm theo schedule tự lập."
+        },
+        "result": {
+          "en": "Delivered on time, with several items ahead of schedule. Went into a real-world pilot with 1 tenant and 2 lockers, the gate before commercial launch.",
+          "ja": "期限どおりに納品し、いくつかの項目は前倒しで完了しました。商用化前の関門として、1テナント・2台のロッカーで実環境での試験運用に入りました。",
+          "vi": "Giao đúng hạn, nhiều hạng mục xong trước hạn. Đưa vào chạy thử thực tế với 1 tenant và 2 locker, làm cửa ải trước khi thương mại hóa."
+        }
+      },
+      "tech": [
+        "TypeScript",
+        "Next.js",
+        "AWS SAM",
+        "AWS Lambda",
+        "API Gateway",
+        "DynamoDB",
+        "fincode"
+      ],
+      "demoUrl": null,
+      "repoUrls": [],
+      "posterUrl": null,
+      "videoUrl": null,
+      "published": true,
+      "sortIndex": 3,
+      "experienceId": "skg-intern",
+      "educationId": null,
+      "kind": "work",
+      "featured": false,
+      "featuredOrder": null,
+      "roles": ["fullstack", "pm"],
+      "teamSize": "2",
+      "links": []
+    },
+    {
+      "id": "tongue-ai-driver-ms",
+      "title": "TONGUE-AI & Driver MS",
+      "role": {
+        "en": "Software Engineer Intern",
+        "ja": "ソフトウェアエンジニア(インターン)",
+        "vi": "Thực tập sinh Kỹ sư phần mềm"
+      },
+      "start": "2025-08",
+      "end": "2025-09",
+      "summary": {
+        "en": "Two client projects during the internship, each with a team of 4. TONGUE-AI is a mobile web app where AI analyses a tongue photo and questionnaire answers to assess disease risk. Driver MS digitises attendance, daily checks and work records for light-truck drivers.",
+        "ja": "インターン期間中に、それぞれ4名のチームでお客様向けプロジェクト2件に参加しました。TONGUE-AIは舌の写真と問診の回答をAIで分析し、病気の可能性を評価するモバイル向けWebアプリです。Driver MSは軽トラックドライバーの点呼、日常点検、業務記録をデジタル化するシステムです。",
+        "vi": "Hai dự án khách hàng trong thời gian thực tập, mỗi team 4 người. TONGUE-AI là web app trên mobile, dùng AI phân tích ảnh lưỡi và câu trả lời bảng hỏi để đánh giá khả năng mắc bệnh. Driver MS số hóa điểm danh, kiểm tra hằng ngày và ghi nhận công việc cho tài xế xe tải nhẹ."
+      },
+      "caseStudy": {
+        "problem": {
+          "en": "TONGUE-AI needed a mobile web flow for users plus a multi-tenant admin screen. Driver MS needed attendance, daily checks and work records for drivers in Japanese and English.",
+          "ja": "TONGUE-AIでは、ユーザー向けのモバイルWebの画面フローとマルチテナントの管理画面が必要でした。Driver MSでは、ドライバーの点呼、日常点検、業務記録を日本語と英語で扱う必要がありました。",
+          "vi": "TONGUE-AI cần luồng web trên mobile cho người dùng và màn hình quản trị multi-tenant. Driver MS cần điểm danh, kiểm tra hằng ngày và ghi nhận công việc cho tài xế bằng tiếng Nhật và tiếng Anh."
+        },
+        "role": {
+          "en": "Full-stack Developer. On TONGUE-AI: requirements analysis, sprint planning, UI/UX, the Next.js frontend, and test design and review. On Driver MS: frontend, Japanese/English localisation, Laravel API changes, change requests and bug fixes.",
+          "ja": "フルスタック開発者として参加しました。TONGUE-AIでは要件分析、スプリント計画、UI/UX、Next.jsのフロントエンド、テスト設計とレビューを担当しました。Driver MSではフロントエンド、日本語・英語の多言語対応、Laravel APIの修正、変更要求への対応とバグ修正を担当しました。",
+          "vi": "Full-stack Developer. Ở TONGUE-AI: phân tích yêu cầu, lập kế hoạch sprint, UI/UX, frontend Next.js, thiết kế và review test. Ở Driver MS: frontend, đa ngôn ngữ Nhật/Anh, sửa API Laravel, xử lý CR và sửa bug."
+        },
+        "decisions": {
+          "en": "Built the TONGUE-AI frontend in Next.js and TypeScript. On Driver MS, added Japanese/English support to the frontend and made changes to the existing Laravel API.",
+          "ja": "TONGUE-AIのフロントエンドはNext.jsとTypeScriptで開発しました。Driver MSでは、フロントエンドに日本語・英語対応を追加し、既存のLaravel APIを修正しました。",
+          "vi": "Làm frontend TONGUE-AI bằng Next.js và TypeScript. Ở Driver MS, thêm hỗ trợ tiếng Nhật/Anh cho frontend và sửa API Laravel có sẵn."
+        },
+        "result": {
+          "en": "Moved to a full-time Software Engineer role after the standard 2-month internship.",
+          "ja": "標準の2か月のインターン期間を経て、正社員のソフトウェアエンジニアになりました。",
+          "vi": "Lên nhân viên chính thức (Software Engineer) theo lộ trình thực tập chuẩn 2 tháng."
+        }
+      },
+      "tech": [
+        "TypeScript",
+        "PHP",
+        "Next.js",
+        "Laravel",
+        "SQL Server",
+        "MySQL",
+        "Docker",
+        "Swagger",
+        "Jira"
+      ],
+      "demoUrl": null,
+      "repoUrls": [],
+      "posterUrl": null,
+      "videoUrl": null,
+      "published": true,
+      "sortIndex": 4,
+      "experienceId": "skg-intern",
+      "educationId": null,
+      "kind": "work",
+      "featured": false,
+      "featuredOrder": null,
+      "roles": [],
+      "teamSize": "4",
+      "links": []
     }
   ],
   "skills": [
@@ -577,13 +661,14 @@
       "name": "TypeScript",
       "group": "languages",
       "sortIndex": 0,
-      "experienceIds": [
+      "experienceIds": [],
+      "projectIds": [
+        "siteplus",
         "skg-ai-agent",
         "skg-flexybox-p2",
         "skg-flexybox-p1",
-        "skg-intern"
-      ],
-      "projectIds": ["siteplus"]
+        "tongue-ai-driver-ms"
+      ]
     },
     {
       "id": "javascript",
@@ -598,16 +683,16 @@
       "name": "C#",
       "group": "languages",
       "sortIndex": 2,
-      "experienceIds": ["skg-coa"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-coa"]
     },
     {
       "id": "python",
       "name": "Python",
       "group": "languages",
       "sortIndex": 3,
-      "experienceIds": ["skg-ai-agent"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-ai-agent"]
     },
     {
       "id": "java",
@@ -630,57 +715,71 @@
       "name": "PHP",
       "group": "languages",
       "sortIndex": 6,
-      "experienceIds": ["skg-intern"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["tongue-ai-driver-ms"]
     },
     {
       "id": "sql",
       "name": "SQL",
       "group": "languages",
       "sortIndex": 7,
-      "experienceIds": ["skg-ai-agent", "skg-coa", "skg-intern"],
-      "projectIds": ["siteplus", "meet-my-lecturer"]
+      "experienceIds": [],
+      "projectIds": [
+        "siteplus",
+        "meet-my-lecturer",
+        "skg-ai-agent",
+        "skg-coa",
+        "tongue-ai-driver-ms"
+      ]
     },
-
     {
       "id": "nextjs",
       "name": "Next.js",
       "group": "frameworks",
       "sortIndex": 0,
-      "experienceIds": ["skg-flexybox-p2", "skg-flexybox-p1", "skg-intern"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": [
+        "skg-flexybox-p2",
+        "skg-flexybox-p1",
+        "tongue-ai-driver-ms"
+      ]
     },
     {
       "id": "react",
       "name": "React",
       "group": "frameworks",
       "sortIndex": 1,
-      "experienceIds": ["skg-ai-agent", "skg-flexybox-p2"],
-      "projectIds": ["siteplus", "zodiacgems"]
+      "experienceIds": [],
+      "projectIds": [
+        "siteplus",
+        "zodiacgems",
+        "skg-ai-agent",
+        "skg-flexybox-p2"
+      ]
     },
     {
       "id": "nodejs",
       "name": "Node.js",
       "group": "frameworks",
       "sortIndex": 2,
-      "experienceIds": ["skg-flexybox-p2"],
-      "projectIds": ["siteplus"]
+      "experienceIds": [],
+      "projectIds": ["siteplus", "skg-flexybox-p2"]
     },
     {
       "id": "aspnet-core",
       "name": "ASP.NET Core (.NET 8)",
       "group": "frameworks",
       "sortIndex": 3,
-      "experienceIds": ["skg-coa"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-coa"]
     },
     {
       "id": "fastapi",
       "name": "FastAPI",
       "group": "frameworks",
       "sortIndex": 4,
-      "experienceIds": ["skg-ai-agent"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-ai-agent"]
     },
     {
       "id": "flutter",
@@ -695,40 +794,45 @@
       "name": "Laravel",
       "group": "frameworks",
       "sortIndex": 6,
-      "experienceIds": ["skg-intern"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["tongue-ai-driver-ms"]
     },
     {
       "id": "tailwind-css",
       "name": "Tailwind CSS",
       "group": "frameworks",
       "sortIndex": 7,
-      "experienceIds": ["skg-ai-agent", "skg-flexybox-p2"],
-      "projectIds": ["siteplus", "zodiacgems"]
+      "experienceIds": [],
+      "projectIds": [
+        "siteplus",
+        "zodiacgems",
+        "skg-ai-agent",
+        "skg-flexybox-p2"
+      ]
     },
     {
       "id": "shadcn-ui",
       "name": "shadcn/ui",
       "group": "frameworks",
       "sortIndex": 8,
-      "experienceIds": ["skg-flexybox-p2"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-flexybox-p2"]
     },
     {
       "id": "dapper",
       "name": "Dapper",
       "group": "frameworks",
       "sortIndex": 9,
-      "experienceIds": ["skg-coa"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-coa"]
     },
     {
       "id": "biz-designer-dt",
       "name": "Biz/Designer DT",
       "group": "frameworks",
       "sortIndex": 10,
-      "experienceIds": ["skg-coa"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-coa"]
     },
     {
       "id": "framer-motion",
@@ -762,110 +866,109 @@
       "experienceIds": [],
       "projectIds": []
     },
-
     {
       "id": "aws-lambda",
       "name": "AWS Lambda",
       "group": "cloud",
       "sortIndex": 0,
-      "experienceIds": ["skg-ai-agent", "skg-flexybox-p2", "skg-flexybox-p1"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-ai-agent", "skg-flexybox-p2", "skg-flexybox-p1"]
     },
     {
       "id": "aws-api-gateway",
       "name": "API Gateway",
       "group": "cloud",
       "sortIndex": 1,
-      "experienceIds": ["skg-flexybox-p2", "skg-flexybox-p1"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-flexybox-p2", "skg-flexybox-p1"]
     },
     {
       "id": "aws-sam",
       "name": "AWS SAM",
       "group": "cloud",
       "sortIndex": 2,
-      "experienceIds": ["skg-flexybox-p2", "skg-flexybox-p1"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-flexybox-p2", "skg-flexybox-p1"]
     },
     {
       "id": "aws-iot-core",
       "name": "AWS IoT Core",
       "group": "cloud",
       "sortIndex": 3,
-      "experienceIds": ["skg-flexybox-p2"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-flexybox-p2"]
     },
     {
       "id": "aws-s3",
       "name": "Amazon S3",
       "group": "cloud",
       "sortIndex": 4,
-      "experienceIds": ["skg-ai-agent", "skg-flexybox-p2"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-ai-agent", "skg-flexybox-p2"]
     },
     {
       "id": "aws-ses",
       "name": "Amazon SES",
       "group": "cloud",
       "sortIndex": 5,
-      "experienceIds": ["skg-flexybox-p2"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-flexybox-p2"]
     },
     {
       "id": "aws-amplify",
       "name": "AWS Amplify",
       "group": "cloud",
       "sortIndex": 6,
-      "experienceIds": ["skg-flexybox-p2"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-flexybox-p2"]
     },
     {
       "id": "aws-rds",
       "name": "Amazon RDS",
       "group": "cloud",
       "sortIndex": 7,
-      "experienceIds": ["skg-ai-agent"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-ai-agent"]
     },
     {
       "id": "aws-cloudfront",
       "name": "CloudFront",
       "group": "cloud",
       "sortIndex": 8,
-      "experienceIds": ["skg-ai-agent"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-ai-agent"]
     },
     {
       "id": "aws-waf",
       "name": "AWS WAF",
       "group": "cloud",
       "sortIndex": 9,
-      "experienceIds": ["skg-ai-agent"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-ai-agent"]
     },
     {
       "id": "terraform",
       "name": "Terraform",
       "group": "cloud",
       "sortIndex": 10,
-      "experienceIds": ["skg-ai-agent"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-ai-agent"]
     },
     {
       "id": "docker",
       "name": "Docker",
       "group": "cloud",
       "sortIndex": 11,
-      "experienceIds": ["skg-ai-agent", "skg-intern"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-ai-agent", "tongue-ai-driver-ms"]
     },
     {
       "id": "gitlab",
       "name": "GitLab",
       "group": "cloud",
       "sortIndex": 12,
-      "experienceIds": ["skg-ai-agent", "skg-flexybox-p2"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-ai-agent", "skg-flexybox-p2"]
     },
     {
       "id": "github",
@@ -875,79 +978,82 @@
       "experienceIds": [],
       "projectIds": ["siteplus", "zodiacgems", "meet-my-lecturer"]
     },
-
     {
       "id": "openai-agents-sdk",
       "name": "OpenAI Agents SDK",
       "group": "ai",
       "sortIndex": 0,
-      "experienceIds": ["skg-ai-agent"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-ai-agent"]
     },
     {
       "id": "litellm",
       "name": "LiteLLM",
       "group": "ai",
       "sortIndex": 1,
-      "experienceIds": ["skg-ai-agent"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-ai-agent"]
     },
     {
       "id": "mcp",
       "name": "MCP",
       "group": "ai",
       "sortIndex": 2,
-      "experienceIds": ["skg-ai-agent"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-ai-agent"]
     },
     {
       "id": "ollama",
       "name": "Ollama",
       "group": "ai",
       "sortIndex": 3,
-      "experienceIds": ["skg-ai-agent"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-ai-agent"]
     },
     {
       "id": "vllm",
       "name": "vLLM",
       "group": "ai",
       "sortIndex": 4,
-      "experienceIds": ["skg-ai-agent"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-ai-agent"]
     },
-
     {
       "id": "postgresql",
       "name": "PostgreSQL",
       "group": "databases",
       "sortIndex": 0,
-      "experienceIds": ["skg-ai-agent"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-ai-agent"]
     },
     {
       "id": "oracle",
       "name": "Oracle",
       "group": "databases",
       "sortIndex": 1,
-      "experienceIds": ["skg-coa"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-coa"]
     },
     {
       "id": "sql-server",
       "name": "SQL Server",
       "group": "databases",
       "sortIndex": 2,
-      "experienceIds": ["skg-intern"],
-      "projectIds": ["siteplus", "zodiacgems", "meet-my-lecturer"]
+      "experienceIds": [],
+      "projectIds": [
+        "siteplus",
+        "zodiacgems",
+        "meet-my-lecturer",
+        "tongue-ai-driver-ms"
+      ]
     },
     {
       "id": "mysql",
       "name": "MySQL",
       "group": "databases",
       "sortIndex": 3,
-      "experienceIds": ["skg-intern"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["tongue-ai-driver-ms"]
     },
     {
       "id": "mongodb",
@@ -962,113 +1068,106 @@
       "name": "DynamoDB",
       "group": "databases",
       "sortIndex": 5,
-      "experienceIds": ["skg-flexybox-p2", "skg-flexybox-p1"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-flexybox-p2", "skg-flexybox-p1"]
     },
-
     {
       "id": "estimation",
       "name": "Estimation",
       "group": "delivery",
       "sortIndex": 0,
-      "experienceIds": [
+      "experienceIds": [],
+      "projectIds": [
         "skg-ai-agent",
         "skg-flexybox-p2",
         "skg-coa",
         "skg-flexybox-p1"
-      ],
-      "projectIds": []
+      ]
     },
     {
       "id": "scheduling",
       "name": "Scheduling",
       "group": "delivery",
       "sortIndex": 1,
-      "experienceIds": ["skg-ai-agent", "skg-flexybox-p1"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-ai-agent", "skg-flexybox-p1"]
     },
     {
       "id": "risk-release-management",
       "name": "Risk and release management",
       "group": "delivery",
       "sortIndex": 2,
-      "experienceIds": ["skg-flexybox-p2"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-flexybox-p2"]
     },
     {
       "id": "requirements-definition",
       "name": "Requirements definition",
       "group": "delivery",
       "sortIndex": 3,
-      "experienceIds": [
-        "skg-ai-agent",
-        "skg-flexybox-p2",
-        "skg-intern",
-        "fpt-japan"
-      ],
-      "projectIds": []
+      "experienceIds": ["fpt-japan"],
+      "projectIds": ["skg-ai-agent", "skg-flexybox-p2", "tongue-ai-driver-ms"]
     },
     {
       "id": "design-documents",
       "name": "Basic and detailed design documents",
       "group": "delivery",
       "sortIndex": 4,
-      "experienceIds": ["skg-ai-agent", "skg-flexybox-p2", "skg-flexybox-p1"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-ai-agent", "skg-flexybox-p2", "skg-flexybox-p1"]
     },
     {
       "id": "proposals",
       "name": "Proposals",
       "group": "delivery",
       "sortIndex": 5,
-      "experienceIds": [
+      "experienceIds": [],
+      "projectIds": [
         "skg-ai-agent",
         "skg-flexybox-p2",
         "skg-coa",
         "skg-flexybox-p1"
-      ],
-      "projectIds": []
+      ]
     },
     {
       "id": "uat-review",
       "name": "UAT review",
       "group": "delivery",
       "sortIndex": 6,
-      "experienceIds": ["skg-ai-agent"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-ai-agent"]
     },
     {
       "id": "redmine",
       "name": "Redmine",
       "group": "delivery",
       "sortIndex": 7,
-      "experienceIds": ["skg-ai-agent", "skg-flexybox-p2"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-ai-agent", "skg-flexybox-p2"]
     },
     {
       "id": "backlog",
       "name": "Backlog",
       "group": "delivery",
       "sortIndex": 8,
-      "experienceIds": ["skg-flexybox-p2"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-flexybox-p2"]
     },
     {
       "id": "jira",
       "name": "Jira",
       "group": "delivery",
       "sortIndex": 9,
-      "experienceIds": ["skg-intern"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["tongue-ai-driver-ms"]
     },
-
     {
       "id": "unit-testing",
       "name": "Unit test specs and execution",
       "group": "testing",
       "sortIndex": 0,
-      "experienceIds": ["skg-coa"],
-      "projectIds": []
+      "experienceIds": [],
+      "projectIds": ["skg-coa"]
     },
     {
       "id": "jest",
@@ -1110,7 +1209,6 @@
       "experienceIds": [],
       "projectIds": []
     },
-
     {
       "id": "figma",
       "name": "Figma",
@@ -1452,7 +1550,7 @@
         "vi": "Trực tiếp tham gia họp định kỳ với khách Nhật bằng tiếng Nhật, có IT comtor hỗ trợ: lấy và định nghĩa yêu cầu, viết tài liệu thiết kế và đề xuất."
       },
       "colors": ["#118AB2", "#5AC8E3"],
-      "evidenceLink": "#exp-skg-flexybox-p2",
+      "evidenceLink": "#tree-skg-flexybox-p2",
       "stat": {
         "value": 6,
         "label": {
@@ -1486,7 +1584,7 @@
         "vi": "Tự viết toàn bộ code Phase 1: API serverless trên AWS, thanh toán fincode và webhook, API mở locker và các màn hình Next.js. Hệ thống được đưa vào chạy thử thực tế với 1 tenant và 2 locker."
       },
       "colors": ["#fb923c", "#f97316"],
-      "evidenceLink": "#exp-skg-flexybox-p1",
+      "evidenceLink": "#tree-skg-flexybox-p1",
       "stat": {
         "value": 2,
         "label": {
@@ -1520,7 +1618,7 @@
         "vi": "Điều phối song song FlexyBox Phase 2 và AI Agent: estimate, lập lịch và họp với khách cho cả hai dự án, với team từ 3 đến 8 người."
       },
       "colors": ["#118AB2", "#5AC8E3"],
-      "evidenceLink": "#exp-skg-ai-agent",
+      "evidenceLink": "#tree-skg-ai-agent",
       "stat": {
         "value": 2,
         "label": {

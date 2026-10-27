@@ -4,7 +4,8 @@ import { NextIntlClientProvider } from "next-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "@/messages/en.json";
 import ja from "@/messages/ja.json";
-import seed from "@/content/seed.json";
+// Content as before the experience tree migration, until this test moves to the new model.
+import seed from "../fixtures/seed-before-experience-tree.json";
 import { contentSchema, type Content, type Locale } from "@/content/schema";
 import { stubIntersectionObserver } from "../helpers/io-stub";
 

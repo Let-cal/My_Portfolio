@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { contentSchema, SKILL_GROUPS } from "@/content/schema";
-import seed from "@/content/seed.json";
+// Content as before the experience tree migration, until this test moves to the new model.
+import seed from "../fixtures/seed-before-experience-tree.json";
 import { orderExperiences, orderSkillGroups, parseRole } from "@/lib/roles";
 
 const content = contentSchema.parse(seed);

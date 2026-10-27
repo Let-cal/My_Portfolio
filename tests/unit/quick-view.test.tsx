@@ -5,7 +5,8 @@ import { Activity } from "react";
 import { NextIntlClientProvider } from "next-intl";
 import { describe, expect, it, vi } from "vitest";
 import { contentSchema, type Locale, type RoleKey } from "@/content/schema";
-import seed from "@/content/seed.json";
+// Content as before the experience tree migration, until this test moves to the new model.
+import seed from "../fixtures/seed-before-experience-tree.json";
 import en from "@/messages/en.json";
 import ja from "@/messages/ja.json";
 import vi_ from "@/messages/vi.json";

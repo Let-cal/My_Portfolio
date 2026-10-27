@@ -1,7 +1,10 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { contentSchema } from "@/content/schema";
 import seed from "@/content/seed.json";
+import en from "@/messages/en.json";
+import ja from "@/messages/ja.json";
+import vi from "@/messages/vi.json";
 import { TABLES, type Table, type TableName } from "@/lib/data/columns";
 import {
   renderSchemaSql,
@@ -203,6 +206,103 @@ describe("admin realtime", () => {
       "utf8",
     ).replace(/\r\n/g, "\n");
     expect(migration).toContain(REALTIME_SQL);
+  });
+});
+
+describe("experience tree migration", () => {
+  const read = (path: string) =>
+    readFileSync(path, "utf8").replace(/\r\n/g, "\n");
+  const file = readdirSync("supabase/migrations").find((f) =>
+    /^\d{14}_experience_tree_projects\.sql$/.test(f),
+  );
+  const sql = file ? read(`supabase/migrations/${file}`) : "";
+  const ROLLBACK = "docs/experience-tree-rollback.sql";
+  const rollback = existsSync(ROLLBACK) ? read(ROLLBACK) : "";
+  const NEW_COLUMNS = [
+    "experience_id",
+    "education_id",
+    "kind",
+    "featured",
+    "featured_order",
+    "roles",
+    "team_size",
+    "links",
+  ];
+  const MOVED = `('skg-ai-agent', 'skg-flexybox-p2', 'skg-coa', 'skg-flexybox-p1')`;
+
+  it("migration adds columns and check, moves five rows, rewrites why cards", () => {
+    expect(file, "CLI-style migration file").toBeTruthy();
+    // Columns and the kind/link check exactly as columns.ts declares them.
+    for (const col of TABLES.projects.columns.filter((c) =>
+      NEW_COLUMNS.includes(c.name),
+    )) {
+      const def = [
+        `${col.name} ${col.type}`,
+        col.nullable ? "" : " not null",
+        col.default ? ` default ${col.default}` : "",
+        col.constraint ? ` ${col.constraint}` : "",
+      ].join("");
+      expect(sql).toContain(`add column ${def}`);
+    }
+    expect(sql).toContain(`add ${TABLES.projects.tableConstraints[0]}`);
+    // The new stint exists before projects point at it; the internship content is copied
+    // to its project before the row turns into the stint.
+    const engineer = sql.indexOf("insert into public.experiences");
+    const copy = sql.indexOf("insert into public.projects");
+    const convert = sql.indexOf("update public.experiences");
+    const relink = sql.indexOf("update public.skill_links");
+    const remove = sql.indexOf(
+      `delete from public.experiences where id in ${MOVED};`,
+    );
+    expect(engineer).toBeGreaterThan(-1);
+    expect(copy).toBeGreaterThan(engineer);
+    expect(convert).toBeGreaterThan(copy);
+    // Links move before the delete, which would otherwise cascade them away.
+    expect(relink).toBeGreaterThan(copy);
+    expect(remove).toBeGreaterThan(relink);
+    expect(sql).toContain(
+      `where e.id in ('skg-ai-agent', 'skg-flexybox-p2', 'skg-coa', 'skg-flexybox-p1', 'skg-intern')`,
+    );
+    expect(sql).toContain("'tongue-ai-driver-ms'");
+    expect(sql).toContain("update public.why_cards");
+    expect(sql).toContain("'#tree-'");
+    expect(sql).toContain("update public.roles");
+    // The converted internship row is never deleted.
+    expect(sql).not.toMatch(/delete from public\.experiences[^;]*skg-intern/);
+  });
+
+  it("stint titles come from the experience messages", () => {
+    for (const key of ["skgIntern", "skgEngineer"] as const) {
+      const titles = {
+        en: en.experience[key],
+        ja: ja.experience[key],
+        vi: vi.experience[key],
+      };
+      expect(sql).toContain(`'${JSON.stringify(titles)}'::jsonb`);
+    }
+  });
+
+  it("rollback restores the rows and drops what the migration added", () => {
+    expect(rollback).toMatch(/^begin;$/m);
+    expect(rollback).toMatch(/^commit;$/m);
+    for (const name of NEW_COLUMNS)
+      expect(rollback).toContain(`drop column ${name}`);
+    expect(rollback).toContain("drop constraint projects_kind_matches_link");
+    expect(rollback).toContain("insert into public.experiences");
+    expect(rollback).toContain("update public.skill_links");
+    expect(rollback).toContain("update public.why_cards");
+    expect(rollback).toContain("update public.roles");
+    expect(rollback).toContain(
+      "delete from public.experiences where id = 'skg-engineer';",
+    );
+    expect(rollback).toContain("drop table private.experience_tree_backup;");
+    // Experiences come back before links point at them again, and projects go before columns.
+    expect(rollback.indexOf("insert into public.experiences")).toBeLessThan(
+      rollback.indexOf("update public.skill_links"),
+    );
+    expect(rollback.indexOf("delete from public.projects")).toBeLessThan(
+      rollback.indexOf("drop column"),
+    );
   });
 });
 

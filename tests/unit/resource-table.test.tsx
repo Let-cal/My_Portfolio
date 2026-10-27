@@ -1,7 +1,8 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { contentSchema } from "@/content/schema";
-import seed from "@/content/seed.json";
+// Content as before the experience tree migration, until this test moves to the new model.
+import seed from "../fixtures/seed-before-experience-tree.json";
 import { listRows } from "@/lib/admin/list-view";
 
 const push = vi.fn();
