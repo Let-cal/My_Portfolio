@@ -10,6 +10,7 @@ import {
   renderSchemaSql,
   VERSIONED_TABLES,
   REALTIME_SQL,
+  RESTORE_BARRIERS_SQL,
   REVIEWER_SQL,
   VERSIONS_SECURITY_SQL,
   VERSIONS_SQL,
@@ -302,6 +303,104 @@ describe("experience tree migration", () => {
     );
     expect(rollback.indexOf("delete from public.projects")).toBeLessThan(
       rollback.indexOf("drop column"),
+    );
+  });
+});
+
+describe("version restore after the experience tree migration", () => {
+  const file = readdirSync("supabase/migrations").find((f) =>
+    /^\d{14}_experience_tree_projects\.sql$/.test(f),
+  );
+  const read = (path: string) =>
+    readFileSync(path, "utf8").replace(/\r\n/g, "\n");
+  const sql = file ? read(`supabase/migrations/${file}`) : "";
+  const rollback = read("docs/experience-tree-rollback.sql");
+  const fn = RESTORE_BARRIERS_SQL.slice(
+    RESTORE_BARRIERS_SQL.indexOf(
+      "create or replace function public.admin_restore_version",
+    ),
+  );
+
+  it("the migration is exactly the restore section, and the schema includes it", () => {
+    expect(sql).toContain(RESTORE_BARRIERS_SQL);
+    expect(renderSchemaSql()).toContain(RESTORE_BARRIERS_SQL);
+  });
+
+  it("stays admin-only with the caller's rights", () => {
+    expect(fn).toMatch(
+      /language plpgsql security invoker set search_path = ''/,
+    );
+    const guard = fn.indexOf("if not private.is_admin() then");
+    expect(guard).toBeGreaterThan(-1);
+    expect(guard).toBeLessThan(fn.indexOf("private.content_versions where"));
+    expect(fn).not.toContain("is_reviewer");
+    expect(RESTORE_BARRIERS_SQL).toContain(
+      "revoke execute on function public.admin_restore_version(bigint) from public, anon;",
+    );
+    expect(RESTORE_BARRIERS_SQL).toContain(
+      'create policy "restore_barriers_admin_read" on private.restore_barriers for select to authenticated using (private.is_admin());',
+    );
+    expect(RESTORE_BARRIERS_SQL).toContain(
+      "revoke all on private.restore_barriers from public, anon, authenticated;",
+    );
+  });
+
+  it("fills keys an old row lacks from the current row, else the column defaults", () => {
+    expect(fn).toContain(
+      "execute format('select to_jsonb(t) from public.%1$I t where t.%2$I = $1', v.table_name, pk)",
+    );
+    expect(fn).toContain("pg_catalog.pg_get_expr(d.adbin, d.adrelid)");
+    expect(fn).toContain("fill := fill || v.old_row;");
+    expect(fn.match(/using fill;/g)).toHaveLength(2);
+    expect(fn).not.toContain("using v.old_row");
+    // Restoring an edit still keeps the current position.
+    expect(fn).toContain("c.column_name <> 'sort_index'");
+  });
+
+  it("refuses versions behind a barrier before writing anything", () => {
+    const barrier = fn.indexOf("from private.restore_barriers b");
+    expect(barrier).toBeGreaterThan(-1);
+    expect(barrier).toBeLessThan(fn.indexOf("execute format("));
+    expect(fn).toContain("v.id <= b.last_version_id");
+    // Barriers cover the five moved rows, up to the versions the migration itself wrote.
+    const insert = sql.indexOf("insert into private.restore_barriers");
+    expect(insert).toBeGreaterThan(
+      sql.indexOf("delete from public.experiences where id in"),
+    );
+    for (const id of [
+      "skg-ai-agent",
+      "skg-flexybox-p2",
+      "skg-coa",
+      "skg-flexybox-p1",
+      "skg-intern",
+    ])
+      expect(sql.slice(insert)).toContain(`('${id}', '`);
+    expect(sql.slice(insert)).toContain(
+      "max(id) as last_id from private.content_versions",
+    );
+  });
+
+  it("numbers the moved projects after the existing ones; the rollback puts the old numbers back", () => {
+    expect(sql).toContain(
+      "(select coalesce(max(sort_index), -1) from public.projects) + row_number() over (order by e.sort_index, e.id)",
+    );
+    expect(rollback).toContain(
+      "prev.sort_index, prev.created_at, prev.updated_at",
+    );
+    expect(rollback).toContain("sort_index = prev.sort_index");
+  });
+
+  it("the rollback puts the previous restore function back and drops the barriers", () => {
+    const start = VERSIONS_SQL.indexOf(
+      "create or replace function public.admin_restore_version",
+    );
+    const original = VERSIONS_SQL.slice(
+      start,
+      VERSIONS_SQL.indexOf("\n$$;", start) + 4,
+    ).replace("security definer", "security invoker");
+    expect(rollback).toContain(original);
+    expect(rollback.indexOf(original)).toBeLessThan(
+      rollback.indexOf("drop table private.restore_barriers;"),
     );
   });
 });

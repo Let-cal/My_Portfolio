@@ -471,3 +471,95 @@ end;
 $$;
 
 create policy "reviewer_content_receive" on realtime.messages for select to authenticated using (realtime.topic() = 'admin:content' and private.is_reviewer());
+
+-- Restore barriers: versions of an item up to last_version_id cannot be restored (its content moved).
+create table private.restore_barriers (
+  table_name text not null,
+  item_key text not null,
+  last_version_id bigint not null,
+  reason text not null,
+  primary key (table_name, item_key)
+);
+alter table private.restore_barriers enable row level security;
+revoke all on private.restore_barriers from public, anon, authenticated;
+grant select on private.restore_barriers to authenticated;
+create policy "restore_barriers_admin_read" on private.restore_barriers for select to authenticated using (private.is_admin());
+
+-- Restore as before; an old row missing a newer column keeps the current value or takes the default.
+create or replace function public.admin_restore_version(p_version_id bigint) returns void
+language plpgsql security invoker set search_path = '' as $$
+declare
+  v private.content_versions;
+  pk text;
+  cols text;
+  sets text;
+  default_list text;
+  fill jsonb;
+  barrier_reason text;
+  link private.content_versions;
+begin
+  if not private.is_admin() then
+    raise exception 'not allowed' using errcode = '42501';
+  end if;
+  select * into v from private.content_versions where content_versions.id = p_version_id;
+  if not found then
+    raise exception 'version % not found', p_version_id;
+  end if;
+  if v.table_name not in ('profile', 'roles', 'experiences', 'projects', 'skills', 'skill_links', 'certificates', 'activities', 'education', 'why_cards') or v.table_name = 'skill_links' then
+    raise exception 'cannot restore %', v.table_name;
+  end if;
+  select b.reason into barrier_reason from private.restore_barriers b
+  where b.table_name = v.table_name and b.item_key = v.item_key and v.id <= b.last_version_id;
+  if found then
+    raise exception 'cannot restore version %: %', p_version_id, barrier_reason using errcode = '22023';
+  end if;
+  pk := case v.table_name when 'roles' then 'key' else 'id' end;
+  select string_agg(format('%I', c.column_name), ', ' order by c.ordinal_position),
+         -- An edit restore keeps the current position: reorders write no version, so the old
+         -- sort_index may be stale. A deleted item comes back at its old position (insert below).
+         string_agg(format('%1$I = excluded.%1$I', c.column_name), ', ' order by c.ordinal_position)
+           filter (where c.column_name <> 'sort_index')
+    into cols, sets
+    from information_schema.columns c
+    where c.table_schema = 'public' and c.table_name = v.table_name;
+  -- Keys the old row lacks: the current row's values, else the column defaults.
+  if v.op = 'update' then
+    execute format('select to_jsonb(t) from public.%1$I t where t.%2$I = $1', v.table_name, pk)
+      into fill using v.item_key;
+  end if;
+  if fill is null then
+    select string_agg(format('%L, %s', a.attname, pg_catalog.pg_get_expr(d.adbin, d.adrelid)), ', ')
+      into default_list
+      from pg_catalog.pg_attrdef d
+      join pg_catalog.pg_attribute a on a.attrelid = d.adrelid and a.attnum = d.adnum
+      where d.adrelid = format('public.%I', v.table_name)::pg_catalog.regclass and not a.attisdropped;
+    execute format('select jsonb_build_object(%s)', coalesce(default_list, '')) into fill;
+  end if;
+  fill := fill || v.old_row;
+  if v.op = 'update' then
+    execute format(
+      'insert into public.%1$I (%2$s) select %2$s from jsonb_populate_record(null::public.%1$I, $1) on conflict (%3$I) do update set %4$s',
+      v.table_name, cols, pk, sets
+    ) using fill;
+  else
+    execute format(
+      'insert into public.%1$I (%2$s) select %2$s from jsonb_populate_record(null::public.%1$I, $1) on conflict (%3$I) do nothing',
+      v.table_name, cols, pk
+    ) using fill;
+    for link in
+      select * from private.content_versions l
+      where l.txid = v.txid and l.table_name = 'skill_links' and l.op = 'delete'
+    loop
+      insert into public.skill_links (skill_id, experience_id, project_id, created_at, updated_at)
+      select r.skill_id, r.experience_id, r.project_id, r.created_at, r.updated_at
+      from jsonb_populate_record(null::public.skill_links, link.old_row) r
+      where exists (select 1 from public.skills s where s.id = r.skill_id)
+        and (r.experience_id is null or exists (select 1 from public.experiences e where e.id = r.experience_id))
+        and (r.project_id is null or exists (select 1 from public.projects p where p.id = r.project_id))
+      on conflict do nothing;
+    end loop;
+  end if;
+end;
+$$;
+revoke execute on function public.admin_restore_version(bigint) from public, anon;
+grant execute on function public.admin_restore_version(bigint) to authenticated;

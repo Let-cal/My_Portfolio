@@ -171,81 +171,6 @@
   ],
   "projects": [
     {
-      "id": "skg-ai-agent",
-      "title": "AI Agent",
-      "role": {
-        "en": "Software Engineer, acting Project Manager",
-        "ja": "ソフトウェアエンジニア(プロジェクトマネージャー代行)",
-        "vi": "Kỹ sư phần mềm, kiêm Project Manager"
-      },
-      "start": "2026-04",
-      "end": "2026-09",
-      "summary": {
-        "en": "Multi-tenant LLM agent service that calls a Japanese client's business system APIs to query data and generate reports. Supports both cloud and local LLMs.",
-        "ja": "日本のお客様の業務システムAPIを呼び出し、データの照会やレポート作成を行うマルチテナントのLLMエージェントサービスです。クラウドとローカルの両方のLLMに対応しています。",
-        "vi": "Dịch vụ LLM agent multi-tenant, gọi API hệ thống nghiệp vụ của khách hàng Nhật để truy vấn dữ liệu và tạo báo cáo. Hỗ trợ cả LLM cloud và local."
-      },
-      "caseStudy": {
-        "problem": {
-          "en": "The client wanted an agent that could answer questions and build reports from its own business data, on top of about 15 existing business APIs, with both cloud and local model options.",
-          "ja": "お客様は、既存の約15本の業務APIを基に、自社の業務データから質問に答えたりレポートを作成したりできるエージェントを求めていました。クラウドとローカルの両方のモデルを選べることも条件でした。",
-          "vi": "Khách hàng cần một agent trả lời câu hỏi và tạo báo cáo từ dữ liệu nghiệp vụ của họ, dựa trên khoảng 15 API nghiệp vụ có sẵn, chạy được cả với model cloud lẫn local."
-        },
-        "role": {
-          "en": "Acting Project Manager. The team had 3 people until June 2026, then 6. Handled estimates, scheduling, task and progress tracking, and requirements definition with the client in Japanese. Wrote basic design documents and proposals, reviewed test cases and acceptance criteria, and built the PoC admin console and agent chat UI.",
-          "ja": "プロジェクトマネージャー代行として担当しました。チームは2026年6月まで3名、その後6名です。見積もり、スケジュール作成、タスクと進捗の管理、日本語でのお客様との要件定義を行いました。基本設計書と提案書を作成し、テストケースと受け入れ基準をレビューしました。PoCの管理画面とエージェントのチャットUIも自分で開発しました。",
-          "vi": "Đảm nhận vai trò Project Manager. Team có 3 người đến tháng 6/2026, sau đó là 6 người. Phụ trách estimate, lập lịch, quản lý task và tiến độ, lấy và định nghĩa yêu cầu với khách bằng tiếng Nhật. Viết tài liệu thiết kế cơ bản và tài liệu đề xuất, review test case và tiêu chí nghiệm thu, tự build admin console và chat UI cho bản PoC."
-        },
-        "decisions": {
-          "en": "Wrapped about 15 business APIs into about 10 agent tools. Merged the local AI setup into the cloud AI setup to cut cost and simplify security, and restructured the team around it. The trade-off: during UAT, answers from the cloud and local models had to be checked for consistency. Set up Terraform and Docker for the project.",
-          "ja": "約15本の業務APIを約10個のエージェントツールにまとめました。コスト削減とセキュリティの簡素化のため、ローカルAIの構成をクラウドAIに統合し、合わせてチーム体制も見直しました。その代わり、UAT期間中はクラウドとローカルの回答が近い内容になっているかを確認する必要がありました。TerraformとDockerの構成も自分で行いました。",
-          "vi": "Gói khoảng 15 API nghiệp vụ thành khoảng 10 agent tool. Hợp nhất AI Local vào AI Cloud để tiết kiệm chi phí và đơn giản hóa phần bảo mật, đồng thời tái cơ cấu team. Đánh đổi: trong giai đoạn UAT phải kiểm tra để câu trả lời từ cloud và local tương đồng nhau. Tự cấu hình Terraform và Docker cho dự án."
-        },
-        "result": {
-          "en": "The PoC was demoed to the client, and the client agreed to move on to the next phases. When the client's own PoC stage started, the tenant switched to hybrid mode, so the cloud/local consistency check was no longer needed.",
-          "ja": "PoCをお客様にデモし、次のフェーズへ進むことに合意いただきました。お客様側のPoC段階ではテナントがハイブリッドモードに切り替わったため、クラウドとローカルの回答の確認は不要になりました。",
-          "vi": "Bản PoC được demo cho khách và khách đồng ý chuyển sang các giai đoạn tiếp theo. Đến giai đoạn PoC phía khách, tenant chuyển sang chế độ hybrid nên việc kiểm tra câu trả lời giữa cloud và local không còn cần thiết."
-        }
-      },
-      "tech": [
-        "Python",
-        "FastAPI",
-        "TypeScript",
-        "React",
-        "Vite",
-        "Tailwind CSS",
-        "OpenAI Agents SDK",
-        "LiteLLM",
-        "MCP",
-        "Ollama",
-        "vLLM",
-        "PostgreSQL",
-        "AWS Lambda",
-        "Amazon RDS",
-        "Amazon S3",
-        "CloudFront",
-        "AWS WAF",
-        "Terraform",
-        "Docker",
-        "GitLab",
-        "Redmine"
-      ],
-      "demoUrl": null,
-      "repoUrls": [],
-      "posterUrl": null,
-      "videoUrl": null,
-      "published": true,
-      "sortIndex": 0,
-      "experienceId": "skg-engineer",
-      "educationId": null,
-      "kind": "work",
-      "featured": false,
-      "featuredOrder": null,
-      "roles": ["pm"],
-      "teamSize": "3 → 6",
-      "links": []
-    },
-    {
       "experienceId": null,
       "educationId": "fpt-university",
       "kind": "university",
@@ -314,6 +239,164 @@
       "sortIndex": 0
     },
     {
+      "experienceId": null,
+      "educationId": "fpt-university",
+      "kind": "university",
+      "featured": true,
+      "featuredOrder": 2,
+      "roles": ["fullstack"],
+      "teamSize": null,
+      "links": [],
+      "id": "zodiacgems",
+      "title": "ZodiacGems",
+      "role": {
+        "en": "Front-end Developer",
+        "ja": "フロントエンド開発",
+        "vi": "Front-end Developer"
+      },
+      "start": "2024-06",
+      "end": "2024-10",
+      "summary": {
+        "en": "University project: a jewelry e-commerce site and mobile app that suggests pieces based on the customer's zodiac sign.",
+        "ja": "大学のプロジェクトです。お客様の星座に合わせてジュエリーを提案するECサイトとモバイルアプリです。",
+        "vi": "Dự án đại học: website và app thương mại điện tử bán trang sức, gợi ý sản phẩm theo cung hoàng đạo của khách hàng."
+      },
+      "caseStudy": null,
+      "tech": [
+        "React",
+        "JavaScript",
+        "Tailwind CSS",
+        "Flutter",
+        "Dart",
+        "SQL Server",
+        "Figma"
+      ],
+      "demoUrl": "https://swd-392-rfr4ctba8-let-cals-projects.vercel.app/customer-page",
+      "repoUrls": [
+        "https://github.com/Let-cal/SWD392",
+        "https://github.com/Let-cal/ZodiacGems-MobileApp"
+      ],
+      "posterUrl": null,
+      "videoUrl": null,
+      "published": true,
+      "sortIndex": 1
+    },
+    {
+      "experienceId": null,
+      "educationId": "fpt-university",
+      "kind": "university",
+      "featured": true,
+      "featuredOrder": 3,
+      "roles": ["fullstack"],
+      "teamSize": null,
+      "links": [],
+      "id": "meet-my-lecturer",
+      "title": "Meet My Lecturer",
+      "role": {
+        "en": "Full-stack Developer",
+        "ja": "フルスタック開発",
+        "vi": "Full-stack Developer"
+      },
+      "start": "2023-07",
+      "end": "2023-11",
+      "summary": {
+        "en": "University project: a web app for booking meetings with lecturers, linked to Google Calendar and Google Meet, with real-time notifications over Socket.io.",
+        "ja": "大学のプロジェクトです。講師との面談を予約するWebアプリで、Google CalendarとGoogle Meetに連携し、Socket.ioでリアルタイム通知を送ります。",
+        "vi": "Dự án đại học: web app đặt lịch gặp giảng viên, liên kết với Google Calendar và Google Meet, thông báo real-time qua Socket.io."
+      },
+      "caseStudy": null,
+      "tech": [
+        "Java Servlet",
+        "JSP",
+        "SQL Server",
+        "Socket.io",
+        "Google Calendar API",
+        "Google Meet API",
+        "Figma"
+      ],
+      "demoUrl": null,
+      "repoUrls": ["https://github.com/Let-cal/meet-my-lecturers"],
+      "posterUrl": null,
+      "videoUrl": null,
+      "published": true,
+      "sortIndex": 2
+    },
+    {
+      "id": "skg-ai-agent",
+      "title": "AI Agent",
+      "role": {
+        "en": "Software Engineer, acting Project Manager",
+        "ja": "ソフトウェアエンジニア(プロジェクトマネージャー代行)",
+        "vi": "Kỹ sư phần mềm, kiêm Project Manager"
+      },
+      "start": "2026-04",
+      "end": "2026-09",
+      "summary": {
+        "en": "Multi-tenant LLM agent service that calls a Japanese client's business system APIs to query data and generate reports. Supports both cloud and local LLMs.",
+        "ja": "日本のお客様の業務システムAPIを呼び出し、データの照会やレポート作成を行うマルチテナントのLLMエージェントサービスです。クラウドとローカルの両方のLLMに対応しています。",
+        "vi": "Dịch vụ LLM agent multi-tenant, gọi API hệ thống nghiệp vụ của khách hàng Nhật để truy vấn dữ liệu và tạo báo cáo. Hỗ trợ cả LLM cloud và local."
+      },
+      "caseStudy": {
+        "problem": {
+          "en": "The client wanted an agent that could answer questions and build reports from its own business data, on top of about 15 existing business APIs, with both cloud and local model options.",
+          "ja": "お客様は、既存の約15本の業務APIを基に、自社の業務データから質問に答えたりレポートを作成したりできるエージェントを求めていました。クラウドとローカルの両方のモデルを選べることも条件でした。",
+          "vi": "Khách hàng cần một agent trả lời câu hỏi và tạo báo cáo từ dữ liệu nghiệp vụ của họ, dựa trên khoảng 15 API nghiệp vụ có sẵn, chạy được cả với model cloud lẫn local."
+        },
+        "role": {
+          "en": "Acting Project Manager. The team had 3 people until June 2026, then 6. Handled estimates, scheduling, task and progress tracking, and requirements definition with the client in Japanese. Wrote basic design documents and proposals, reviewed test cases and acceptance criteria, and built the PoC admin console and agent chat UI.",
+          "ja": "プロジェクトマネージャー代行として担当しました。チームは2026年6月まで3名、その後6名です。見積もり、スケジュール作成、タスクと進捗の管理、日本語でのお客様との要件定義を行いました。基本設計書と提案書を作成し、テストケースと受け入れ基準をレビューしました。PoCの管理画面とエージェントのチャットUIも自分で開発しました。",
+          "vi": "Đảm nhận vai trò Project Manager. Team có 3 người đến tháng 6/2026, sau đó là 6 người. Phụ trách estimate, lập lịch, quản lý task và tiến độ, lấy và định nghĩa yêu cầu với khách bằng tiếng Nhật. Viết tài liệu thiết kế cơ bản và tài liệu đề xuất, review test case và tiêu chí nghiệm thu, tự build admin console và chat UI cho bản PoC."
+        },
+        "decisions": {
+          "en": "Wrapped about 15 business APIs into about 10 agent tools. Merged the local AI setup into the cloud AI setup to cut cost and simplify security, and restructured the team around it. The trade-off: during UAT, answers from the cloud and local models had to be checked for consistency. Set up Terraform and Docker for the project.",
+          "ja": "約15本の業務APIを約10個のエージェントツールにまとめました。コスト削減とセキュリティの簡素化のため、ローカルAIの構成をクラウドAIに統合し、合わせてチーム体制も見直しました。その代わり、UAT期間中はクラウドとローカルの回答が近い内容になっているかを確認する必要がありました。TerraformとDockerの構成も自分で行いました。",
+          "vi": "Gói khoảng 15 API nghiệp vụ thành khoảng 10 agent tool. Hợp nhất AI Local vào AI Cloud để tiết kiệm chi phí và đơn giản hóa phần bảo mật, đồng thời tái cơ cấu team. Đánh đổi: trong giai đoạn UAT phải kiểm tra để câu trả lời từ cloud và local tương đồng nhau. Tự cấu hình Terraform và Docker cho dự án."
+        },
+        "result": {
+          "en": "The PoC was demoed to the client, and the client agreed to move on to the next phases. When the client's own PoC stage started, the tenant switched to hybrid mode, so the cloud/local consistency check was no longer needed.",
+          "ja": "PoCをお客様にデモし、次のフェーズへ進むことに合意いただきました。お客様側のPoC段階ではテナントがハイブリッドモードに切り替わったため、クラウドとローカルの回答の確認は不要になりました。",
+          "vi": "Bản PoC được demo cho khách và khách đồng ý chuyển sang các giai đoạn tiếp theo. Đến giai đoạn PoC phía khách, tenant chuyển sang chế độ hybrid nên việc kiểm tra câu trả lời giữa cloud và local không còn cần thiết."
+        }
+      },
+      "tech": [
+        "Python",
+        "FastAPI",
+        "TypeScript",
+        "React",
+        "Vite",
+        "Tailwind CSS",
+        "OpenAI Agents SDK",
+        "LiteLLM",
+        "MCP",
+        "Ollama",
+        "vLLM",
+        "PostgreSQL",
+        "AWS Lambda",
+        "Amazon RDS",
+        "Amazon S3",
+        "CloudFront",
+        "AWS WAF",
+        "Terraform",
+        "Docker",
+        "GitLab",
+        "Redmine"
+      ],
+      "demoUrl": null,
+      "repoUrls": [],
+      "posterUrl": null,
+      "videoUrl": null,
+      "published": true,
+      "sortIndex": 3,
+      "experienceId": "skg-engineer",
+      "educationId": null,
+      "kind": "work",
+      "featured": false,
+      "featuredOrder": null,
+      "roles": ["pm"],
+      "teamSize": "3 → 6",
+      "links": []
+    },
+    {
       "id": "skg-flexybox-p2",
       "title": "FlexyBox Phase 2",
       "role": {
@@ -376,7 +459,7 @@
       "posterUrl": null,
       "videoUrl": null,
       "published": true,
-      "sortIndex": 1,
+      "sortIndex": 4,
       "experienceId": "skg-engineer",
       "educationId": null,
       "kind": "work",
@@ -385,49 +468,6 @@
       "roles": ["techlead", "pm"],
       "teamSize": "8 → 5",
       "links": []
-    },
-    {
-      "experienceId": null,
-      "educationId": "fpt-university",
-      "kind": "university",
-      "featured": true,
-      "featuredOrder": 2,
-      "roles": ["fullstack"],
-      "teamSize": null,
-      "links": [],
-      "id": "zodiacgems",
-      "title": "ZodiacGems",
-      "role": {
-        "en": "Front-end Developer",
-        "ja": "フロントエンド開発",
-        "vi": "Front-end Developer"
-      },
-      "start": "2024-06",
-      "end": "2024-10",
-      "summary": {
-        "en": "University project: a jewelry e-commerce site and mobile app that suggests pieces based on the customer's zodiac sign.",
-        "ja": "大学のプロジェクトです。お客様の星座に合わせてジュエリーを提案するECサイトとモバイルアプリです。",
-        "vi": "Dự án đại học: website và app thương mại điện tử bán trang sức, gợi ý sản phẩm theo cung hoàng đạo của khách hàng."
-      },
-      "caseStudy": null,
-      "tech": [
-        "React",
-        "JavaScript",
-        "Tailwind CSS",
-        "Flutter",
-        "Dart",
-        "SQL Server",
-        "Figma"
-      ],
-      "demoUrl": "https://swd-392-rfr4ctba8-let-cals-projects.vercel.app/customer-page",
-      "repoUrls": [
-        "https://github.com/Let-cal/SWD392",
-        "https://github.com/Let-cal/ZodiacGems-MobileApp"
-      ],
-      "posterUrl": null,
-      "videoUrl": null,
-      "published": true,
-      "sortIndex": 1
     },
     {
       "id": "skg-coa",
@@ -480,7 +520,7 @@
       "posterUrl": null,
       "videoUrl": null,
       "published": true,
-      "sortIndex": 2,
+      "sortIndex": 5,
       "experienceId": "skg-engineer",
       "educationId": null,
       "kind": "work",
@@ -489,46 +529,6 @@
       "roles": ["fullstack", "techlead"],
       "teamSize": "4",
       "links": []
-    },
-    {
-      "experienceId": null,
-      "educationId": "fpt-university",
-      "kind": "university",
-      "featured": true,
-      "featuredOrder": 3,
-      "roles": ["fullstack"],
-      "teamSize": null,
-      "links": [],
-      "id": "meet-my-lecturer",
-      "title": "Meet My Lecturer",
-      "role": {
-        "en": "Full-stack Developer",
-        "ja": "フルスタック開発",
-        "vi": "Full-stack Developer"
-      },
-      "start": "2023-07",
-      "end": "2023-11",
-      "summary": {
-        "en": "University project: a web app for booking meetings with lecturers, linked to Google Calendar and Google Meet, with real-time notifications over Socket.io.",
-        "ja": "大学のプロジェクトです。講師との面談を予約するWebアプリで、Google CalendarとGoogle Meetに連携し、Socket.ioでリアルタイム通知を送ります。",
-        "vi": "Dự án đại học: web app đặt lịch gặp giảng viên, liên kết với Google Calendar và Google Meet, thông báo real-time qua Socket.io."
-      },
-      "caseStudy": null,
-      "tech": [
-        "Java Servlet",
-        "JSP",
-        "SQL Server",
-        "Socket.io",
-        "Google Calendar API",
-        "Google Meet API",
-        "Figma"
-      ],
-      "demoUrl": null,
-      "repoUrls": ["https://github.com/Let-cal/meet-my-lecturers"],
-      "posterUrl": null,
-      "videoUrl": null,
-      "published": true,
-      "sortIndex": 2
     },
     {
       "id": "skg-flexybox-p1",
@@ -581,7 +581,7 @@
       "posterUrl": null,
       "videoUrl": null,
       "published": true,
-      "sortIndex": 3,
+      "sortIndex": 6,
       "experienceId": "skg-intern",
       "educationId": null,
       "kind": "work",
@@ -644,7 +644,7 @@
       "posterUrl": null,
       "videoUrl": null,
       "published": true,
-      "sortIndex": 4,
+      "sortIndex": 7,
       "experienceId": "skg-intern",
       "educationId": null,
       "kind": "work",

@@ -145,7 +145,13 @@ describe("seed after the experience tree migration", () => {
   });
 
   it("every moved project keeps its summary, case study and skill links", () => {
-    for (const old of before.experiences.filter((e) => MOVED[e.id])) {
+    const moved = before.experiences
+      .filter((e) => MOVED[e.id])
+      .sort((a, b) => a.sortIndex - b.sortIndex || a.id.localeCompare(b.id));
+    expect(moved).toHaveLength(5);
+    // Numbered after the existing projects, in their old order (no sort_index ties).
+    const after = Math.max(...before.projects.map((p) => p.sortIndex)) + 1;
+    for (const old of moved) {
       const p = project(MOVED[old.id]);
       const links = old.links as Link[];
       expect(p, old.id).toMatchObject({
@@ -158,7 +164,7 @@ describe("seed after the experience tree migration", () => {
         tech: old.tech,
         teamSize: old.teamSize,
         published: old.published,
-        sortIndex: old.sortIndex,
+        sortIndex: after + moved.indexOf(old),
         demoUrl: links.find((l) => l.label === "Demo")?.url ?? null,
         repoUrls: links.filter((l) => l.label === "Code").map((l) => l.url),
         links: links.filter((l) => l.label !== "Code" && l.label !== "Demo"),
@@ -178,6 +184,11 @@ describe("seed after the experience tree migration", () => {
         oldSkill.experienceIds.filter((e) => !MOVED[e]),
       );
     }
+  });
+
+  it("projects have distinct sort indexes", () => {
+    const indexes = c.projects.map((p) => p.sortIndex);
+    expect(new Set(indexes).size).toBe(indexes.length);
   });
 
   it("every role orders the stints, newest first", () => {
