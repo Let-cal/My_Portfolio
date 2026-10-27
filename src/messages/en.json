@@ -254,7 +254,8 @@
     "codeWeb": "Code (Web)",
     "codeMobile": "Code (Mobile)",
     "codeN": "Code {n}",
-    "newTab": "(opens in new tab)"
+    "newTab": "(opens in new tab)",
+    "viewAll": "View all {count, plural, one {# project} other {# projects}}"
   },
   "certificates": {
     "intro": "Courses, certificates and school activities. Pick a lantern to see its credential.",

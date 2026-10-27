@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 import type { Content, Locale } from "@/content/schema";
+import { featuredProjects } from "@/lib/featured";
 import { formatPeriod } from "@/lib/format";
 import { pickLocale } from "@/lib/i18n-text";
 import { ProjectsBento, type ProjectView } from "./projects/ProjectsBento";
@@ -49,8 +50,9 @@ function repoLinks(
 }
 
 /**
- * Projects section. Builds localized view-models (published only, in sortIndex order) and hands them to the client
- * bento grid, which owns hover video previews and the case study sheet.
+ * Projects section. Builds localized view-models for the featured projects (the starred ones in order, filled with
+ * the newest published when fewer than three are starred) and hands them to the client bento grid, which owns hover
+ * video previews and the case study sheet. A link below the grid goes to the page with every published project.
  */
 export function Projects({
   content,
@@ -62,28 +64,26 @@ export function Projects({
   const t = useTranslations("projects");
   const ts = useTranslations("sections");
 
-  const projects = content.projects
-    .filter((p) => p.published)
-    .sort((a, b) => a.sortIndex - b.sortIndex)
-    .map((p): ProjectView => ({
-      id: p.id,
-      title: p.title,
-      initials: initialsOf(p.title),
-      role: pickLocale(p.role, locale),
-      period: formatPeriod(p.start, p.end, locale),
-      summary: pickLocale(p.summary, locale),
-      tech: p.tech,
-      demoUrl: p.demoUrl,
-      repos: repoLinks(p.repoUrls, t),
-      posterUrl: p.posterUrl,
-      videoUrl: p.videoUrl,
-      caseStudy: p.caseStudy && {
-        problem: pickLocale(p.caseStudy.problem, locale),
-        role: pickLocale(p.caseStudy.role, locale),
-        decisions: pickLocale(p.caseStudy.decisions, locale),
-        result: pickLocale(p.caseStudy.result, locale),
-      },
-    }));
+  const projects = featuredProjects(content.projects).map((p): ProjectView => ({
+    id: p.id,
+    title: p.title,
+    initials: initialsOf(p.title),
+    role: pickLocale(p.role, locale),
+    period: formatPeriod(p.start, p.end, locale),
+    summary: pickLocale(p.summary, locale),
+    tech: p.tech,
+    demoUrl: p.demoUrl,
+    repos: repoLinks(p.repoUrls, t),
+    posterUrl: p.posterUrl,
+    videoUrl: p.videoUrl,
+    caseStudy: p.caseStudy && {
+      problem: pickLocale(p.caseStudy.problem, locale),
+      role: pickLocale(p.caseStudy.role, locale),
+      decisions: pickLocale(p.caseStudy.decisions, locale),
+      result: pickLocale(p.caseStudy.result, locale),
+    },
+  }));
+  const total = content.projects.filter((p) => p.published).length;
 
   return (
     <section
@@ -116,6 +116,21 @@ export function Projects({
           )}
         />
       </div>
+      {/* A plain anchor: next/link would add a client chunk past the initial-JS budget for a link that needs no client navigation. */}
+      <p className="mt-8 flex justify-center md:justify-end">
+        <a
+          href={`/${locale}/projects`}
+          className="group/all inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-card/60 px-5 text-sm font-medium backdrop-blur-md transition-colors hover:border-brand-400/60 hover:bg-card/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        >
+          {t("viewAll", { count: total })}
+          <span
+            aria-hidden="true"
+            className="transition-transform group-hover/all:translate-x-0.5 motion-reduce:transition-none"
+          >
+            →
+          </span>
+        </a>
+      </p>
     </section>
   );
 }

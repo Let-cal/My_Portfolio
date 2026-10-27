@@ -28,7 +28,10 @@ import { SkillTerminal } from "./SkillTerminal";
 export type EvidenceView = {
   kind: "exp" | "proj";
   id: string;
-  /** Element id of the real card on the page: `exp-<group>` (tree parent), `tree-<id>` (tree child) or `proj-<id>`. */
+  /**
+   * Element id of the real card on the page: `exp-<group>` (tree parent), `tree-<id>` (tree child) or `proj-<id>`.
+   * A project with no card on this page links to its row on the all-projects page instead: `/<locale>/projects#row-<id>`.
+   */
   anchor: string;
   title: string;
   role: string;
@@ -123,7 +126,10 @@ export function SkillMap({ data }: { data: SkillMapData }) {
   // The real cards elsewhere on the page glow while their skill is selected: the tree parent or child the link
   // points to and, for a project, its bento card too.
   useEffect(() => {
-    const anchors = anchorKey ? anchorKey.split("|") : [];
+    // Links to another page have no card here to light up.
+    const anchors = (anchorKey ? anchorKey.split("|") : []).filter(
+      (a) => !a.startsWith("/"),
+    );
     setIds(
       anchors.flatMap((a) =>
         a.startsWith("tree-") ? [a, `proj-${a.slice(5)}`] : [a],
@@ -357,7 +363,11 @@ export function SkillMap({ data }: { data: SkillMapData }) {
                       className="skill-card-in"
                     >
                       <a
-                        href={`#${item.anchor}`}
+                        href={
+                          item.anchor.startsWith("/")
+                            ? item.anchor
+                            : `#${item.anchor}`
+                        }
                         onMouseEnter={() => setActiveCard(cardIdOf(item))}
                         onMouseLeave={() => setActiveCard(null)}
                         onFocus={() => setActiveCard(cardIdOf(item))}

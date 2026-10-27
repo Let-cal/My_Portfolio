@@ -254,7 +254,8 @@
     "codeWeb": "Code (Web)",
     "codeMobile": "Code (Mobile)",
     "codeN": "Code {n}",
-    "newTab": "(mở trong tab mới)"
+    "newTab": "(mở trong tab mới)",
+    "viewAll": "Xem tất cả {count} dự án"
   },
   "certificates": {
     "intro": "Các khóa học, chứng chỉ và hoạt động ở trường. Chọn một chiếc đèn lồng để xem thông tin chứng chỉ.",
