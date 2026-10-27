@@ -1,5 +1,5 @@
 import type { Content } from "@/content/schema";
-import { TABLES, type TableName } from "./columns";
+import { creationOrder, TABLES, type TableName } from "./columns";
 import {
   activityToRow,
   certificateToRow,
@@ -17,18 +17,22 @@ export type SeedRows = { [T in TableName]: Record<string, unknown>[] };
 
 /** Every table's rows for a full content snapshot, in foreign-key order. */
 export function buildSeedRows(c: Content): SeedRows {
-  return {
+  const rows: SeedRows = {
     profile: [{ id: "me", ...profileToRow(c.profile) }],
     roles: c.roles.map(roleToRow),
     experiences: c.experiences.map(experienceToRow),
-    projects: c.projects.map(projectToRow),
     skills: c.skills.map(skillToRow),
     skill_links: c.skills.flatMap(skillToLinkRows),
     certificates: c.certificates.map(certificateToRow),
     activities: c.activities.map(activityToRow),
     education: c.education.map(educationToRow),
+    projects: c.projects.map(projectToRow),
     why_cards: c.whyCards.map(whyCardToRow),
   };
+  // Keys in creation order, so a table is written after the tables it references.
+  return Object.fromEntries(
+    creationOrder().map((t) => [t, rows[t]]),
+  ) as SeedRows;
 }
 
 /** Upsert key per table; skill_links are replaced as a whole instead. */

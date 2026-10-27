@@ -96,6 +96,24 @@ alter table public.experiences enable row level security;
 create policy "experiences_read" on public.experiences for select to anon, authenticated using (published or private.is_admin());
 create policy "experiences_write" on public.experiences for all to authenticated using (private.is_admin()) with check (private.is_admin());
 
+create table public.education (
+  id text not null primary key,
+  school text not null,
+  degree jsonb not null,
+  major jsonb not null,
+  start_month text not null,
+  end_month text,
+  gpa text,
+  notes jsonb,
+  sort_index integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create trigger education_updated_at before update on public.education for each row execute function public.set_updated_at();
+alter table public.education enable row level security;
+create policy "education_read" on public.education for select to anon, authenticated using (true);
+create policy "education_write" on public.education for all to authenticated using (private.is_admin()) with check (private.is_admin());
+
 create table public.projects (
   id text not null primary key,
   title text not null,
@@ -111,8 +129,17 @@ create table public.projects (
   video_url text,
   published boolean not null default true,
   sort_index integer not null default 0,
+  experience_id text references public.experiences (id) on delete restrict,
+  education_id text references public.education (id) on delete restrict,
+  kind text not null default 'personal' check (kind in ('work', 'university', 'personal')),
+  featured boolean not null default false,
+  featured_order integer,
+  roles text[] not null default '{}',
+  team_size text,
+  links jsonb not null default '[]',
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  constraint projects_kind_matches_link check ((kind = 'work' and experience_id is not null and education_id is null) or (kind = 'university' and education_id is not null and experience_id is null) or (kind = 'personal' and experience_id is null and education_id is null))
 );
 create trigger projects_updated_at before update on public.projects for each row execute function public.set_updated_at();
 alter table public.projects enable row level security;
@@ -181,24 +208,6 @@ create trigger activities_updated_at before update on public.activities for each
 alter table public.activities enable row level security;
 create policy "activities_read" on public.activities for select to anon, authenticated using (true);
 create policy "activities_write" on public.activities for all to authenticated using (private.is_admin()) with check (private.is_admin());
-
-create table public.education (
-  id text not null primary key,
-  school text not null,
-  degree jsonb not null,
-  major jsonb not null,
-  start_month text not null,
-  end_month text,
-  gpa text,
-  notes jsonb,
-  sort_index integer not null default 0,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-create trigger education_updated_at before update on public.education for each row execute function public.set_updated_at();
-alter table public.education enable row level security;
-create policy "education_read" on public.education for select to anon, authenticated using (true);
-create policy "education_write" on public.education for all to authenticated using (private.is_admin()) with check (private.is_admin());
 
 create table public.why_cards (
   id text not null primary key,

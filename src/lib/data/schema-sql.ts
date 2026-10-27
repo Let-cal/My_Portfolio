@@ -1,4 +1,10 @@
-import { BUCKETS, TABLES, type Column, type Table } from "./columns";
+import {
+  BUCKETS,
+  creationOrder,
+  TABLES,
+  type Column,
+  type Table,
+} from "./columns";
 
 function columnSql(col: Column): string {
   return [
@@ -86,8 +92,8 @@ function storageSql(): string {
 
 /** The full current schema. Tests compare it with supabase/schema.sql. */
 export function renderSchemaSql(): string {
-  const tables = Object.entries(TABLES).map(([name, table]) =>
-    tableSql(name, table),
+  const tables = creationOrder().map((name) =>
+    tableSql(name, TABLES[name as keyof typeof TABLES]),
   );
   return (
     [

@@ -39,6 +39,7 @@ import {
   resources,
   type FieldSpec,
   type ResourceKey,
+  withoutSortIndex,
 } from "@/lib/admin/resources";
 import {
   adminResolver,
@@ -1246,7 +1247,7 @@ export function ResourceForm({
       )}
       <FieldsForm
         fields={resource.fields}
-        schema={resource.schema.omit({ sortIndex: true })}
+        schema={withoutSortIndex(resource.schema)}
         initial={defaults}
         options={options}
         lockId={!isNew}

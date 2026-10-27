@@ -1,7 +1,7 @@
 // Describes each editable list for the admin: its table, schema, form fields and row mappers.
 // The list page, the form and the server actions are all driven by this file.
 
-import type { z } from "zod";
+import { z } from "zod";
 import {
   activitySchema,
   CERT_TOPICS,
@@ -87,6 +87,17 @@ export type Resource = {
   toRow: (item: AnyRow) => AnyRow;
   fromRow: (row: AnyRow, links: SkillLinkRow[]) => AnyRow;
 };
+
+/**
+ * The form's schema: the item schema without the drag-and-drop position. `.omit()` refuses schemas
+ * with cross-field rules (projects), so the object is rebuilt from its shape; the server action
+ * still checks the full schema, rules included.
+ */
+export function withoutSortIndex(schema: z.ZodObject): z.ZodObject {
+  const { sortIndex: _sortIndex, ...shape } = schema.shape;
+  void _sortIndex;
+  return z.object(shape);
+}
 
 // The schema validates every item before toRow runs, so these widenings are safe.
 const toRows = <T, R>(fn: (item: T) => R) => fn as unknown as Resource["toRow"];

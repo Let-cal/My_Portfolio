@@ -36,6 +36,13 @@ export const i18nText = z.object({
   vi: z.string().optional(),
 });
 export const i18nTextSchema = i18nText;
+
+/** Like i18nText, but EN may be empty (a summary that is filled in only for JA/VI, or not at all). */
+const i18nTextOptionalEn = z.object({
+  en: z.string(),
+  ja: z.string().optional(),
+  vi: z.string().optional(),
+});
 export type I18nText = z.infer<typeof i18nText>;
 
 /** 'YYYY-MM' */
@@ -108,7 +115,7 @@ export const experienceSchema = z.object({
   start: yearMonth,
   end: yearMonth.nullable(),
   employmentType: z.enum(["full-time", "internship"]),
-  summary: i18nText,
+  summary: i18nTextOptionalEn,
   caseStudy: caseStudySchema.nullable(),
   teamSize: z.string().nullable(),
   tech: z.array(z.string()),
@@ -118,22 +125,58 @@ export const experienceSchema = z.object({
 });
 export type Experience = z.infer<typeof experienceSchema>;
 
-export const projectSchema = z.object({
-  id,
-  title: z.string().min(1),
-  role: i18nText,
-  start: yearMonth,
-  end: yearMonth.nullable(),
-  summary: i18nText,
-  caseStudy: caseStudySchema.nullable(),
-  tech: z.array(z.string()),
-  demoUrl: z.string().url().nullable(),
-  repoUrls: z.array(z.string().url()),
-  posterUrl: z.string().nullable(),
-  videoUrl: z.string().nullable(),
-  published: z.boolean(),
-  sortIndex: z.number().int(),
-});
+export const PROJECT_KINDS = ["work", "university", "personal"] as const;
+export const projectKindSchema = z.enum(PROJECT_KINDS);
+export type ProjectKind = z.infer<typeof projectKindSchema>;
+
+/**
+ * A project belongs to one company stint (`work`), one school (`university`) or nobody
+ * (`personal`). `kind` must agree with which link is set.
+ */
+export const projectSchema = z
+  .object({
+    id,
+    title: z.string().min(1),
+    role: i18nText,
+    start: yearMonth,
+    end: yearMonth.nullable(),
+    summary: i18nText,
+    caseStudy: caseStudySchema.nullable(),
+    tech: z.array(z.string()),
+    demoUrl: z.string().url().nullable(),
+    repoUrls: z.array(z.string().url()),
+    posterUrl: z.string().nullable(),
+    videoUrl: z.string().nullable(),
+    published: z.boolean(),
+    sortIndex: z.number().int(),
+    experienceId: z.string().nullable().default(null),
+    educationId: z.string().nullable().default(null),
+    kind: projectKindSchema.default("personal"),
+    featured: z.boolean().default(false),
+    featuredOrder: z.number().int().nullable().default(null),
+    roles: z.array(roleKeySchema).default([]),
+    teamSize: z.string().nullable().default(null),
+    links: z.array(linkSchema).default([]),
+  })
+  .superRefine((p, ctx) => {
+    const ok =
+      (p.kind === "work" &&
+        p.experienceId !== null &&
+        p.educationId === null) ||
+      (p.kind === "university" &&
+        p.educationId !== null &&
+        p.experienceId === null) ||
+      (p.kind === "personal" &&
+        p.experienceId === null &&
+        p.educationId === null);
+    if (!ok) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["kind"],
+        message: "kind must match where the project belongs",
+      });
+    }
+  });
 export type Project = z.infer<typeof projectSchema>;
 
 export const skillSchema = z.object({
@@ -204,8 +247,8 @@ export const whyCardSchema = z.object({
   evidenceLink: z
     .string()
     .regex(
-      /^#(exp|proj)-[a-z0-9]+(-[a-z0-9]+)*$/,
-      "Expected #exp-<id> or #proj-<id>",
+      /^#(exp|proj|tree)-[a-z0-9]+(-[a-z0-9]+)*$/,
+      "Expected #exp-<id>, #proj-<id> or #tree-<id>",
     )
     .nullable(),
   stat: whyStatSchema.nullable().default(null),

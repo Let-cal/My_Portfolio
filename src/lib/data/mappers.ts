@@ -82,6 +82,14 @@ export type ProjectRow = {
   video_url: string | null;
   published: boolean;
   sort_index: number;
+  experience_id: string | null;
+  education_id: string | null;
+  kind: Project["kind"];
+  featured: boolean;
+  featured_order: number | null;
+  roles: RoleKey[];
+  team_size: string | null;
+  links: Link[];
 };
 
 export type SkillRow = {
@@ -263,6 +271,14 @@ export function rowToProject(r: ProjectRow): Project {
     videoUrl: r.video_url,
     published: r.published,
     sortIndex: r.sort_index,
+    experienceId: r.experience_id,
+    educationId: r.education_id,
+    kind: r.kind,
+    featured: r.featured,
+    featuredOrder: r.featured_order,
+    roles: r.roles,
+    teamSize: r.team_size,
+    links: r.links,
   };
 }
 
@@ -282,6 +298,14 @@ export function projectToRow(p: Project): ProjectRow {
     video_url: p.videoUrl,
     published: p.published,
     sort_index: p.sortIndex,
+    experience_id: p.experienceId,
+    education_id: p.educationId,
+    kind: p.kind,
+    featured: p.featured,
+    featured_order: p.featuredOrder,
+    roles: p.roles,
+    team_size: p.teamSize,
+    links: p.links,
   };
 }
 
