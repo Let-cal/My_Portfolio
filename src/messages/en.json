@@ -209,7 +209,11 @@
     "moreTech": "+{count} more",
     "skgIntern": "Software Engineer Intern",
     "skgEngineer": "Software Engineer — acting Project Manager / Tech Lead",
-    "gpa": "GPA {gpa}"
+    "gpa": "GPA {gpa}",
+    "projectsCount": "{count, plural, one {# project} other {# projects}}",
+    "internshipChip": "internship",
+    "expand": "Show details",
+    "collapse": "Hide details"
   },
   "skills": {
     "intro": "Pick a skill to see which experience and projects it comes from.",

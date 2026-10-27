@@ -10,6 +10,8 @@ type TracingBeamProps = {
   className?: string;
   /** Position and size of the rail column; the default sits on the timeline's river column. */
   railClassName?: string;
+  /** Colour class of the faint full-height track under the beam; `text-transparent` lets a custom rail show. */
+  trackClassName?: string;
 };
 
 /** Same column the static river used: 2rem on phones, the 3rem track after the 9.5rem date column from md up. */
@@ -24,6 +26,7 @@ export function TracingBeam({
   children,
   className,
   railClassName = RAIL,
+  trackClassName = "text-border",
 }: TracingBeamProps) {
   const reduced = usePrefersReducedMotion();
   const gradient = useId();
@@ -69,7 +72,7 @@ export function TracingBeam({
             fill="none"
             stroke="currentColor"
             strokeWidth={2}
-            className="text-border"
+            className={trackClassName}
           />
           <path
             data-beam-path=""

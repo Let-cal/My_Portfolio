@@ -42,6 +42,7 @@ function fixture(): Content {
         ...base.experiences[0],
         id: "shared",
         company: "Example Company",
+        parentCompany: null,
         published: true,
         position: { en: "Engineer", ja: "エンジニア", vi: "Kỹ sư" },
         start: "2026-04",
@@ -133,7 +134,7 @@ it.each([
       {
         kind: "exp",
         id: "shared",
-        anchor: "exp-shared",
+        anchor: "exp-example-company",
         title: "Example Company",
         role,
         period,
@@ -141,7 +142,7 @@ it.each([
       {
         kind: "proj",
         id: "shared",
-        anchor: "proj-shared",
+        anchor: "tree-shared",
         title: "Example Project",
         role: projectRole,
         period: projectPeriod,
@@ -189,7 +190,7 @@ it("keeps the evidence cache local to a render so changed content and locale can
   expect(first.evidence[0]).toEqual({
     kind: "exp",
     id: "shared",
-    anchor: "exp-shared",
+    anchor: "exp-changed-company",
     title: "Changed Company",
     role: "Kỹ sư",
     period: "Th5 2026",

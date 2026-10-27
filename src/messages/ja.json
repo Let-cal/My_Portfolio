@@ -209,7 +209,11 @@
     "moreTech": "ほか{count}件",
     "skgIntern": "ソフトウェアエンジニアインターン",
     "skgEngineer": "ソフトウェアエンジニア(プロジェクトマネージャー/テックリード代行)",
-    "gpa": "GPA {gpa}"
+    "gpa": "GPA {gpa}",
+    "projectsCount": "{count}件のプロジェクト",
+    "internshipChip": "インターンシップ",
+    "expand": "詳細を表示",
+    "collapse": "詳細を閉じる"
   },
   "skills": {
     "intro": "スキルを選ぶと、どの経験・プロジェクトで使ったかが分かります。",

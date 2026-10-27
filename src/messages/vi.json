@@ -209,7 +209,11 @@
     "moreTech": "+{count} nữa",
     "skgIntern": "Thực tập sinh kỹ sư phần mềm",
     "skgEngineer": "Kỹ sư phần mềm, kiêm Project Manager / Tech Lead",
-    "gpa": "GPA {gpa}"
+    "gpa": "GPA {gpa}",
+    "projectsCount": "{count} dự án",
+    "internshipChip": "thực tập",
+    "expand": "Xem chi tiết",
+    "collapse": "Thu gọn"
   },
   "skills": {
     "intro": "Chọn một kỹ năng để xem nó đến từ kinh nghiệm và dự án nào.",

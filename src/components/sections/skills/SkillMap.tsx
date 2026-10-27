@@ -28,7 +28,7 @@ import { SkillTerminal } from "./SkillTerminal";
 export type EvidenceView = {
   kind: "exp" | "proj";
   id: string;
-  /** Element id of the real card on the page (`exp-<id>` / `proj-<id>`). */
+  /** Element id of the real card on the page: `exp-<group>` (tree parent), `tree-<id>` (tree child) or `proj-<id>`. */
   anchor: string;
   title: string;
   role: string;
@@ -55,6 +55,7 @@ export type SkillMapData = {
 };
 
 const NO_EVIDENCE: EvidenceView[] = [];
+const cardIdOf = (e: EvidenceView) => `${e.kind}:${e.id}`;
 
 const ARROW_STEP: Record<string, number> = {
   ArrowRight: 1,
@@ -66,7 +67,7 @@ const ARROW_STEP: Record<string, number> = {
 /**
  * The skill map. Groups follow the current role. Choosing a skill lists the experiences and projects behind it as
  * mini-cards in the evidence panel, draws an animated beam from the chip to each card, and lights up the real
- * `#exp-*` / `#proj-*` cards through the HighlightProvider. The terminal types the current group's skills.
+ * `#exp-*` / `#tree-*` / `#proj-*` cards through the HighlightProvider. The terminal types the current group's skills.
  * Wide screens keep the terminal and evidence panel sticky beside the groups; narrower ones stack them and dock the
  * evidence panel to the bottom of the viewport while a skill is selected.
  */
@@ -115,14 +116,21 @@ export function SkillMap({ data }: { data: SkillMapData }) {
       ? pick.group
       : groups[0];
   const evidence = selected?.evidence ?? NO_EVIDENCE;
-  const cardIds = evidence.map((e) => e.anchor);
-  const cardKey = cardIds.join("|");
+  // Two stints of one company share their parent's anchor, so cards are keyed by kind and id.
+  const cardIds = evidence.map(cardIdOf);
+  const anchorKey = [...new Set(evidence.map((e) => e.anchor))].join("|");
 
-  // The real #exp-* / #proj-* cards elsewhere on the page glow while their skill is selected.
+  // The real cards elsewhere on the page glow while their skill is selected: the tree parent or child the link
+  // points to and, for a project, its bento card too.
   useEffect(() => {
-    setIds(cardKey ? cardKey.split("|") : []);
+    const anchors = anchorKey ? anchorKey.split("|") : [];
+    setIds(
+      anchors.flatMap((a) =>
+        a.startsWith("tree-") ? [a, `proj-${a.slice(5)}`] : [a],
+      ),
+    );
     return () => setIds([]);
-  }, [cardKey, setIds]);
+  }, [anchorKey, setIds]);
 
   function selectSkill(skill: SkillView) {
     setActiveCard(null);
@@ -338,21 +346,21 @@ export function SkillMap({ data }: { data: SkillMapData }) {
                 <ul key={selected.id} className="mt-3 flex flex-col gap-2">
                   {evidence.map((item, i) => (
                     <li
-                      key={item.anchor}
+                      key={cardIdOf(item)}
                       data-evidence-card=""
                       data-kind={item.kind}
                       ref={(el) => {
-                        if (el) cardRefs.current.set(item.anchor, el);
-                        else cardRefs.current.delete(item.anchor);
+                        if (el) cardRefs.current.set(cardIdOf(item), el);
+                        else cardRefs.current.delete(cardIdOf(item));
                       }}
                       style={{ animationDelay: `${i * 70}ms` }}
                       className="skill-card-in"
                     >
                       <a
                         href={`#${item.anchor}`}
-                        onMouseEnter={() => setActiveCard(item.anchor)}
+                        onMouseEnter={() => setActiveCard(cardIdOf(item))}
                         onMouseLeave={() => setActiveCard(null)}
-                        onFocus={() => setActiveCard(item.anchor)}
+                        onFocus={() => setActiveCard(cardIdOf(item))}
                         onBlur={() => setActiveCard(null)}
                         className="block rounded-lg border border-border bg-background/50 px-3 py-2 transition-colors hover:border-(--role-accent)/60 hover:bg-(--role-accent)/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                       >

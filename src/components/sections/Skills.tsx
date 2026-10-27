@@ -11,6 +11,7 @@ import {
 } from "@/content/schema";
 import { formatPeriod } from "@/lib/format";
 import { pickLocale } from "@/lib/i18n-text";
+import { journeyAnchors } from "@/lib/journey";
 import { orderSkillGroups } from "@/lib/roles";
 import { evidenceFor } from "@/lib/skills";
 import { SkillGlyph, SkillMonogram } from "./skills/SkillGlyph";
@@ -54,6 +55,10 @@ export function Skills({
     ]),
   ) as Record<RoleKey, string>;
 
+  // Evidence links point into the experience tree: a stint to its parent (`#exp-<group>`), a project the tree shows
+  // to its child card (`#tree-<id>`); any other project to its bento card (`#proj-<id>`).
+  const anchors = journeyAnchors(content);
+
   // Shared records keep one identity in the client props and are localized/formatted only once per render.
   const evidenceByAnchor = new Map<string, EvidenceView>();
   const sharedEvidence = (
@@ -77,20 +82,20 @@ export function Skills({
         const { experiences, projects } = evidenceFor(s.id, content);
         const evidence: EvidenceView[] = [
           ...experiences.map((e): EvidenceView =>
-            sharedEvidence(`exp-${e.id}`, () => ({
+            sharedEvidence(`exp:${e.id}`, () => ({
               kind: "exp",
               id: e.id,
-              anchor: `exp-${e.id}`,
+              anchor: anchors.experiences.get(e.id) ?? `exp-${e.id}`,
               title: e.company,
               role: pickLocale(e.position, locale),
               period: formatPeriod(e.start, e.end, locale),
             })),
           ),
           ...projects.map((p): EvidenceView =>
-            sharedEvidence(`proj-${p.id}`, () => ({
+            sharedEvidence(`proj:${p.id}`, () => ({
               kind: "proj",
               id: p.id,
-              anchor: `proj-${p.id}`,
+              anchor: anchors.projects.get(p.id) ?? `proj-${p.id}`,
               title: p.title,
               role: pickLocale(p.role, locale),
               period: formatPeriod(p.start, p.end, locale),

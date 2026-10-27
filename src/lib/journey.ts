@@ -118,6 +118,60 @@ function childOf(
 const newestStart = (a: { start: string }, b: { start: string }) =>
   b.start.localeCompare(a.start);
 
+/** Published stints grouped by parent company, otherwise by company; each group newest first. */
+function companyGroups(content: Content): [string, Experience[]][] {
+  const groups = new Map<string, Experience[]>();
+  for (const e of content.experiences) {
+    if (!e.published) continue;
+    const key = e.parentCompany || e.company;
+    groups.set(key, [...(groups.get(key) ?? []), e]);
+  }
+  return [...groups].map(([name, unsorted]) => [
+    name,
+    [...unsorted].sort(
+      (a, b) =>
+        newestStart(a, b) ||
+        endKey(b.end).localeCompare(endKey(a.end)) ||
+        a.sortIndex - b.sortIndex,
+    ),
+  ]);
+}
+
+const companyAnchor = (name: string, stints: Experience[]) =>
+  `exp-${groupSlug(name) ?? stints[0].id}`;
+const schoolAnchor = (e: Education) => `exp-${groupSlug(e.school) ?? e.id}`;
+
+/**
+ * Where each item lives in the tree, without localizing anything: a published stint maps to its parent's
+ * `exp-<slug>`, a school to its `exp-<slug>`, and a project that the tree shows to `tree-<id>`. Projects the tree
+ * leaves out (personal, unpublished, or whose stint / school is not shown) are absent.
+ */
+export function journeyAnchors(content: Content): {
+  experiences: Map<string, string>;
+  education: Map<string, string>;
+  projects: Map<string, string>;
+} {
+  const experiences = new Map<string, string>();
+  for (const [name, stints] of companyGroups(content))
+    for (const s of stints) experiences.set(s.id, companyAnchor(name, stints));
+  const education = new Map(
+    content.education.map((e) => [e.id, schoolAnchor(e)]),
+  );
+  const projects = new Map<string, string>();
+  for (const p of content.projects) {
+    if (!p.published) continue;
+    const shown =
+      (p.kind === "work" &&
+        p.experienceId !== null &&
+        experiences.has(p.experienceId)) ||
+      (p.kind === "university" &&
+        p.educationId !== null &&
+        education.has(p.educationId));
+    if (shown) projects.set(p.id, `tree-${p.id}`);
+  }
+  return { experiences, education, projects };
+}
+
 /**
  * The Experience tree: one parent per company (stints grouped by `parentCompany`, otherwise `company`) and one
  * per school, each with the work / university projects that belong to it.
@@ -142,21 +196,7 @@ export function buildJourney(
       .sort((a, b) => newestStart(a, b) || a.sortIndex - b.sortIndex)
       .map((p) => childOf(p, locale, t));
 
-  // Companies: published stints grouped by parent company, otherwise by company.
-  const groups = new Map<string, Experience[]>();
-  for (const e of content.experiences) {
-    if (!e.published) continue;
-    const key = e.parentCompany || e.company;
-    groups.set(key, [...(groups.get(key) ?? []), e]);
-  }
-
-  const companies = [...groups].map(([name, unsorted]) => {
-    const stints = [...unsorted].sort(
-      (a, b) =>
-        newestStart(a, b) ||
-        endKey(b.end).localeCompare(endKey(a.end)) ||
-        a.sortIndex - b.sortIndex,
-    );
+  const companies = companyGroups(content).map(([name, stints]) => {
     const ids = new Set(stints.map((s) => s.id));
     const children = childrenFor(
       (p) =>
@@ -166,7 +206,7 @@ export function buildJourney(
     const summary = unique(stints.map((s) => pickLocale(s.summary, locale)));
     const parent: JourneyParent = {
       key: `company:${name}`,
-      anchor: `exp-${groupSlug(name) ?? stints[0].id}`,
+      anchor: companyAnchor(name, stints),
       kind: "company",
       name,
       location: stints[0].location,
@@ -197,7 +237,7 @@ export function buildJourney(
     const period = formatPeriod(e.start, e.end, locale);
     const parent: JourneyParent = {
       key: `school:${e.id}`,
-      anchor: `exp-${groupSlug(e.school) ?? e.id}`,
+      anchor: schoolAnchor(e),
       kind: "school",
       name: e.school,
       location: null,

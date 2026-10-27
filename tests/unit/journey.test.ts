@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { contentSchema, type Content, type Project } from "@/content/schema";
 import seed from "@/content/seed.json";
-import { buildJourney, groupSlug } from "@/lib/journey";
+import { buildJourney, groupSlug, journeyAnchors } from "@/lib/journey";
 
 const base = (): Content => contentSchema.parse(structuredClone(seed));
 const t = (key: string) => ({ code: "Code", demo: "Demo" })[key] ?? `[${key}]`;
@@ -313,5 +313,26 @@ describe("groupSlug", () => {
     c.experiences.find((e) => e.id === "fpt-japan")!.company = "日本株式会社";
     const anchors = buildJourney(c, "en", t).map((p) => p.anchor);
     expect(anchors).toContain("exp-fpt-japan");
+  });
+});
+
+describe("journeyAnchors", () => {
+  it("agrees with buildJourney for every stint, school and child", () => {
+    const c = base();
+    c.projects.push(personal);
+    c.experiences.find((e) => e.id === "skg-intern")!.published = false;
+    const anchors = journeyAnchors(c);
+    const tree = buildJourney(c, "en", t);
+    const childAnchors = tree.flatMap((p) => p.children.map((x) => x.anchor));
+    expect([...anchors.projects.values()].sort()).toEqual(
+      [...childAnchors].sort(),
+    );
+    expect(anchors.experiences.get("skg-engineer")).toBe("exp-skg-software");
+    expect(anchors.experiences.has("skg-intern")).toBe(false);
+    expect(anchors.experiences.get("fpt-japan")).toBe("exp-fpt-japan");
+    expect(anchors.education.get("fpt-university")).toBe("exp-fpt-university");
+    // The intern stint is hidden, so its projects and the personal project have no tree anchor.
+    for (const id of ["tongue-ai-driver-ms", "skg-flexybox-p1", "side-project"])
+      expect(anchors.projects.has(id)).toBe(false);
   });
 });
