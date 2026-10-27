@@ -86,6 +86,36 @@ function withLinksAfter(c: Content): Content {
   };
 }
 
+/**
+ * Text the live database corrected after the frozen pre-migration seed was taken. The migration moves projects but
+ * never rewrites these columns, so the dry run expects the frozen text for the projects that exist on both sides.
+ */
+const CORRECTED_AFTER_FREEZE = [
+  "role",
+  "summary",
+  "tech",
+  "demoUrl",
+  "repoUrls",
+] as const;
+
+export function withFrozenProjectText(
+  after: Content,
+  before: Content,
+): Content {
+  const frozen = new Map(before.projects.map((p) => [p.id, p]));
+  return {
+    ...after,
+    projects: after.projects.map((p) => {
+      const old = frozen.get(p.id);
+      if (!old) return p;
+      return {
+        ...p,
+        ...Object.fromEntries(CORRECTED_AFTER_FREEZE.map((k) => [k, old[k]])),
+      };
+    }),
+  };
+}
+
 export type DryRunData = {
   beforeSql: string;
   expectedBefore: Snapshot;
@@ -94,9 +124,8 @@ export type DryRunData = {
 
 /** `before` is the frozen pre-migration seed, `after` the current seed.json. */
 export function dryRunData(before: unknown, after: unknown): DryRunData {
-  const beforeRows = buildSeedRows(
-    withLinksBefore(contentSchema.parse(before)),
-  );
+  const frozen = contentSchema.parse(before);
+  const beforeRows = buildSeedRows(withLinksBefore(frozen));
   const omitted = new Set<string>(NEW_PROJECT_COLUMNS);
   beforeRows.projects = beforeRows.projects.map((p) =>
     Object.fromEntries(Object.entries(p).filter(([k]) => !omitted.has(k))),
@@ -105,7 +134,11 @@ export function dryRunData(before: unknown, after: unknown): DryRunData {
     beforeSql: renderSeedSql(beforeRows, { projects: NEW_PROJECT_COLUMNS }),
     expectedBefore: snapshotOf(beforeRows),
     expectedAfter: snapshotOf(
-      buildSeedRows(withLinksAfter(contentSchema.parse(after))),
+      buildSeedRows(
+        withLinksAfter(
+          withFrozenProjectText(contentSchema.parse(after), frozen),
+        ),
+      ),
     ),
   };
 }

@@ -6,6 +6,7 @@ import {
   dryRunData,
   LINKS_VARIANT,
   NEW_PROJECT_COLUMNS,
+  withFrozenProjectText,
 } from "../../scripts/ci/experience-tree-data";
 import before from "../fixtures/seed-before-experience-tree.json";
 
@@ -42,7 +43,14 @@ describe("experience tree dry-run data", () => {
   });
 
   it("expects seed.json after the migration, apart from that variant", () => {
-    const rows = buildSeedRows(contentSchema.parse(seed));
+    // The migration leaves the project text columns alone, so the texts corrected on the live database after the
+    // freeze (see seed.json) are expected as frozen.
+    const rows = buildSeedRows(
+      withFrozenProjectText(
+        contentSchema.parse(seed),
+        contentSchema.parse(before),
+      ),
+    );
     const strip = (list: Record<string, unknown>[]) =>
       list.filter((r) => r.id !== LINKS_VARIANT.id);
     expect(strip(data.expectedAfter.projects)).toEqual(strip(rows.projects));
@@ -56,6 +64,32 @@ describe("experience tree dry-run data", () => {
     );
     expect(data.expectedAfter.why_cards).toEqual(
       rows.why_cards.map((w) => ({ id: w.id, evidence_link: w.evidence_link })),
+    );
+  });
+
+  it("keeps the corrected live texts out of the expected data, and only those", () => {
+    const live = buildSeedRows(contentSchema.parse(seed)).projects;
+    const expected = data.expectedAfter.projects;
+    const differing = expected.flatMap((row) => {
+      const current = live.find((r) => r.id === row.id)!;
+      return Object.keys(row)
+        .filter((k) => JSON.stringify(row[k]) !== JSON.stringify(current[k]))
+        .map((k) => `${row.id}.${k}`);
+    });
+    expect(differing.sort()).toEqual(
+      [
+        "meet-my-lecturer.role",
+        "meet-my-lecturer.summary",
+        "meet-my-lecturer.tech",
+        "meet-my-lecturer.repo_urls",
+        "zodiacgems.role",
+        "zodiacgems.demo_url",
+        "siteplus.demo_url",
+        // The Code/Demo/Docs variant row is exercised separately.
+        "skg-coa.demo_url",
+        "skg-coa.repo_urls",
+        "skg-coa.links",
+      ].sort(),
     );
   });
 });

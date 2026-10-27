@@ -228,7 +228,7 @@
         "Cohere",
         "Figma"
       ],
-      "demoUrl": "https://site-plus-15hdsvfpr-let-cals-projects.vercel.app/",
+      "demoUrl": "https://site-plus-fe.vercel.app",
       "repoUrls": [
         "https://github.com/Let-cal/SitePlus-FE",
         "https://github.com/Let-cal/SitePlus-MB"
@@ -250,9 +250,9 @@
       "id": "zodiacgems",
       "title": "ZodiacGems",
       "role": {
-        "en": "Front-end Developer",
-        "ja": "フロントエンド開発",
-        "vi": "Front-end Developer"
+        "en": "Team Lead, front-end",
+        "ja": "チームリーダー・フロントエンド開発",
+        "vi": "Trưởng nhóm, front-end"
       },
       "start": "2024-06",
       "end": "2024-10",
@@ -271,7 +271,7 @@
         "SQL Server",
         "Figma"
       ],
-      "demoUrl": "https://swd-392-rfr4ctba8-let-cals-projects.vercel.app/customer-page",
+      "demoUrl": "https://swd-392.vercel.app",
       "repoUrls": [
         "https://github.com/Let-cal/SWD392",
         "https://github.com/Let-cal/ZodiacGems-MobileApp"
@@ -293,29 +293,28 @@
       "id": "meet-my-lecturer",
       "title": "Meet My Lecturer",
       "role": {
-        "en": "Full-stack Developer",
-        "ja": "フルスタック開発",
-        "vi": "Full-stack Developer"
+        "en": "Team Lead, full-stack",
+        "ja": "チームリーダー・フルスタック開発",
+        "vi": "Trưởng nhóm, full-stack"
       },
       "start": "2023-07",
       "end": "2023-11",
       "summary": {
-        "en": "University project: a web app for booking meetings with lecturers, linked to Google Calendar and Google Meet, with real-time notifications over Socket.io.",
-        "ja": "大学のプロジェクトです。講師との面談を予約するWebアプリで、Google CalendarとGoogle Meetに連携し、Socket.ioでリアルタイム通知を送ります。",
-        "vi": "Dự án đại học: web app đặt lịch gặp giảng viên, liên kết với Google Calendar và Google Meet, thông báo real-time qua Socket.io."
+        "en": "University project: a web app where students book meeting slots with lecturers. Lecturers attach a Google Meet link, and bookings send email notices.",
+        "ja": "大学のプロジェクトです。学生が講師との面談枠を予約できるWebアプリで、講師がGoogle Meetのリンクを登録し、予約はメールで通知されます。",
+        "vi": "Dự án đại học: web app cho sinh viên đặt lịch gặp giảng viên. Giảng viên gắn link Google Meet, việc đặt lịch được thông báo qua email."
       },
       "caseStudy": null,
       "tech": [
         "Java Servlet",
         "JSP",
         "SQL Server",
-        "Socket.io",
-        "Google Calendar API",
-        "Google Meet API",
+        "Google Sign-In",
+        "JavaMail",
         "Figma"
       ],
       "demoUrl": null,
-      "repoUrls": ["https://github.com/Let-cal/meet-my-lecturers"],
+      "repoUrls": ["https://github.com/SWP309/meet-my-lecturers"],
       "posterUrl": null,
       "videoUrl": null,
       "published": true,

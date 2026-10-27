@@ -106,11 +106,55 @@ describe("seed after the experience tree migration", () => {
     expect(c.projects.filter((p) => p.kind === "personal")).toEqual([]);
   });
 
-  it("university projects keep their text", () => {
+  it("university projects keep their text, except what the live database corrected on 2026-10-27", () => {
+    // These columns were corrected on the live database after the pre-migration seed was frozen; seed.json mirrors it.
+    const corrected: Record<string, string[]> = {
+      "meet-my-lecturer": ["role", "summary", "tech", "repoUrls"],
+      zodiacgems: ["role", "demoUrl"],
+      siteplus: ["demoUrl"],
+    };
     for (const old of before.projects) {
       const { id, ...text } = old;
-      expect(project(id), id).toMatchObject(text);
+      const kept = Object.fromEntries(
+        Object.entries(text).filter(([k]) => !corrected[id]?.includes(k)),
+      );
+      expect(project(id), id).toMatchObject(kept);
     }
+  });
+
+  it("seed mirrors the corrected live project texts", () => {
+    expect(project("meet-my-lecturer")).toMatchObject({
+      role: {
+        en: "Team Lead, full-stack",
+        ja: "チームリーダー・フルスタック開発",
+        vi: "Trưởng nhóm, full-stack",
+      },
+      summary: {
+        en: "University project: a web app where students book meeting slots with lecturers. Lecturers attach a Google Meet link, and bookings send email notices.",
+        ja: "大学のプロジェクトです。学生が講師との面談枠を予約できるWebアプリで、講師がGoogle Meetのリンクを登録し、予約はメールで通知されます。",
+        vi: "Dự án đại học: web app cho sinh viên đặt lịch gặp giảng viên. Giảng viên gắn link Google Meet, việc đặt lịch được thông báo qua email.",
+      },
+      tech: [
+        "Java Servlet",
+        "JSP",
+        "SQL Server",
+        "Google Sign-In",
+        "JavaMail",
+        "Figma",
+      ],
+      repoUrls: ["https://github.com/SWP309/meet-my-lecturers"],
+    });
+    expect(project("zodiacgems")).toMatchObject({
+      role: {
+        en: "Team Lead, front-end",
+        ja: "チームリーダー・フロントエンド開発",
+        vi: "Trưởng nhóm, front-end",
+      },
+      demoUrl: "https://swd-392.vercel.app",
+    });
+    expect(project("siteplus")!.demoUrl).toBe(
+      "https://site-plus-fe.vercel.app",
+    );
   });
 
   it("role tags follow the position text", () => {
