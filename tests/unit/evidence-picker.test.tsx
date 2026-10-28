@@ -26,6 +26,7 @@ Element.prototype.scrollIntoView ??= function () {};
 const { ResourceForm } = await import("@/components/admin/ResourceForm");
 const { RoleTabs } = await import("@/components/admin/SingletonForms");
 const { emptyItem } = await import("@/lib/admin/empty-item");
+const { evidenceOptions } = await import("@/lib/admin/project-options");
 const content = contentSchema.parse(seed);
 
 beforeEach(() => {
@@ -76,7 +77,7 @@ describe("automatic IDs", () => {
 });
 
 describe("evidence link", () => {
-  it("is chosen from experiences and projects", async () => {
+  it("is chosen from the tree and the home cards", async () => {
     const { sortIndex: _s, ...card } = content.whyCards[0];
     void _s;
     render(
@@ -84,27 +85,23 @@ describe("evidence link", () => {
         resourceKey="why_cards"
         isNew={false}
         initial={card}
-        options={{
-          evidence: {
-            experiences: content.experiences.map((e) => ({
-              id: e.id,
-              label: e.company,
-            })),
-            projects: content.projects.map((p) => ({
-              id: p.id,
-              label: p.title,
-            })),
-          },
-        }}
+        options={{ evidence: evidenceOptions(content) }}
       />,
     );
     const select = document.getElementById(
       "field-evidenceLink",
     ) as HTMLSelectElement;
     expect(
-      within(select).getByRole("group", { name: "Kinh nghiệm" }),
+      within(select).getByRole("group", {
+        name: "Cây kinh nghiệm: công ty, trường",
+      }),
     ).toBeTruthy();
-    expect(within(select).getByRole("group", { name: "Dự án" })).toBeTruthy();
+    expect(
+      within(select).getByRole("group", { name: "Cây kinh nghiệm: dự án" }),
+    ).toBeTruthy();
+    expect(
+      within(select).getByRole("group", { name: "Thẻ dự án trên trang chủ" }),
+    ).toBeTruthy();
     await act(async () =>
       fireEvent.change(select, { target: { value: "#proj-siteplus" } }),
     );

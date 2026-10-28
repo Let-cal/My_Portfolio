@@ -34,7 +34,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import type { ZodObject } from "zod";
+import { ROLE_KEYS } from "@/content/constants";
 import type { Option } from "@/lib/admin/data";
+import {
+  applyWhere,
+  KIND_LABELS,
+  ROLE_LABELS,
+  whereValue,
+  type EvidenceGroup,
+  type WhereOptions,
+} from "@/lib/admin/project-options";
 import {
   resources,
   type FieldSpec,
@@ -88,8 +97,10 @@ export type Options = Partial<
   skillNames?: string[];
   /** IDs already used in this list, for the live "ID đã được dùng" check on new items. */
   existingIds?: string[];
-  /** Items a why card can point to as evidence. */
-  evidence?: { experiences: Option[]; projects: Option[] };
+  /** Anchors a why card can point to as evidence, grouped (tree parents, tree children, home cards). */
+  evidence?: EvidenceGroup[];
+  /** A project's "Thuộc về" choices: stints by company, then schools. */
+  where?: WhereOptions;
 };
 
 /** Field that seeds a new item's ID, in order of preference. */
@@ -171,12 +182,16 @@ export function FieldsForm({
   const isNew = !lockId;
   const scoped = (path: string) => (idScope ? `${idScope}-${path}` : path);
   const fid = (path: string) => `field-${scoped(path)}`;
-  // Chips have one input for the whole list, so their item errors point at that input.
-  const kindOf = new Map(fields.map((f) => [f.name, f.kind]));
-  const errorTarget = (e: { path: string; field: string }) =>
-    kindOf.get(e.field) === "tags" || kindOf.get(e.field) === "upload"
+  // Chips have one input for the whole list, so their item errors point at that input; a derived
+  // field (e.g. a project's kind) points at the control that sets it.
+  const specOf = new Map(fields.map((f) => [f.name, f]));
+  const errorTarget = (e: { path: string; field: string }) => {
+    const spec = specOf.get(e.field);
+    if (spec?.kind === "derived") return fid(spec.target);
+    return spec?.kind === "tags" || spec?.kind === "upload"
       ? fid(e.field)
       : fid(e.path);
+  };
 
   // New items: the ID follows the name/title until the user edits the ID field.
   const idEdited = useRef(false);
@@ -302,7 +317,12 @@ export function FieldsForm({
         );
       }
       case "evidence": {
-        const ev = options.evidence ?? { experiences: [], projects: [] };
+        const groups = options.evidence ?? [];
+        const saved = (initial[f.name] as string | null | undefined) ?? "";
+        // A saved link that no longer exists stays visible (and selected) until it is changed.
+        const stale =
+          saved !== "" &&
+          !groups.some((g) => g.options.some((o) => o.value === saved));
         return (
           <FieldShell
             key={f.name}
@@ -326,20 +346,20 @@ export function FieldsForm({
               }
             >
               <option value="">Không có</option>
-              <optgroup label="Kinh nghiệm">
-                {ev.experiences.map((o) => (
-                  <option key={o.id} value={`#exp-${o.id}`}>
-                    {o.label}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Dự án">
-                {ev.projects.map((o) => (
-                  <option key={o.id} value={`#proj-${o.id}`}>
-                    {o.label}
-                  </option>
-                ))}
-              </optgroup>
+              {groups.map((g) => (
+                <optgroup key={g.label} label={g.label}>
+                  {g.options.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+              {stale && (
+                <optgroup label="Liên kết đã lưu (không còn trên trang)">
+                  <option value={saved}>{saved}</option>
+                </optgroup>
+              )}
             </select>
           </FieldShell>
         );
@@ -386,15 +406,146 @@ export function FieldsForm({
             control={control}
             name={f.name}
             render={({ field }) => (
-              <label className="flex items-center gap-3 text-sm font-medium">
-                <Switch
-                  id={id}
-                  checked={Boolean(field.value)}
-                  onCheckedChange={field.onChange}
-                />
-                {f.label}
-              </label>
+              <div className="flex flex-col gap-1.5">
+                <label className="flex items-center gap-3 text-sm font-medium">
+                  <Switch
+                    id={id}
+                    checked={Boolean(field.value)}
+                    onCheckedChange={field.onChange}
+                    aria-invalid={Boolean(error)}
+                    aria-describedby={error ? `${id}-error` : undefined}
+                  />
+                  {f.label}
+                </label>
+                {f.hint && (
+                  <span className="text-xs text-muted-foreground">
+                    {f.hint}
+                  </span>
+                )}
+                <FieldError id={id} message={error} />
+              </div>
             )}
+          />
+        );
+      case "derived":
+        // Set and shown by its target control (e.g. "Thuộc về"); saved with the form.
+        return null;
+      case "where": {
+        const where = options.where ?? { companies: [], schools: [] };
+        const values = translationValues as Values;
+        const current = whereValue(values);
+        const known =
+          current === "personal" ||
+          [...where.companies.flatMap((c) => c.stints), ...where.schools].some(
+            (o) => o.value === current,
+          );
+        // The kind / link rule reports on `kind`; it belongs to this select.
+        const shownError =
+          error ?? errAt("kind") ?? errAt("educationId") ?? undefined;
+        const kind = (values.kind as keyof typeof KIND_LABELS) ?? "personal";
+        const choose = (value: string) => {
+          const next = applyWhere(value);
+          const opts = {
+            shouldDirty: true,
+            shouldValidate: formState.submitCount > 0,
+          };
+          form.setValue("experienceId", next.experienceId, opts);
+          form.setValue("educationId", next.educationId, opts);
+          form.setValue("kind", next.kind, opts);
+        };
+        return (
+          <FieldShell
+            key={f.name}
+            id={id}
+            label={f.label}
+            hint={f.hint}
+            error={shownError}
+          >
+            <select
+              id={id}
+              aria-invalid={Boolean(shownError)}
+              aria-describedby={
+                shownError ? `${id}-kind ${id}-error` : `${id}-kind`
+              }
+              className={cn(
+                "h-9 rounded-md border bg-background px-2 text-sm",
+                invalid(shownError),
+              )}
+              value={current}
+              onChange={(e) => choose(e.target.value)}
+            >
+              {where.companies.map((c) => (
+                <optgroup key={c.name} label={c.name}>
+                  {c.stints.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+              {where.schools.length > 0 && (
+                <optgroup label="Trường">
+                  {where.schools.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {!known && <option value={current}>{current}</option>}
+              <option value="personal">Cá nhân</option>
+            </select>
+            <p id={`${id}-kind`} className="text-xs text-muted-foreground">
+              Loại dự án (tự suy ra):{" "}
+              <strong className="font-medium text-foreground">
+                {KIND_LABELS[kind] ?? kind}
+              </strong>
+            </p>
+          </FieldShell>
+        );
+      }
+      case "roles":
+        return (
+          <Controller
+            key={f.name}
+            control={control}
+            name={f.name}
+            render={({ field }) => {
+              const selected = new Set((field.value as string[]) ?? []);
+              return (
+                <FieldShell
+                  group
+                  id={id}
+                  label={f.label}
+                  hint={f.hint}
+                  error={error}
+                >
+                  <div className="flex flex-wrap gap-x-5 gap-y-2">
+                    {ROLE_KEYS.map((role) => (
+                      <label
+                        key={role}
+                        className="flex items-center gap-2 text-sm"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selected.has(role)}
+                          onChange={(e) => {
+                            const next = new Set(selected);
+                            if (e.target.checked) next.add(role);
+                            else next.delete(role);
+                            // Stored in the switcher's order, whatever the click order.
+                            field.onChange(
+                              ROLE_KEYS.filter((r) => next.has(r)),
+                            );
+                          }}
+                        />
+                        {ROLE_LABELS[role]}
+                      </label>
+                    ))}
+                  </div>
+                </FieldShell>
+              );
+            }}
           />
         );
       case "select":

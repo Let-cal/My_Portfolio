@@ -99,6 +99,7 @@ describe("form sections", () => {
         .map((a) => a.textContent),
     ).toEqual([
       "Thông tin",
+      "Thuộc về & vai trò",
       "Nội dung",
       "Case study",
       "Liên kết & skills",

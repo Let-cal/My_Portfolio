@@ -20,23 +20,6 @@ const firstItem: Record<ResourceKey, unknown> = {
   why_cards: content.whyCards[0],
 };
 
-// Project fields the admin form does not edit yet (the "belongs to" select, role tags, stars
-// and links arrive with the admin task of the experience-tree plan).
-const NOT_IN_FORM_YET: Partial<
-  Record<(typeof RESOURCE_KEYS)[number], string[]>
-> = {
-  projects: [
-    "experienceId",
-    "educationId",
-    "kind",
-    "featured",
-    "featuredOrder",
-    "roles",
-    "teamSize",
-    "links",
-  ],
-};
-
 describe.each(RESOURCE_KEYS)("resource %s", (key) => {
   const resource = resources[key];
 
@@ -46,7 +29,7 @@ describe.each(RESOURCE_KEYS)("resource %s", (key) => {
 
   it("its form edits every field except the drag-and-drop position", () => {
     const schemaKeys = Object.keys(resource.schema.shape)
-      .filter((k) => k !== "sortIndex" && !NOT_IN_FORM_YET[key]?.includes(k))
+      .filter((k) => k !== "sortIndex")
       .sort();
     expect(
       resource.fields

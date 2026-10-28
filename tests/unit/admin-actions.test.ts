@@ -91,6 +91,8 @@ const {
   listVersions,
   restoreVersion,
   undoDelete,
+  toggleFeatured,
+  reorderFeatured,
 } = await import("@/app/admin/actions");
 const content = contentSchema.parse(seed);
 
@@ -431,6 +433,26 @@ describe("admin actions", () => {
     expect(calls).toEqual([]);
   });
 
+  it("explains a restore the experience tree migration blocks, naming the project to restore", async () => {
+    rpcError = {
+      code: "22023",
+      message:
+        "cannot restore version 41: its content moved to project tongue-ai-driver-ms (experience tree); restore that project instead",
+    };
+    expect(await restoreVersion(41)).toEqual({
+      ok: false,
+      error:
+        'Không khôi phục được phiên bản này: nội dung đã chuyển sang dự án "tongue-ai-driver-ms" (cây kinh nghiệm). Hãy khôi phục dự án đó.',
+    });
+    expect(updateTag).not.toHaveBeenCalled();
+    // Another 22023 reason is still shown, in Vietnamese framing, never as a generic error.
+    rpcError = { code: "22023", message: "cannot restore version 7: x" };
+    expect(await restoreVersion(7)).toEqual({
+      ok: false,
+      error: "Không khôi phục được phiên bản này: x",
+    });
+  });
+
   it("lists versions with the current row, for known tables only", async () => {
     rpcResults.admin_list_versions = [
       {
@@ -550,6 +572,8 @@ describe("admin actions", () => {
       ["saveRole", () => saveRole(content.roles[0])],
       ["restoreVersion", () => restoreVersion(5)],
       ["undoDelete", () => undoDelete("certificates", "a")],
+      ["toggleFeatured", () => toggleFeatured("a")],
+      ["reorderFeatured", () => reorderFeatured(["a"])],
     ];
     it.each(writes)(
       "cannot %s, and nothing reaches the database",

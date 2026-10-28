@@ -1,8 +1,7 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { contentSchema } from "@/content/schema";
-// Content as before the experience tree migration, until this test moves to the new model.
-import seed from "../fixtures/seed-before-experience-tree.json";
+import seed from "@/content/seed.json";
 import { listRows } from "@/lib/admin/list-view";
 
 const push = vi.fn();
@@ -41,9 +40,7 @@ describe("ResourceTable", () => {
         initialRows={listRows("experiences", content)}
       />,
     );
-    const row = screen
-      .getByText("COA (Certificate of Analysis system)")
-      .closest("li")!;
+    const row = screen.getByText("FPT Japan").closest("li")!;
     expect(within(row).getByText(/ – /)).toBeTruthy();
   });
 
@@ -51,7 +48,11 @@ describe("ResourceTable", () => {
     const rows = listRows("projects", content);
     rows[0] = { ...rows[0], hidden: true };
     render(<ResourceTable resourceKey="projects" initialRows={rows} />);
-    const list = () => screen.getAllByRole("listitem");
+    // The main list only (the projects screen also has the featured strip).
+    const list = () =>
+      within(screen.getByRole("list", { name: "Danh sách" })).getAllByRole(
+        "listitem",
+      );
     expect(list()).toHaveLength(rows.length);
 
     await act(async () =>

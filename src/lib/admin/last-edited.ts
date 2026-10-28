@@ -9,7 +9,7 @@ export type EditEntry = {
 };
 
 const KIND: Record<ResourceKey, string> = {
-  experiences: "Kinh nghiệm",
+  experiences: "Vị trí",
   projects: "Dự án",
   skills: "Kỹ năng",
   certificates: "Chứng chỉ",

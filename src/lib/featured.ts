@@ -51,7 +51,10 @@ export function featuredProjects(
  * Why `id` may not be starred right now, or null when it may. Removing a star, or re-saving a project that is
  * already starred, is never refused. Counts every starred row (published or not): the limit is on the data.
  */
-export function starRefusal(projects: Project[], id: string): string | null {
+export function starRefusal(
+  projects: Pick<Project, "id" | "featured">[],
+  id: string,
+): string | null {
   const target = projects.find((p) => p.id === id);
   if (target?.featured) return null;
   const starred = projects.filter((p) => p.featured).length;

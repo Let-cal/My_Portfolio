@@ -57,7 +57,7 @@ export const ROLE_FIELDS: FieldSpec[] = [
   },
   {
     name: "experienceOrder",
-    label: "Thứ tự kinh nghiệm",
+    label: "Thứ tự vị trí làm việc",
     kind: "order",
     source: "experiences",
   },

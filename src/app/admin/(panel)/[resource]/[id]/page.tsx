@@ -6,7 +6,8 @@ import { ResourceForm } from "@/components/admin/ResourceForm";
 import { getAdminAccess } from "@/lib/admin/access";
 import { emptyItem } from "@/lib/admin/empty-item";
 import type { Options } from "@/components/admin/ResourceForm";
-import type { Skill } from "@/content/schema";
+import type { Education, Experience, Project, Skill } from "@/content/schema";
+import { evidenceOptions, whereOptions } from "@/lib/admin/project-options";
 import { getItem, listItems, relationOptions } from "@/lib/admin/data";
 import { copyId, neighbours } from "@/lib/admin/list-view";
 import { tableFor } from "@/lib/admin/versions";
@@ -60,10 +61,13 @@ async function Editor({
       : Promise.resolve([] as Skill[]),
   ]);
   if (!found) notFound();
-  const [ownList, experiences, projects] = await Promise.all([
+  // Why cards point at anchors of the tree and the home cards; projects choose their stint or school.
+  const needsTree = key === "why_cards" || key === "projects";
+  const [ownList, experiences, projects, education] = await Promise.all([
     listItems(key),
-    key === "why_cards" ? listItems("experiences") : Promise.resolve([]),
+    needsTree ? listItems("experiences") : Promise.resolve([]),
     key === "why_cards" ? listItems("projects") : Promise.resolve([]),
+    needsTree ? listItems("education") : Promise.resolve([]),
   ]);
   let source: Record<string, unknown> = found;
   if (from) {
@@ -77,22 +81,20 @@ async function Editor({
       ),
     };
   }
-  const hiddenMark = (item: Record<string, unknown>) =>
-    item.published === false ? " (đang ẩn)" : "";
+  const tree = {
+    experiences: experiences as unknown as Experience[],
+    projects: projects as unknown as Project[],
+    education: education as unknown as Education[],
+  };
   const options: Options = {
     ...relations,
     // Only a new item can clash with an existing id; an edit keeps its own.
     existingIds: isNew ? ownList.map((i) => i.id) : [],
-    evidence: {
-      experiences: experiences.map((e) => ({
-        id: e.id,
-        label: `${String(e.company)} · ${String(e.start)}${hiddenMark(e)}`,
-      })),
-      projects: projects.map((p) => ({
-        id: p.id,
-        label: `${String(p.title)}${hiddenMark(p)}`,
-      })),
-    },
+    evidence: key === "why_cards" ? evidenceOptions(tree) : undefined,
+    where:
+      key === "projects"
+        ? whereOptions(tree.experiences, tree.education)
+        : undefined,
     skills: skills.map((s) => ({ id: s.id, label: s.name, group: s.group })),
     skillNames: skills.map((s) => s.name),
   };

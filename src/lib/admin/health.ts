@@ -86,7 +86,7 @@ function translatableItems(c: AdminContent): Labeled[] {
     })),
     ...c.experiences.map((e) => ({
       href: `/admin/experiences/${e.id}`,
-      label: `Kinh nghiệm ${e.company}`,
+      label: `Vị trí ${e.company}`,
       value: e,
     })),
     ...c.projects.map((p) => ({
@@ -271,7 +271,7 @@ export function checkContentHealth(c: AdminContent): HealthIssue[] {
   }
 
   const hiddenLists = [
-    { key: "experiences", label: "kinh nghiệm", items: c.experiences },
+    { key: "experiences", label: "vị trí", items: c.experiences },
     { key: "projects", label: "dự án", items: c.projects },
     { key: "certificates", label: "chứng chỉ", items: c.certificates },
   ] as const;

@@ -10,7 +10,7 @@ export type CommandItem = {
 };
 
 const SINGULAR: Record<ResourceKey, string> = {
-  experiences: "kinh nghiệm",
+  experiences: "vị trí",
   projects: "dự án",
   skills: "kỹ năng",
   certificates: "chứng chỉ",
@@ -19,7 +19,7 @@ const SINGULAR: Record<ResourceKey, string> = {
   why_cards: "why card",
 };
 const TYPE: Record<ResourceKey, string> = {
-  experiences: "Kinh nghiệm",
+  experiences: "Vị trí",
   projects: "Dự án",
   skills: "Kỹ năng",
   certificates: "Chứng chỉ",

@@ -14,6 +14,9 @@ export type ListRow = {
   missingLocales: ("ja" | "vi")[];
   /** Skills linked to this experience/project; the number of evidence items for a skill. */
   skillCount?: number;
+  /** Projects only: starred for the home page, and its place in the featured strip. */
+  featured?: boolean;
+  featuredOrder?: number | null;
 };
 export type RowStatus =
   "all" | "visible" | "hidden" | "untranslated" | "no-skills";
@@ -79,6 +82,8 @@ export function listRows(key: ResourceKey, c: AdminContent): ListRow[] {
           p.published,
         ),
         skillCount: c.skills.filter((s) => s.projectIds.includes(p.id)).length,
+        featured: p.featured,
+        featuredOrder: p.featuredOrder,
       }));
     case "skills":
       return c.skills.map((s) => ({

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { AdminOnly } from "@/components/admin/AdminAccessProvider";
+import { CompanyHeaderPreview } from "@/components/admin/CompanyHeaderPreview";
 import { ResourceTable } from "@/components/admin/ResourceTable";
 import { SkillMatrix } from "@/components/admin/SkillMatrix";
 import { Button } from "@/components/ui/button";
@@ -52,19 +53,22 @@ async function ResourceList({
       ) : matrix ? (
         <SkillMatrix content={content} initialFilter={parseMatrixFilter(sp)} />
       ) : (
-        <ResourceTable
-          resourceKey={key}
-          initialRows={listRows(key, content)}
-          highlightId={
-            typeof sp.highlight === "string" ? sp.highlight : undefined
-          }
-          impacts={Object.fromEntries(
-            listRows(key, content).map((r) => [
-              r.id,
-              deleteImpact(key, r.id, content),
-            ]),
-          )}
-        />
+        <>
+          {key === "experiences" && <CompanyHeaderPreview content={content} />}
+          <ResourceTable
+            resourceKey={key}
+            initialRows={listRows(key, content)}
+            highlightId={
+              typeof sp.highlight === "string" ? sp.highlight : undefined
+            }
+            impacts={Object.fromEntries(
+              listRows(key, content).map((r) => [
+                r.id,
+                deleteImpact(key, r.id, content),
+              ]),
+            )}
+          />
+        </>
       )}
     </>
   );

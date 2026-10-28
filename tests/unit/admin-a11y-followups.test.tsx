@@ -166,10 +166,9 @@ describe("accessibility follow-ups", () => {
   });
 
   it("the evidence select shows its saved value in the server HTML", () => {
-    const exp = content.experiences[0];
     const card = {
       ...strip(content.whyCards[0]),
-      evidenceLink: `#exp-${exp.id}`,
+      evidenceLink: "#exp-skg-software",
     };
     const html = renderToString(
       <ResourceForm
@@ -177,15 +176,17 @@ describe("accessibility follow-ups", () => {
         isNew={false}
         initial={card}
         options={{
-          evidence: {
-            experiences: [{ id: exp.id, label: exp.company }],
-            projects: [],
-          },
+          evidence: [
+            {
+              label: "Cây kinh nghiệm: công ty, trường",
+              options: [
+                { value: "#exp-skg-software", label: "SKG Software (Splus)" },
+              ],
+            },
+          ],
         }}
       />,
     );
-    expect(html).toMatch(
-      new RegExp(`<option value="#exp-${exp.id}" selected="">`),
-    );
+    expect(html).toMatch(/<option value="#exp-skg-software" selected="">/);
   });
 });
