@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { contentSchema } from "@/content/schema";
-// Content as before the experience tree migration, until this test moves to the new model.
-import seed from "../fixtures/seed-before-experience-tree.json";
+import seed from "@/content/seed.json";
 import {
   copyId,
   filterRows,
@@ -24,18 +23,14 @@ describe("formatting", () => {
 });
 
 describe("listRows", () => {
-  it("gives each experience a name, a period and its skill count", () => {
+  it("gives each position a name, a period and its skill count", () => {
     const rows = listRows("experiences", c);
-    const coa = rows.find((r) => r.id === "skg-coa")!;
-    expect(coa.label).toBe("COA (Certificate of Analysis system)");
-    expect(coa.detail).toContain(
-      formatPeriod(
-        c.experiences.find((e) => e.id === "skg-coa")!.start,
-        c.experiences.find((e) => e.id === "skg-coa")!.end,
-      ),
-    );
-    expect(coa.skillCount).toBe(
-      c.skills.filter((s) => s.experienceIds.includes("skg-coa")).length,
+    const stint = c.experiences.find((e) => e.id === "fpt-japan")!;
+    const row = rows.find((r) => r.id === "fpt-japan")!;
+    expect(row.label).toBe(stint.company);
+    expect(row.detail).toContain(formatPeriod(stint.start, stint.end));
+    expect(row.skillCount).toBe(
+      c.skills.filter((s) => s.experienceIds.includes("fpt-japan")).length,
     );
   });
 
@@ -52,7 +47,7 @@ describe("listRows", () => {
 });
 
 describe("filterRows", () => {
-  const rows = listRows("experiences", c);
+  const rows = listRows("projects", c);
 
   it("finds by name without accents or case", () => {
     expect(

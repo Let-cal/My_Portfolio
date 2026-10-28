@@ -1,50 +1,59 @@
 import { describe, expect, it } from "vitest";
 import { contentSchema, type Content } from "@/content/schema";
-// Content as before the experience tree migration, until this test moves to the new model.
-import seed from "../fixtures/seed-before-experience-tree.json";
+import seed from "@/content/seed.json";
 import { evidenceFor, skillsInGroup } from "@/lib/skills";
 
 const content: Content = contentSchema.parse(seed);
 
 describe("evidenceFor", () => {
   it("lists the experiences that used the skill", () => {
-    const { experiences, projects } = evidenceFor("terraform", content);
-    expect(experiences.map((e) => e.id)).toContain("skg-ai-agent");
-    expect(projects).toEqual([]);
+    const { experiences } = evidenceFor("requirements-definition", content);
+    expect(experiences.map((e) => e.id)).toEqual(["fpt-japan"]);
   });
 
   it("lists projects as well as experiences", () => {
-    const { experiences, projects } = evidenceFor("react", content);
-    expect(experiences.map((e) => e.id)).toEqual(
+    const { experiences, projects } = evidenceFor(
+      "requirements-definition",
+      content,
+    );
+    expect(experiences.map((e) => e.id)).toEqual(["fpt-japan"]);
+    expect(projects.map((p) => p.id)).toEqual(
       expect.arrayContaining(["skg-ai-agent", "skg-flexybox-p2"]),
     );
-    expect(projects.map((p) => p.id)).toEqual(
-      expect.arrayContaining(["siteplus", "zodiacgems"]),
-    );
+    expect(evidenceFor("terraform", content)).toEqual({
+      experiences: [],
+      projects: [expect.objectContaining({ id: "skg-ai-agent" })],
+    });
   });
 
   it("returns the full records, ordered by sortIndex", () => {
-    const { experiences } = evidenceFor("nextjs", content);
-    expect(experiences.map((e) => e.company)).toEqual(
-      experiences
+    const { projects } = evidenceFor("react", content);
+    expect(projects.length).toBeGreaterThan(1);
+    expect(projects.map((p) => p.id)).toEqual(
+      projects
         .slice()
         .sort((a, b) => a.sortIndex - b.sortIndex)
-        .map((e) => e.company),
+        .map((p) => p.id),
     );
-    expect(experiences[0]).toHaveProperty("position");
+    expect(projects[0]).toHaveProperty("title");
+    expect(
+      evidenceFor("requirements-definition", content).experiences[0],
+    ).toHaveProperty("position");
   });
 
   it("drops unpublished experiences and projects", () => {
     const hidden: Content = {
       ...content,
       experiences: content.experiences.map((e) =>
-        e.id === "skg-ai-agent" ? { ...e, published: false } : e,
+        e.id === "fpt-japan" ? { ...e, published: false } : e,
       ),
       projects: content.projects.map((p) =>
         p.id === "siteplus" ? { ...p, published: false } : p,
       ),
     };
-    expect(evidenceFor("terraform", hidden).experiences).toEqual([]);
+    expect(evidenceFor("requirements-definition", hidden).experiences).toEqual(
+      [],
+    );
     expect(
       evidenceFor("react", hidden).projects.map((p) => p.id),
     ).not.toContain("siteplus");
@@ -54,14 +63,16 @@ describe("evidenceFor", () => {
     const dangling: Content = {
       ...content,
       skills: content.skills.map((s) =>
-        s.id === "terraform"
-          ? { ...s, experienceIds: ["nope", "skg-ai-agent"] }
+        s.id === "requirements-definition"
+          ? { ...s, experienceIds: ["nope", "fpt-japan"] }
           : s,
       ),
     };
     expect(
-      evidenceFor("terraform", dangling).experiences.map((e) => e.id),
-    ).toEqual(["skg-ai-agent"]);
+      evidenceFor("requirements-definition", dangling).experiences.map(
+        (e) => e.id,
+      ),
+    ).toEqual(["fpt-japan"]);
     expect(evidenceFor("does-not-exist", content)).toEqual({
       experiences: [],
       projects: [],

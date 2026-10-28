@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { contentSchema } from "@/content/schema";
-// Content as before the experience tree migration, until this test moves to the new model.
-import seed from "../fixtures/seed-before-experience-tree.json";
+import seed from "@/content/seed.json";
 import {
   buildMatrix,
   filterMatrix,
@@ -23,17 +22,18 @@ describe("buildMatrix", () => {
   const m = buildMatrix(c);
 
   it("lists experiences then projects as columns, each by position", () => {
-    expect(m.columns).toHaveLength(9);
+    const n = c.experiences.length;
+    expect(m.columns).toHaveLength(n + c.projects.length);
     expect(
-      m.columns.slice(0, 6).every((col) => col.kind === "experience"),
+      m.columns.slice(0, n).every((col) => col.kind === "experience"),
     ).toBe(true);
-    expect(m.columns.slice(6).every((col) => col.kind === "project")).toBe(
+    expect(m.columns.slice(n).every((col) => col.kind === "project")).toBe(
       true,
     );
     const expIds = [...c.experiences]
       .sort((a, b) => a.sortIndex - b.sortIndex)
       .map((e) => e.id);
-    expect(m.columns.slice(0, 6).map((col) => col.id)).toEqual(expIds);
+    expect(m.columns.slice(0, n).map((col) => col.id)).toEqual(expIds);
   });
 
   it("groups skills in SKILL_GROUPS order with their links", () => {
@@ -41,8 +41,10 @@ describe("buildMatrix", () => {
     expect(m.groups[0].rows).toHaveLength(8);
     const ts = m.groups[0].rows[0];
     expect(ts.skill.name).toBe("TypeScript");
-    expect(ts.linked.has("experience:skg-ai-agent")).toBe(true);
+    expect(ts.linked.has("project:skg-ai-agent")).toBe(true);
     expect(ts.linked.has("project:siteplus")).toBe(true);
+    const req = rows(m).find((r) => r.skill.id === "requirements-definition")!;
+    expect(req.linked.has("experience:fpt-japan")).toBe(true);
   });
 });
 
@@ -84,10 +86,9 @@ describe("filterMatrix", () => {
   it("finds skills whose only evidence is hidden", () => {
     const h = structuredClone(c);
     const skill = h.skills.find(
-      (s) => s.experienceIds.length === 1 && s.projectIds.length === 0,
+      (s) => s.projectIds.length === 1 && s.experienceIds.length === 0,
     )!;
-    h.experiences.find((e) => e.id === skill.experienceIds[0])!.published =
-      false;
+    h.projects.find((p) => p.id === skill.projectIds[0])!.published = false;
     const names = rows(
       filterMatrix(buildMatrix(h), { ...all, only: "hidden-evidence" }, h),
     ).map((r) => r.skill.id);

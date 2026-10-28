@@ -1,8 +1,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { contentSchema } from "@/content/schema";
-// Content as before the experience tree migration, until this test moves to the new model.
-import seed from "../fixtures/seed-before-experience-tree.json";
+import seed from "@/content/seed.json";
 
 const saveSkillLinks = vi.fn();
 const saveResource = vi.fn();
@@ -69,7 +68,7 @@ describe("SkillMatrix (edit, then save)", () => {
     expect(saveSkillLinks.mock.calls[0][0]).toEqual(
       expect.arrayContaining([
         { skillId: "csharp", projectId: "siteplus", linked: true },
-        { skillId: "typescript", experienceId: "skg-ai-agent", linked: false },
+        { skillId: "typescript", projectId: "skg-ai-agent", linked: false },
       ]),
     );
     expect(saveButton()).toBeNull();
