@@ -44,11 +44,14 @@ describe("portfolio search identity", () => {
     });
   });
 
-  it("lists only the three indexable language pages in the sitemap", () => {
+  it("lists only the indexable language pages (home and project archive) in the sitemap", () => {
     expect(sitemap().map(({ url }) => url)).toEqual([
       "https://letcal.is-a.dev/en",
       "https://letcal.is-a.dev/ja",
       "https://letcal.is-a.dev/vi",
+      "https://letcal.is-a.dev/en/projects",
+      "https://letcal.is-a.dev/ja/projects",
+      "https://letcal.is-a.dev/vi/projects",
     ]);
     expect(sitemap()[0].alternates?.languages).toMatchObject({
       ja: "https://letcal.is-a.dev/ja",

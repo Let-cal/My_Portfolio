@@ -9,7 +9,7 @@ import { describe, expect, it } from "vitest";
 const cases = [
   { file: "site/LanguageSwitch.tsx", eligible: [1], retained: [0] },
   { file: "site/PillNav.tsx", eligible: [0], retained: [] },
-  { file: "site/SideRail.tsx", eligible: [0, 1], retained: [] },
+  { file: "site/SideRail.tsx", eligible: [0, 1, 2, 3], retained: [] },
   {
     file: "sections/certificates/CertificatesBoard.tsx",
     eligible: [0, 1, 2, 3],
@@ -83,9 +83,10 @@ describe.each(cases)(
             "current",
             "selected",
             "checked",
+            "onArchive",
             "GRID",
             `return [${args}];`,
-          )(state, state, state, state, grid);
+          )(state, state, state, state, state, grid);
           expect(clsx(inputs), `class expression ${index}`).toBe(
             twMerge(clsx(inputs)),
           );

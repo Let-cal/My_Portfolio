@@ -9,6 +9,7 @@ import { useRole } from "./RoleProvider";
 import { SECTION_IDS } from "./sections";
 import type { ReactNode } from "react";
 import { useActiveSection } from "./use-active-section";
+import { useSiteLinks } from "./use-site-links";
 
 export type SideRailProps = {
   name: string;
@@ -22,13 +23,15 @@ const ACCENT = "var(--role-accent, #f97316)";
 
 /**
  * Sticky left column (desktop, 1024px and up): name, the title of the chosen role, the seven section links
- * and the contact icons. Each link has a 32px line; the section crossing the reading line gets a 64px line
+ * (with the all-projects page nested under Projects) and the contact icons. Off the home page the section links
+ * load the home page at that section. Each link has a 32px line; the section crossing the reading line gets a 64px line
  * in the role accent colour and `aria-current`.
  */
 export function SideRail({ name, titles, links, icons }: SideRailProps) {
   const t = useTranslations();
   const { role } = useRole();
   const active = useActiveSection();
+  const { sectionHref, archiveHref, onArchive } = useSiteLinks();
 
   const socials = [
     { label: t("footer.github"), href: links.github, icon: icons.github },
@@ -45,7 +48,7 @@ export function SideRail({ name, titles, links, icons }: SideRailProps) {
       <div className="sticky top-0 flex h-svh flex-col justify-between px-8 py-12 xl:px-12 xl:py-16">
         <div>
           <a
-            href="#hero"
+            href={sectionHref("hero")}
             data-scene-avoid=""
             className="block rounded-sm font-heading text-3xl leading-tight font-bold tracking-tight outline-none focus-visible:ring-3 focus-visible:ring-ring/50 xl:text-4xl"
           >
@@ -69,7 +72,7 @@ export function SideRail({ name, titles, links, icons }: SideRailProps) {
                 return (
                   <li key={id}>
                     <a
-                      href={`#${id}`}
+                      href={sectionHref(id)}
                       aria-current={current ? "true" : undefined}
                       className={clsx(
                         "group flex items-center gap-4 rounded-sm py-2 text-xs font-semibold tracking-[0.18em] uppercase outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
@@ -90,6 +93,31 @@ export function SideRail({ name, titles, links, icons }: SideRailProps) {
                       />
                       {t(`nav.${id}`)}
                     </a>
+                    {id === "projects" ? (
+                      // The all-projects page, nested under its section.
+                      <a
+                        href={archiveHref}
+                        aria-current={onArchive ? "page" : undefined}
+                        className={clsx(
+                          "group ml-12 flex items-center gap-3 rounded-sm py-1.5 text-xs font-medium tracking-wide outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+                          onArchive
+                            ? "text-foreground"
+                            : "text-muted-foreground hover:text-foreground focus-visible:text-foreground",
+                        )}
+                      >
+                        <span
+                          aria-hidden="true"
+                          className={clsx(
+                            "h-px shrink-0 bg-current transition-[width] duration-300 ease-out group-hover:w-8 group-focus-visible:w-8 motion-reduce:transition-none",
+                            onArchive ? "w-8" : "w-4",
+                          )}
+                          style={
+                            onArchive ? { backgroundColor: ACCENT } : undefined
+                          }
+                        />
+                        {t("archive.nav")}
+                      </a>
+                    ) : null}
                   </li>
                 );
               })}

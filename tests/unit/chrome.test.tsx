@@ -4,8 +4,10 @@ import { NextIntlClientProvider } from "next-intl";
 import type { ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // RoleProvider (used by the side rail) pulls in the routing helpers; a plain stub keeps the test free of the Next runtime.
+const route = vi.hoisted(() => ({ pathname: "/en" }));
 vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(""),
+  usePathname: () => route.pathname,
 }));
 vi.mock("@/i18n/navigation", () => ({
   useRouter: () => ({ replace: vi.fn() }),
@@ -119,6 +121,7 @@ const railProps = {
 };
 
 beforeEach(() => {
+  route.pathname = "/en";
   io.callbacks = [];
   io.options = [];
   vi.stubGlobal("IntersectionObserver", FakeObserver);
@@ -137,7 +140,10 @@ describe("SideRail", () => {
     mountSections();
     render(withIntl(<SideRail {...railProps} />));
     const nav = screen.getByRole("navigation", { name: en.header.primaryNav });
-    expect(within(nav).getAllByRole("link")).toHaveLength(SECTION_IDS.length);
+    // The seven sections plus the all-projects page.
+    expect(within(nav).getAllByRole("link")).toHaveLength(
+      SECTION_IDS.length + 1,
+    );
     expect(nav.querySelector("[aria-current]")).toBeNull();
 
     io.fire([
@@ -150,6 +156,29 @@ describe("SideRail", () => {
     expect(active.querySelector("span")).toHaveClass("w-16");
     const other = within(nav).getByRole("link", { name: en.nav.skills });
     expect(other.querySelector("span")).toHaveClass("w-8");
+  });
+
+  it("links to the all-projects page and marks it current there", () => {
+    render(withIntl(<SideRail {...railProps} />));
+    const nav = screen.getByRole("navigation", { name: en.header.primaryNav });
+    const all = within(nav).getByRole("link", { name: en.archive.nav });
+    expect(all).toHaveAttribute("href", "/en/projects");
+    expect(all).not.toHaveAttribute("aria-current");
+  });
+
+  it("on the archive page, section links lead back to the home page", () => {
+    route.pathname = "/ja/projects";
+    render(withIntl(<SideRail {...railProps} />, "ja"));
+    const nav = screen.getByRole("navigation", { name: ja.header.primaryNav });
+    expect(
+      within(nav).getByRole("link", { name: ja.nav.skills }),
+    ).toHaveAttribute("href", "/ja#skills");
+    expect(
+      within(nav).getByRole("link", { name: ja.archive.nav }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      screen.getByRole("link", { name: "Le Tran Cat Lam" }),
+    ).toHaveAttribute("href", "/ja#hero");
   });
 
   it("observes a thin band around the middle of the viewport", () => {
@@ -222,6 +251,18 @@ describe("PillNav", () => {
       "true",
     );
     expect(nav.querySelectorAll("[aria-current]")).toHaveLength(1);
+  });
+});
+
+describe("PillNav off the home page", () => {
+  it("points the section links at the home page", () => {
+    route.pathname = "/en/projects";
+    render(withIntl(<PillNav />));
+    const nav = screen.getByRole("navigation", { name: en.header.primaryNav });
+    expect(within(nav).getByRole("link", { name: /Projects/ })).toHaveAttribute(
+      "href",
+      "/en#projects",
+    );
   });
 });
 

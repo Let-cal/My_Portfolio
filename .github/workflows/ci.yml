@@ -87,7 +87,7 @@ jobs:
         run: npm ci
       - name: Build production
         run: npm run build
-      - name: Measure all three locales (median of three runs)
+      - name: Measure the three locales and the project archive (median of three runs)
         run: |
           set -euo pipefail
           node node_modules/next/dist/bin/next start -p 3100 -H 127.0.0.1 > "$RUNNER_TEMP/performance-server.log" 2>&1 &

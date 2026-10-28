@@ -16,6 +16,7 @@ import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
 import { clsx } from "clsx";
 import { SECTION_IDS, type SectionId } from "./sections";
 import { useActiveSection } from "./use-active-section";
+import { useSiteLinks } from "./use-site-links";
 
 const ICONS: Record<SectionId, LucideIcon> = {
   hero: HouseIcon,
@@ -35,6 +36,7 @@ export function PillNav() {
   const t = useTranslations();
   const reduced = usePrefersReducedMotion();
   const active = useActiveSection();
+  const { sectionHref } = useSiteLinks();
 
   return (
     <nav
@@ -48,7 +50,7 @@ export function PillNav() {
           return (
             <li key={id} className="min-w-0 flex-1">
               <a
-                href={`#${id}`}
+                href={sectionHref(id)}
                 aria-current={current ? "true" : undefined}
                 className={clsx(
                   "relative flex h-12 flex-col items-center justify-center gap-0.5 rounded-full px-0.5 text-[10px] leading-none font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring/50",

@@ -22,25 +22,38 @@ export function getSiteUrl(): URL {
   return new URL("/", url);
 }
 
+/**
+ * Title, description, canonical URL with its three language alternatives, and the Open Graph / Twitter cards of a
+ * page. `path` is the part after the locale ("" for the home page, "/projects" for the archive); `title` defaults
+ * to the site title.
+ */
 export function buildPageMetadata(
   locale: Locale,
   description: string,
+  {
+    path = "",
+    title = SITE_TITLES[locale],
+  }: { path?: string; title?: string } = {},
 ): Metadata {
-  const title = SITE_TITLES[locale];
   return {
     metadataBase: getSiteUrl(),
     title,
     description,
     alternates: {
-      canonical: `/${locale}`,
-      languages: { en: "/en", ja: "/ja", vi: "/vi", "x-default": "/en" },
+      canonical: `/${locale}${path}`,
+      languages: {
+        en: `/en${path}`,
+        ja: `/ja${path}`,
+        vi: `/vi${path}`,
+        "x-default": `/en${path}`,
+      },
     },
     openGraph: {
       type: "website",
       title,
       description,
       siteName: "LETCAL",
-      url: `/${locale}`,
+      url: `/${locale}${path}`,
       locale: OG_LOCALE[locale],
       alternateLocale: Object.values(OG_LOCALE).filter(
         (value) => value !== OG_LOCALE[locale],

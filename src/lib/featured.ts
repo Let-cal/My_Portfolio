@@ -8,7 +8,10 @@ export const STAR_LIMIT_MESSAGE =
   "Đã có 3 dự án nổi bật. Bỏ sao một dự án khác trước.";
 
 /** Newest start first; ties keep the owner's manual order, then id, so the result is stable. */
-function newestFirst(a: Project, b: Project): number {
+export function newestFirst(
+  a: Pick<Project, "start" | "sortIndex" | "id">,
+  b: Pick<Project, "start" | "sortIndex" | "id">,
+): number {
   return (
     b.start.localeCompare(a.start) ||
     a.sortIndex - b.sortIndex ||

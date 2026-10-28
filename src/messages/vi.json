@@ -81,7 +81,8 @@
     "actions": {
       "downloadCv": "Tải CV",
       "copyEmail": "Sao chép email",
-      "quickView": "Xem nhanh 60 giây"
+      "quickView": "Xem nhanh 60 giây",
+      "allProjects": "Tất cả dự án"
     }
   },
   "roles": {
@@ -256,6 +257,34 @@
     "codeN": "Code {n}",
     "newTab": "(mở trong tab mới)",
     "viewAll": "Xem tất cả {count} dự án"
+  },
+  "archive": {
+    "metaTitle": "Tất cả dự án | Lê Trần Cát Lâm",
+    "description": "Mọi dự án Lê Trần Cát Lâm đã tham gia: dự án ở công ty, đồ án đại học và dự án cá nhân, kèm vai trò, công nghệ và liên kết của từng dự án.",
+    "title": "Tất cả dự án",
+    "intro": "Dự án ở công ty, đồ án đại học và dự án cá nhân, mới nhất trước. Chọn tên dự án để đọc case study nếu có.",
+    "back": "Về trang chủ",
+    "nav": "Tất cả dự án",
+    "filterLabel": "Lọc dự án theo nơi thực hiện",
+    "kinds": {
+      "all": "Tất cả",
+      "work": "Công ty",
+      "university": "Đại học",
+      "personal": "Cá nhân"
+    },
+    "personal": "Cá nhân",
+    "caption": "Danh sách dự án, mới nhất trước",
+    "columns": {
+      "year": "Năm",
+      "project": "Dự án",
+      "where": "Nơi thực hiện",
+      "role": "Vai trò",
+      "tech": "Công nghệ",
+      "links": "Liên kết"
+    },
+    "featured": "Nổi bật trên trang chủ",
+    "showing": "Đang hiện {count} trên {total} dự án",
+    "empty": "Chưa có dự án nào thuộc loại này."
   },
   "certificates": {
     "intro": "Các khóa học, chứng chỉ và hoạt động ở trường. Chọn một chiếc đèn lồng để xem thông tin chứng chỉ.",

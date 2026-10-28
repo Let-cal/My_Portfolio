@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { evaluatePerformance } from "../../scripts/performance-budgets.mjs";
+import {
+  AUDITED_ROUTES,
+  evaluatePerformance,
+  reportName,
+} from "../../scripts/performance-budgets.mjs";
 
 const report = (values = {}) => ({
   categories: {
@@ -48,4 +52,10 @@ test("accessibility, SEO and layout shift block; loading metrics only warn", () 
     evaluatePerformance([broken, broken, report()]).failures.length,
     3,
   );
+});
+
+test("Lighthouse audits the three home pages and the project archive", () => {
+  assert.deepEqual(AUDITED_ROUTES, ["en", "ja", "vi", "en/projects"]);
+  assert.equal(reportName("en/projects", 2), "en-projects-2.json");
+  assert.equal(reportName("ja", 1), "ja-1.json");
 });

@@ -118,12 +118,16 @@ function childOf(
 const newestStart = (a: { start: string }, b: { start: string }) =>
   b.start.localeCompare(a.start);
 
+/** Name of the company group a stint belongs to: its parent company, otherwise its own company. */
+export const companyName = (e: Pick<Experience, "company" | "parentCompany">) =>
+  e.parentCompany || e.company;
+
 /** Published stints grouped by parent company, otherwise by company; each group newest first. */
 function companyGroups(content: Content): [string, Experience[]][] {
   const groups = new Map<string, Experience[]>();
   for (const e of content.experiences) {
     if (!e.published) continue;
-    const key = e.parentCompany || e.company;
+    const key = companyName(e);
     groups.set(key, [...(groups.get(key) ?? []), e]);
   }
   return [...groups].map(([name, unsorted]) => [

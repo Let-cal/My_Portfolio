@@ -2,6 +2,7 @@
 
 import {
   DownloadIcon,
+  FolderKanbanIcon,
   HashIcon,
   LanguagesIcon,
   MonitorIcon,
@@ -40,6 +41,7 @@ import { ROLE_KEYS } from "@/content/constants";
 import type { RoleKey } from "@/content/schema";
 import { getPathname, usePathname } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
+import { DEFAULT_ROLE } from "@/lib/roles";
 import { getLenis, scrollToElement } from "./lenis-instance";
 import {
   useMotionPreference,
@@ -83,7 +85,7 @@ function downloadFile(url: string) {
 
 /**
  * The command palette dialog (loaded on demand by `CommandPalette`): jump to a section, switch role, language, theme or motion, download the CV,
- * copy the email, or open the 60-second view. Opens on the shortcut or on a `window` "open-command" event (the
+ * copy the email, or open the 60-second view or the all-projects page. Opens on the shortcut or on a `window` "open-command" event (the
  * header button fires it). Smooth scrolling pauses while it is open. Language changes are a full page load, as
  * in LanguageSwitch, because a soft navigation keeps the previous locale's page mounted.
  */
@@ -153,7 +155,13 @@ export function CommandPaletteDialog({
   const goTo = (id: SectionId) => {
     pending.current = () => {
       const section = document.getElementById(id);
-      if (!section) return;
+      if (!section) {
+        // Not on the home page (the project archive, the 60-second view): load the home page at that section.
+        const query = role === DEFAULT_ROLE ? "" : `?role=${role}`;
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- full load of a different route
+        window.location.assign(`/${locale}${query}#${id}`);
+        return;
+      }
       scrollToElement(section);
       focusHeading(id);
     };
@@ -325,6 +333,19 @@ export function CommandPaletteDialog({
               >
                 <TimerIcon aria-hidden />
                 {t("actions.quickView")}
+              </CommandItem>
+              <CommandItem
+                value="action-all-projects"
+                keywords={[t("actions.allProjects"), groupLabels.actions]}
+                onSelect={() =>
+                  run(() => {
+                    // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- full load of a different route
+                    window.location.assign(`/${locale}/projects`);
+                  })
+                }
+              >
+                <FolderKanbanIcon aria-hidden />
+                {t("actions.allProjects")}
               </CommandItem>
             </CommandGroup>
           </CommandList>
