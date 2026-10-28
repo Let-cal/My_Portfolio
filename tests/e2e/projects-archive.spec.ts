@@ -111,6 +111,37 @@ test("canonical and hreflang point at the archive in each language", async ({
     ).toHaveAttribute("href", new RegExp(`/${locale}/projects$`));
 });
 
+test("the archive has a share image for Open Graph and Twitter", async ({
+  page,
+  request,
+}) => {
+  await page.goto("/vi/projects");
+  const og = await page
+    .locator('meta[property="og:image"]')
+    .getAttribute("content");
+  expect(og).toMatch(/\/vi\/opengraph-image$/);
+  await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute(
+    "content",
+    og!,
+  );
+  const image = await request.get(new URL(og!).pathname);
+  expect(image.ok()).toBe(true);
+  expect(image.headers()["content-type"]).toContain("image/png");
+});
+
+test("a section link in the navigation goes back to the home page at that section", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto("/en/projects?role=pm");
+  await page
+    .getByRole("navigation", { name: "Main navigation" })
+    .getByRole("link", { name: /Skills/ })
+    .click();
+  await expect(page).toHaveURL(/\/en\?role=pm#skills$/);
+  await expect(page.locator("#skills")).toBeAttached();
+});
+
 test("mobile 375px shows stacked rows without horizontal scroll", async ({
   page,
 }) => {

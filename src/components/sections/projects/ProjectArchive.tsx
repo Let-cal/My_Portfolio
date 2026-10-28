@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import {
   useCallback,
@@ -13,6 +13,7 @@ import {
 import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
 import { ChevronRightIcon } from "@/components/site/icons";
 import { useRole } from "@/components/site/RoleProvider";
+import { SECTION_IDS } from "@/components/site/sections";
 import type { ArchiveRow } from "@/lib/archive";
 import {
   ARCHIVE_KINDS,
@@ -72,12 +73,14 @@ function Star({ label }: { label: string }) {
  *   sets from the URL before the first paint and this component owns afterwards (never rendered by React, so
  *   hydration cannot contradict it).
  * - A `#row-<id>` deep link that the filter would hide resets the filter to "all", then the row scrolls into view.
+ * - A section link of the site navigation (`#experience`, ...) loads the home page at that section.
  * - The role switcher only highlights rows whose roles include it (`data-highlight`); the order never changes.
  * - A project with a case study opens it in the shared sheet from a button over its row (click or Enter).
  */
 export function ProjectArchive({ rows }: { rows: ArchiveRow[] }) {
   const t = useTranslations("archive");
   const tp = useTranslations("projects");
+  const locale = useLocale();
   const { role } = useRole();
   const reduced = usePrefersReducedMotion();
   // null until the URL has been read after hydration; the server HTML (and the inline script) cover that moment.
@@ -115,17 +118,29 @@ export function ProjectArchive({ rows }: { rows: ArchiveRow[] }) {
 
   const fromLocation = useCallback(() => {
     const { search, hash } = window.location;
-    const next = initialKind(search, hash, kindOfRow);
-    setKind(next);
-    // A deep link overrode ?kind=: drop it so a reload shows the same thing.
-    if (next !== parseKind(new URLSearchParams(search).get("kind")))
-      writeKind(next, true);
     let id = "";
     try {
       id = decodeURIComponent(hash.replace(/^#/, ""));
     } catch {
+      // A malformed escape is not a row or a section; the filter still follows ?kind=.
+    }
+    // The site navigation's section links are in-page `#id` links (so the home bundle carries no routing code).
+    // Here the sections do not exist: load the home page at that section, keeping ?role=, and replace this history
+    // entry so Back does not bounce through it again.
+    if ((SECTION_IDS as readonly string[]).includes(id)) {
+      const params = new URLSearchParams(search);
+      params.delete("kind");
+      const query = params.toString();
+      window.location.replace(`/${locale}${query ? `?${query}` : ""}#${id}`);
       return;
     }
+    const next = initialKind(search, hash, kindOfRow);
+    // Applied now, not in the effect: a row the old filter hid must be displayed before it is scrolled to.
+    wrapRef.current?.setAttribute(FILTER_ATTR, next);
+    setKind(next);
+    // A deep link overrode ?kind=: drop it so a reload shows the same thing.
+    if (next !== parseKind(new URLSearchParams(search).get("kind")))
+      writeKind(next, true);
     if (!kindOfRow(id)) return;
     requestAnimationFrame(() => {
       document.getElementById(id)?.scrollIntoView?.({
@@ -133,7 +148,7 @@ export function ProjectArchive({ rows }: { rows: ArchiveRow[] }) {
         block: "center",
       });
     });
-  }, [kindOfRow]);
+  }, [kindOfRow, locale]);
 
   useEffect(() => {
     const frame = requestAnimationFrame(fromLocation);
@@ -145,6 +160,7 @@ export function ProjectArchive({ rows }: { rows: ArchiveRow[] }) {
   }, [fromLocation]);
 
   function choose(next: ArchiveKind) {
+    wrapRef.current?.setAttribute(FILTER_ATTR, next);
     setKind(next);
     writeKind(next, false);
   }

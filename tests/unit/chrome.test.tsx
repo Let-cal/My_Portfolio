@@ -166,19 +166,20 @@ describe("SideRail", () => {
     expect(all).not.toHaveAttribute("aria-current");
   });
 
-  it("on the archive page, section links lead back to the home page", () => {
+  it("on the archive page, marks the all-projects link current and keeps section links in-page", () => {
     route.pathname = "/ja/projects";
     render(withIntl(<SideRail {...railProps} />, "ja"));
     const nav = screen.getByRole("navigation", { name: ja.header.primaryNav });
     expect(
-      within(nav).getByRole("link", { name: ja.nav.skills }),
-    ).toHaveAttribute("href", "/ja#skills");
-    expect(
       within(nav).getByRole("link", { name: ja.archive.nav }),
     ).toHaveAttribute("aria-current", "page");
     expect(
-      screen.getByRole("link", { name: "Le Tran Cat Lam" }),
-    ).toHaveAttribute("href", "/ja#hero");
+      within(nav).getByRole("link", { name: ja.archive.nav }),
+    ).toHaveAttribute("href", "/ja/projects");
+    // The archive page itself sends these to the home page (no routing code in the home bundle).
+    expect(
+      within(nav).getByRole("link", { name: ja.nav.skills }),
+    ).toHaveAttribute("href", "#skills");
   });
 
   it("observes a thin band around the middle of the viewport", () => {
@@ -251,18 +252,6 @@ describe("PillNav", () => {
       "true",
     );
     expect(nav.querySelectorAll("[aria-current]")).toHaveLength(1);
-  });
-});
-
-describe("PillNav off the home page", () => {
-  it("points the section links at the home page", () => {
-    route.pathname = "/en/projects";
-    render(withIntl(<PillNav />));
-    const nav = screen.getByRole("navigation", { name: en.header.primaryNav });
-    expect(within(nav).getByRole("link", { name: /Projects/ })).toHaveAttribute(
-      "href",
-      "/en#projects",
-    );
   });
 });
 

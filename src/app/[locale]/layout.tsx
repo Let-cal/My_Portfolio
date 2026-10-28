@@ -36,7 +36,7 @@ import {
   buildPersonJsonLd,
   serializeJsonLd,
 } from "@/lib/metadata";
-import { SpeedInsights } from "@vercel/speed-insights/next";
+import { DeferredSpeedInsights } from "@/components/site/DeferredSpeedInsights";
 import { DeferredToaster } from "@/components/site/DeferredToaster";
 import { PreviewBanner } from "@/components/site/PreviewBanner";
 import { getPreviewContent } from "@/lib/data/preview-content";
@@ -184,7 +184,7 @@ export default async function LocaleLayout({
           </MotionProvider>
         </NextIntlClientProvider>
         {/* The analytics script is served only by Vercel; other hosts would answer 404. */}
-        {process.env.VERCEL ? <SpeedInsights /> : null}
+        {process.env.VERCEL ? <DeferredSpeedInsights /> : null}
       </body>
     </html>
   );

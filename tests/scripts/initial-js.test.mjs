@@ -449,3 +449,25 @@ test(
     }
   },
 );
+
+test(
+  "Speed Insights loads after startup, outside the home page's initial scripts",
+  { skip: !existsSync(".next/server/app/en.html") },
+  () => {
+    const result = spawnSync(process.execPath, [script, "en", "--json"], {
+      encoding: "utf8",
+    });
+    const [{ chunks }] = JSON.parse(result.stdout);
+    for (const { src } of chunks) {
+      const path = join(
+        ".next",
+        decodeURIComponent(src.replace(/^\/_next\//, "")),
+      );
+      assert.equal(
+        readFileSync(path, "utf8").includes("@vercel/speed-insights"),
+        false,
+        `${src} ships Speed Insights at startup`,
+      );
+    }
+  },
+);

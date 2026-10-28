@@ -12,6 +12,7 @@ import { formatPeriod } from "@/lib/format";
 import { pickLocale } from "@/lib/i18n-text";
 import { companyName } from "@/lib/journey";
 import { buildPageMetadata } from "@/lib/metadata";
+import { OG_IMAGE } from "@/lib/og-image";
 import en from "@/messages/en.json";
 import ja from "@/messages/ja.json";
 import vi from "@/messages/vi.json";
@@ -91,10 +92,28 @@ export function archiveRows(content: Content, locale: Locale): ArchiveRow[] {
     });
 }
 
-/** Title, description, canonical `/<locale>/projects` and its hreflang alternatives. */
+/**
+ * Title, description, canonical `/<locale>/projects` with its hreflang alternatives, and the share image. A child
+ * route that sets its own `openGraph` does not inherit the image file of `[locale]`, so the locale's card is named
+ * here for both Open Graph and the large Twitter card.
+ */
 export function archiveMetadata(locale: Locale): Metadata {
-  return buildPageMetadata(locale, ARCHIVE[locale].description, {
+  const metadata = buildPageMetadata(locale, ARCHIVE[locale].description, {
     path: "/projects",
     title: ARCHIVE[locale].metaTitle,
   });
+  const images = [
+    {
+      url: `/${locale}/opengraph-image`,
+      width: OG_IMAGE.size.width,
+      height: OG_IMAGE.size.height,
+      alt: OG_IMAGE.alt,
+      type: OG_IMAGE.contentType,
+    },
+  ];
+  return {
+    ...metadata,
+    openGraph: { ...metadata.openGraph, images },
+    twitter: { ...metadata.twitter, images },
+  };
 }

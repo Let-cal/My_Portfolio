@@ -314,6 +314,55 @@ describe("ProjectArchive", () => {
     );
   });
 
+  it("a hashchange to a row the current filter hides shows it before scrolling to it", async () => {
+    const user = userEvent.setup();
+    renderArchive();
+    await user.click(chip(/^University/));
+    expect(visibleRowIds()).not.toContain("row-skg-coa");
+    const seen: string[] = [];
+    Element.prototype.scrollIntoView = vi.fn(function (this: Element) {
+      seen.push(`${this.id}:${getComputedStyle(this).display}`);
+    });
+    // Make the frame run right away, so a filter applied any later than the hashchange itself would be missed.
+    const raf = vi
+      .spyOn(window, "requestAnimationFrame")
+      .mockImplementation((cb) => {
+        cb(0);
+        return 0;
+      });
+    act(() => {
+      window.history.replaceState(
+        null,
+        "",
+        "/en/projects?kind=university#row-skg-coa",
+      );
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
+    raf.mockRestore();
+    expect(seen).toHaveLength(1);
+    expect(seen[0]).toMatch(/^row-skg-coa:/);
+    expect(seen[0]).not.toBe("row-skg-coa:none");
+    expect(chip(/^All/)).toHaveAttribute("aria-pressed", "true");
+    expect(window.location.search).toBe("");
+  });
+
+  it("a site navigation section link (#skills) loads the home page at that section, keeping the role", async () => {
+    const replace = vi.fn();
+    const real = window.location;
+    vi.stubGlobal("location", {
+      ...real,
+      pathname: "/en/projects",
+      search: "?role=pm&kind=work",
+      hash: "#skills",
+      replace,
+    });
+    renderArchive();
+    await waitFor(() =>
+      expect(replace).toHaveBeenCalledWith("/en?role=pm#skills"),
+    );
+    vi.unstubAllGlobals();
+  });
+
   it("row Enter opens the case study", async () => {
     const user = userEvent.setup();
     renderArchive();
@@ -426,6 +475,19 @@ describe("archive SEO", () => {
         },
       });
       expect(metadata.openGraph).toMatchObject({ url: `/${locale}/projects` });
+      const image = {
+        url: `/${locale}/opengraph-image`,
+        width: 1200,
+        height: 630,
+        type: "image/png",
+      };
+      expect(metadata.openGraph?.images).toEqual([
+        expect.objectContaining(image),
+      ]);
+      expect(metadata.twitter).toMatchObject({ card: "summary_large_image" });
+      expect(metadata.twitter?.images).toEqual([
+        expect.objectContaining(image),
+      ]);
     }
   });
 
