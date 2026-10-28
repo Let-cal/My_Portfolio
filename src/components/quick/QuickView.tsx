@@ -17,7 +17,7 @@ const LINK =
 
 /**
  * The 60-second view: one A4 page for a recruiter. Name, the title of the chosen role, summary, the first four
- * experiences for that role (one line each), skill groups, four certificates, education and contact. A server
+ * work projects, newest first (one line each), skill groups, four certificates, education and contact. A server
  * component; the Print button is the only client script it adds. On screen it is a sheet on the site background;
  * in print the site chrome is gone (globals.css) and the sheet fills the page in dark-on-white.
  *
@@ -150,22 +150,22 @@ export function QuickView({
             )}
           </h2>
           <ol className="flex flex-col gap-1.5">
-            {d.experiences.map((e) => (
+            {d.projects.map((p) => (
               <li
-                key={e.id}
+                key={p.id}
                 data-quick-experience=""
                 className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5"
               >
                 <p className="min-w-0 flex-1">
-                  <span className="font-semibold">{e.company}</span>
+                  <span className="font-semibold">{p.title}</span>
                   <span className="text-muted-foreground">
                     {" · "}
-                    {e.position}
-                    {e.parentCompany ? ` · ${e.parentCompany}` : ""}
+                    {p.role}
+                    {p.employer ? ` · ${p.employer}` : ""}
                   </span>
                 </p>
                 <span className="shrink-0 text-muted-foreground tabular-nums">
-                  {e.period}
+                  {p.period}
                 </span>
               </li>
             ))}

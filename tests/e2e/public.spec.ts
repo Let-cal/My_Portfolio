@@ -178,11 +178,14 @@ test.describe("quick view", () => {
     );
   });
 
-  test("shows four experiences, four certificates, no phone number and a way back", async ({
+  test("shows the five SKG projects, four certificates, no phone number and a way back", async ({
     page,
   }) => {
     await page.goto("/en/quick?role=techlead");
-    await expect(page.locator("[data-quick-experience]")).toHaveCount(4);
+    const projects = page.locator("[data-quick-experience]");
+    await expect(projects).toHaveCount(5);
+    await expect(projects.first()).toContainText("AI Agent");
+    await expect(projects.last()).toContainText("TONGUE-AI & Driver MS");
     await expect(page.locator("[data-quick-certificate]")).toHaveCount(4);
     const text = await page.locator("body").innerText();
     expect(text).not.toContain("undefined");

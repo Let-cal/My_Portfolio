@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { contentSchema, SKILL_GROUPS } from "@/content/schema";
-// Content as before the experience tree migration, until this test moves to the new model.
-import seed from "../fixtures/seed-before-experience-tree.json";
+import seed from "@/content/seed.json";
 import { orderExperiences, orderSkillGroups, parseRole } from "@/lib/roles";
 
 const content = contentSchema.parse(seed);
@@ -22,30 +21,39 @@ describe("parseRole", () => {
 });
 
 describe("orderExperiences", () => {
-  it("puts the pm order first", () => {
-    expect(orderExperiences(content.experiences, role("pm"))[0].id).toBe(
-      "skg-ai-agent",
-    );
+  // Since the experience tree migration the experiences are stints and roles.experienceOrder lists stint ids.
+  it("puts the stints in the role order: engineer, then intern, then the rest", () => {
+    for (const key of ["pm", "techlead", "fullstack"]) {
+      expect(
+        orderExperiences(content.experiences, role(key)).map((e) => e.id),
+      ).toEqual(["skg-engineer", "skg-intern", "fpt-japan"]);
+    }
   });
-  it("puts the techlead order first", () => {
-    expect(orderExperiences(content.experiences, role("techlead"))[0].id).toBe(
-      "skg-flexybox-p1",
-    );
+  it("follows a role order that differs", () => {
+    const r = {
+      ...role("pm"),
+      experienceOrder: ["skg-intern", "skg-engineer"],
+    };
+    expect(orderExperiences(content.experiences, r).map((e) => e.id)).toEqual([
+      "skg-intern",
+      "skg-engineer",
+      "fpt-japan",
+    ]);
   });
   it("drops unpublished entries", () => {
     const exps = content.experiences.map((e) =>
-      e.id === "skg-ai-agent" ? { ...e, published: false } : e,
+      e.id === "skg-engineer" ? { ...e, published: false } : e,
     );
     const ids = orderExperiences(exps, role("pm")).map((e) => e.id);
-    expect(ids).not.toContain("skg-ai-agent");
-    expect(ids[0]).toBe("skg-flexybox-p2");
+    expect(ids).not.toContain("skg-engineer");
+    expect(ids[0]).toBe("skg-intern");
   });
   it("appends entries missing from the role order by sortIndex", () => {
-    const r = { ...role("pm"), experienceOrder: ["skg-coa"] };
+    const r = { ...role("pm"), experienceOrder: ["fpt-japan"] };
     const ids = orderExperiences(content.experiences, r).map((e) => e.id);
-    expect(ids[0]).toBe("skg-coa");
+    expect(ids[0]).toBe("fpt-japan");
     const rest = content.experiences
-      .filter((e) => e.id !== "skg-coa")
+      .filter((e) => e.id !== "fpt-japan")
       .sort((a, b) => a.sortIndex - b.sortIndex)
       .map((e) => e.id);
     expect(ids.slice(1)).toEqual(rest);

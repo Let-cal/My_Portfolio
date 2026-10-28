@@ -5,8 +5,7 @@ import { Activity } from "react";
 import { NextIntlClientProvider } from "next-intl";
 import { describe, expect, it, vi } from "vitest";
 import { contentSchema, type Locale, type RoleKey } from "@/content/schema";
-// Content as before the experience tree migration, until this test moves to the new model.
-import seed from "../fixtures/seed-before-experience-tree.json";
+import seed from "@/content/seed.json";
 import en from "@/messages/en.json";
 import ja from "@/messages/ja.json";
 import vi_ from "@/messages/vi.json";
@@ -47,11 +46,16 @@ describe("QuickView", () => {
     ).toBeInTheDocument();
   });
 
-  it("lists four experiences and four certificates", () => {
+  it("lists the five SKG projects with one employer line, and four certificates", () => {
     const { container } = renderQuick("techlead");
-    expect(container.querySelectorAll("[data-quick-experience]")).toHaveLength(
-      4,
-    );
+    const rows = [...container.querySelectorAll("[data-quick-experience]")];
+    expect(rows).toHaveLength(5);
+    expect(rows[0]).toHaveTextContent("AI Agent");
+    expect(rows[1]).toHaveTextContent("FlexyBox Phase 2");
+    expect(rows[4]).toHaveTextContent("TONGUE-AI & Driver MS");
+    expect(
+      container.textContent?.match(/SKG Software \(Splus\)/g),
+    ).toHaveLength(1);
     expect(container.querySelectorAll("[data-quick-certificate]")).toHaveLength(
       4,
     );

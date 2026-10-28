@@ -1,6 +1,8 @@
 // Content health checks for the admin dashboard. Pure functions over the full content,
 // hidden items included, so they can be unit-tested against the seed.
-import type { Content, Skill } from "@/content/schema";
+import type { Content, Project, Skill } from "@/content/schema";
+import { FEATURED_LIMIT, featuredProjects } from "@/lib/featured";
+import { journeyAnchors } from "@/lib/journey";
 
 export type AdminContent = Content;
 
@@ -11,6 +13,8 @@ export type HealthKind =
   | "broken-evidence"
   | "missing-cv"
   | "stale-order"
+  | "too-many-featured"
+  | "kind-link-mismatch"
   | "hidden-items"
   | "empty-case-study";
 
@@ -113,6 +117,32 @@ function translatableItems(c: AdminContent): Labeled[] {
   ];
 }
 
+/** Whether `kind` agrees with which link a project has: work = stint, university = school, personal = neither. */
+function kindMatchesLink(p: Project): boolean {
+  const hasStint = Boolean(p.experienceId);
+  const hasSchool = Boolean(p.educationId);
+  if (p.kind === "work") return hasStint && !hasSchool;
+  if (p.kind === "university") return hasSchool && !hasStint;
+  return !hasStint && !hasSchool;
+}
+
+/**
+ * Anchors a visitor can land on: the tree's parents (`#exp-<group slug>`) and children (`#tree-<id>`), taken
+ * from the journey so the slug rule lives in one place, and `#proj-<id>` only for the projects that have a card
+ * on the home page.
+ */
+function visibleAnchors(c: AdminContent): Set<string> {
+  const journey = journeyAnchors(c);
+  return new Set(
+    [
+      ...journey.experiences.values(),
+      ...journey.education.values(),
+      ...journey.projects.values(),
+      ...featuredProjects(c.projects).map((p) => `proj-${p.id}`),
+    ].map((anchor) => `#${anchor}`),
+  );
+}
+
 export function checkContentHealth(c: AdminContent): HealthIssue[] {
   const issues: HealthIssue[] = [];
 
@@ -157,18 +187,38 @@ export function checkContentHealth(c: AdminContent): HealthIssue[] {
     });
   }
 
-  const visibleAnchors = new Set([
-    ...c.experiences.filter((e) => e.published).map((e) => `#exp-${e.id}`),
-    ...c.projects.filter((p) => p.published).map((p) => `#proj-${p.id}`),
-  ]);
+  const anchors = visibleAnchors(c);
   for (const w of c.whyCards) {
-    if (w.evidenceLink && !visibleAnchors.has(w.evidenceLink)) {
+    if (w.evidenceLink && !anchors.has(w.evidenceLink)) {
       issues.push({
         id: `broken-evidence:${w.id}`,
         severity: "error",
         kind: "broken-evidence",
         message: `Why card "${w.title.en}" trỏ tới ${w.evidenceLink}, mục này không tồn tại hoặc đang ẩn`,
         href: `/admin/why_cards/${w.id}`,
+      });
+    }
+  }
+
+  const starred = c.projects.filter((p) => p.featured);
+  if (starred.length > FEATURED_LIMIT) {
+    issues.push({
+      id: "too-many-featured",
+      severity: "error",
+      kind: "too-many-featured",
+      count: starred.length,
+      message: `${starred.length} dự án đang có sao, tối đa là ${FEATURED_LIMIT}. Trang chủ chỉ hiện ${FEATURED_LIMIT} dự án đầu theo thứ tự sao`,
+      href: "/admin/projects",
+    });
+  }
+  for (const p of c.projects) {
+    if (!kindMatchesLink(p)) {
+      issues.push({
+        id: `kind-link-mismatch:${p.id}`,
+        severity: "warning",
+        kind: "kind-link-mismatch",
+        message: `Dự án ${p.title}: loại "${p.kind}" không khớp với nơi dự án thuộc về (kinh nghiệm hoặc trường)`,
+        href: `/admin/projects/${p.id}`,
       });
     }
   }

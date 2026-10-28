@@ -10,7 +10,10 @@ export function parseRole(v: string | null | undefined): RoleKey {
     : DEFAULT_ROLE;
 }
 
-/** Published experiences: ids listed in `role.experienceOrder` first (in that order), the rest by `sortIndex`. */
+/**
+ * Published stints (the `experiences` rows; projects live in `projects`): ids listed in `role.experienceOrder`
+ * first (in that order), the rest by `sortIndex`. The order lists stint ids, never project ids.
+ */
 export function orderExperiences(exps: Experience[], role: Role): Experience[] {
   const published = exps.filter((e) => e.published);
   const byId = new Map(published.map((e) => [e.id, e]));

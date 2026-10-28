@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { contentSchema, type Content } from "@/content/schema";
-// Content as before the experience tree migration, until this test moves to the new model.
-import seed from "../fixtures/seed-before-experience-tree.json";
+import seed from "@/content/seed.json";
 import {
   checkContentHealth,
   evidenceOf,
@@ -27,10 +26,9 @@ describe("checkContentHealth", () => {
   it("a skill whose only evidence is hidden is link-to-hidden, not orphan", () => {
     const c = clone();
     const skill = c.skills.find(
-      (s) => s.experienceIds.length === 1 && s.projectIds.length === 0,
+      (s) => s.experienceIds.length === 0 && s.projectIds.length === 1,
     )!;
-    c.experiences.find((e) => e.id === skill.experienceIds[0])!.published =
-      false;
+    c.projects.find((p) => p.id === skill.projectIds[0])!.published = false;
     const hidden = ofKind(c, "link-to-hidden");
     expect(hidden).toEqual([
       expect.objectContaining({ href: "/admin/skills?filter=hidden-evidence" }),
@@ -63,11 +61,107 @@ describe("checkContentHealth", () => {
       }),
     ]);
     const d = clone();
-    const target = d.whyCards.find((w) => w.evidenceLink?.startsWith("#exp-"))!;
-    d.experiences.find(
-      (e) => `#exp-${e.id}` === target.evidenceLink,
-    )!.published = false;
-    expect(ofKind(d, "broken-evidence")).toHaveLength(1);
+    const target = d.whyCards.find((w) =>
+      w.evidenceLink?.startsWith("#tree-"),
+    )!;
+    d.projects.find((p) => `#tree-${p.id}` === target.evidenceLink)!.published =
+      false;
+    expect(ofKind(d, "broken-evidence")).toEqual([
+      expect.objectContaining({ href: `/admin/why_cards/${target.id}` }),
+    ]);
+  });
+
+  describe("evidence anchors follow the experience tree", () => {
+    const withLink = (link: string | null) => {
+      const c = clone();
+      c.whyCards[0].evidenceLink = link;
+      return ofKind(c, "broken-evidence");
+    };
+
+    // Errors for the first why card only: hiding a stint also breaks the seed's other cards that point into it.
+    const firstCardErrors = (c: Content) =>
+      ofKind(c, "broken-evidence").filter(
+        (i) => i.href === `/admin/why_cards/${c.whyCards[0].id}`,
+      );
+
+    it("health: why card #tree-skg-coa is valid", () => {
+      expect(withLink("#tree-skg-coa")).toEqual([]);
+    });
+
+    it("the seed's why cards are all valid", () => {
+      expect(ofKind(base, "broken-evidence")).toEqual([]);
+    });
+
+    it("a tree parent is valid by its group slug, not by a stint id", () => {
+      expect(withLink("#exp-skg-software")).toEqual([]);
+      expect(withLink("#exp-fpt-university")).toEqual([]);
+      expect(withLink("#exp-skg-engineer")).toHaveLength(1);
+      expect(withLink("#exp-skg-intern")).toHaveLength(1);
+    });
+
+    it("a tree parent whose stints are all hidden is broken", () => {
+      const c = clone();
+      c.whyCards[0].evidenceLink = "#exp-skg-software";
+      for (const e of c.experiences)
+        if (e.company.startsWith("SKG")) e.published = false;
+      expect(firstCardErrors(c)).toHaveLength(1);
+    });
+
+    it("a tree child is broken when its project or its stint is hidden", () => {
+      const a = clone();
+      a.whyCards[0].evidenceLink = "#tree-skg-coa";
+      a.projects.find((p) => p.id === "skg-coa")!.published = false;
+      expect(firstCardErrors(a)).toHaveLength(1);
+      const b = clone();
+      b.whyCards[0].evidenceLink = "#tree-skg-coa";
+      b.experiences.find((e) => e.id === "skg-engineer")!.published = false;
+      expect(firstCardErrors(b)).toHaveLength(1);
+    });
+
+    it("#proj- is valid only for a project with a home card", () => {
+      expect(withLink("#proj-siteplus")).toEqual([]);
+      expect(withLink("#proj-skg-coa")).toHaveLength(1);
+      const c = clone();
+      for (const id of ["zodiacgems", "meet-my-lecturer"])
+        c.projects.find((p) => p.id === id)!.featured = false;
+      c.whyCards[0].evidenceLink = "#proj-skg-ai-agent";
+      expect(ofKind(c, "broken-evidence")).toEqual([]);
+    });
+  });
+
+  it("the seed has no health errors", () => {
+    expect(
+      checkContentHealth(base).filter((i) => i.severity === "error"),
+    ).toEqual([]);
+  });
+
+  it("health: 4 featured → error", () => {
+    const c = clone();
+    expect(ofKind(c, "too-many-featured")).toEqual([]);
+    c.projects.find((p) => p.id === "skg-coa")!.featured = true;
+    c.projects.find((p) => p.id === "skg-coa")!.featuredOrder = 4;
+    expect(ofKind(c, "too-many-featured")).toEqual([
+      expect.objectContaining({
+        severity: "error",
+        count: 4,
+        href: "/admin/projects",
+      }),
+    ]);
+  });
+
+  it("a project whose kind and link disagree is a warning", () => {
+    expect(ofKind(base, "kind-link-mismatch")).toEqual([]);
+    const c = clone();
+    c.projects.find((p) => p.id === "skg-coa")!.educationId = "fpt-university";
+    c.projects.find((p) => p.id === "siteplus")!.kind = "work";
+    c.projects.find((p) => p.id === "zodiacgems")!.kind = "personal";
+    const issues = ofKind(c, "kind-link-mismatch");
+    expect(issues.map((i) => i.href).sort()).toEqual([
+      "/admin/projects/siteplus",
+      "/admin/projects/skg-coa",
+      "/admin/projects/zodiacgems",
+    ]);
+    expect(issues.every((i) => i.severity === "warning")).toBe(true);
   });
 
   it("a role without a CV is an error", () => {
@@ -76,6 +170,11 @@ describe("checkContentHealth", () => {
     expect(ofKind(c, "missing-cv")).toEqual([
       expect.objectContaining({ severity: "error", href: "/admin/roles" }),
     ]);
+  });
+
+  it("health: no stale-order warning after migration", () => {
+    expect(ofKind(base, "stale-order")).toEqual([]);
+    expect(base.roles.every((r) => r.experienceOrder.length > 0)).toBe(true);
   });
 
   it("stale order flags unknown ids only", () => {
@@ -102,10 +201,10 @@ describe("checkContentHealth", () => {
 
   it("flags a case study with an empty English part", () => {
     const c = clone();
-    const exp = c.experiences.find((e) => e.caseStudy)!;
-    exp.caseStudy!.result.en = "";
+    const project = c.projects.find((p) => p.caseStudy)!;
+    project.caseStudy!.result.en = "";
     expect(ofKind(c, "empty-case-study")).toEqual([
-      expect.objectContaining({ href: `/admin/experiences/${exp.id}` }),
+      expect.objectContaining({ href: `/admin/projects/${project.id}` }),
     ]);
   });
 
@@ -148,9 +247,8 @@ describe("translationStats", () => {
 describe("evidenceOf", () => {
   it("splits evidence into visible and hidden items", () => {
     const c = clone();
-    const skill = c.skills.find((s) => s.experienceIds.length >= 2)!;
-    c.experiences.find((e) => e.id === skill.experienceIds[0])!.published =
-      false;
+    const skill = c.skills.find((s) => s.projectIds.length >= 2)!;
+    c.projects.find((p) => p.id === skill.projectIds[0])!.published = false;
     const ev = evidenceOf(skill, c);
     expect(ev.hidden).toBe(1);
     expect(ev.visible).toBe(
