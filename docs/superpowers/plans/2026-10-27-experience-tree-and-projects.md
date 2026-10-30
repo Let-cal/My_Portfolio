@@ -149,6 +149,8 @@
 
 ### Task 9: Verify, review, rollout (owner gates)
 
+Runbook (preflight SQL, apply, verification, preview and production checks, rollback order): [docs/experience-tree-rollout.md](../../experience-tree-rollout.md).
+
 - [ ] **Step 1:** `npm run verify` → exit 0; push; open PR with spec/plan links; Auto-fix on; disposable-Supabase job replays the migration and RLS checks (visitor sees only published projects incl. new columns; reviewer reads; writes admin-only).
 - [ ] **Step 2:** Whole-branch review (fresh reviewer, plus ai-generated-code-auditor for the migration/RLS/admin actions); one fix pass.
 - [ ] **Step 3 (gate):** Show the owner the exact migration SQL + rollback; on approval apply via MCP `apply_migration`, rename the file to the hosted version, verify read-only (column set, check constraint, 5 work + 3 university projects, why cards, advisors).

@@ -305,6 +305,28 @@ describe("experience tree migration", () => {
       rollback.indexOf("drop column"),
     );
   });
+
+  it("has a rollout runbook that the rollback header and the plan link to (app rollback first)", () => {
+    const RUNBOOK = "docs/experience-tree-rollout.md";
+    expect(existsSync(RUNBOOK)).toBe(true);
+    const runbook = read(RUNBOOK);
+    const header = rollback.slice(0, rollback.indexOf("begin;"));
+    expect(header).toContain("docs/experience-tree-rollout.md");
+    expect(header).not.toMatch(/afterwards[\s\S]*revert the app/i);
+    expect(
+      read("docs/superpowers/plans/2026-10-27-experience-tree-and-projects.md"),
+    ).toContain("docs/experience-tree-rollout.md");
+    // Rollback order: production app first, then the SQL, then the history row.
+    const instant = runbook.indexOf("Instant Rollback");
+    const sqlStep = runbook.indexOf("experience-tree-rollback.sql", instant);
+    expect(instant).toBeGreaterThan(-1);
+    expect(sqlStep).toBeGreaterThan(instant);
+    for (const table of [
+      "private.experience_tree_backup",
+      "private.restore_barriers",
+    ])
+      expect(runbook).toContain(table);
+  });
 });
 
 describe("version restore after the experience tree migration", () => {

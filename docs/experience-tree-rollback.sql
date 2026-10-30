@@ -1,6 +1,8 @@
 -- Rollback for supabase/migrations/*_experience_tree_projects.sql (experience tree).
--- Run in the SQL editor of the hosted project, as one transaction. Afterwards remove the
--- migration's row from supabase_migrations.schema_migrations (step 8) and revert the app.
+-- Order (docs/experience-tree-rollout.md, section 7): roll the production app back first (Vercel
+-- Instant Rollback), then run this file in the SQL editor of the hosted project as one transaction,
+-- then redeploy the old app, then remove the migration's row from
+-- supabase_migrations.schema_migrations (step 8).
 --
 -- The five experience rows take their content (title, position, period, summary, case study,
 -- tech, team size, published) from the projects rows, so edits made after the migration are
