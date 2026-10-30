@@ -426,7 +426,19 @@ export function JourneyTree({ parents }: { parents: JourneyParent[] }) {
               )}
               {next && stint.promotedFrom ? (
                 <p className="jt-promo">
-                  <span aria-hidden="true">↑</span>
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 8 10"
+                    width="0.7em"
+                    height="0.875em"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M4 9.25V1M1 4l3-3 3 3" />
+                  </svg>
                   <span>{t("promoted", { month: stint.promotedFrom })}</span>
                 </p>
               ) : next ? (
