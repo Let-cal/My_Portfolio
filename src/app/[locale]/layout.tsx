@@ -10,7 +10,6 @@ import { Footer } from "@/components/site/Footer";
 import { Header } from "@/components/site/Header";
 import { HelloIntro } from "@/components/site/HelloIntro";
 import { JapaneseTypography } from "@/components/site/JapaneseTypography";
-import { AccentTypography } from "@/components/site/AccentTypography";
 import { HighlightProvider } from "@/components/site/HighlightProvider";
 import { HELLO_SEEN_SCRIPT } from "@/components/site/hello-script";
 import {
@@ -135,7 +134,6 @@ export default async function LocaleLayout({
         />
         <NextIntlClientProvider>
           <ThemeSync />
-          <AccentTypography />
           {locale === "ja" && <JapaneseTypography />}
           <MotionProvider>
             <RoleProvider>

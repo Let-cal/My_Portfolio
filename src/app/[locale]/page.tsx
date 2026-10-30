@@ -9,6 +9,7 @@ import { Projects } from "@/components/sections/Projects";
 import { Skills } from "@/components/sections/Skills";
 import { Why } from "@/components/sections/Why";
 import { WaveEdge } from "@/components/fx/WaveEdge";
+import { AccentTypography } from "@/components/site/AccentTypography";
 import { SectionLabel } from "@/components/site/SectionLabel";
 import { SECTION_CHAPTERS, SECTION_IDS } from "@/components/site/sections";
 import { routing } from "@/i18n/routing";
@@ -27,6 +28,9 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
   // water wave on top as the divider. Section backgrounds stay transparent for the 3D canvas behind.
   return (
     <main id="main" className="flex-1">
+      {/* The Mincho face of the chapter labels below. Only this page has them: a font stylesheet added after
+          hydration makes Chrome re-resolve fonts, which can swap a late optional Inter in and shift the text. */}
+      <AccentTypography />
       {/* Portals itself to <body> as a fixed layer behind the content; renders nothing here. */}
       <KoiCanvas />
       {SECTION_IDS.map((id) => {

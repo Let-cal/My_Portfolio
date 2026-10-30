@@ -48,6 +48,10 @@ test("filter + reload keeps the filter", async ({ page }) => {
 test("a shared ?kind= link filters without a layout shift", async ({
   page,
 }) => {
+  // A slow CPU (as on the Linux CI runners) makes the optional Inter face miss the first paint, so any stylesheet
+  // added after hydration that re-resolves fonts would swap it in and shift the table.
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 6 });
   await page.addInitScript(() => {
     (window as unknown as { __cls: number }).__cls = 0;
     new PerformanceObserver((list) => {
@@ -67,6 +71,22 @@ test("a shared ?kind= link filters without a layout shift", async ({
     () => (window as unknown as { __cls: number }).__cls,
   );
   expect(cls).toBeLessThan(0.01);
+});
+
+test("the archive loads no late font stylesheet (it would re-resolve the optional fonts and shift the text)", async ({
+  page,
+}) => {
+  const fontCss: string[] = [];
+  page.on("response", async (response) => {
+    if (!/\.css(\?|$)/.test(response.url())) return;
+    const css = await response.text().catch(() => "");
+    if (css.includes("@font-face")) fontCss.push(response.url());
+  });
+  await page.goto("/en/projects?kind=work");
+  await expect(chip(page, /^Work/)).toHaveAttribute("aria-pressed", "true");
+  await page.waitForLoadState("networkidle");
+  // The Shippori Mincho faces belong to the vertical chapter labels, which only the home page has.
+  expect(fontCss).toEqual([]);
 });
 
 test("an unknown ?kind= shows every project", async ({ page }) => {
