@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeftIcon } from "@/components/site/icons";
 import { ProjectArchive } from "@/components/sections/projects/ProjectArchive";
 import { routing } from "@/i18n/routing";
-import { archiveMetadata, archiveRows } from "@/lib/archive";
+import { archiveMetadata, archiveRows, groupByYear } from "@/lib/archive";
 import {
   ARCHIVE_FILTER_CSS,
   ARCHIVE_FILTER_SCRIPT,
@@ -22,9 +22,10 @@ export async function generateMetadata({
 }
 
 /**
- * `/[locale]/projects`: every published project in one filterable table (spec 5.4). The page is prerendered per
- * locale from the cached content; `?kind=` is applied on the client (an inline script before the first paint, then
- * the table component), so the shell never waits on request data.
+ * `/[locale]/projects`: every published project in filterable year groups (spec 5.3), under a summary line
+ * ("8 projects · 2023 – 2026"). The page is prerendered per locale from the cached content; `?kind=` is applied on
+ * the client (an inline script before the first paint, then the archive component), so the shell never waits on
+ * request data.
  */
 export default async function ProjectsPage({
   params,
@@ -35,6 +36,8 @@ export default async function ProjectsPage({
   const t = await getTranslations("archive");
   const content = await getContent();
   const now = await cachedNow();
+  const rows = archiveRows(content, locale, now);
+  const years = rows.map((r) => r.year).sort();
 
   return (
     <main
@@ -53,9 +56,18 @@ export default async function ProjectsPage({
       <h1 className="mt-4 font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
         {t("title")}
       </h1>
-      <p className="mt-3 max-w-2xl text-muted-foreground">{t("intro")}</p>
-      <ProjectArchive rows={archiveRows(content, locale, now)} />
-      {/* After the table: it reads the rows to keep a #row- deep link visible. */}
+      {years.length > 0 ? (
+        <p className="mt-3 font-medium text-foreground tabular-nums">
+          {t("summary", {
+            count: rows.length,
+            from: years[0],
+            to: years[years.length - 1],
+          })}
+        </p>
+      ) : null}
+      <p className="mt-2 max-w-2xl text-muted-foreground">{t("intro")}</p>
+      <ProjectArchive groups={groupByYear(rows)} />
+      {/* After the rows: it reads them to keep a #row- deep link visible. */}
       <script dangerouslySetInnerHTML={{ __html: ARCHIVE_FILTER_SCRIPT }} />
     </main>
   );

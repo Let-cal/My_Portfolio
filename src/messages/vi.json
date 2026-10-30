@@ -279,6 +279,7 @@
     "description": "Mọi dự án Lê Trần Cát Lâm đã tham gia: dự án ở công ty, đồ án đại học và dự án cá nhân, kèm vai trò, công nghệ và liên kết của từng dự án.",
     "title": "Tất cả dự án",
     "intro": "Dự án ở công ty, đồ án đại học và dự án cá nhân, mới nhất trước. Chọn tên dự án để đọc case study nếu có.",
+    "summary": "{count} dự án · {from} – {to}",
     "back": "Về trang chủ",
     "nav": "Tất cả dự án",
     "filterLabel": "Lọc dự án theo nơi thực hiện",
@@ -289,15 +290,7 @@
       "personal": "Cá nhân"
     },
     "personal": "Cá nhân",
-    "caption": "Danh sách dự án, mới nhất trước",
-    "columns": {
-      "year": "Năm",
-      "project": "Dự án",
-      "where": "Nơi thực hiện",
-      "role": "Vai trò",
-      "tech": "Công nghệ",
-      "links": "Liên kết"
-    },
+    "stint": "Vị trí:",
     "featured": "Nổi bật trên trang chủ",
     "showing": "Đang hiện {count} trên {total} dự án",
     "empty": "Chưa có dự án nào thuộc loại này."

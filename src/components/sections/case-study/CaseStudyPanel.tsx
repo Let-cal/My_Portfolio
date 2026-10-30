@@ -252,7 +252,11 @@ export function CaseStudyPanel({
                 <DialogPrimitive.Description className={styles.where}>
                   {[item.where, item.stint].filter(Boolean).join(" · ")}
                 </DialogPrimitive.Description>
-                <DialogPrimitive.Title className={styles.title}>
+                {/* data-case-title: the archive's opening View Transition names it (see ProjectArchive). */}
+                <DialogPrimitive.Title
+                  data-case-title=""
+                  className={styles.title}
+                >
                   {item.title}
                 </DialogPrimitive.Title>
                 <dl className={styles.meta}>

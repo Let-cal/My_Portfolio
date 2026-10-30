@@ -279,6 +279,7 @@
     "description": "Every project Le Tran Cat Lam has worked on: client work, university projects and personal projects, with the role, tech stack and links of each.",
     "title": "All projects",
     "intro": "Client work, university projects and personal projects, newest first. Select a project name to read its case study, where there is one.",
+    "summary": "{count, plural, one {# project} other {# projects}} · {from} – {to}",
     "back": "Back to home",
     "nav": "All projects",
     "filterLabel": "Filter projects by where they were done",
@@ -289,15 +290,7 @@
       "personal": "Personal"
     },
     "personal": "Personal",
-    "caption": "Projects, newest first",
-    "columns": {
-      "year": "Year",
-      "project": "Project",
-      "where": "Where",
-      "role": "Role",
-      "tech": "Tech",
-      "links": "Links"
-    },
+    "stint": "Position:",
     "featured": "Featured on the home page",
     "showing": "Showing {count} of {total} projects",
     "empty": "No projects of this kind yet."

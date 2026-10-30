@@ -8,7 +8,7 @@ import type {
   RoleKey,
 } from "@/content/schema";
 import { newestFirst } from "@/lib/featured";
-import { formatDuration, formatPeriod } from "@/lib/format";
+import { formatDuration, formatPeriod, kanjiYear } from "@/lib/format";
 import { pickLocale } from "@/lib/i18n-text";
 import { companyName, stintShortLabel } from "@/lib/journey";
 import { buildPageMetadata } from "@/lib/metadata";
@@ -44,6 +44,8 @@ export type ArchiveRow = {
   teamSize: string | null;
   /** Starred for the home page. */
   featured: boolean;
+  /** Poster image of the project, shown by the archive's hover preview; null for a gradient card. */
+  posterUrl: string | null;
   /** Roles this project is evidence for; the role switcher highlights these rows. */
   roles: RoleKey[];
   caseStudy: CaseStudyView | null;
@@ -93,6 +95,7 @@ export function archiveRows(
         links: p.links,
         teamSize: p.teamSize,
         featured: p.featured,
+        posterUrl: p.posterUrl,
         roles: p.roles,
         caseStudy: p.caseStudy && {
           problem: pickLocale(p.caseStudy.problem, locale),
@@ -104,16 +107,24 @@ export function archiveRows(
     });
 }
 
+/** One year of the archive: its rows in their order, and the year in kanji numerals for the decorative label. */
+export type ArchiveGroup = { year: string; kanji: string; rows: ArchiveRow[] };
+
 /** Rows split by start year, newest year first; the order inside a year is kept. */
-export function groupByYear(
-  rows: ArchiveRow[],
-): { year: string; rows: ArchiveRow[] }[] {
+export function groupByYear(rows: ArchiveRow[]): ArchiveGroup[] {
   const groups = new Map<string, ArchiveRow[]>();
-  for (const row of rows)
-    groups.set(row.year, [...(groups.get(row.year) ?? []), row]);
+  for (const row of rows) {
+    const list = groups.get(row.year);
+    if (list) list.push(row);
+    else groups.set(row.year, [row]);
+  }
   return [...groups]
     .sort(([a], [b]) => b.localeCompare(a))
-    .map(([year, yearRows]) => ({ year, rows: yearRows }));
+    .map(([year, yearRows]) => ({
+      year,
+      kanji: kanjiYear(Number(year)),
+      rows: yearRows,
+    }));
 }
 
 /**
