@@ -15,6 +15,7 @@ import { TracingBeam } from "@/components/fx/TracingBeam";
 import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
 import { useHighlight } from "@/components/site/HighlightProvider";
 import { ChevronDownIcon, ChevronRightIcon } from "@/components/site/icons";
+import { getLenis } from "@/components/site/lenis-instance";
 import { useRole } from "@/components/site/RoleProvider";
 import type { JourneyChild, JourneyParent } from "@/lib/journey";
 import { cn } from "@/lib/utils";
@@ -62,8 +63,8 @@ function TechChips({
  * dashed branch. The newest parent starts open; the others are collapsed behind a disclosure button with a chip.
  *
  * - Collapsed panels stay in the DOM (`inert`, zero height) so no published text leaves the page source.
- * - A `#exp-<group>` or `#tree-<project>` hash (on load, on hashchange, or a same-hash link click) opens the parent
- *   that holds it and scrolls the target into view.
+ * - A `#exp-<group>` or `#tree-<project>` hash (on load, on hashchange, or any same-page link click, including one
+ *   SmoothScroll turns into a pushState) opens the parent that holds it and scrolls the target into view.
  * - The role switcher only highlights the children whose roles include it; the order never changes.
  * - Height and opacity transition in CSS; under reduced motion the panel switches instantly.
  */
@@ -99,8 +100,9 @@ export function JourneyTree({ parents }: { parents: JourneyParent[] }) {
     return map;
   }, [parents]);
 
+  /** Opens the parent that holds `#id`; with `scroll`, also brings the target into view once it is open. */
   const reveal = useCallback(
-    (hash: string) => {
+    (hash: string, scroll = true) => {
       let id: string;
       try {
         id = decodeURIComponent(hash.replace(/^#/, ""));
@@ -110,31 +112,49 @@ export function JourneyTree({ parents }: { parents: JourneyParent[] }) {
       const key = ownerOf.get(id);
       if (!key) return;
       setOpen((prev) => (prev.has(key) ? prev : new Set(prev).add(key)));
-      setTarget((prev) => ({ id, seq: (prev?.seq ?? 0) + 1 }));
+      if (scroll) setTarget((prev) => ({ id, seq: (prev?.seq ?? 0) + 1 }));
     },
     [ownerOf],
   );
 
   useEffect(() => {
     const fromLocation = () => reveal(window.location.hash);
-    // A link to the hash already in the URL fires no hashchange; catch that click so it still opens the parent.
+    // Every plain click on a same-page link into the tree opens the parent, whatever happens to the URL next:
+    // SmoothScroll (Lenis) cancels the click and uses pushState, and a link to the hash already in the URL fires no
+    // hashchange either. Capture phase, so this runs before any handler that cancels the click. While Lenis runs it
+    // also does the scrolling (the target's position does not depend on its panel being open); otherwise this
+    // component scrolls, as for a hashchange.
     const onClick = (event: MouseEvent) => {
-      if (event.defaultPrevented || event.button !== 0) return;
-      const link = (event.target as Element | null)?.closest?.("a[href^='#']");
       if (
-        link instanceof HTMLAnchorElement &&
-        link.hash !== "" &&
-        link.hash === window.location.hash
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
       )
-        fromLocation();
+        return;
+      const link = (event.target as Element | null)?.closest?.("a[href]");
+      if (
+        !(link instanceof HTMLAnchorElement) ||
+        (link.target && link.target !== "_self")
+      )
+        return;
+      const url = new URL(link.href, window.location.href);
+      if (
+        url.origin !== window.location.origin ||
+        url.pathname !== window.location.pathname ||
+        url.hash.length < 2
+      )
+        return;
+      reveal(url.hash, !getLenis());
     };
     const frame = requestAnimationFrame(fromLocation);
     window.addEventListener("hashchange", fromLocation);
-    document.addEventListener("click", onClick);
+    document.addEventListener("click", onClick, true);
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener("hashchange", fromLocation);
-      document.removeEventListener("click", onClick);
+      document.removeEventListener("click", onClick, true);
     };
   }, [reveal]);
 

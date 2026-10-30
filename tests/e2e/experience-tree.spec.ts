@@ -87,6 +87,28 @@ test("a skill evidence link to a collapsed child expands its parent", async ({
   await expect.poll(() => inViewport(page, "tree-zodiacgems")).toBe(true);
 });
 
+test("motion on (smooth scroll): a skill evidence link to a collapsed child expands its parent", async ({
+  page,
+}) => {
+  // Lenis handles in-page links with pushState, which fires no hashchange: the tree must still open the parent.
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.addInitScript(() => localStorage.setItem("motion", "on"));
+  await page.goto("/en");
+  await expect(page.locator("html")).toHaveAttribute("data-motion", "full");
+  await expect(page.locator("html")).toHaveClass(/\blenis\b/);
+  await page
+    .locator('[data-skill-chip][data-skill-name="Flutter"]')
+    .first()
+    .click();
+  await page.locator('#skills-evidence a[href="#tree-zodiacgems"]').click();
+  await expect(toggle(page, "exp-fpt-university")).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
+  await expect(page.locator("#tree-zodiacgems")).toBeVisible();
+  await expect.poll(() => inViewport(page, "tree-zodiacgems")).toBe(true);
+});
+
 test("case study opens from a child card", async ({ page }) => {
   await page.goto("/en");
   await page
