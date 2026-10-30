@@ -6,6 +6,8 @@ const W = 220;
 const H = 136;
 const GAP = 16;
 const LERP = 0.18;
+/** Capture, so a scroll of any scroller under the row re-aims too. */
+const VIEWPORT = { capture: true, passive: true } as const;
 
 type Preview = { title: string; posterUrl: string | null };
 
@@ -60,7 +62,6 @@ export function ArchivePreview({
       place();
       if (shown && (Math.abs(tx - cx) > 0.5 || Math.abs(ty - cy) > 0.5))
         frame = requestAnimationFrame(tick);
-      else if (shown && anchored) frame = requestAnimationFrame(tick);
     };
     const run = () => {
       if (!frame) frame = requestAnimationFrame(tick);
@@ -92,9 +93,27 @@ export function ArchivePreview({
       setState({ id: key, on: true });
       run();
     }
+    /** While anchored to a focused row, re-aim only when the page moves under it (no per-frame polling). */
+    const onViewport = () => {
+      if (anchored && row) run();
+    };
+    function anchor() {
+      if (!anchored) {
+        window.addEventListener("scroll", onViewport, VIEWPORT);
+        window.addEventListener("resize", onViewport, VIEWPORT);
+      }
+      anchored = true;
+    }
+    function unanchor() {
+      if (anchored) {
+        window.removeEventListener("scroll", onViewport, VIEWPORT);
+        window.removeEventListener("resize", onViewport, VIEWPORT);
+      }
+      anchored = false;
+    }
     function hide() {
       row = null;
-      anchored = false;
+      unanchor();
       shown = false;
       setState((now) => (now.on ? { ...now, on: false } : now));
     }
@@ -103,7 +122,7 @@ export function ArchivePreview({
       if (event.pointerType !== "mouse") return;
       const target = rowOf(event.target);
       if (!target) return;
-      anchored = false;
+      unanchor();
       follow(event.clientX, event.clientY);
       if (target !== row) show(target, false);
       run();
@@ -116,7 +135,7 @@ export function ArchivePreview({
       const target = rowOf(event.target);
       if (!target || !(event.target as Element).matches?.(":focus-visible"))
         return;
-      anchored = true;
+      anchor();
       aim(target);
       show(target, true);
     };
@@ -137,6 +156,7 @@ export function ArchivePreview({
     root.addEventListener("click", hide);
     return () => {
       cancelAnimationFrame(frame);
+      unanchor();
       root.removeEventListener("pointermove", onMove);
       root.removeEventListener("pointerout", onLeave);
       root.removeEventListener("pointerdown", hide);
