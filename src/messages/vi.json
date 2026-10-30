@@ -10,7 +10,16 @@
     "skills": "Kỹ năng",
     "certificates": "Chứng chỉ",
     "why": "Vì sao chọn tôi",
-    "contact": "Liên hệ"
+    "contact": "Liên hệ",
+    "peek": {
+      "hero": "Giới thiệu, vai trò và CV",
+      "experience": "Công ty, vị trí và dự án",
+      "projects": "Dự án nổi bật và case study",
+      "skills": "Kỹ năng và bằng chứng đi kèm",
+      "certificates": "Khóa học, chứng chỉ và hoạt động",
+      "why": "Vì sao chọn tôi: cá chép hóa rồng",
+      "contact": "Email, LinkedIn và GitHub"
+    }
   },
   "pill": {
     "hero": "Trang chủ",

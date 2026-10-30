@@ -10,7 +10,16 @@
     "skills": "Skills",
     "certificates": "Certificates",
     "why": "Why me",
-    "contact": "Contact"
+    "contact": "Contact",
+    "peek": {
+      "hero": "Introduction, role and CV",
+      "experience": "Companies, positions and their projects",
+      "projects": "Featured work and case studies",
+      "skills": "Skills and the evidence behind them",
+      "certificates": "Courses, certificates and activities",
+      "why": "Why work with me: the koi becomes a dragon",
+      "contact": "Email, LinkedIn and GitHub"
+    }
   },
   "pill": {
     "hero": "Home",

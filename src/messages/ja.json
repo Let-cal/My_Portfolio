@@ -10,7 +10,16 @@
     "skills": "スキル",
     "certificates": "資格",
     "why": "強み",
-    "contact": "連絡先"
+    "contact": "連絡先",
+    "peek": {
+      "hero": "自己紹介・役割・履歴書",
+      "experience": "会社・役職・担当プロジェクト",
+      "projects": "注目の作品とケーススタディ",
+      "skills": "スキルとその裏付け",
+      "certificates": "講座・資格・活動",
+      "why": "一緒に働く理由：鯉が龍になる",
+      "contact": "メール・LinkedIn・GitHub"
+    }
   },
   "pill": {
     "hero": "ホーム",
