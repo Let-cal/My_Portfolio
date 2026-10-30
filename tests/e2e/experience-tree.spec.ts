@@ -221,6 +221,44 @@ test("phone width: the Gantt hides its bar labels and nothing scrolls sideways",
   ).toBe(true);
 });
 
+for (const { locale, width } of [
+  { locale: "ja", width: 375 },
+  { locale: "vi", width: 375 },
+  { locale: "en", width: 375 },
+  { locale: "ja", width: 1366 },
+  { locale: "vi", width: 1366 },
+]) {
+  test(`${locale} at ${width} px: no Gantt label is cut (it fits or is hidden)`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(`/${locale}`);
+    const gantt = page.locator("#exp-skg-software [role=img]");
+    await expect(gantt).toBeVisible();
+    await expect(gantt.locator(".jt-seg")).toHaveCount(2);
+    const cut = await gantt.evaluate((root) => {
+      const bad: string[] = [];
+      for (const seg of root.querySelectorAll<HTMLElement>(".jt-seg")) {
+        const painted = getComputedStyle(seg).color !== "rgba(0, 0, 0, 0)";
+        if (painted && seg.scrollWidth > seg.clientWidth)
+          bad.push(`segment "${seg.textContent}"`);
+      }
+      for (const label of root.querySelectorAll<HTMLElement>(".jt-blabel")) {
+        const style = getComputedStyle(label);
+        if (style.display === "none" || style.visibility === "hidden") continue;
+        const lane = label.parentElement!;
+        if (
+          label.offsetLeft < 0 ||
+          label.offsetLeft + label.offsetWidth > lane.clientWidth
+        )
+          bad.push(`bar label "${label.textContent}"`);
+      }
+      return bad;
+    });
+    expect(cut).toEqual([]);
+  });
+}
+
 test("case study opens from a child card", async ({ page }) => {
   await page.goto("/en");
   await page

@@ -598,6 +598,13 @@
   line-height: 20px;
   white-space: nowrap;
 }
+/* A label that would not fit is not painted (JourneyTimeline marks it); the layout, and so the check, stay the same. */
+.jt-seg[data-clip] {
+  color: transparent;
+}
+.jt-blabel[data-clip] {
+  visibility: hidden;
+}
 .jt-seg[data-intern] {
   background: linear-gradient(90deg, #ffb070, #f5a35a);
 }
