@@ -215,7 +215,12 @@
     "internshipChip": "internship",
     "intern": "Intern",
     "expand": "Show details",
-    "collapse": "Hide details"
+    "collapse": "Hide details",
+    "promoted": "Promoted to full-time · {month}",
+    "positionsCount": "{count, plural, one {# position} other {# positions}}",
+    "showDescription": "Show description",
+    "hideDescription": "Hide description",
+    "timelineLabel": "{company} timeline. Positions: {positions}. Projects: {projects}."
   },
   "skills": {
     "intro": "Pick a skill to see which experience and projects it comes from.",

@@ -124,3 +124,10 @@ export function shortTitle(position: string): string {
   const cut = position.search(/[—,(（、]/);
   return (cut === -1 ? position : position.slice(0, cut)).trim();
 }
+
+const KANJI_DIGITS = "〇一二三四五六七八九";
+
+/** A year written digit by digit in kanji numerals, as on a seal: 2026 -> "二〇二六". */
+export function kanjiYear(year: number): string {
+  return String(year).replace(/\d/g, (d) => KANJI_DIGITS[Number(d)]);
+}

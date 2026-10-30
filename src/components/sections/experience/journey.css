@@ -1,0 +1,653 @@
+/*
+ * Emaki experience tree (spec 5.1, 5.2): ink rail, hanko, scroll-unroll panels, compact rows, the mini Gantt.
+ * Imported by the server-rendered Experience section, so it ships in the page CSS and costs no JS.
+ * Dark is the default theme; `.light` on <html> switches the tokens. Motion only runs under
+ * <html data-motion="full"> (the site's Motion toggle, else the OS setting); everything else is the static design.
+ */
+
+.jt {
+  --jt-koi: #f07a2a;
+  --jt-koi-ink: #ffb070;
+  --jt-teal: #3fb8a9;
+  --jt-vermilion: #c8361f;
+  --jt-seal-ink: #fbe9df;
+  --jt-seal-line: #f0644a;
+  --jt-gold: #c9a45c;
+  --jt-gold-edge: #5b4a26;
+  --jt-line: rgb(255 255 255 / 9%);
+  --jt-line-2: rgb(255 255 255 / 16%);
+  --jt-card: color-mix(in srgb, var(--card) 72%, transparent);
+  --jt-card-lit: color-mix(in srgb, var(--card) 88%, #f07a2a 4%);
+  --jt-chip: color-mix(in srgb, var(--muted-surface) 70%, transparent);
+  --jt-gantt: linear-gradient(180deg, #14120f, #100f0d);
+  --jt-bar: #3a342e;
+  --jt-seg-ink: #120c08;
+  --jt-bleed-koi: rgb(240 122 42 / 14%);
+  --jt-bleed-teal: rgb(63 184 169 / 11%);
+  --jt-glow:
+    0 0 0 1px rgb(240 122 42 / 20%), 0 12px 40px -18px rgb(240 122 42 / 55%);
+  --jt-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --jt-gutter: 2.75rem;
+
+  position: relative;
+}
+
+.light .jt {
+  --jt-koi-ink: #9a3412;
+  --jt-teal: #0f766e;
+  --jt-seal-line: #b3301b;
+  --jt-gold: #8a6a1f;
+  --jt-gold-edge: #d9c69c;
+  --jt-line: rgb(0 0 0 / 9%);
+  --jt-line-2: rgb(0 0 0 / 16%);
+  --jt-card-lit: color-mix(in srgb, var(--card) 94%, #f07a2a 6%);
+  --jt-gantt: linear-gradient(180deg, #fbf7ef, #f5eee1);
+  --jt-bar: #d4c8b4;
+  --jt-bleed-koi: rgb(240 122 42 / 12%);
+  --jt-bleed-teal: rgb(15 118 110 / 9%);
+  --jt-glow:
+    0 0 0 1px rgb(240 122 42 / 25%), 0 12px 36px -20px rgb(240 122 42 / 45%);
+}
+
+@media (min-width: 640px) {
+  .jt {
+    --jt-gutter: 3.5rem;
+  }
+}
+
+.jt-list {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2.25rem;
+  padding-left: var(--jt-gutter);
+}
+
+.jt-parent {
+  position: relative;
+  scroll-margin-top: 6rem;
+}
+.jt-sum {
+  max-width: 48rem;
+  margin-top: 0.75rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.625;
+  white-space: pre-line;
+}
+.jt-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+}
+.jt-lines > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 0.75rem;
+  font-weight: 500;
+}
+.jt-a {
+  color: var(--brand-text);
+  text-underline-offset: 4px;
+}
+.jt-a:hover {
+  text-decoration: underline;
+}
+.jt-a:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* ---- Ink rail: one wavering stroke; the fill path follows scroll progress (see InkRail). ---- */
+.jt-rail {
+  position: absolute;
+  top: 0.25rem;
+  bottom: 0;
+  left: calc(var(--jt-gutter) / 2 - 14px);
+  width: 28px;
+  height: calc(100% - 0.25rem);
+  overflow: visible;
+  pointer-events: none;
+}
+.jt-rail path {
+  fill: none;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+}
+.jt-rail-track {
+  stroke: var(--jt-line-2);
+}
+/* The scroll engine writes the dash offset as an attribute; under reduced motion this rule draws the rail in full. */
+:root:not([data-motion="full"]) .jt-rail-fill {
+  stroke-dashoffset: 0;
+}
+
+/* ---- Hanko: the parent's last year in kanji. Filled when open, outlined when closed; stamps once on view. ---- */
+.jt-hanko {
+  position: absolute;
+  top: 2px;
+  left: calc(var(--jt-gutter) / -2 - 15px);
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 42px;
+  border: 1.5px solid var(--jt-vermilion);
+  border-radius: 4px;
+  background: var(--background);
+  box-shadow: 0 0 0 3px var(--background);
+  color: var(--jt-seal-line);
+  font: 600 9px/1 var(--font-mincho);
+  letter-spacing: 0.08em;
+  writing-mode: vertical-rl;
+  transform: rotate(-3deg);
+  transition:
+    background-color 0.25s,
+    color 0.25s;
+  user-select: none;
+}
+.jt-hanko[data-state="open"] {
+  /* A shade darker than the border so the 9 px seal text keeps 4.5:1 (axe checks it although it is aria-hidden). */
+  background: #b02e19;
+  color: var(--jt-seal-ink);
+  box-shadow:
+    0 0 0 3px var(--background),
+    0 4px 14px rgb(200 54 31 / 33%);
+}
+:root[data-motion="full"] .jt-hanko[data-stamped] {
+  animation: jt-stamp 260ms var(--jt-ease) both;
+}
+@keyframes jt-stamp {
+  from {
+    opacity: 0.35;
+    transform: rotate(-3deg) scale(1.35);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-3deg) scale(1);
+  }
+}
+
+/* ---- Parent header ---- */
+.jt-head {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.875rem;
+  width: 100%;
+  padding-right: 1.75rem;
+  border-radius: 0.625rem;
+  text-align: left;
+  cursor: pointer;
+}
+.jt-head:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 6px;
+}
+.jt-name {
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 1.75rem;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.005em;
+}
+@media (min-width: 640px) {
+  .jt-name {
+    font-size: 2rem;
+  }
+}
+.jt-meta {
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+.jt-period {
+  color: var(--foreground);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.jt-chev {
+  position: absolute;
+  top: 0.75rem;
+  right: 0;
+  color: var(--muted);
+  transition: transform 0.3s var(--jt-ease);
+}
+.jt-head[aria-expanded="false"] .jt-chev {
+  transform: rotate(-90deg);
+}
+.jt-head:hover .jt-chev {
+  color: var(--foreground);
+}
+.jt-pills {
+  display: flex;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+.jt-pill {
+  padding: 0.125rem 0.625rem;
+  border: 1px solid var(--jt-line-2);
+  border-radius: 999px;
+  background: var(--jt-chip);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.jt-pill[data-tone="koi"] {
+  border-color: color-mix(in srgb, var(--jt-koi) 40%, transparent);
+  background: color-mix(in srgb, var(--jt-koi) 10%, transparent);
+  color: var(--jt-koi-ink);
+}
+
+/* ---- Open and close: a scroll unrolling top-down (rows + clip), rows rising in with a capped stagger. ---- */
+.jt-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  visibility: hidden;
+  opacity: 0;
+}
+.jt-panel[data-state="open"] {
+  grid-template-rows: 1fr;
+  visibility: visible;
+  opacity: 1;
+}
+.jt-panel > div {
+  min-height: 0;
+  overflow: clip;
+  overflow-clip-margin: 1rem;
+  clip-path: inset(0 0 100% 0);
+}
+.jt-panel[data-state="open"] > div {
+  clip-path: inset(-1rem -1rem -1rem -1rem);
+}
+:root[data-motion="full"] .jt-panel {
+  transition:
+    grid-template-rows 220ms var(--jt-ease),
+    opacity 220ms ease,
+    visibility 220ms;
+}
+:root[data-motion="full"] .jt-panel > div {
+  transition: clip-path 220ms var(--jt-ease);
+}
+:root[data-motion="full"] .jt-panel[data-state="open"],
+:root[data-motion="full"] .jt-panel[data-state="open"] > div {
+  transition-duration: 360ms;
+}
+:root[data-motion="full"] .jt-panel[data-anim][data-state="open"] .jt-row {
+  animation: jt-rise 240ms var(--jt-ease) calc(var(--i, 0) * 40ms) both;
+}
+@keyframes jt-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* ---- Stints ---- */
+.jt-stint {
+  position: relative;
+  margin-top: 1.375rem;
+  padding-left: 1.25rem;
+  border-left: 1px dashed var(--jt-line-2);
+}
+.jt-stint-h {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  margin-bottom: 0.75rem;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.jt-when {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+.jt-dur {
+  color: var(--jt-koi-ink);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.jt-promo {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin: 1.125rem 0 0 -0.375rem;
+  color: var(--jt-teal);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.jt-promo::before {
+  content: "";
+  flex: none;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--jt-teal);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--jt-teal) 20%, transparent);
+}
+.jt-link {
+  height: 1.125rem;
+  margin-left: -0.375rem;
+  border-left: 1px dashed var(--jt-line-2);
+  translate: 0.375rem 0;
+}
+
+/* ---- Compact project row: washi grain at 4% and an ink-bleed glow on hover, focus or Gantt sync. ---- */
+.jt-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.jt-row {
+  position: relative;
+  scroll-margin-top: 6rem;
+}
+.jt-row::before {
+  content: "";
+  position: absolute;
+  top: 1.375rem;
+  left: -1.4375rem;
+  width: 1.125rem;
+  border-top: 1px dashed var(--jt-line-2);
+}
+.jt-card {
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--jt-line);
+  border-radius: 0.75rem;
+  background: var(--jt-card);
+  transition:
+    border-color 0.25s,
+    box-shadow 0.25s,
+    background-color 0.25s;
+}
+@media (min-width: 640px) {
+  .jt-card {
+    padding: 0.875rem 1.125rem;
+  }
+}
+.jt-card::before,
+.jt-card::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.jt-card::before {
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+.jt-card::after {
+  opacity: 0;
+  background:
+    radial-gradient(130px 70px at 0% 0%, var(--jt-bleed-koi), transparent 70%),
+    radial-gradient(
+      170px 90px at 100% 100%,
+      var(--jt-bleed-teal),
+      transparent 70%
+    );
+  transition: opacity 0.4s;
+}
+.jt-row:hover .jt-card,
+.jt-row[data-lit] .jt-card,
+.jt-card:focus-within {
+  border-color: color-mix(in srgb, var(--jt-koi) 38%, transparent);
+  background: var(--jt-card-lit);
+  box-shadow: var(--jt-glow);
+}
+.jt-row:hover .jt-card::after,
+.jt-row[data-lit] .jt-card::after,
+.jt-card:focus-within::after {
+  opacity: 1;
+}
+/* Role switcher: the matching rows get the accent ring; a highlight (command palette, skill evidence) glows. */
+.jt-row[data-role-match] .jt-card {
+  border-color: color-mix(in srgb, var(--role-accent) 60%, transparent);
+  box-shadow: 0 0 0 1px var(--role-accent);
+}
+.jt-row[data-highlight] .jt-card {
+  border-color: var(--role-accent);
+  box-shadow: 0 0 30px -8px var(--role-accent);
+}
+.jt-parent[data-highlight] > .jt-hanko,
+.jt-parent:has([data-journey-child][data-highlight]) > .jt-hanko {
+  outline: 2px solid var(--role-accent);
+  outline-offset: 2px;
+}
+.jt-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.125rem 1rem;
+}
+.jt-title {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.jt-role {
+  color: var(--jt-koi-ink);
+  font-size: 0.8125rem;
+}
+.jt-team {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.jt-result {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.625rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+.jt-result-mark {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  border: 1px solid var(--jt-gold-edge);
+  border-radius: 4px;
+  color: var(--jt-gold);
+  font: 600 11px/16px var(--font-mincho);
+  text-align: center;
+}
+.jt-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-top: 0.625rem;
+}
+.jt-chip {
+  padding: 0.0625rem 0.5rem;
+  border: 1px solid var(--jt-line-2);
+  border-radius: 0.375rem;
+  background: var(--jt-chip);
+  font-size: 0.75rem;
+}
+.jt-chip[data-more] {
+  border-color: transparent;
+  background: none;
+  color: var(--muted);
+}
+.jt-desc {
+  display: grid;
+  grid-template-rows: 0fr;
+  visibility: hidden;
+}
+.jt-desc[data-state="open"] {
+  grid-template-rows: 1fr;
+  visibility: visible;
+}
+.jt-desc > div {
+  min-height: 0;
+  overflow: hidden;
+}
+:root[data-motion="full"] .jt-desc {
+  transition:
+    grid-template-rows 240ms var(--jt-ease),
+    visibility 240ms;
+}
+.jt-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem 1rem;
+  margin-top: 0.625rem;
+  font-size: 0.8125rem;
+}
+.jt-more {
+  color: var(--muted);
+  cursor: pointer;
+}
+.jt-more:hover {
+  color: var(--foreground);
+}
+.jt-cs {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-left: auto;
+  color: var(--jt-koi-ink);
+  font-weight: 600;
+  cursor: pointer;
+}
+.jt-cs:hover .jt-arrow {
+  translate: 3px 0;
+}
+.jt-arrow {
+  transition: translate 0.2s;
+}
+.jt-more:focus-visible,
+.jt-cs:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--ring);
+  outline-offset: 4px;
+}
+
+/* ---- Mini Gantt: axis, the stint lane, one 10 px bar per project. Fixed height, so a deferred load never shifts. ---- */
+.jt-slot {
+  height: calc(50px + var(--rows, 2) * 32px);
+  margin: 1.25rem 0 0.5rem;
+}
+.jt-gantt {
+  position: relative;
+  box-sizing: border-box;
+  height: 100%;
+  padding: 1rem 1.125rem 0.75rem;
+  overflow: hidden;
+  border: 1px solid var(--jt-line);
+  border-radius: 0.875rem;
+  background: var(--jt-gantt);
+}
+.jt-axis,
+.jt-lane {
+  position: relative;
+}
+.jt-axis {
+  height: 18px;
+  color: var(--muted);
+  font-size: 0.6875rem;
+  white-space: nowrap;
+}
+.jt-axis > span {
+  position: absolute;
+  top: 0;
+  padding-left: 4px;
+  border-left: 1px solid var(--jt-line-2);
+}
+.jt-lane {
+  height: 26px;
+  margin-top: 6px;
+  background-image: linear-gradient(90deg, var(--jt-line) 1px, transparent 1px);
+  background-size: calc(100% / var(--months, 12)) 100%;
+}
+.jt-seg,
+.jt-bar {
+  position: absolute;
+  transform-origin: left;
+}
+.jt-seg {
+  top: 3px;
+  height: 20px;
+  overflow: hidden;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #f07a2a, #e0703b 60%, #3fb8a9);
+  color: var(--jt-seg-ink);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 20px;
+  white-space: nowrap;
+}
+.jt-seg[data-intern] {
+  background: linear-gradient(90deg, #ffb070, #f5a35a);
+}
+.jt-tick {
+  position: absolute;
+  top: -3px;
+  color: var(--jt-teal);
+  font-size: 0.625rem;
+  font-weight: 700;
+  transform: translateX(-50%);
+}
+.jt-bar {
+  top: 8px;
+  height: 10px;
+  border-radius: 5px;
+  background: var(--jt-bar);
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    box-shadow 0.2s;
+}
+.jt-bar:hover,
+.jt-bar[data-lit] {
+  background: linear-gradient(90deg, var(--jt-koi), var(--jt-teal));
+  box-shadow: 0 0 14px rgb(240 122 42 / 40%);
+}
+.jt-blabel {
+  position: absolute;
+  top: 3px;
+  color: var(--muted);
+  font-size: 0.6875rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+:root[data-motion="full"] .jt-seg,
+:root[data-motion="full"] .jt-bar {
+  animation: jt-grow 0.7s var(--jt-ease) calc(var(--i, 0) * 80ms + 0.15s) both;
+}
+@keyframes jt-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+@media (max-width: 639px) {
+  .jt-blabel,
+  .jt-axis > span:nth-child(even) {
+    display: none;
+  }
+  /* The last tick label then still fits in the Gantt's right padding. */
+  .jt-axis {
+    font-size: 0.625rem;
+  }
+}

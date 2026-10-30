@@ -215,7 +215,12 @@
     "internshipChip": "thực tập",
     "intern": "Thực tập",
     "expand": "Xem chi tiết",
-    "collapse": "Thu gọn"
+    "collapse": "Thu gọn",
+    "promoted": "Lên nhân viên chính thức · {month}",
+    "positionsCount": "{count} vị trí",
+    "showDescription": "Xem mô tả",
+    "hideDescription": "Thu gọn mô tả",
+    "timelineLabel": "Dòng thời gian {company}. Vị trí: {positions}. Dự án: {projects}."
   },
   "skills": {
     "intro": "Chọn một kỹ năng để xem nó đến từ kinh nghiệm và dự án nào.",

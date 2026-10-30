@@ -13,6 +13,7 @@ import {
   formatDuration,
   formatMonth,
   formatPeriod,
+  kanjiYear,
   monthIndex,
   monthsBetween,
   shortTitle,
@@ -106,6 +107,8 @@ export type JourneyParent = {
   tech: string[];
   /** Duration of the whole span, months counted inclusively: "1 yr 2 mos". */
   duration: string;
+  /** The hanko's text: the year of the span's last month in kanji ("二〇二六"); the year of `now` when open-ended. */
+  hankoYear: string;
   /** Companies: the positions, newest first, each with its projects. Schools: empty. */
   stints: JourneyStint[];
   /** "Intern → Software Engineer": the short labels oldest first, only when a promotion exists. */
@@ -138,6 +141,9 @@ export function groupSlug(name: string): string | null {
 
 /** Sorts so an open-ended (null) end comes first, then the later end; shared by parents and spans. */
 const endKey = (end: string | null) => end ?? "9999-99";
+
+const hankoYearOf = (end: string | null, now: Date) =>
+  kanjiYear(end === null ? now.getFullYear() : Number(end.slice(0, 4)));
 
 function span(items: { start: string; end: string | null }[]): {
   start: string;
@@ -407,6 +413,7 @@ export function buildJourney(
       gpa: null,
       tech: unique(stints.flatMap((s) => s.tech)),
       duration: formatDuration(start, end, locale, now),
+      hankoYear: hankoYearOf(end, now),
       stints: stintList,
       summaryLabel: promoted
         ? stintList
@@ -463,6 +470,7 @@ export function buildJourney(
       gpa: e.gpa,
       tech: [],
       duration: formatDuration(e.start, e.end, locale, now),
+      hankoYear: hankoYearOf(e.end, now),
       stints: [],
       summaryLabel: null,
       timeline: null,

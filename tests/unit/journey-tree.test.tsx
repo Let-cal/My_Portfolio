@@ -1,4 +1,10 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -131,21 +137,187 @@ describe("Experience journey tree", () => {
     }
   });
 
-  it("shows the SKG stint lines from the data, newest first", () => {
+  it("shows period, duration, location and the summary chips in the parent header", () => {
     renderExperience();
-    const text = byId("exp-skg-software").querySelector(
-      "[data-journey-lines]",
-    )!.textContent!;
-    expect(text).toContain(
+    const skg = toggle("exp-skg-software");
+    expect(skg).toHaveTextContent("Aug 2025 – Sep 2026");
+    expect(skg).toHaveTextContent("1 yr 2 mos");
+    expect(within(skg).getByText("5 projects")).toBeInTheDocument();
+    expect(within(skg).getByText("2 positions")).toBeInTheDocument();
+    expect(
+      within(skg).getByText("Intern → Software Engineer"),
+    ).toBeInTheDocument();
+    const school = toggle("exp-fpt-university");
+    expect(school).toHaveTextContent("Education");
+    expect(within(school).getByText("GPA 7.66/10")).toBeInTheDocument();
+    expect(within(toggle("exp-fpt-japan")).queryByText(/positions/)).toBeNull();
+  });
+
+  it("renders stints with their projects under them", () => {
+    renderExperience();
+    const sections = [
+      ...panelOf("exp-skg-software").querySelectorAll<HTMLElement>(
+        "section[aria-labelledby]",
+      ),
+    ];
+    expect(sections).toHaveLength(2);
+    const [engineer, intern] = sections;
+    const heading = (section: HTMLElement) =>
+      byId(section.getAttribute("aria-labelledby")!);
+    expect(heading(engineer).tagName).toBe("H4");
+    expect(heading(engineer)).toHaveTextContent(
       "Software Engineer — acting Project Manager / Tech Lead",
     );
-    expect(text).toContain("Oct 2025 – Sep 2026");
-    expect(text).toContain("Software Engineer Intern");
-    expect(text).toContain("Aug 2025 – Oct 2025");
-    expect(text.indexOf("acting Project Manager")).toBeLessThan(
-      text.indexOf("Software Engineer Intern"),
+    expect(heading(engineer)).toHaveTextContent("Oct 2025 – Sep 2026");
+    expect(heading(engineer)).toHaveTextContent("1 yr");
+    expect(heading(intern)).toHaveTextContent("Software Engineer Intern");
+    expect(heading(intern)).toHaveTextContent("Aug 2025 – Oct 2025");
+    expect(heading(intern)).toHaveTextContent("3 mos");
+    const ids = (section: HTMLElement) =>
+      [...section.querySelectorAll("[data-journey-child]")].map((n) => n.id);
+    expect(ids(engineer)).toEqual([
+      "tree-skg-ai-agent",
+      "tree-skg-flexybox-p2",
+      "tree-skg-coa",
+    ]);
+    expect(ids(intern)).toEqual([
+      "tree-skg-flexybox-p1",
+      "tree-tongue-ai-driver-ms",
+    ]);
+  });
+
+  it("shows the promotion connector between intern and engineer", () => {
+    renderExperience();
+    const marker = within(panelOf("exp-skg-software")).getByText(
+      "Promoted to full-time · Oct 2025",
     );
-    expect(toggle("exp-skg-software")).toHaveTextContent("Aug 2025 – Sep 2026");
+    const [engineer, intern] = panelOf("exp-skg-software").querySelectorAll(
+      "section[aria-labelledby]",
+    );
+    expect(
+      engineer.compareDocumentPosition(marker) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      intern.compareDocumentPosition(marker) & Node.DOCUMENT_POSITION_PRECEDING,
+    ).toBeTruthy();
+  });
+
+  it("description disclosure keeps text in the DOM", async () => {
+    const user = userEvent.setup();
+    renderExperience();
+    const card = byId("tree-skg-coa");
+    const coa = base.projects.find((p) => p.id === "skg-coa")!;
+    const button = within(card).getByRole("button", {
+      name: "Show description",
+    });
+    expect(button).toHaveAttribute("aria-expanded", "false");
+    const region = byId(button.getAttribute("aria-controls")!);
+    expect(region).toHaveTextContent(coa.summary.en);
+    expect(region).toHaveAttribute("inert");
+    await user.click(button);
+    expect(button).toHaveAttribute("aria-expanded", "true");
+    expect(button).toHaveTextContent("Hide description");
+    expect(region).not.toHaveAttribute("inert");
+    expect(region).toHaveTextContent(coa.summary.en);
+    await user.click(button);
+    expect(button).toHaveAttribute("aria-expanded", "false");
+    expect(region).toHaveAttribute("inert");
+  });
+
+  it("shows the result line in full and the duration on each row", () => {
+    renderExperience();
+    const coa = base.projects.find((p) => p.id === "skg-coa")!;
+    const card = byId("tree-skg-coa");
+    expect(card).toHaveTextContent(coa.caseStudy!.result.en);
+    expect(card).toHaveTextContent("Oct 2025 – Mar 2026");
+    expect(card).toHaveTextContent("6 mos");
+  });
+
+  it("timeline has an accessible label and one bar per project", async () => {
+    renderExperience();
+    const skg = panelOf("exp-skg-software");
+    const timeline = await within(skg).findByRole("img");
+    const label = timeline.getAttribute("aria-label")!;
+    for (const text of [
+      "SKG Software (Splus)",
+      "Intern",
+      "Software Engineer",
+      "AI Agent",
+      "COA",
+      "Aug 2025 – Oct 2025",
+    ])
+      expect(label).toContain(text);
+    const bars = [...timeline.querySelectorAll("[data-bar]")].map((n) =>
+      n.getAttribute("data-sync"),
+    );
+    expect(bars).toEqual([
+      "skg-ai-agent",
+      "skg-flexybox-p2",
+      "skg-coa",
+      "skg-flexybox-p1",
+      "tongue-ai-driver-ms",
+    ]);
+  });
+
+  it("FPT Japan has no timeline and no stint headings", () => {
+    renderExperience();
+    const japan = byId("exp-fpt-japan");
+    expect(within(japan).queryByRole("img")).toBeNull();
+    expect(japan.querySelector("section, h4")).toBeNull();
+    expect(byId("exp-fpt-university").querySelector("[role='img']")).toBeNull();
+  });
+
+  it("hovering a row lights its bar", async () => {
+    renderExperience();
+    const skg = panelOf("exp-skg-software");
+    await within(skg).findByRole("img");
+    const bar = (id: string) =>
+      skg.querySelector<HTMLElement>(`[data-bar][data-sync="${id}"]`)!;
+    fireEvent.mouseOver(within(byId("tree-skg-coa")).getByText("C#"));
+    expect(bar("skg-coa")).toHaveAttribute("data-lit");
+    expect(byId("tree-skg-coa")).toHaveAttribute("data-lit");
+    expect(bar("skg-ai-agent")).not.toHaveAttribute("data-lit");
+    fireEvent.mouseOver(bar("skg-ai-agent"));
+    expect(byId("tree-skg-ai-agent")).toHaveAttribute("data-lit");
+    expect(bar("skg-coa")).not.toHaveAttribute("data-lit");
+    fireEvent.mouseLeave(skg.closest("[data-journey-tree]")!);
+    expect(skg.querySelector("[data-lit]")).toBeNull();
+    within(byId("tree-skg-flexybox-p1"))
+      .getByRole("button", { name: /Show description/ })
+      .focus();
+    expect(bar("skg-flexybox-p1")).toHaveAttribute("data-lit");
+  });
+
+  it("clicking a bar scrolls its row into view", async () => {
+    const scroll = vi.fn();
+    Element.prototype.scrollIntoView = scroll;
+    renderExperience();
+    const skg = panelOf("exp-skg-software");
+    await within(skg).findByRole("img");
+    fireEvent.click(
+      skg.querySelector<HTMLElement>('[data-bar][data-sync="skg-coa"]')!,
+    );
+    await waitFor(() => expect(scroll).toHaveBeenCalled());
+    expect(scroll.mock.contexts.at(-1)).toBe(byId("tree-skg-coa"));
+  });
+
+  it("stamps a kanji-year hanko on every parent, filled when open", async () => {
+    const user = userEvent.setup();
+    renderExperience();
+    const hanko = (anchor: string) =>
+      byId(anchor).querySelector<HTMLElement>("[data-hanko]")!;
+    expect(hanko("exp-skg-software")).toHaveTextContent("二〇二六");
+    expect(hanko("exp-fpt-university")).toHaveTextContent("二〇二五");
+    expect(hanko("exp-fpt-japan")).toHaveTextContent("二〇二四");
+    for (const anchor of ["exp-skg-software", "exp-fpt-japan"]) {
+      expect(hanko(anchor)).toHaveAttribute("aria-hidden", "true");
+      expect(hanko(anchor)).toHaveAttribute("lang", "ja");
+    }
+    expect(hanko("exp-skg-software")).toHaveAttribute("data-state", "open");
+    expect(hanko("exp-fpt-japan")).toHaveAttribute("data-state", "closed");
+    await user.click(toggle("exp-fpt-japan"));
+    expect(hanko("exp-fpt-japan")).toHaveAttribute("data-state", "open");
   });
 
   it("puts the SKG projects under SKG newest first and the university projects under FPT University", () => {
@@ -188,8 +360,12 @@ describe("Experience journey tree", () => {
       expect(card).toHaveTextContent(p.title);
       expect(card).toHaveTextContent(p.summary.en);
       expect(card).toHaveTextContent(p.role.en);
-      for (const name of p.tech.slice(0, 8))
+      for (const name of p.tech.slice(0, 5))
         expect(within(card).getByText(name)).toBeInTheDocument();
+      if (p.tech.length > 5) {
+        expect(card).toHaveTextContent(`+${p.tech.length - 5} more`);
+        expect(within(card).queryByText(p.tech[5])).toBeNull();
+      }
       if (p.teamSize)
         expect(card).toHaveTextContent(`Team size: ${p.teamSize}`);
       const hrefs = [...card.querySelectorAll("a")].map((a) =>
@@ -295,8 +471,17 @@ describe("Case study sheet", () => {
     expect(trigger).toHaveFocus();
   });
 
-  it("does not make children without a case study clickable", () => {
+  it("does not give children without a case study a case study button", () => {
     renderExperience();
-    expect(within(byId("tree-zodiacgems")).queryByRole("button")).toBeNull();
+    expect(
+      within(byId("tree-zodiacgems")).queryByRole("button", {
+        name: /case study/i,
+      }),
+    ).toBeNull();
+    expect(
+      within(byId("tree-skg-coa")).getByRole("button", {
+        name: /View case study/,
+      }),
+    ).toHaveAttribute("aria-haspopup", "dialog");
   });
 });

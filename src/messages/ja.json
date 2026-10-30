@@ -215,7 +215,12 @@
     "internshipChip": "インターンシップ",
     "intern": "インターン",
     "expand": "詳細を表示",
-    "collapse": "詳細を閉じる"
+    "collapse": "詳細を閉じる",
+    "promoted": "正社員に登用 · {month}",
+    "positionsCount": "{count}つの役職",
+    "showDescription": "説明を表示",
+    "hideDescription": "説明を閉じる",
+    "timelineLabel": "{company}のタイムライン。役職: {positions}。プロジェクト: {projects}。"
   },
   "skills": {
     "intro": "スキルを選ぶと、どの経験・プロジェクトで使ったかが分かります。",

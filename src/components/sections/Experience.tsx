@@ -2,6 +2,7 @@ import { useTranslations } from "next-intl";
 import type { Content, Locale } from "@/content/schema";
 import { buildJourney } from "@/lib/journey";
 import { JourneyTree } from "./experience/JourneyTree";
+import "./experience/journey.css";
 import { Reveal } from "@/components/site/Reveal";
 
 /**

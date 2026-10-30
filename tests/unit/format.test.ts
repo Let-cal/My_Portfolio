@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { formatDuration, formatPeriod, monthsBetween } from "@/lib/format";
+import {
+  formatDuration,
+  formatPeriod,
+  kanjiYear,
+  monthsBetween,
+} from "@/lib/format";
 
 describe("formatPeriod", () => {
   it("formats EN as 'Mon YYYY – Mon YYYY' with a spaced en dash", () => {
@@ -79,5 +84,13 @@ describe("formatDuration with precompiled messages", () => {
     const { formatDuration: compiled } = await import("@/lib/format");
     expect(compiled("2025-08", "2026-09", "en")).toBe("1 yr 2 mos");
     vi.doUnmock("@/messages/en.json");
+  });
+});
+
+describe("kanjiYear", () => {
+  it("writes a year digit by digit in kanji numerals", () => {
+    expect(kanjiYear(2026)).toBe("二〇二六");
+    expect(kanjiYear(2019)).toBe("二〇一九");
+    expect(kanjiYear(1987)).toBe("一九八七");
   });
 });
