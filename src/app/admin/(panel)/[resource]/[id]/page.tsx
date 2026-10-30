@@ -8,6 +8,7 @@ import { emptyItem } from "@/lib/admin/empty-item";
 import type { Options } from "@/components/admin/ResourceForm";
 import type { Education, Experience, Project, Skill } from "@/content/schema";
 import { evidenceOptions, whereOptions } from "@/lib/admin/project-options";
+import { publicTarget } from "@/lib/admin/public-link";
 import { getItem, listItems, relationOptions } from "@/lib/admin/data";
 import { copyId, neighbours } from "@/lib/admin/list-view";
 import { tableFor } from "@/lib/admin/versions";
@@ -61,13 +62,21 @@ async function Editor({
       : Promise.resolve([] as Skill[]),
   ]);
   if (!found) notFound();
-  // Why cards point at anchors of the tree and the home cards; projects choose their stint or school.
-  const needsTree = key === "why_cards" || key === "projects";
+  // Why cards point at anchors of the tree and the home cards; projects choose their stint or school. An edited
+  // stint, school or project links to where the tree (or the home card, or the archive) shows it.
+  const needsTree =
+    key === "why_cards" ||
+    key === "projects" ||
+    key === "experiences" ||
+    key === "education";
+  const ownListPromise = listItems(key);
+  const treeList = (k: "experiences" | "projects" | "education") =>
+    k === key ? ownListPromise : needsTree ? listItems(k) : Promise.resolve([]);
   const [ownList, experiences, projects, education] = await Promise.all([
-    listItems(key),
-    needsTree ? listItems("experiences") : Promise.resolve([]),
-    key === "why_cards" ? listItems("projects") : Promise.resolve([]),
-    needsTree ? listItems("education") : Promise.resolve([]),
+    ownListPromise,
+    treeList("experiences"),
+    treeList("projects"),
+    treeList("education"),
   ]);
   let source: Record<string, unknown> = found;
   if (from) {
@@ -97,6 +106,10 @@ async function Editor({
         : undefined,
     skills: skills.map((s) => ({ id: s.id, label: s.name, group: s.group })),
     skillNames: skills.map((s) => s.name),
+    publicTarget:
+      !isNew && needsTree && key !== "why_cards"
+        ? publicTarget(key, id, tree)
+        : undefined,
   };
   // An experience or project edits its skills here; they live in skill_links.
   const linkIds = (s: Skill) =>

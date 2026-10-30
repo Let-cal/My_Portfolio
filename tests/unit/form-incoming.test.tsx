@@ -76,6 +76,21 @@ describe("form and new server data", () => {
     );
     expect(screen.getByRole("progressbar", { name: "JA 1/1" })).toBeTruthy();
   });
+  it("the saved-preview link goes where the server says the item shows (e.g. an archive row)", () => {
+    render(
+      <ResourceForm
+        resourceKey="certificates"
+        isNew={false}
+        initial={cert}
+        options={{ publicTarget: { page: "projects", anchor: "row-x" } }}
+      />,
+    );
+    expect(
+      screen
+        .getByRole("link", { name: /Xem trước nội dung đã lưu/ })
+        .getAttribute("href"),
+    ).toBe("/admin/preview?locale=en&target=row-x&page=projects");
+  });
   it("keeps a real editor after expiry and blocks cancel until verified; saving remains manual", async () => {
     render(
       <>

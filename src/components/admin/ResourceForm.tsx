@@ -11,7 +11,12 @@ import {
   saveDraft,
 } from "@/lib/admin/drafts";
 import { runAction } from "@/lib/admin/action-errors";
-import { publicUrl } from "@/lib/admin/public-link";
+import {
+  previewHref,
+  publicTarget,
+  publicUrl,
+  type PublicTarget,
+} from "@/lib/admin/public-link";
 import { ADMIN_DISCARD_EVENT, signature } from "@/lib/admin/sync";
 
 import {
@@ -23,7 +28,6 @@ import {
 } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { TranslationProgress } from "./TranslationProgress";
-import { publicAnchor } from "@/lib/admin/public-link";
 import { toast } from "sonner";
 import {
   saveResource,
@@ -101,6 +105,8 @@ export type Options = Partial<
   evidence?: EvidenceGroup[];
   /** A project's "Thuộc về" choices: stints by company, then schools. */
   where?: WhereOptions;
+  /** Where the saved item shows on the site (tree parent, tree child, home card or archive row); edits only. */
+  publicTarget?: PublicTarget;
 };
 
 /** Field that seeds a new item's ID, in order of preference. */
@@ -1368,7 +1374,11 @@ export function ResourceForm({
           {visible && (
             <a
               className={link}
-              href={publicUrl(resourceKey, id, window.location.origin)}
+              href={publicUrl(
+                (!isNew && options.publicTarget) ||
+                  publicTarget(resourceKey, id),
+                window.location.origin,
+              )}
               target="_blank"
               rel="noopener"
             >
@@ -1386,7 +1396,10 @@ export function ResourceForm({
         <div className="flex justify-end">
           <Button asChild variant="outline" size="sm">
             <Link
-              href={`/admin/preview?locale=en&target=${encodeURIComponent(publicAnchor(resourceKey, String(initial.id)))}`}
+              href={previewHref(
+                options.publicTarget ??
+                  publicTarget(resourceKey, String(initial.id)),
+              )}
               prefetch={false}
               target="_blank"
               rel="noopener"
