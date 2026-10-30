@@ -274,6 +274,36 @@ The owner chose A.
 - Budgets: `scripts/measure-initial-js.mjs` stays ≤ 200 KB on both routes. Lighthouse CLS ≤ 0.1 on `/` and
   `/[locale]/projects`.
 
+## 6a. Builder-check rulings (Claude's calls, 2026-10-30, owner approved the spec and asked to proceed)
+
+1. **Panel fit is measured, never assumed.**
+   - Layout tiers by width:
+     - ≥ 1280 px: three panes.
+     - 1024–1279 px: two columns. Problem and Role on the left, Decisions on the right.
+     - < 1024 px: one column, full screen.
+   - A `ResizeObserver` on the panel content switches to the scrolling one-column mode whenever the content
+     overflows, at any viewport. Text is never clipped.
+   - The e2e fit test: at 1366 × 768 and 1440 × 900, every seed case study fits in EN and VI.
+   - Body type in the panes may go down to 14 px (never lower) to meet it.
+   - The admin gets no length caps.
+2. **Only projects with a case study take part in the panel.** The position counter and previous/next count only
+   the projects with a case study in the list the panel was opened from. Rows and cards without one open nothing
+   (as today). The mockup's "06 / 08" numbers are illustrative.
+3. **Short position labels are derived; there is no data change.**
+   - `shortTitle(position)` takes the localized position text up to the first "—", ",", "(", "（" or "、", then
+     trims it:
+     - "Software Engineer — acting …" becomes "Software Engineer";
+     - "Kỹ sư phần mềm, kiêm …" becomes "Kỹ sư phần mềm";
+     - "ソフトウェアエンジニア(…)" becomes "ソフトウェアエンジニア".
+   - An `internship` stint uses the localized word "Intern" (Intern / Thực tập / インターン).
+   - These labels appear in:
+     - the collapsed chip ("Intern → Software Engineer");
+     - the Gantt stint segments;
+     - the archive's "Where" second line.
+   - Project rows keep the stored role text and the full result line. Taller rows than in the mockup are accepted.
+4. For a project that is in both the tree and the home bento, `?case=<id>` opens it with the tree as its list.
+   After previous/next, closing returns focus to the opener of the first panel.
+
 ## 7. Left to the builder
 
 - Component split and file names.
