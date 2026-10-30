@@ -10,6 +10,7 @@ import {
   ARCHIVE_FILTER_CSS,
   ARCHIVE_FILTER_SCRIPT,
 } from "@/lib/archive-filter";
+import { cachedNow } from "@/lib/data/cached-now";
 import { getContent } from "@/lib/data/get-content";
 
 export async function generateMetadata({
@@ -33,6 +34,7 @@ export default async function ProjectsPage({
   setRequestLocale(locale);
   const t = await getTranslations("archive");
   const content = await getContent();
+  const now = await cachedNow();
 
   return (
     <main
@@ -52,7 +54,7 @@ export default async function ProjectsPage({
         {t("title")}
       </h1>
       <p className="mt-3 max-w-2xl text-muted-foreground">{t("intro")}</p>
-      <ProjectArchive rows={archiveRows(content, locale)} />
+      <ProjectArchive rows={archiveRows(content, locale, now)} />
       {/* After the table: it reads the rows to keep a #row- deep link visible. */}
       <script dangerouslySetInnerHTML={{ __html: ARCHIVE_FILTER_SCRIPT }} />
     </main>

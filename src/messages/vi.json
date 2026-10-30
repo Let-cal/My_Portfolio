@@ -245,7 +245,17 @@
     "decisions": "Quyết định",
     "result": "Kết quả",
     "tech": "Công nghệ",
-    "team": "Quy mô team: {size}"
+    "team": "Quy mô team: {size}",
+    "copyLink": "Sao chép link",
+    "copied": "Đã sao chép link",
+    "prev": "Dự án trước: {title}",
+    "next": "Dự án tiếp theo: {title}",
+    "position": "{index} trên {total}",
+    "chapterTree": "第一章 経歴",
+    "chapterProjects": "第二章 作品",
+    "where": "Nơi làm",
+    "period": "Thời gian",
+    "teamLabel": "Team"
   },
   "projects": {
     "viewCaseStudy": "Xem case study",

@@ -1,7 +1,6 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import dynamic from "next/dynamic";
 import {
   useCallback,
   useEffect,
@@ -11,6 +10,9 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from "react";
 import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
+import type { CaseStudyItem } from "@/components/sections/case-study/CaseStudyPanel";
+import { LazyCaseStudyPanel } from "@/components/sections/case-study/LazyCaseStudyPanel";
+import { useCaseParam } from "@/components/sections/case-study/use-case-param";
 import { ChevronRightIcon } from "@/components/site/icons";
 import { useRole } from "@/components/site/RoleProvider";
 import { SECTION_IDS } from "@/components/site/sections";
@@ -22,16 +24,9 @@ import {
   parseKind,
   type ArchiveKind,
 } from "@/lib/archive-filter";
+import { caseItemFromRow } from "@/lib/case-items";
 import { repoLinks } from "@/lib/repo-links";
 import { cn } from "@/lib/utils";
-
-const CaseStudySheet = dynamic(
-  () =>
-    import("@/components/sections/experience/CaseStudySheet").then(
-      (module) => module.CaseStudySheet,
-    ),
-  { ssr: false },
-);
 
 const MAX_TECH = 4;
 
@@ -75,7 +70,8 @@ function Star({ label }: { label: string }) {
  * - A `#row-<id>` deep link that the filter would hide resets the filter to "all", then the row scrolls into view.
  * - A section link of the site navigation (`#experience`, ...) loads the home page at that section.
  * - The role switcher only highlights rows whose roles include it (`data-highlight`); the order never changes.
- * - A project with a case study opens it in the shared sheet from a button over its row (click or Enter).
+ * - A project with a case study opens it in the shared case study panel from a button over its row (click or
+ *   Enter); previous / next walk the rows the current filter shows. `?case=<id>` opens it on load.
  */
 export function ProjectArchive({ rows }: { rows: ArchiveRow[] }) {
   const t = useTranslations("archive");
@@ -86,14 +82,33 @@ export function ProjectArchive({ rows }: { rows: ArchiveRow[] }) {
   // null until the URL has been read after hydration; the server HTML (and the inline script) cover that moment.
   const [kind, setKind] = useState<ArchiveKind | null>(null);
   const active: ArchiveKind = kind ?? "all";
-  const [shown, setShown] = useState<ArchiveRow | null>(null);
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const [caseId, setCaseId] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const reducedRef = useRef(reduced);
   useEffect(() => {
     reducedRef.current = reduced;
   }, [reduced]);
+
+  /** Every row with a case study, with its kind (the filter decides which ones previous / next walk). */
+  const caseRows = useMemo(
+    () =>
+      rows.flatMap((row): { kind: ArchiveKind; item: CaseStudyItem }[] => {
+        const item = caseItemFromRow(row, t(`kinds.${row.whereKind}`));
+        return item ? [{ kind: row.whereKind, item }] : [];
+      }),
+    [rows, t],
+  );
+  const allItems = useMemo(() => caseRows.map((r) => r.item), [caseRows]);
+  const openCase = useCaseParam(allItems, setCaseId, "archive");
+  const shownItems = caseRows
+    .filter((r) => active === "all" || r.kind === active)
+    .map((r) => r.item);
+  // A deep-linked project that the filter hides still opens, walking the whole list.
+  const panelItems =
+    caseId !== null && !shownItems.some((i) => i.id === caseId)
+      ? allItems
+      : shownItems;
 
   const counts = useMemo(() => {
     const result: Record<ArchiveKind, number> = {
@@ -165,10 +180,9 @@ export function ProjectArchive({ rows }: { rows: ArchiveRow[] }) {
     writeKind(next, false);
   }
 
-  function openCaseStudy(row: ArchiveRow, event: ReactMouseEvent<HTMLElement>) {
+  function openCaseStudy(id: string, event: ReactMouseEvent<HTMLElement>) {
     returnFocusRef.current = event.currentTarget;
-    setShown(row);
-    setSheetOpen(true);
+    openCase(id);
   }
 
   const headers = [
@@ -280,7 +294,7 @@ export function ProjectArchive({ rows }: { rows: ArchiveRow[] }) {
                       <button
                         type="button"
                         aria-haspopup="dialog"
-                        onClick={(e) => openCaseStudy(row, e)}
+                        onClick={(e) => openCaseStudy(row.id, e)}
                         className="inline-flex cursor-pointer items-baseline gap-1 rounded-sm text-left font-heading text-base font-semibold text-foreground outline-none group-hover/row:text-brand-text after:absolute after:inset-0 after:content-[''] focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         {row.title}
@@ -347,22 +361,13 @@ export function ProjectArchive({ rows }: { rows: ArchiveRow[] }) {
         </table>
       </div>
 
-      {shown?.caseStudy ? (
-        <CaseStudySheet
-          open={sheetOpen}
-          onOpenChange={(next) => {
-            if (!next) setSheetOpen(false);
-          }}
-          title={shown.title}
-          description={[shown.where, shown.role, shown.period]
-            .filter(Boolean)
-            .join(" · ")}
-          caseStudy={shown.caseStudy}
-          teamSize={shown.teamSize}
-          tech={shown.tech}
-          returnFocusRef={returnFocusRef}
-        />
-      ) : null}
+      <LazyCaseStudyPanel
+        items={panelItems}
+        openId={caseId}
+        context="archive"
+        onOpenChange={openCase}
+        returnFocusRef={returnFocusRef}
+      />
     </div>
   );
 }

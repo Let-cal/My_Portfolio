@@ -245,7 +245,17 @@
     "decisions": "Decisions",
     "result": "Result",
     "tech": "Tech stack",
-    "team": "Team size: {size}"
+    "team": "Team size: {size}",
+    "copyLink": "Copy link",
+    "copied": "Link copied",
+    "prev": "Previous project: {title}",
+    "next": "Next project: {title}",
+    "position": "{index} of {total}",
+    "chapterTree": "第一章 経歴",
+    "chapterProjects": "第二章 作品",
+    "where": "Where",
+    "period": "Period",
+    "teamLabel": "Team"
   },
   "projects": {
     "viewCaseStudy": "View case study",

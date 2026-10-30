@@ -1,7 +1,6 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import dynamic from "next/dynamic";
 import {
   useCallback,
   useEffect,
@@ -11,19 +10,17 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from "react";
 import { GlowCard } from "@/components/fx/GlowCard";
+import { LazyCaseStudyPanel } from "@/components/sections/case-study/LazyCaseStudyPanel";
+import { useCaseParam } from "@/components/sections/case-study/use-case-param";
 import { TracingBeam } from "@/components/fx/TracingBeam";
 import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
 import { useHighlight } from "@/components/site/HighlightProvider";
 import { ChevronDownIcon, ChevronRightIcon } from "@/components/site/icons";
 import { getLenis } from "@/components/site/lenis-instance";
 import { useRole } from "@/components/site/RoleProvider";
+import { caseItemsFromJourney } from "@/lib/case-items";
 import type { JourneyChild, JourneyParent } from "@/lib/journey";
 import { cn } from "@/lib/utils";
-
-const CaseStudySheet = dynamic(
-  () => import("./CaseStudySheet").then((module) => module.CaseStudySheet),
-  { ssr: false },
-);
 
 const MAX_CHIPS = 8;
 
@@ -70,6 +67,7 @@ function TechChips({
  */
 export function JourneyTree({ parents }: { parents: JourneyParent[] }) {
   const t = useTranslations("experience");
+  const ta = useTranslations("archive");
   const { role } = useRole();
   const reduced = usePrefersReducedMotion();
   const { ids: lit } = useHighlight();
@@ -79,11 +77,15 @@ export function JourneyTree({ parents }: { parents: JourneyParent[] }) {
   const [target, setTarget] = useState<{ id: string; seq: number } | null>(
     null,
   );
-  const [shown, setShown] = useState<{
-    parent: string;
-    child: JourneyChild;
-  } | null>(null);
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const [caseId, setCaseId] = useState<string | null>(null);
+  const caseItems = useMemo(
+    () =>
+      caseItemsFromJourney(parents, (kind) =>
+        ta(kind === "company" ? "kinds.work" : "kinds.university"),
+      ),
+    [parents, ta],
+  );
+  const openCase = useCaseParam(caseItems, setCaseId, "tree");
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const reducedRef = useRef(reduced);
   useEffect(() => {
@@ -179,17 +181,12 @@ export function JourneyTree({ parents }: { parents: JourneyParent[] }) {
     });
   }
 
-  function openCaseStudy(
-    parent: string,
-    child: JourneyChild,
-    event: ReactMouseEvent<HTMLElement>,
-  ) {
+  function openCaseStudy(id: string, event: ReactMouseEvent<HTMLElement>) {
     returnFocusRef.current = event.currentTarget;
-    setShown({ parent, child });
-    setSheetOpen(true);
+    openCase(id);
   }
 
-  function renderChild(parent: JourneyParent, child: JourneyChild) {
+  function renderChild(child: JourneyChild) {
     const cs = child.caseStudy;
     const highlighted = lit.includes(child.anchor);
     const matched = child.roles.includes(role);
@@ -217,7 +214,7 @@ export function JourneyTree({ parents }: { parents: JourneyParent[] }) {
               <button
                 type="button"
                 aria-haspopup="dialog"
-                onClick={(e) => openCaseStudy(parent.name, child, e)}
+                onClick={(e) => openCaseStudy(child.id, e)}
                 className="cursor-pointer text-left outline-none after:absolute after:inset-0 after:rounded-xl after:content-['']"
               >
                 {child.title}
@@ -409,9 +406,7 @@ export function JourneyTree({ parents }: { parents: JourneyParent[] }) {
                     />
                     {parent.children.length > 0 ? (
                       <ol className="mt-4 ml-1 flex flex-col gap-3 border-l border-dashed border-border pl-5">
-                        {parent.children.map((child) =>
-                          renderChild(parent, child),
-                        )}
+                        {parent.children.map((child) => renderChild(child))}
                       </ol>
                     ) : null}
                   </div>
@@ -422,22 +417,13 @@ export function JourneyTree({ parents }: { parents: JourneyParent[] }) {
         </ol>
       </TracingBeam>
 
-      {shown?.child.caseStudy ? (
-        <CaseStudySheet
-          open={sheetOpen}
-          onOpenChange={(next) => {
-            if (!next) setSheetOpen(false);
-          }}
-          title={shown.child.title}
-          description={[shown.parent, shown.child.role, shown.child.period]
-            .filter(Boolean)
-            .join(" · ")}
-          caseStudy={shown.child.caseStudy}
-          teamSize={shown.child.teamSize}
-          tech={shown.child.tech}
-          returnFocusRef={returnFocusRef}
-        />
-      ) : null}
+      <LazyCaseStudyPanel
+        items={caseItems}
+        openId={caseId}
+        context="tree"
+        onOpenChange={openCase}
+        returnFocusRef={returnFocusRef}
+      />
     </div>
   );
 }

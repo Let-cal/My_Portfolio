@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { formatDuration, formatPeriod, monthsBetween } from "@/lib/format";
 
 describe("formatPeriod", () => {
@@ -57,5 +57,27 @@ describe("formatDuration", () => {
     const now = new Date(2026, 9, 30);
     expect(monthsBetween("2026-04", null, now)).toBe(7);
     expect(formatDuration("2025-08", null, "en", now)).toBe("1 yr 3 mos");
+  });
+});
+
+describe("formatDuration with precompiled messages", () => {
+  it("fills {count} in the parsed form the production build ships", async () => {
+    vi.resetModules();
+    vi.doMock("@/messages/en.json", async (importOriginal) => {
+      const actual = (await importOriginal()) as {
+        default: typeof import("@/messages/en.json");
+      };
+      const en = structuredClone(actual.default);
+      (en.common.duration as unknown as Record<string, unknown>) = {
+        yearOne: [["count"], " yr"],
+        yearOther: [["count"], " yrs"],
+        monthOne: [["count"], " mo"],
+        monthOther: [["count"], " mos"],
+      };
+      return { default: en };
+    });
+    const { formatDuration: compiled } = await import("@/lib/format");
+    expect(compiled("2025-08", "2026-09", "en")).toBe("1 yr 2 mos");
+    vi.doUnmock("@/messages/en.json");
   });
 });

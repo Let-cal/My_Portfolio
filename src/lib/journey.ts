@@ -7,7 +7,7 @@ import type {
   Project,
   RoleKey,
 } from "@/content/schema";
-import type { CaseStudyView } from "@/components/sections/experience/CaseStudySheet";
+import type { CaseStudyView } from "@/components/sections/case-study/CaseStudyPanel";
 import {
   currentMonth,
   formatDuration,
@@ -41,6 +41,9 @@ export type JourneyChild = {
   tech: string[];
   teamSize: string | null;
   links: Link[];
+  /** The raw demo and repository URLs (also in `links`, labelled), for the case study panel's actions. */
+  demoUrl: string | null;
+  repoUrls: string[];
   caseStudy: CaseStudyView | null;
   roles: RoleKey[];
   /** The localized `caseStudy.result`; null without a case study. */
@@ -185,6 +188,8 @@ function childOf(
       ...repos,
       ...p.links,
     ],
+    demoUrl: p.demoUrl,
+    repoUrls: p.repoUrls,
     caseStudy: p.caseStudy && {
       problem: pickLocale(p.caseStudy.problem, locale),
       role: pickLocale(p.caseStudy.role, locale),

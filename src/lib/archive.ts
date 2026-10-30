@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import type { CaseStudyView } from "@/components/sections/experience/CaseStudySheet";
+import type { CaseStudyView } from "@/components/sections/case-study/CaseStudyPanel";
 import type {
   Content,
   Link,
@@ -8,7 +8,7 @@ import type {
   RoleKey,
 } from "@/content/schema";
 import { newestFirst } from "@/lib/featured";
-import { formatPeriod } from "@/lib/format";
+import { formatDuration, formatPeriod } from "@/lib/format";
 import { pickLocale } from "@/lib/i18n-text";
 import { companyName, stintShortLabel } from "@/lib/journey";
 import { buildPageMetadata } from "@/lib/metadata";
@@ -34,6 +34,8 @@ export type ArchiveRow = {
   stintLabel: string | null;
   role: string;
   period: string;
+  /** Length of the project, months counted inclusively: "6 mos". */
+  duration: string;
   tech: string[];
   demoUrl: string | null;
   repoUrls: string[];
@@ -50,9 +52,14 @@ export type ArchiveRow = {
 /**
  * Every published project, newest start first (ties: the owner's manual order, then id), for the archive table.
  * Unlike the Experience tree, a project is listed even when its stint is unpublished; "where" still names the
- * company. Texts fall back to EN through `pickLocale`.
+ * company. Texts fall back to EN through `pickLocale`. `now` is the month an open-ended project runs up to (its
+ * duration); a prerender passes a cached date, since Cache Components reject a bare `new Date()` there.
  */
-export function archiveRows(content: Content, locale: Locale): ArchiveRow[] {
+export function archiveRows(
+  content: Content,
+  locale: Locale,
+  now: Date = new Date(),
+): ArchiveRow[] {
   const stints = new Map(content.experiences.map((e) => [e.id, e]));
   const schools = new Map(content.education.map((e) => [e.id, e]));
   return content.projects
@@ -79,6 +86,7 @@ export function archiveRows(content: Content, locale: Locale): ArchiveRow[] {
           p.kind === "work" && stint ? stintShortLabel(stint, locale) : null,
         role: pickLocale(p.role, locale),
         period: formatPeriod(p.start, p.end, locale),
+        duration: formatDuration(p.start, p.end, locale, now),
         tech: p.tech,
         demoUrl: p.demoUrl,
         repoUrls: p.repoUrls,
