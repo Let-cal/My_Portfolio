@@ -213,6 +213,7 @@
     "gpa": "GPA {gpa}",
     "projectsCount": "{count, plural, one {# project} other {# projects}}",
     "internshipChip": "internship",
+    "intern": "Intern",
     "expand": "Show details",
     "collapse": "Hide details"
   },
@@ -347,6 +348,12 @@
   },
   "common": {
     "present": "Present",
-    "close": "Close"
+    "close": "Close",
+    "duration": {
+      "yearOne": "{count} yr",
+      "yearOther": "{count} yrs",
+      "monthOne": "{count} mo",
+      "monthOther": "{count} mos"
+    }
   }
 }

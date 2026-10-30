@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { contentSchema, type Content, type Project } from "@/content/schema";
 import seed from "@/content/seed.json";
-import { buildJourney, groupSlug, journeyAnchors } from "@/lib/journey";
+import {
+  buildJourney,
+  groupSlug,
+  journeyAnchors,
+  shortTitle,
+} from "@/lib/journey";
 
 const base = (): Content => contentSchema.parse(structuredClone(seed));
 const t = (key: string) => ({ code: "Code", demo: "Demo" })[key] ?? `[${key}]`;
@@ -334,5 +339,141 @@ describe("journeyAnchors", () => {
     // The intern stint is hidden, so its projects and the personal project have no tree anchor.
     for (const id of ["tongue-ai-driver-ms", "skg-flexybox-p1", "side-project"])
       expect(anchors.projects.has(id)).toBe(false);
+  });
+});
+
+describe("buildJourney stints and timeline", () => {
+  const skgOf = (locale: "en" | "ja" | "vi" = "en") =>
+    buildJourney(base(), locale, t).find(
+      (p) => p.anchor === "exp-skg-software",
+    )!;
+
+  it("groups SKG projects under their stint", () => {
+    const skg = skgOf();
+    expect(skg.stints.map((s) => s.id)).toEqual(["skg-engineer", "skg-intern"]);
+    expect(skg.stints[0].children.map((c) => c.id)).toEqual([
+      "skg-ai-agent",
+      "skg-flexybox-p2",
+      "skg-coa",
+    ]);
+    expect(skg.stints[1].children.map((c) => c.id)).toEqual([
+      "skg-flexybox-p1",
+      "tongue-ai-driver-ms",
+    ]);
+    expect(skg.children).toHaveLength(5);
+    expect(skg.children[0].stintId).toBe("skg-engineer");
+    expect(skg.stints[0]).toMatchObject({
+      title: "Software Engineer — acting Project Manager / Tech Lead",
+      shortLabel: "Software Engineer",
+      period: "Oct 2025 – Sep 2026",
+      duration: "1 yr",
+      start: "2025-10",
+      end: "2026-09",
+      employmentType: "full-time",
+    });
+    expect(skg.stints[1]).toMatchObject({
+      shortLabel: "Intern",
+      duration: "3 mos",
+      employmentType: "internship",
+      promotedFrom: null,
+    });
+    expect(skg.duration).toBe("1 yr 2 mos");
+  });
+
+  it("marks the promotion from internship", () => {
+    const skg = skgOf();
+    expect(skg.stints[0].promotedFrom).toBe("Oct 2025");
+    expect(skg.stints[1].promotedFrom).toBeNull();
+    expect(skgOf("vi").stints[0].promotedFrom).toBe("Th10 2025");
+  });
+
+  it("summary label lists short titles oldest first", () => {
+    expect(skgOf().summaryLabel).toBe("Intern → Software Engineer");
+    expect(skgOf("vi").summaryLabel).toBe("Thực tập → Kỹ sư phần mềm");
+    expect(skgOf("ja").summaryLabel).toBe(
+      "インターン → ソフトウェアエンジニア",
+    );
+  });
+
+  it("no timeline or promotion for FPT Japan", () => {
+    const fpt = buildJourney(base(), "en", t).find(
+      (p) => p.anchor === "exp-fpt-japan",
+    )!;
+    expect(fpt.timeline).toBeNull();
+    expect(fpt.stints).toHaveLength(1);
+    expect(fpt.summaryLabel).toBeNull();
+    expect(fpt.stints[0].promotedFrom).toBeNull();
+  });
+
+  it("schools keep no stints, summary label or timeline", () => {
+    const uni = buildJourney(base(), "en", t).find((p) => p.kind === "school")!;
+    expect(uni.stints).toEqual([]);
+    expect(uni.summaryLabel).toBeNull();
+    expect(uni.timeline).toBeNull();
+    expect(uni.children[0].stintId).toBeNull();
+  });
+
+  it("timeline bars are month fractions", () => {
+    const tl = skgOf().timeline!;
+    expect(tl.start).toBe("2025-08");
+    expect(tl.months).toBe(14);
+    const bar = (id: string) => tl.bars.find((b) => b.id === id)!;
+    expect(bar("tongue-ai-driver-ms")).toMatchObject({
+      anchor: "tree-tongue-ai-driver-ms",
+      from: 0,
+      to: 2 / 14,
+    });
+    // 2026-04 .. 2026-09 inclusive: axis months 8 .. 14
+    expect(bar("skg-ai-agent").from).toBeCloseTo(8 / 14);
+    expect(bar("skg-ai-agent").to).toBe(1);
+    expect(tl.bars).toHaveLength(5);
+    expect(tl.segments).toEqual([
+      { id: "skg-engineer", label: "Software Engineer", from: 2 / 14, to: 1 },
+      { id: "skg-intern", label: "Intern", from: 0, to: 3 / 14 },
+    ]);
+    expect(tl.axis[0]).toEqual({ label: "Aug 2025", index: 0 });
+    expect(tl.axis.every((a) => a.index >= 0 && a.index < 14)).toBe(true);
+  });
+
+  it("an open-ended company runs the axis up to now", () => {
+    const c = base();
+    c.experiences.find((e) => e.id === "skg-engineer")!.end = null;
+    const skg = buildJourney(c, "en", t, new Date(2026, 11, 5)).find(
+      (p) => p.anchor === "exp-skg-software",
+    )!;
+    expect(skg.timeline!.months).toBe(17);
+    expect(skg.duration).toBe("1 yr 5 mos");
+    expect(skg.timeline!.segments[0].to).toBe(1);
+  });
+
+  it("child result and duration", () => {
+    const first = skgOf().children[0];
+    expect(first.result).toBe(first.caseStudy!.result);
+    expect(first.duration).toBe("6 mos");
+    const nocase = base();
+    nocase.projects.find((p) => p.id === "skg-coa")!.caseStudy = null;
+    const coa = buildJourney(nocase, "en", t)[0].children.find(
+      (c) => c.id === "skg-coa",
+    )!;
+    expect(coa.result).toBeNull();
+  });
+});
+
+describe("shortTitle", () => {
+  it("shortTitle cuts at the first separator", () => {
+    expect(
+      shortTitle("Software Engineer — acting Project Manager / Tech Lead"),
+    ).toBe("Software Engineer");
+    expect(shortTitle("Kỹ sư phần mềm, kiêm Project Manager")).toBe(
+      "Kỹ sư phần mềm",
+    );
+    expect(shortTitle("ソフトウェアエンジニア(代行)")).toBe(
+      "ソフトウェアエンジニア",
+    );
+    expect(shortTitle("ソフトウェアエンジニア（代行）")).toBe(
+      "ソフトウェアエンジニア",
+    );
+    expect(shortTitle("ビジネスアナリスト、UI")).toBe("ビジネスアナリスト");
+    expect(shortTitle("Designer")).toBe("Designer");
   });
 });

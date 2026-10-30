@@ -9,6 +9,12 @@ const PRESENT: Record<Locale, string> = {
   vi: vi.common.present,
 };
 
+const DURATION: Record<Locale, typeof en.common.duration> = {
+  en: en.common.duration,
+  ja: ja.common.duration,
+  vi: vi.common.duration,
+};
+
 const EN_MONTHS = [
   "Jan",
   "Feb",
@@ -44,4 +50,62 @@ export function formatPeriod(
 ): string {
   if (end === start) return formatMonth(start, locale);
   return `${formatMonth(start, locale)} – ${end === null ? PRESENT[locale] : formatMonth(end, locale)}`;
+}
+
+/** `YYYY-MM` as a running month number (year * 12 + month index), for month arithmetic. */
+export function monthIndex(ym: string): number {
+  const [year, month] = ym.split("-");
+  return Number(year) * 12 + Number(month) - 1;
+}
+
+/** The month of `now` as `YYYY-MM`. */
+export function currentMonth(now: Date = new Date()): string {
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
+/**
+ * Months from `start` to `end`, both months counted: 2025-08 .. 2026-09 is 14, one month alone is 1.
+ * `end === null` runs up to the current month (`now`). Never below 1.
+ */
+export function monthsBetween(
+  start: string,
+  end: string | null,
+  now: Date = new Date(),
+): number {
+  return Math.max(
+    1,
+    monthIndex(end ?? currentMonth(now)) - monthIndex(start) + 1,
+  );
+}
+
+/**
+ * A span as years and months: "1 yr 2 mos", "3 mos", "1 yr" (EN), "1 năm 2 tháng" (VI), "1年2か月" (JA). The
+ * zero part is left out; months are counted inclusively (see `monthsBetween`).
+ */
+export function formatDuration(
+  start: string,
+  end: string | null,
+  locale: Locale,
+  now: Date = new Date(),
+): string {
+  const total = monthsBetween(start, end, now);
+  const years = Math.floor(total / 12);
+  const months = total % 12;
+  const words = DURATION[locale];
+  const part = (n: number, one: string, other: string) =>
+    (n === 1 ? one : other).replace("{count}", String(n));
+  const parts = [
+    ...(years > 0 ? [part(years, words.yearOne, words.yearOther)] : []),
+    ...(months > 0 ? [part(months, words.monthOne, words.monthOther)] : []),
+  ];
+  return parts.join(locale === "ja" ? "" : " ");
+}
+
+/**
+ * A position text cut before its first "—", ",", "(", "（" or "、", trimmed:
+ * "Software Engineer — acting Project Manager" -> "Software Engineer".
+ */
+export function shortTitle(position: string): string {
+  const cut = position.search(/[—,(（、]/);
+  return (cut === -1 ? position : position.slice(0, cut)).trim();
 }

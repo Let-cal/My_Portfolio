@@ -213,6 +213,7 @@
     "gpa": "GPA {gpa}",
     "projectsCount": "{count}件のプロジェクト",
     "internshipChip": "インターンシップ",
+    "intern": "インターン",
     "expand": "詳細を表示",
     "collapse": "詳細を閉じる"
   },
@@ -347,6 +348,12 @@
   },
   "common": {
     "present": "現在",
-    "close": "閉じる"
+    "close": "閉じる",
+    "duration": {
+      "yearOne": "{count}年",
+      "yearOther": "{count}年",
+      "monthOne": "{count}か月",
+      "monthOther": "{count}か月"
+    }
   }
 }

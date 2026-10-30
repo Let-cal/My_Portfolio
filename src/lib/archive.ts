@@ -10,7 +10,7 @@ import type {
 import { newestFirst } from "@/lib/featured";
 import { formatPeriod } from "@/lib/format";
 import { pickLocale } from "@/lib/i18n-text";
-import { companyName } from "@/lib/journey";
+import { companyName, stintShortLabel } from "@/lib/journey";
 import { buildPageMetadata } from "@/lib/metadata";
 import { OG_IMAGE } from "@/lib/og-image";
 import en from "@/messages/en.json";
@@ -30,6 +30,8 @@ export type ArchiveRow = {
   /** Company group (parent company, else company) for work, the school for university, "Personal" otherwise. */
   where: string;
   whereKind: ProjectKind;
+  /** Short label of the stint a work project belongs to ("Intern", "Software Engineer"); null otherwise. */
+  stintLabel: string | null;
   role: string;
   period: string;
   tech: string[];
@@ -73,6 +75,8 @@ export function archiveRows(content: Content, locale: Locale): ArchiveRow[] {
         title: p.title,
         where,
         whereKind: p.kind,
+        stintLabel:
+          p.kind === "work" && stint ? stintShortLabel(stint, locale) : null,
         role: pickLocale(p.role, locale),
         period: formatPeriod(p.start, p.end, locale),
         tech: p.tech,
@@ -90,6 +94,18 @@ export function archiveRows(content: Content, locale: Locale): ArchiveRow[] {
         },
       };
     });
+}
+
+/** Rows split by start year, newest year first; the order inside a year is kept. */
+export function groupByYear(
+  rows: ArchiveRow[],
+): { year: string; rows: ArchiveRow[] }[] {
+  const groups = new Map<string, ArchiveRow[]>();
+  for (const row of rows)
+    groups.set(row.year, [...(groups.get(row.year) ?? []), row]);
+  return [...groups]
+    .sort(([a], [b]) => b.localeCompare(a))
+    .map(([year, yearRows]) => ({ year, rows: yearRows }));
 }
 
 /**

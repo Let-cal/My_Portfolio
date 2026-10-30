@@ -213,6 +213,7 @@
     "gpa": "GPA {gpa}",
     "projectsCount": "{count} dự án",
     "internshipChip": "thực tập",
+    "intern": "Thực tập",
     "expand": "Xem chi tiết",
     "collapse": "Thu gọn"
   },
@@ -347,6 +348,12 @@
   },
   "common": {
     "present": "Hiện tại",
-    "close": "Đóng"
+    "close": "Đóng",
+    "duration": {
+      "yearOne": "{count} năm",
+      "yearOther": "{count} năm",
+      "monthOne": "{count} tháng",
+      "monthOther": "{count} tháng"
+    }
   }
 }
