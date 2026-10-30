@@ -119,6 +119,15 @@ describe("a lazy chunk that fails to load", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
+  it("does not reload while offline (the reload would land on the browser's offline page)", async () => {
+    vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
+    render(wrap(<LazyCaseStudyPanel {...panelProps} />));
+    await new Promise((r) => setTimeout(r, 100));
+    expect(assign).not.toHaveBeenCalled();
+    expect(window.sessionStorage.getItem("case-reload:skg-coa")).toBeNull();
+    vi.restoreAllMocks();
+  });
+
   it("does not reload twice for the same project (no reload loop)", async () => {
     const first = render(wrap(<LazyCaseStudyPanel {...panelProps} />));
     await waitFor(() => expect(assign).toHaveBeenCalledTimes(1));

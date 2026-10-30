@@ -10,11 +10,12 @@ type Props = ComponentProps<typeof CaseStudyPanel>;
 /**
  * Stands in for a panel whose chunk failed to load (a stale deploy, a dropped connection): a fresh page load of
  * the same URL with `?case=<id>` opens the panel through its deep link. Once per project per tab, so a chunk that
- * stays broken shows nothing instead of reloading forever.
+ * stays broken shows nothing instead of reloading forever. Offline it shows nothing: the reload would only reach
+ * the browser's offline page and take the portfolio with it.
  */
 function ReloadOnDeepLink({ openId }: Props) {
   useEffect(() => {
-    if (openId === null) return;
+    if (openId === null || navigator.onLine === false) return;
     const key = `case-reload:${openId}`;
     try {
       if (window.sessionStorage.getItem(key)) return;
