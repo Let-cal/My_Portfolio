@@ -90,6 +90,9 @@
   font-weight: 500;
 }
 .jt-a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.5rem;
   color: var(--brand-text);
   text-underline-offset: 4px;
 }
@@ -515,6 +518,9 @@
   font-size: 0.8125rem;
 }
 .jt-more {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.5rem;
   color: var(--muted);
   cursor: pointer;
 }
@@ -525,6 +531,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
+  min-height: 1.5rem;
   margin-left: auto;
   color: var(--jt-koi-ink);
   font-weight: 600;
@@ -541,6 +548,14 @@
   border-radius: 4px;
   outline: 2px solid var(--ring);
   outline-offset: 4px;
+}
+/* Touch targets: the tree's text links and buttons reach 44px on a coarse pointer. */
+@media (pointer: coarse) {
+  .jt-a,
+  .jt-more,
+  .jt-cs {
+    min-height: 2.75rem;
+  }
 }
 
 /* ---- Mini Gantt: axis, the stint lane, one 10 px bar per project. Fixed height, so a deferred load never shifts. ---- */

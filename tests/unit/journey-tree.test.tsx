@@ -260,6 +260,22 @@ describe("Experience journey tree", () => {
     ]);
   });
 
+  it("keeps the header of a stint with no projects but renders no empty list under it", () => {
+    const content: Content = {
+      ...base,
+      projects: base.projects.filter((p) => p.experienceId !== "skg-intern"),
+    };
+    renderExperience({ content });
+    const skg = panelOf("exp-skg-software");
+    const stints = [...skg.querySelectorAll("section.jt-stint")];
+    const intern = stints.find((s) => /Intern/.test(s.textContent ?? ""))!;
+    expect(intern.querySelector("h4")).toBeInTheDocument();
+    expect(intern.querySelector("ol")).toBeNull();
+    const engineer = stints.find((s) => s !== intern)!;
+    expect(engineer.querySelector("ol")).toBeInTheDocument();
+    expect(document.querySelectorAll("ol:empty")).toHaveLength(0);
+  });
+
   it("FPT Japan has no timeline and no stint headings", () => {
     renderExperience();
     const japan = byId("exp-fpt-japan");

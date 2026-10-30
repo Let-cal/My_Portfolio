@@ -23,9 +23,16 @@ import { caseItemsFromJourney } from "@/lib/case-items";
 import type { JourneyChild, JourneyParent } from "@/lib/journey";
 import { InkRail } from "./InkRail";
 
-/** The mini Gantt loads after first paint (initial JS budget); its slot reserves the exact height, so nothing shifts. */
+/**
+ * The mini Gantt loads after first paint (initial JS budget); its slot reserves the exact height, so nothing shifts.
+ * A failed chunk leaves the slot empty instead of taking the page down (the App Router has no catch around it).
+ */
 const JourneyTimeline = dynamic(
-  () => import("./JourneyTimeline").then((module) => module.JourneyTimeline),
+  () =>
+    import("./JourneyTimeline").then(
+      (module) => module.JourneyTimeline,
+      () => () => null,
+    ),
   { ssr: false },
 );
 
@@ -403,11 +410,12 @@ export function JourneyTree({ parents }: { parents: JourneyParent[] }) {
           </div>
         ) : null}
         {parent.stints.map((stint, i) => {
-          const rows = (
-            <ol className="jt-rows">
-              {stint.children.map((child) => renderChild(child, index++, 5))}
-            </ol>
-          );
+          const rows =
+            stint.children.length > 0 ? (
+              <ol className="jt-rows">
+                {stint.children.map((child) => renderChild(child, index++, 5))}
+              </ol>
+            ) : null;
           const next = parent.stints[i + 1];
           const headingId = `${parent.anchor}-stint-${i}`;
           return (

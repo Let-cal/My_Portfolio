@@ -89,8 +89,12 @@ function useFitMode(content: HTMLElement | null, itemId: string | null) {
     const small =
       typeof window.matchMedia === "function" ? window.matchMedia(SMALL) : null;
     const measure = () => {
+      if (small?.matches) {
+        content.setAttribute("data-mode", "scroll");
+        return;
+      }
       content.setAttribute("data-mode", "wide");
-      if (small?.matches || content.scrollHeight > content.clientHeight + 1)
+      if (content.scrollHeight > content.clientHeight + 1)
         content.setAttribute("data-mode", "scroll");
     };
     measure();
@@ -358,6 +362,9 @@ export function CaseStudyPanel({
                   ))}
                 </ul>
               </div>
+              <p className="sr-only" aria-live="polite">
+                {item.title}, {position}
+              </p>
               {prev && next ? (
                 <div className={styles.nav}>
                   <p className="sr-only">{position}</p>
@@ -392,9 +399,7 @@ export function CaseStudyPanel({
                     <span aria-hidden="true">→</span>
                   </button>
                 </div>
-              ) : (
-                <p className="sr-only">{position}</p>
-              )}
+              ) : null}
             </footer>
           </div>
         </DialogPrimitive.Content>

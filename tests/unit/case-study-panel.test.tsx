@@ -152,6 +152,24 @@ describe("CaseStudyPanel", () => {
     expect(window.location.search).toBe("?case=skg-flexybox-p2");
   });
 
+  it("announces the project and its position to screen readers after previous / next", async () => {
+    const user = userEvent.setup();
+    renderPanel({ initial: "skg-ai-agent" });
+    const dialog = await screen.findByRole("dialog", { name: "AI Agent" });
+    const live = within(dialog).getByText("AI Agent, 1 of 6");
+    expect(live).toHaveAttribute("aria-live", "polite");
+    expect(live).toHaveClass("sr-only");
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: /Next project: FlexyBox Phase 2/,
+      }),
+    );
+    await screen.findByRole("dialog", { name: "FlexyBox Phase 2" });
+    // The same region (so it is announced as a change), now naming the new project.
+    expect(live).toBeInTheDocument();
+    expect(live).toHaveTextContent("FlexyBox Phase 2, 2 of 6");
+  });
+
   it("arrow keys move between projects but not inside inputs", async () => {
     const user = userEvent.setup();
     renderPanel({ initial: "skg-ai-agent" });
@@ -236,6 +254,30 @@ describe("CaseStudyPanel", () => {
         "scroll",
       ),
     );
+  });
+
+  it("does not reset to wide first when the small-viewport query matches", async () => {
+    stubLayoutApis(true);
+    const modes: string[] = [];
+    const original = Element.prototype.setAttribute;
+    vi.spyOn(Element.prototype, "setAttribute").mockImplementation(function (
+      this: Element,
+      name: string,
+      value: string,
+    ) {
+      if (name === "data-mode") modes.push(value);
+      return original.call(this, name, value);
+    });
+    renderPanel({ initial: "skg-coa" });
+    const dialog = await screen.findByRole("dialog");
+    await waitFor(() =>
+      expect(dialog.querySelector("[data-case-content]")).toHaveAttribute(
+        "data-mode",
+        "scroll",
+      ),
+    );
+    expect(modes).not.toContain("wide");
+    expect(modes.length).toBeGreaterThan(0);
   });
 
   it("copies the ?case= link and confirms with a toast", async () => {
