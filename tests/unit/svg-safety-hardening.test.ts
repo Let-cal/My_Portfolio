@@ -113,3 +113,167 @@ describe("isSafeSvg CSS escapes split by a line break", () => {
     );
   });
 });
+
+// Round 4: the checker models the browser's pipeline in order. XML first (raw line
+// endings become LF, then the document is tokenised, then attribute values are
+// whitespace-normalised and references expanded), then CSS (CR/CRLF/FF become LF, then
+// escapes are resolved). Each describe block pins one boundary of that pipeline.
+const BS = "\\";
+const RED_RECT = `<rect width="100" height="100" fill="red"/>`;
+const EVIL = (tag: string) => `https://evil.test/${tag}`;
+
+describe("isSafeSvg XML end-of-line handling runs before references are expanded", () => {
+  it.each([
+    [
+      "url() hidden by &#13; + raw CRLF in a style element",
+      W(
+        RED_RECT,
+        `<style>svg{background-image:${BS}75&#13;\r\nrl(${EVIL("a")})}</style>`,
+      ),
+    ],
+    [
+      "url() hidden by &#13; + raw CR in a style element",
+      W(
+        RED_RECT,
+        `<style>svg{background-image:${BS}75&#13;\rrl(${EVIL("a")})}</style>`,
+      ),
+    ],
+    [
+      "@import hidden by &#13; + raw CRLF in a style element",
+      W(RED_RECT, `<style>@${BS}69&#13;\r\nmport "${EVIL("a.css")}";</style>`),
+    ],
+    [
+      "image-set hidden by &#13; + raw CR in a style element",
+      W(
+        RED_RECT,
+        `<style>svg{background-image:${BS}69&#13;\rmage-set("${EVIL("a")}" 1x)}</style>`,
+      ),
+    ],
+  ])("rejects %s", (_name, svg) => {
+    expect(isSafeSvg(svg).ok).toBe(false);
+  });
+
+  it("accepts a raw CR followed by &#10; (LF + LF: the escape swallows one, no url token)", () => {
+    // The raw CR becomes LF before &#10; is expanded, so CSS sees two newlines and
+    // "\75" + LF + "rl(" is not url( (Chromium fetches nothing for it either).
+    expect(
+      isSafeSvg(
+        W(
+          RED_RECT,
+          `<style>svg{background-image:${BS}75\r&#10;rl(${EVIL("a")})}</style>`,
+        ),
+      ),
+    ).toEqual({ ok: true });
+  });
+});
+
+describe("isSafeSvg attribute values are whitespace-normalised before references", () => {
+  it.each([
+    ["a raw LF", "\n"],
+    ["a raw TAB", "\t"],
+    ["a raw CRLF", "\r\n"],
+  ])(
+    "rejects url() hidden by %s in a style attribute (it becomes a space)",
+    (_n, sep) => {
+      expect(
+        isSafeSvg(
+          W(
+            `<rect width="1" height="1" style="fill:${BS}75${sep}rl(${EVIL("a")}#a)"/>`,
+          ),
+        ).ok,
+      ).toBe(false);
+    },
+  );
+
+  it("accepts &#13; + raw CRLF in a style attribute (CR + space: no url token)", () => {
+    expect(
+      isSafeSvg(
+        W(`<rect width="1" height="1" style="fill:${BS}75&#13;\r\nrl(#a)"/>`),
+      ),
+    ).toEqual({ ok: true });
+  });
+});
+
+describe("isSafeSvg reads only well-formed XML, the way the browser reads it", () => {
+  it.each([
+    [
+      "XML version 1.1 (other end-of-line rules)",
+      `<?xml version="1.1"?>` + W(`<rect/>`),
+    ],
+    [
+      "an Ogham space mark inside a tag (an XML name character)",
+      W(`<rect a="b"/>`),
+    ],
+    ["]]> in text", W(`<text>a]]>b</text>`)],
+    ["an undefined entity (&nbsp;)", W(`<text>a&nbsp;b</text>`)],
+    ["an entity with the wrong case (&AMP;)", W(`<text>a&AMP;b</text>`)],
+    ["a bare &", W(`<text>a & b</text>`)],
+    ["an upper-case hex reference (&#X41;)", W(`<text>&#X41;</text>`)],
+    ["a reference to NUL", W(`<text>&#0;</text>`)],
+    ["a reference to a C0 control", W(`<text>&#27;</text>`)],
+    ["a reference to a surrogate", W(`<text>&#xD800;</text>`)],
+    ["a reference to U+FFFE", W(`<text>&#xFFFE;</text>`)],
+    ["a raw U+FFFF", W(`<text>a￿b</text>`)],
+    ["a bad reference in an attribute", W(`<rect id="a&b"/>`)],
+  ])("rejects %s", (_name, svg) => {
+    expect(isSafeSvg(svg).ok).toBe(false);
+  });
+
+  it("accepts a byte order mark before the XML declaration", () => {
+    expect(
+      isSafeSvg("﻿" + `<?xml version="1.0" encoding="UTF-8"?>` + W(`<rect/>`)),
+    ).toEqual({ ok: true });
+  });
+
+  it("accepts the five predefined entities and numeric references", () => {
+    expect(
+      isSafeSvg(
+        W(
+          `<text id="a&amp;b">&lt;T&gt; &quot;x&quot; &apos;y&apos; &#160;&#xA0;&#x1F600;</text>`,
+        ),
+      ),
+    ).toEqual({ ok: true });
+  });
+});
+
+describe("isSafeSvg trims URLs the way the URL parser does", () => {
+  it.each([
+    [
+      "url() whose value starts with a no-break space (a relative URL)",
+      W(RED_RECT, `<style>svg{background-image:url(&#160;#a)}</style>`),
+    ],
+    [
+      "a quoted url() whose value starts with a no-break space",
+      W(RED_RECT, `<style>svg{background-image:url("&#160;#a")}</style>`),
+    ],
+    [
+      "a fill url() whose value starts with a no-break space",
+      W(`<rect width="1" height="1" fill="url(&#160;#a)"/>`),
+    ],
+    [
+      "an href that starts with a no-break space",
+      W(`<defs><pattern id="p" href="&#160;#q" width="1" height="1"/></defs>`),
+    ],
+    [
+      "url() whose value starts with a CSS escape for NUL",
+      W(RED_RECT, `<style>svg{background-image:url(${BS}0 #a)}</style>`),
+    ],
+    [
+      "a CSS escape for a surrogate",
+      W(RED_RECT, `<style>svg{background-image:url(${BS}D800 #a)}</style>`),
+    ],
+  ])("rejects %s", (_name, svg) => {
+    expect(isSafeSvg(svg).ok).toBe(false);
+  });
+
+  it("accepts url() and href with plain spaces around a fragment", () => {
+    expect(
+      isSafeSvg(
+        W(
+          `<defs><pattern id="p" href=" #q " width="1" height="1"/></defs><rect width="1" height="1" fill="url( #p )"/>`,
+          `<style>rect{fill:url( "#p" )}</style>`,
+        ),
+      ),
+    ).toEqual({ ok: true });
+  });
+});

@@ -7,24 +7,71 @@ export type SvgCheck = { ok: true } | { ok: false; reason: string };
 const FRAGMENT = /^#[A-Za-z0-9_.:-]+$/;
 const FONT_DATA_URL = /^data:font\/woff2;base64,[A-Za-z0-9+/]+={0,2}$/;
 
-const NAMED_ENTITIES: Record<string, string> = {
+// The checker reads the document in the order the browser does:
+//   1. a leading byte order mark is dropped;
+//   2. XML end-of-line handling: raw CRLF and CR become LF before anything else, so
+//      "&#13;" + raw CRLF is CR + LF (one CSS newline), never CR + CR + LF;
+//   3. tokenising, with XML whitespace (space, tab, LF) only;
+//   4. attribute values: raw whitespace becomes a space, then references are expanded;
+//      element text: references are expanded, raw LF stays;
+//   5. CSS (style text and attribute values): CRLF, CR and FF become LF, then escapes.
+// Anything an XML parser refuses is refused here too, so the browser never renders a
+// document (or the prefix of one) that the checker read differently.
+
+/** XML whitespace (CR is gone after end-of-line handling; listed for safety). */
+const XML_WS = /[ \t\n\r]/;
+const PREDEFINED_ENTITIES: Record<string, string> = {
   amp: "&",
   lt: "<",
   gt: ">",
   quot: '"',
   apos: "'",
 };
+const REFERENCE = /&(?:#x([0-9a-fA-F]+)|#([0-9]+)|(amp|lt|gt|quot|apos));/y;
 
-/** Decodes the XML character references a browser would decode before it reads a value. */
-function decodeEntities(text: string): string {
-  return text.replace(
-    /&(?:#x([0-9a-f]+)|#(\d+)|([a-z]+));/gi,
-    (match, hex: string, dec: string, name: string) => {
-      if (name) return NAMED_ENTITIES[name.toLowerCase()] ?? match;
-      const code = hex ? parseInt(hex, 16) : parseInt(dec, 10);
-      return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : match;
-    },
+/** The XML 1.0 Char production: what a character reference may produce. */
+function isXmlChar(code: number): boolean {
+  return (
+    code === 0x9 ||
+    code === 0xa ||
+    code === 0xd ||
+    (code >= 0x20 && code <= 0xd7ff) ||
+    (code >= 0xe000 && code <= 0xfffd) ||
+    (code >= 0x10000 && code <= 0x10ffff)
   );
+}
+
+/**
+ * Expands XML references exactly as an XML parser does: only the five predefined
+ * entities (case-sensitive) and numeric references to legal characters. Any other "&"
+ * is a fatal error to the browser and a rejection here.
+ */
+function decodeEntities(text: string): string {
+  let out = "";
+  let pos = 0;
+  for (let amp = text.indexOf("&"); amp !== -1; amp = text.indexOf("&", pos)) {
+    REFERENCE.lastIndex = amp;
+    const m = REFERENCE.exec(text);
+    if (!m) reject("SVG contains an & that is not a valid XML reference.");
+    let char: string;
+    if (m[3]) {
+      char = PREDEFINED_ENTITIES[m[3]];
+    } else {
+      const code = m[1] ? parseInt(m[1], 16) : parseInt(m[2], 10);
+      if (!isXmlChar(code)) {
+        reject("SVG contains a reference to a character XML does not allow.");
+      }
+      char = String.fromCodePoint(code);
+    }
+    out += text.slice(pos, amp) + char;
+    pos = REFERENCE.lastIndex;
+  }
+  return out + text.slice(pos);
+}
+
+/** Step 4 for attributes: raw tab and LF become spaces, then references expand. */
+function decodeAttributeValue(raw: string): string {
+  return decodeEntities(raw.replace(/[\t\n\r]/g, " "));
 }
 
 /** Resolves CSS escapes such as \75 rl( so they cannot hide a url() or @import. */
@@ -36,10 +83,24 @@ function decodeCssEscapes(css: string): string {
     .replace(/\\(?:([0-9a-f]{1,6})[ \t\n]?|([^\n]))/gi, (_m, hex, ch) => {
       if (hex) {
         const code = parseInt(hex, 16);
-        return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : "";
+        // The browser turns these into U+FFFD, which can make "url(\0 #a)" a relative
+        // URL instead of a fragment; nothing legitimate needs them.
+        if (
+          code === 0 ||
+          (code >= 0xd800 && code <= 0xdfff) ||
+          code > 0x10ffff
+        ) {
+          reject("SVG contains a CSS escape for an invalid code point.");
+        }
+        return String.fromCodePoint(code);
       }
       return ch as string;
     });
+}
+
+/** Strips CSS whitespace only (JS trim() would also strip a no-break space). */
+function cssTrim(text: string): string {
+  return text.replace(/^[ \t\n]+|[ \t\n]+$/g, "");
 }
 
 /** CSS functions that can fetch a resource without url(); checked in CSS contexts only. */
@@ -61,11 +122,14 @@ function checkUrls(css: string, allowFontData: boolean): string | null {
   while (re.exec(css)) {
     const close = css.indexOf(")", re.lastIndex);
     if (close === -1) return "SVG contains an unterminated url(.";
-    const raw = css
-      .slice(re.lastIndex, close)
-      .trim()
-      .replace(/^(['"])([\s\S]*)\1$/, "$2")
-      .trim();
+    // Only what CSS strips is trimmed: "url(&#160;#a)" is a relative URL to the
+    // browser, not a fragment.
+    const raw = cssTrim(
+      cssTrim(css.slice(re.lastIndex, close)).replace(
+        /^(['"])([\s\S]*)\1$/,
+        "$2",
+      ),
+    );
     if (FRAGMENT.test(raw)) continue;
     if (allowFontData && FONT_DATA_URL.test(raw)) continue;
     return "SVG contains a url( that is not a #fragment or an embedded woff2 font.";
@@ -139,12 +203,12 @@ function readTag(text: string, start: number): Tag {
   const closing = text[i] === "/";
   if (closing) i++;
   const nameStart = i;
-  while (i < text.length && !/[\s/>]/.test(text[i])) i++;
+  while (i < text.length && !/[ \t\n\r/>]/.test(text[i])) i++;
   const name = text.slice(nameStart, i);
   if (!name) reject("SVG contains a stray < that does not start a tag.");
   const attrs: Tag["attrs"] = [];
   for (;;) {
-    while (i < text.length && /\s/.test(text[i])) i++;
+    while (i < text.length && XML_WS.test(text[i])) i++;
     if (i >= text.length) reject("SVG ends inside a tag.");
     if (text[i] === ">") {
       return { name, closing, selfClosing: false, attrs, end: i + 1 };
@@ -155,14 +219,14 @@ function readTag(text: string, start: number): Tag {
     }
     if (closing) reject("SVG contains a malformed closing tag.");
     const attrStart = i;
-    while (i < text.length && !/[\s=/>]/.test(text[i])) i++;
+    while (i < text.length && !/[ \t\n\r=/>]/.test(text[i])) i++;
     const attrName = text.slice(attrStart, i);
-    while (i < text.length && /\s/.test(text[i])) i++;
+    while (i < text.length && XML_WS.test(text[i])) i++;
     if (text[i] !== "=") {
       reject(`SVG attribute "${attrName.slice(0, 30)}" has no value.`);
     }
     i++;
-    while (i < text.length && /\s/.test(text[i])) i++;
+    while (i < text.length && XML_WS.test(text[i])) i++;
     const quote = text[i];
     if (quote !== '"' && quote !== "'") {
       reject(`SVG attribute "${attrName.slice(0, 30)}" is not quoted.`);
@@ -173,19 +237,19 @@ function readTag(text: string, start: number): Tag {
     if (value.includes("<")) reject("SVG attribute value contains <.");
     attrs.push({ name: attrName, value });
     i = close + 1;
-    if (i < text.length && !/[\s/>]/.test(text[i])) {
+    if (i < text.length && !/[ \t\n\r/>]/.test(text[i])) {
       reject("SVG attributes must be separated by whitespace.");
     }
   }
 }
 
-function checkAttribute(name: string, rawValue: string): void {
+/** Checks one attribute; the value is already normalised and reference-expanded. */
+function checkAttribute(name: string, value: string): void {
   if (!ATTR_NAME.test(name)) {
     reject(
       `SVG contains an attribute with an unsupported name "${name.slice(0, 30)}".`,
     );
   }
-  const value = decodeEntities(rawValue);
   if (name === "xmlns") {
     if (value !== SVG_NS)
       reject("SVG declares a namespace other than SVG (xmlns).");
@@ -212,10 +276,13 @@ function checkAttribute(name: string, rawValue: string): void {
   if (/^values$/i.test(name) && !NUMERIC_LIST.test(value)) {
     reject("SVG contains an SMIL animation attribute (values).");
   }
-  if (/^(?:xlink:)?href$/i.test(name) && !FRAGMENT.test(value.trim())) {
-    reject(
-      `SVG href must be a #fragment, found "${value.trim().slice(0, 40)}".`,
-    );
+  if (/^(?:xlink:)?href$/i.test(name)) {
+    // The URL parser strips only leading and trailing C0 controls and spaces; a
+    // no-break space in front of "#a" makes it a relative URL.
+    const href = value.replace(/^[\u0000- ]+|[\u0000- ]+$/g, "");
+    if (!FRAGMENT.test(href)) {
+      reject(`SVG href must be a #fragment, found "${href.slice(0, 40)}".`);
+    }
   }
 }
 
@@ -241,22 +308,33 @@ export function isSafeSvg(svg: string): SvgCheck {
   }
 }
 
-function checkDocument(svg: string): void {
+function checkDocument(input: string): void {
+  // Steps 1 and 2: drop a leading byte order mark, then XML end-of-line handling.
+  const svg = (input.charCodeAt(0) === 0xfeff ? input.slice(1) : input).replace(
+    /\r\n?/g,
+    "\n",
+  );
+
   if (/<!ENTITY/i.test(svg)) reject("SVG declares an XML ENTITY.");
   if (/<!DOCTYPE/i.test(svg)) reject("SVG contains a DOCTYPE declaration.");
 
   // XML 1.0 forbids C0 controls other than tab, LF and CR (ESC switches ISO-2022-JP
-  // into double-byte mode, which can move the markup boundaries).
-  if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(svg)) {
+  // into double-byte mode, which can move the markup boundaries), U+FFFE, U+FFFF and
+  // unpaired surrogates.
+  if (
+    /[\u0000-\u0008\u000b\u000c\u000e-\u001f\ufffe\uffff]|[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/.test(
+      svg,
+    )
+  ) {
     reject("SVG contains a control character that XML does not allow.");
   }
 
   let pos = 0;
-  // An optional XML declaration may open the file, with no encoding or UTF-8 only (a
-  // declared ISO-2022-JP, Shift_JIS or UTF-16 changes how the bytes are read); no other
-  // processing instruction.
+  // An optional XML declaration may open the file: version 1.0 only (1.1 has other
+  // end-of-line rules), no encoding or UTF-8 only (a declared ISO-2022-JP, Shift_JIS or
+  // UTF-16 changes how the bytes are read); no other processing instruction.
   const prolog =
-    /^<\?xml\s+version\s*=\s*(["'])1\.\d+\1(?:\s+encoding\s*=\s*(["'])utf-8\2)?(?:\s+standalone\s*=\s*(["'])(?:yes|no)\3)?\s*\?>/i.exec(
+    /^<\?xml[ \t\n]+version[ \t\n]*=[ \t\n]*(["'])1\.0\1(?:[ \t\n]+encoding[ \t\n]*=[ \t\n]*(["'])[Uu][Tt][Ff]-8\2)?(?:[ \t\n]+standalone[ \t\n]*=[ \t\n]*(["'])(?:yes|no)\3)?[ \t\n]*\?>/.exec(
       svg,
     );
   if (prolog) pos = prolog[0].length;
@@ -271,17 +349,19 @@ function checkDocument(svg: string): void {
   while (pos < svg.length) {
     const lt = svg.indexOf("<", pos);
     const text = svg.slice(pos, lt === -1 ? svg.length : lt);
-    if (text.trim() !== "" && (stack.length === 0 || rootClosed)) {
+    if (/[^ \t\n]/.test(text) && (stack.length === 0 || rootClosed)) {
       reject(
         sawRoot
           ? "SVG has text after the root element."
           : "Not an SVG document (text before the <svg> root).",
       );
     }
+    if (text.includes("]]>"))
+      reject("SVG text contains ]]>, which XML refuses.");
     if (stack[stack.length - 1] === "style") {
       styles.push(decodeEntities(text));
     } else {
-      outside.push(text);
+      outside.push(decodeEntities(text));
     }
     if (lt === -1) break;
     const next = svg[lt + 1];
@@ -322,8 +402,9 @@ function checkDocument(svg: string): void {
       if (seen.has(attr.name))
         reject("SVG repeats an attribute on one element.");
       seen.add(attr.name);
-      checkAttribute(attr.name, attr.value);
-      attrValues.push(decodeEntities(attr.value));
+      const value = decodeAttributeValue(attr.value);
+      checkAttribute(attr.name, value);
+      attrValues.push(value);
     }
     if (tag.selfClosing) {
       if (stack.length === 0) rootClosed = true;
