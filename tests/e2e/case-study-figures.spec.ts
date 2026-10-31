@@ -143,6 +143,71 @@ test("figures in scroll mode keep caption and strip visible at 375x740", async (
   expect(overflowX).toBe(false);
 });
 
+test("small desktop tiers: the figures view never overlaps the footer while it stays wide", async ({
+  page,
+}) => {
+  // Around the threshold where the stage minimum (240 px) + caption + strip no longer fit: either the panel
+  // switches to the scrolling layout, or everything is stacked without overlap.
+  const measured: string[] = [];
+  for (const width of [1024, 1280]) {
+    for (const height of [680, 700, 720, 740, 760, 780]) {
+      await page.setViewportSize({ width, height });
+      await page.goto("/en/projects?case=siteplus&fig=1");
+      await expect(tabs(page)).toHaveCount(2);
+      await page.evaluate(() => document.fonts.ready);
+      const mode = await page
+        .locator("[data-case-content]")
+        .evaluate(
+          (el) =>
+            new Promise<string>((resolve) =>
+              requestAnimationFrame(() =>
+                resolve(el.getAttribute("data-mode") ?? ""),
+              ),
+            ),
+        );
+      measured.push(`${width}x${height}: ${mode}`);
+      const stage = await stacked(page);
+      if (mode === "wide") expect(stage.height).toBeGreaterThanOrEqual(240);
+    }
+  }
+  console.log(`[figures tiers] ${measured.join(" | ")}`);
+});
+
+test("a taller footer (many tech chips) at 1024x680 pushes the figures view into scroll mode instead of overlapping", async ({
+  page,
+}) => {
+  const measured: string[] = [];
+  for (const extra of [0, 40, 80, 120, 160, 240]) {
+    await page.setViewportSize({ width: 1024, height: 720 });
+    await page.goto("/en/projects?case=siteplus&fig=1");
+    await expect(tabs(page)).toHaveCount(2);
+    await page.evaluate(() => document.fonts.ready);
+    // Stands in for a project whose tech chips wrap onto more lines; the resize makes the panel measure again.
+    await page.addStyleTag({
+      content: `[data-case-panel] footer { padding-bottom: ${16 + extra}px !important; }`,
+    });
+    await page.setViewportSize({ width: 1024, height: 680 });
+    const content = page.locator("[data-case-content]");
+    const read = () =>
+      content.evaluate((el) => ({
+        mode: el.getAttribute("data-mode") ?? "",
+        scroll: el.scrollHeight,
+        client: el.clientHeight,
+      }));
+    // The re-measure runs in the ResizeObserver step of a frame: poll until it has settled. Wide must mean it fits.
+    await expect
+      .poll(async () => {
+        const m = await read();
+        return m.mode === "scroll" || m.scroll <= m.client + 1;
+      })
+      .toBe(true);
+    const m = await read();
+    measured.push(`+${extra}: ${m.mode} ${m.scroll}/${m.client}`);
+    await stacked(page);
+  }
+  console.log(`[figures footer] ${measured.join(" | ")}`);
+});
+
 for (const theme of ["dark", "light"] as const) {
   test(`${theme}: the figures view passes axe`, async ({ page }) => {
     await page.addInitScript((theme) => {

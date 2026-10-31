@@ -345,12 +345,16 @@
 .textView {
   display: contents;
 }
+/*
+ * No min-height: 0 here or on the view inside: the figures view hands its real minimum (stage minimum + caption +
+ * filmstrip) up to the content grid, so a panel too short for it grows past the footer instead of overlapping it,
+ * and the fit measure sees the overflow and switches to the scrolling layout.
+ */
 .figView {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr);
+  grid-template-rows: minmax(auto, 1fr);
   min-width: 0;
-  min-height: 0;
   margin-top: 14px;
 }
 .content[data-view="figures"] {
@@ -613,7 +617,6 @@
 }
 .content[data-mode="scroll"] .figView {
   display: block;
-  min-height: auto;
 }
 .content[data-mode="scroll"] .panes {
   grid-template-columns: minmax(0, 1fr);
