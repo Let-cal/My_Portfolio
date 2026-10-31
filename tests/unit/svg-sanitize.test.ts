@@ -14,7 +14,7 @@ const MERMAID_LIKE =
   `<path d="M0 0L10 5L0 10z" fill="rgba(249, 115, 22, 0.7)"/></marker></defs>` +
   `<g class="node"><rect x="10" y="10" width="80" height="40"/><text x="20" y="35">A&#160;B</text></g>` +
   `<path d="M90 30L150 30" marker-end="url(#arrow)" stroke="rgba(249, 115, 22, 0.7)"/>` +
-  `<a xlink:href="#arrow"><text x="5" y="70">link</text></a></svg>`;
+  `<g xlink:href="#arrow"><text x="5" y="70">link</text></g></svg>`;
 
 describe("sanitizeSvg (jsdom)", () => {
   it("keeps a Mermaid-like SVG with its embedded font and fragment references", () => {

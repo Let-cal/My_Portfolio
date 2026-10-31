@@ -26,7 +26,7 @@ describe("isSafeSvg accepts", () => {
   });
 
   it("fragment references through href and xlink:href", () => {
-    expect(isSafeSvg(wrap(`<use href="#a"/><use xlink:href='#b'/>`))).toEqual({
+    expect(isSafeSvg(wrap(`<g href="#a"/><g xlink:href='#b'/>`))).toEqual({
       ok: true,
     });
   });
@@ -68,19 +68,15 @@ describe("isSafeSvg rejects", () => {
       wrap(`<foreignObject><div/></foreignObject>`),
       /foreignObject/i,
     ],
-    [
-      "an external href",
-      wrap(`<image href="https://evil.test/x.png"/>`),
-      /href/i,
-    ],
+    ["an external href", wrap(`<g href="https://evil.test/x.png"/>`), /href/i],
     [
       "a javascript xlink:href",
-      wrap(`<a xlink:href="javascript:alert(1)"><text>x</text></a>`),
+      wrap(`<g xlink:href="javascript:alert(1)"><text>x</text></g>`),
       /href/i,
     ],
     [
       "an entity-encoded javascript href",
-      wrap(`<a href="&#106;avascript:alert(1)"><text>x</text></a>`),
+      wrap(`<g href="&#106;avascript:alert(1)"><text>x</text></g>`),
       /href/i,
     ],
     [
@@ -140,7 +136,11 @@ describe("isSafeSvg rejects", () => {
       wrap(`<animate attributeName="href" to="javascript:x"/>`),
       /animat/i,
     ],
-    ["a set element", wrap(`<set attributeName="href" to="x"/>`), /animat/i],
+    [
+      "a set element",
+      wrap(`<set attributeName="href" to="x"/>`),
+      /not allowed/i,
+    ],
     ["markup that is not an SVG", `<html><body>hi</body></html>`, /svg/i],
   ])("%s", (_name, svg, reason) => {
     expect(reasonOf(svg)).toMatch(reason);
@@ -164,7 +164,7 @@ describe("isSafeSvg rejects namespace-prefixed elements and SMIL attributes", ()
     [
       "a prefixed script",
       `<svg ${NS}><s:script>alert(1)</s:script></svg>`,
-      /prefix/i,
+      /prefix|namespace/i,
     ],
     [
       "an XHTML-prefixed script",
@@ -174,12 +174,12 @@ describe("isSafeSvg rejects namespace-prefixed elements and SMIL attributes", ()
     [
       "a prefixed set that rewrites an href",
       `<svg ${NS}><a href="#a"><s:set attributeName="href" to="javascript:alert(1)"/><text>x</text></a></svg>`,
-      /prefix|SMIL|animation/i,
+      /prefix|namespace|SMIL|animation/i,
     ],
     [
       "a prefixed foreignObject",
       `<svg ${NS}><s:foreignObject><div/></s:foreignObject></svg>`,
-      /prefix/i,
+      /prefix|namespace/i,
     ],
     [
       "an XHTML-prefixed iframe",
@@ -189,7 +189,7 @@ describe("isSafeSvg rejects namespace-prefixed elements and SMIL attributes", ()
     [
       "a prefixed style element",
       `<svg ${NS}><s:style>.a{fill:red}</s:style></svg>`,
-      /prefix/i,
+      /prefix|namespace/i,
     ],
     [
       "an attributeName attribute on any element",
@@ -242,11 +242,143 @@ describe("isSafeSvg rejects namespace-prefixed elements and SMIL attributes", ()
     });
   });
 
-  it("still accepts attributes with a prefix (xlink:href, xml:space, xmlns:xlink)", () => {
+  it("still accepts xlink:href and the xmlns:xlink declaration", () => {
     expect(
       isSafeSvg(
-        `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><a xlink:href="#a" xml:space="preserve"><text>x</text></a></svg>`,
+        `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g xlink:href="#a"><text>x</text></g></svg>`,
       ),
     ).toEqual({ ok: true });
+  });
+});
+
+describe("isSafeSvg allowlist (round 2 payloads)", () => {
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const XH = "http://www.w3.org/1999/xhtml";
+  const W = (inner: string, head = "") =>
+    `<svg xmlns="${SVGNS}" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 100 100">${head}${inner}</svg>`;
+
+  it.each([
+    [
+      "non-ASCII prefix e-acute script",
+      `<svg xmlns="${SVGNS}" xmlns:\u00e9="${SVGNS}"><\u00e9:script>fetch('https://evil.test/')</\u00e9:script></svg>`,
+    ],
+    [
+      "middle-dot prefix script",
+      `<svg xmlns="${SVGNS}" xmlns:a\u00b7b="${SVGNS}"><a\u00b7b:script>fetch('https://evil.test/')</a\u00b7b:script></svg>`,
+    ],
+    [
+      "non-ASCII prefix bound to XHTML, iframe",
+      `<svg xmlns="${SVGNS}" xmlns:\u00e9="${XH}"><\u00e9:iframe src="https://evil.test/"/></svg>`,
+    ],
+    [
+      "XHTML default namespace img",
+      `<svg xmlns="${SVGNS}"><g><img xmlns="${XH}" src="https://evil.test/"/></g></svg>`,
+    ],
+    [
+      "XHTML default namespace input type=image",
+      `<svg xmlns="${SVGNS}"><input xmlns="${XH}" type="image" src="https://evil.test/"/></svg>`,
+    ],
+    [
+      "uppercase prefix",
+      `<svg xmlns="${SVGNS}" xmlns:S="${SVGNS}"><S:script>x</S:script></svg>`,
+    ],
+    ["a space after the angle bracket", W(`< s:script>x</ s:script>`)],
+    ["CDATA", W(`<text><![CDATA[&lt;s:script&gt;]]></text>`)],
+    ["a comment", W(`<!-- hi --><text>x</text>`)],
+    ["animateMotion", W(`<animateMotion path="M0 0" dur="1s"/>`)],
+    ["animateTransform", W(`<animateTransform type="rotate" dur="1s"/>`)],
+    ["a use element", W(`<use href="#a"/>`)],
+    ["an image element", W(`<image href="#a"/>`)],
+    ["an anchor element", W(`<a href="#a"><text>x</text></a>`)],
+    [
+      "a foreignObject with an XHTML child",
+      W(`<foreignObject><div xmlns="${XH}">x</div></foreignObject>`),
+    ],
+    [
+      "a padded javascript xlink:href",
+      W(`<a xlink:href="  javascript:alert(1)"><text>x</text></a>`),
+    ],
+    ["SMIL begin", W(`<rect begin="click"/>`)],
+    [
+      "an attribute name split over lines",
+      W(`<rect\nattributeName\n=\n"href"/>`),
+    ],
+    ["a padded SMIL values", W(`<g values=" javascript:alert(1)"/>`)],
+    ["an unquoted attribute value", W(`<rect width=5/>`)],
+    ["an attribute with a non-ASCII name", W(`<rect \u00e9="1"/>`)],
+    ["xml:base", W(`<rect xml:base="https://evil.test/"/>`)],
+    [
+      "an xmlns:* declaration",
+      `<svg xmlns="${SVGNS}" xmlns:s="${SVGNS}"><text>x</text></svg>`,
+    ],
+    [
+      "an xmlns bound to another namespace",
+      `<svg xmlns="${XH}"><text>x</text></svg>`,
+    ],
+    ["a non-svg root", `<g xmlns="${SVGNS}"><text>x</text></g>`],
+    ["two roots", W(`<text>x</text>`) + W(`<text>y</text>`)],
+    ["mismatched tags", W(`<g><text>x</g></text>`)],
+    ["a stray angle bracket", W(`<text>a < b</text>`)],
+    ["text before the root", `hello` + W(`<text>x</text>`)],
+    [
+      "image-set after a hidden </style> in a comment",
+      W(
+        `<rect width="100" height="100"/>`,
+        `<style>a{}<!--</style>-->svg{background-image:image-set("https://evil.test/" 1x)}</style>`,
+      ),
+    ],
+    [
+      "image-set after a hidden </style> in CDATA",
+      W(
+        `<rect/>`,
+        `<style><![CDATA[</style>]]>{} svg{background-image:image-set("https://evil.test/" 1x)}</style>`,
+      ),
+    ],
+    [
+      "image-set in a plain style",
+      W(
+        `<rect/>`,
+        `<style>svg{background-image:image-set("https://evil.test/" 1x)}</style>`,
+      ),
+    ],
+    [
+      "a CSS function in a presentation attribute",
+      W(`<rect style="mask-image:image-set('https://evil.test/' 1x)"/>`),
+    ],
+    [
+      "a style element holding markup",
+      W(`<text>x</text>`, `<style><g/></style>`),
+    ],
+  ])("rejects %s", (_name, svg) => {
+    const r = isSafeSvg(svg);
+    expect(r.ok).toBe(false);
+  });
+
+  it.each([
+    [
+      "label text with to = and values =",
+      W(`<text>map key to = value, values = abc</text>`),
+    ],
+    [
+      "label text with a prefix-like pair",
+      W(`<text>List&lt;T:Item&gt;</text>`),
+    ],
+    [
+      "label text mentioning image (PNG) and src (x)",
+      W(`<text>Image (PNG) src (x)</text>`),
+    ],
+    [
+      "a drop-shadow filter and a symbol",
+      W(
+        `<symbol id="s"><rect width="1" height="1"/></symbol><rect filter="url(#f)" width="1" height="1"/>`,
+        `<defs><filter id="f"><feDropShadow dx="1" dy="1" stdDeviation="2" flood-color="#000" flood-opacity="0.3"/></filter></defs>`,
+      ),
+    ],
+    [
+      "a prolog before the root",
+      `<?xml version="1.0" encoding="UTF-8"?>\n` + W(`<text>x</text>`),
+    ],
+  ])("accepts %s", (_name, svg) => {
+    expect(isSafeSvg(svg)).toEqual({ ok: true });
   });
 });
