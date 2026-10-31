@@ -121,9 +121,11 @@ export const TABLES = {
       { name: "roles", type: "text[]", default: "'{}'" },
       { name: "team_size", type: "text", nullable: true },
       { name: "links", type: "jsonb", default: "'[]'" },
+      { name: "media", type: "jsonb", default: "'[]'" },
     ],
     tableConstraints: [
       "constraint projects_kind_matches_link check ((kind = 'work' and experience_id is not null and education_id is null) or (kind = 'university' and education_id is not null and experience_id is null) or (kind = 'personal' and experience_id is null and education_id is null))",
+      "constraint projects_media_is_array check (jsonb_typeof(media) = 'array')",
     ],
   },
   skills: {

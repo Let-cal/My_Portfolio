@@ -179,6 +179,54 @@
       "roles": [],
       "teamSize": null,
       "links": [],
+      "media": [
+        {
+          "id": "mobile-survey-screen",
+          "kind": "image",
+          "category": "screen",
+          "caption": {
+            "en": "Mobile site-survey screen",
+            "ja": "モバイルの物件調査画面",
+            "vi": "Màn hình khảo sát mặt bằng trên mobile"
+          },
+          "note": { "en": "" },
+          "alt": {
+            "en": "Illustration of the SitePlus mobile app showing a site survey.",
+            "ja": "物件調査を表示するSitePlusモバイルアプリのイラストです。",
+            "vi": "Hình minh họa ứng dụng mobile SitePlus đang hiển thị một khảo sát mặt bằng."
+          },
+          "url": "/images/Illustration2.png",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "id": "system-overview",
+          "kind": "diagram",
+          "category": "architecture",
+          "caption": {
+            "en": "How the client, API and database connect",
+            "ja": "クライアント、API、データベースのつながり",
+            "vi": "Cách client, API và cơ sở dữ liệu kết nối với nhau"
+          },
+          "note": {
+            "en": "Simplified for this page",
+            "ja": "このページ用に簡略化しています",
+            "vi": "Đã đơn giản hóa cho trang này"
+          },
+          "alt": {
+            "en": "Three boxes in a row: Client calls API, API reads and writes the Database.",
+            "ja": "3つの箱が横に並びます。クライアントがAPIを呼び、APIがデータベースを読み書きします。",
+            "vi": "Ba ô xếp ngang: Client gọi API, API đọc và ghi Database."
+          },
+          "source": "flowchart LR\n  Client --> API --> Database",
+          "svgLight": "/seed/figures/seed-diagram-light.svg",
+          "svgDark": "/seed/figures/seed-diagram-dark.svg",
+          "width": 480,
+          "height": 160,
+          "renderedAt": "2026-10-31T00:00:00.000Z",
+          "themeVersion": 1
+        }
+      ],
       "id": "siteplus",
       "title": "SitePlus",
       "role": {

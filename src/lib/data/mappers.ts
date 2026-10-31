@@ -90,6 +90,8 @@ export type ProjectRow = {
   roles: RoleKey[];
   team_size: string | null;
   links: Link[];
+  /** jsonb array of figures (images and rendered diagrams); validated by projectSchema. */
+  media: unknown;
 };
 
 export type SkillRow = {
@@ -279,6 +281,7 @@ export function rowToProject(r: ProjectRow): Project {
     roles: r.roles,
     teamSize: r.team_size,
     links: r.links,
+    media: (r.media ?? []) as Project["media"],
   };
 }
 
@@ -306,6 +309,7 @@ export function projectToRow(p: Project): ProjectRow {
     roles: p.roles,
     team_size: p.teamSize,
     links: p.links,
+    media: p.media,
   };
 }
 

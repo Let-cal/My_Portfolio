@@ -125,6 +125,70 @@ export const experienceSchema = z.object({
 });
 export type Experience = z.infer<typeof experienceSchema>;
 
+export const FIGURE_CATEGORIES = [
+  "screen",
+  "architecture",
+  "erd",
+  "flow",
+  "other",
+] as const;
+export const figureCategorySchema = z.enum(FIGURE_CATEGORIES);
+export type FigureCategory = z.infer<typeof figureCategorySchema>;
+
+export const MAX_FIGURES = 12;
+export const MAX_FIGURE_CAPTION = 140;
+export const MAX_FIGURE_NOTE = 100;
+export const MAX_DIAGRAM_SOURCE = 20000;
+
+/** Display text capped per locale; `en` may be empty only when `allowEmptyEn` is set. */
+const limitedText = (max: number, allowEmptyEn: boolean) =>
+  z.object({
+    en: allowEmptyEn ? z.string().max(max) : z.string().min(1).max(max),
+    ja: z.string().max(max).optional(),
+    vi: z.string().max(max).optional(),
+  });
+
+const figureBase = {
+  /** Stable within the project; unique per project. */
+  id,
+  category: figureCategorySchema,
+  caption: limitedText(MAX_FIGURE_CAPTION, false),
+  /** Optional second line; an empty `en` means no note. */
+  note: limitedText(MAX_FIGURE_NOTE, true).default({ en: "" }),
+  alt: i18nText,
+};
+
+export const imageFigureSchema = z.object({
+  ...figureBase,
+  kind: z.literal("image"),
+  url: z.string().min(1),
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+});
+export type ImageFigure = z.infer<typeof imageFigureSchema>;
+
+export const diagramFigureSchema = z.object({
+  ...figureBase,
+  kind: z.literal("diagram"),
+  /** Mermaid source; admin-only, never sent to visitors. */
+  source: z.string().max(MAX_DIAGRAM_SOURCE),
+  svgLight: z.string().min(1),
+  svgDark: z.string().min(1),
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+  /** ISO time of the render. */
+  renderedAt: z.string().min(1),
+  /** MERMAID_THEME_VERSION at render time. */
+  themeVersion: z.number().int().nonnegative(),
+});
+export type DiagramFigure = z.infer<typeof diagramFigureSchema>;
+
+export const figureSchema = z.discriminatedUnion("kind", [
+  imageFigureSchema,
+  diagramFigureSchema,
+]);
+export type Figure = z.infer<typeof figureSchema>;
+
 export const PROJECT_KINDS = ["work", "university", "personal"] as const;
 export const projectKindSchema = z.enum(PROJECT_KINDS);
 export type ProjectKind = z.infer<typeof projectKindSchema>;
@@ -157,8 +221,20 @@ export const projectSchema = z
     roles: z.array(roleKeySchema).default([]),
     teamSize: z.string().nullable().default(null),
     links: z.array(linkSchema).default([]),
+    media: z.array(figureSchema).max(MAX_FIGURES).default([]),
   })
   .superRefine((p, ctx) => {
+    const seen = new Set<string>();
+    p.media.forEach((fig, i) => {
+      if (seen.has(fig.id)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["media", i, "id"],
+          message: "figure ids must be unique within the project",
+        });
+      }
+      seen.add(fig.id);
+    });
     const ok =
       (p.kind === "work" &&
         p.experienceId !== null &&
