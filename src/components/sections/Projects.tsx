@@ -52,12 +52,7 @@ export function Projects({
     repos: repoLinks(p.repoUrls, t),
     posterUrl: p.posterUrl,
     videoUrl: p.videoUrl,
-    caseStudy: p.caseStudy && {
-      problem: pickLocale(p.caseStudy.problem, locale),
-      role: pickLocale(p.caseStudy.role, locale),
-      decisions: pickLocale(p.caseStudy.decisions, locale),
-      result: pickLocale(p.caseStudy.result, locale),
-    },
+    hasCaseStudy: Boolean(p.caseStudy),
   }));
   const total = content.projects.filter((p) => p.published).length;
   const rows = new Map(

@@ -11,7 +11,12 @@ import {
 } from "react";
 import { ensureToaster } from "@/components/site/toast-readiness";
 import { CopyIcon, XIcon } from "@/components/site/icons";
-import { CASE_PARAM, neighbours, type CaseContext } from "@/lib/case-list";
+import {
+  CASE_PARAM,
+  caseReloadKey,
+  neighbours,
+  type CaseContext,
+} from "@/lib/case-list";
 import { repoLinks } from "@/lib/repo-links";
 import { cn } from "@/lib/utils";
 import styles from "./kakejiku.module.css";
@@ -76,11 +81,17 @@ function inTextField(target: EventTarget | null): boolean {
   );
 }
 
+/** Trying the shorter wide layout may have clamped the scroll position: put the reader back. */
+function keepScroll(content: HTMLElement, top: number) {
+  if (content.scrollTop !== top) content.scrollTop = top;
+}
+
 /**
  * Wide when the whole case study fits the panel, otherwise (or on a small viewport) the scrolling one-column
  * layout. Written straight to `data-mode` (never rendered by React): reset to wide, read the overflow, set the
- * result, all before paint. Measured on open, on every project change, when the panel's box resizes and when
- * web fonts finish loading.
+ * result, all before paint. Measured on open, on every project change, when the panel's box resizes and whenever
+ * web fonts finish loading (`ready`, then each later `loadingdone`, e.g. a Japanese subset used for the first
+ * time). A re-measure that ends in the scrolling layout keeps the reader's scroll position.
  */
 function useFitMode(content: HTMLElement | null, itemId: string | null) {
   useLayoutEffect(() => {
@@ -93,9 +104,12 @@ function useFitMode(content: HTMLElement | null, itemId: string | null) {
         content.setAttribute("data-mode", "scroll");
         return;
       }
+      const top = content.scrollTop;
       content.setAttribute("data-mode", "wide");
-      if (content.scrollHeight > content.clientHeight + 1)
+      if (content.scrollHeight > content.clientHeight + 1) {
         content.setAttribute("data-mode", "scroll");
+        keepScroll(content, top);
+      }
     };
     measure();
     content.scrollTo?.(0, 0);
@@ -106,13 +120,16 @@ function useFitMode(content: HTMLElement | null, itemId: string | null) {
         : null;
     observer?.observe(frame);
     small?.addEventListener?.("change", measure);
-    void document.fonts?.ready.then(() => {
+    const fonts = document.fonts;
+    void fonts?.ready.then(() => {
       if (alive) measure();
     });
+    fonts?.addEventListener?.("loadingdone", measure);
     return () => {
       alive = false;
       observer?.disconnect();
       small?.removeEventListener?.("change", measure);
+      fonts?.removeEventListener?.("loadingdone", measure);
     };
   }, [content, itemId]);
 }
@@ -148,6 +165,16 @@ export function CaseStudyPanel({
   const titleOf = (id: string) => items.find((i) => i.id === id)?.title ?? "";
 
   useFitMode(open ? content : null, shownId);
+
+  // This chunk loaded and the project is on screen: a reload tried for it earlier (LazyCaseStudyPanel) is done.
+  useEffect(() => {
+    if (!open || shownId === null) return;
+    try {
+      window.sessionStorage.removeItem(caseReloadKey(shownId));
+    } catch {
+      // No storage: nothing was set.
+    }
+  }, [open, shownId]);
 
   useEffect(() => {
     if (!open) return;
@@ -189,12 +216,14 @@ export function CaseStudyPanel({
     } catch {
       copied = false;
     }
-    // Without a clipboard the toast carries the URL itself, so it can still be copied by hand.
+    // Without a clipboard the toast says so and carries the URL itself, so it can still be copied by hand.
     void Promise.all([ensureToaster(), import("sonner")])
       .then(([, { toast }]) =>
-        toast(copied ? t("copied") : t("copyLink"), { description: href }),
+        toast(copied ? t("copied") : t("copyFailed"), { description: href }),
       )
-      .catch(() => {});
+      .catch((error: unknown) => {
+        console.warn("[case study] copy-link toast failed", error);
+      });
   }
 
   const links = [
@@ -367,7 +396,6 @@ export function CaseStudyPanel({
               </p>
               {prev && next ? (
                 <div className={styles.nav}>
-                  <p className="sr-only">{position}</p>
                   <button
                     type="button"
                     aria-label={t("prev", { title: titleOf(prev) })}

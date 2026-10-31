@@ -262,6 +262,7 @@
     "team": "Team size: {size}",
     "copyLink": "Copy link",
     "copied": "Link copied",
+    "copyFailed": "Could not copy the link",
     "prev": "Previous project: {title}",
     "next": "Next project: {title}",
     "position": "{index} of {total}",

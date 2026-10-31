@@ -90,6 +90,7 @@ const panelProps = {
 
 describe("a lazy chunk that fails to load", () => {
   it("keeps the Gantt slot and the rest of the tree when the Gantt import rejects", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     render(wrap(<Experience content={base} locale="en" />));
     // Looked up afresh each time: a crashed page leaves detached nodes behind.
     const slot = () => document.querySelector("#exp-skg-software .jt-slot");
@@ -105,12 +106,25 @@ describe("a lazy chunk that fails to load", () => {
         { name: /AI Agent/ },
       ),
     ).toBeInTheDocument();
+    // The failure is not silent: one console warning with the error.
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("timeline"),
+      expect.any(Error),
+    );
+    warn.mockRestore();
   });
 
   it("reloads on the deep link when the panel import rejects", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     window.history.replaceState(null, "", "/en/projects?x=1#top");
     render(wrap(<LazyCaseStudyPanel {...panelProps} />));
     await waitFor(() => expect(assign).toHaveBeenCalledTimes(1));
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("case study"),
+      expect.any(Error),
+    );
+    warn.mockRestore();
     const target = new URL(assign.mock.calls[0][0] as string, "http://x");
     expect(target.pathname).toBe("/en/projects");
     expect(target.searchParams.get("case")).toBe("skg-coa");

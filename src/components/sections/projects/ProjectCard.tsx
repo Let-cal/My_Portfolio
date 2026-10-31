@@ -7,7 +7,6 @@ import {
   type PointerEvent,
   type ReactNode,
 } from "react";
-import type { CaseStudyView } from "@/components/sections/case-study/CaseStudyPanel";
 import { GlowCard } from "@/components/fx/GlowCard";
 import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
 import { useIsHighlighted } from "@/components/site/HighlightProvider";
@@ -28,7 +27,8 @@ export type ProjectView = {
   repos: { url: string; label: string }[];
   posterUrl: string | null;
   videoUrl: string | null;
-  caseStudy: CaseStudyView | null;
+  /** The case study text itself travels once, in the panel's items; the card only needs to know there is one. */
+  hasCaseStudy: boolean;
 };
 
 export { projectKind } from "./project-kind";
@@ -63,7 +63,7 @@ export function ProjectCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(false);
   const lit = useIsHighlighted(`proj-${project.id}`);
-  const { videoUrl, caseStudy: cs } = project;
+  const { videoUrl, hasCaseStudy: cs } = project;
 
   function play() {
     if (reduced) return;

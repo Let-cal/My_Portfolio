@@ -262,6 +262,7 @@
     "team": "チーム規模: {size}",
     "copyLink": "リンクをコピー",
     "copied": "リンクをコピーしました",
+    "copyFailed": "リンクをコピーできませんでした",
     "prev": "前のプロジェクト: {title}",
     "next": "次のプロジェクト: {title}",
     "position": "{total}件中{index}件目",

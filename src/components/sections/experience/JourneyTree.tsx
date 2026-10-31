@@ -31,7 +31,10 @@ const JourneyTimeline = dynamic(
   () =>
     import("./JourneyTimeline").then(
       (module) => module.JourneyTimeline,
-      () => () => null,
+      (error) => {
+        console.warn("[experience] timeline chunk failed", error);
+        return () => null;
+      },
     ),
   { ssr: false },
 );

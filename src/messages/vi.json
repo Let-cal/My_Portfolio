@@ -262,6 +262,7 @@
     "team": "Quy mô team: {size}",
     "copyLink": "Sao chép link",
     "copied": "Đã sao chép link",
+    "copyFailed": "Không sao chép được link",
     "prev": "Dự án trước: {title}",
     "next": "Dự án tiếp theo: {title}",
     "position": "{index} trên {total}",
