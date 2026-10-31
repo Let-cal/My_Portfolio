@@ -43,12 +43,21 @@ function decodeCssEscapes(css: string): string {
 
 const STYLE_BLOCK = /<style\b[^>]*>([\s\S]*?)<\/style\s*>/gi;
 
+/** CSS functions that can fetch a resource without url(); checked in CSS contexts only. */
+function checkCssFunctions(css: string): string | null {
+  if (
+    /(?<![A-Za-z0-9_])(?:image-set|image|src|cross-fade|element|expression)\s*\(|-moz-binding|behavior\s*:/i.test(
+      css,
+    )
+  ) {
+    return "SVG contains a CSS construct that can load external content.";
+  }
+  return null;
+}
+
 /** Checks every url(...) in a piece of CSS or an attribute; data fonts only when allowed. */
 function checkUrls(css: string, allowFontData: boolean): string | null {
   if (/@import/i.test(css)) return "SVG contains a CSS @import.";
-  if (/image-set\s*\(|expression\s*\(|-moz-binding|behavior\s*:/i.test(css)) {
-    return "SVG contains a CSS construct that can load external content.";
-  }
   const re = /url\s*\(/gi;
   while (re.exec(css)) {
     const close = css.indexOf(")", re.lastIndex);
@@ -85,8 +94,21 @@ export function isSafeSvg(svg: string): SvgCheck {
   if (/<!ENTITY/i.test(text)) {
     return { ok: false, reason: "SVG declares an XML ENTITY." };
   }
+  if (/<!DOCTYPE/i.test(text)) {
+    return { ok: false, reason: "SVG contains a DOCTYPE declaration." };
+  }
   if (/<\?(?!xml\s)/i.test(text)) {
     return { ok: false, reason: "SVG contains a processing instruction." };
+  }
+  // In an XML SVG any prefix bound to the SVG or XHTML namespace makes a real element
+  // (<s:script>, <h:iframe>, <s:set>), which the name checks below would not see.
+  // Mermaid output and hand-written figures use no prefixed elements, so reject them all.
+  if (/<\/?[A-Za-z_][\w.-]*:[A-Za-z_]/.test(text)) {
+    return {
+      ok: false,
+      reason:
+        "SVG contains a namespace-prefixed element (for example <s:script>).",
+    };
   }
   if (/<script/i.test(text)) {
     return { ok: false, reason: "SVG contains a <script> element." };
@@ -109,6 +131,26 @@ export function isSafeSvg(svg: string): SvgCheck {
       ok: false,
       reason: "SVG contains an animation element (animate/set).",
     };
+  }
+  // SMIL can rewrite an href or other attribute at run time: reject its attributes too,
+  // so a missed animation element is still not enough. A numeric values= (feColorMatrix)
+  // is harmless and allowed.
+  if (/[\s"'/](?:attributeName|from|to|by)\s*=/i.test(text)) {
+    return {
+      ok: false,
+      reason:
+        "SVG contains an SMIL animation attribute (attributeName/from/to/by).",
+    };
+  }
+  const valuesRe = /[\s"'/]values\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+))/gi;
+  let v: RegExpExecArray | null;
+  while ((v = valuesRe.exec(text))) {
+    if (!/^[\d\s.,eE+-]*$/.test(v[1] ?? v[2] ?? v[3] ?? "")) {
+      return {
+        ok: false,
+        reason: "SVG contains an SMIL animation attribute (values).",
+      };
+    }
   }
   if (/xml:base\s*=/i.test(text)) {
     return { ok: false, reason: "SVG sets xml:base." };
@@ -134,14 +176,22 @@ export function isSafeSvg(svg: string): SvgCheck {
   }
 
   // CSS: embedded woff2 fonts are allowed in the SVG's own <style> only.
-  let outside = text;
+  // Style blocks are found in the raw markup (an escaped &lt;style&gt; inside an
+  // attribute is not a style element), then each piece is entity-decoded on its own.
   const styles: string[] = [];
-  outside = outside.replace(STYLE_BLOCK, (_m, css: string) => {
-    styles.push(css);
-    return "";
-  });
+  const outside = decodeEntities(
+    svg.replace(STYLE_BLOCK, (_m, css: string) => {
+      styles.push(decodeEntities(css));
+      return "";
+    }),
+  );
   for (const css of styles) {
-    const problem = checkUrls(decodeCssEscapes(css), true);
+    const decoded = decodeCssEscapes(css);
+    const problem = checkCssFunctions(decoded) ?? checkUrls(decoded, true);
+    if (problem) return { ok: false, reason: problem };
+  }
+  for (const m of outside.matchAll(/\sstyle\s*=\s*(?:"([^"]*)"|'([^']*)')/gi)) {
+    const problem = checkCssFunctions(decodeCssEscapes(m[1] ?? m[2] ?? ""));
     if (problem) return { ok: false, reason: problem };
   }
   const problem = checkUrls(decodeCssEscapes(outside), false);

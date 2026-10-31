@@ -157,3 +157,96 @@ describe("isSafeSvg rejects", () => {
     expect(reasonOf(big)).toMatch(/1 MB/);
   });
 });
+
+describe("isSafeSvg rejects namespace-prefixed elements and SMIL attributes", () => {
+  const NS = `xmlns="http://www.w3.org/2000/svg" xmlns:s="http://www.w3.org/2000/svg"`;
+  it.each([
+    [
+      "a prefixed script",
+      `<svg ${NS}><s:script>alert(1)</s:script></svg>`,
+      /prefix/i,
+    ],
+    [
+      "an XHTML-prefixed script",
+      `<svg xmlns="http://www.w3.org/2000/svg"><h:script xmlns:h="http://www.w3.org/1999/xhtml">alert(1)</h:script></svg>`,
+      /prefix/i,
+    ],
+    [
+      "a prefixed set that rewrites an href",
+      `<svg ${NS}><a href="#a"><s:set attributeName="href" to="javascript:alert(1)"/><text>x</text></a></svg>`,
+      /prefix|SMIL|animation/i,
+    ],
+    [
+      "a prefixed foreignObject",
+      `<svg ${NS}><s:foreignObject><div/></s:foreignObject></svg>`,
+      /prefix/i,
+    ],
+    [
+      "an XHTML-prefixed iframe",
+      `<svg xmlns="http://www.w3.org/2000/svg"><h:iframe xmlns:h="http://www.w3.org/1999/xhtml" src="https://evil.test"/></svg>`,
+      /prefix/i,
+    ],
+    [
+      "a prefixed style element",
+      `<svg ${NS}><s:style>.a{fill:red}</s:style></svg>`,
+      /prefix/i,
+    ],
+    [
+      "an attributeName attribute on any element",
+      wrap(`<g attributeName="href" to="javascript:x"/>`),
+      /SMIL|animation/i,
+    ],
+    [
+      "SMIL to/values attributes",
+      wrap(`<g values="javascript:x"/>`),
+      /SMIL|animation/i,
+    ],
+  ])("%s", (_name, svg, reason) => {
+    expect(reasonOf(svg)).toMatch(reason);
+  });
+
+  it.each([
+    [
+      "a CSS src() function",
+      wrap(
+        `<text>x</text>`,
+        `<style>.a{background:src("https://evil.test/a")}</style>`,
+      ),
+      /CSS construct/,
+    ],
+    [
+      "a CSS image() function in a style attribute",
+      wrap(`<rect style="background:image('https://evil.test/a')"/>`),
+      /CSS construct/,
+    ],
+    [
+      "a DOCTYPE with an external id",
+      `<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://evil.test/a.dtd">` +
+        wrap(`<text>x</text>`),
+      /DOCTYPE/,
+    ],
+  ])("%s", (_name, svg, reason) => {
+    expect(reasonOf(svg)).toMatch(reason);
+  });
+
+  it("a data font hidden between escaped style tags in attributes", () => {
+    const svg = wrap(
+      `<g data-x="&lt;style&gt;"/><rect style="fill:url(${FONT_URL})"/><g data-y="&lt;/style&gt;"/>`,
+    );
+    expect(reasonOf(svg)).toMatch(/url\(/);
+  });
+
+  it("accepts label text such as Image (PNG) and src (primary)", () => {
+    expect(isSafeSvg(wrap(`<text>Image (PNG) src (primary)</text>`))).toEqual({
+      ok: true,
+    });
+  });
+
+  it("still accepts attributes with a prefix (xlink:href, xml:space, xmlns:xlink)", () => {
+    expect(
+      isSafeSvg(
+        `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><a xlink:href="#a" xml:space="preserve"><text>x</text></a></svg>`,
+      ),
+    ).toEqual({ ok: true });
+  });
+});
