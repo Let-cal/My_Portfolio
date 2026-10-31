@@ -11,6 +11,7 @@ import {
 } from "react";
 import { ensureToaster } from "@/components/site/toast-readiness";
 import { CopyIcon, XIcon } from "@/components/site/icons";
+import type { FigureView } from "@/lib/figures/view";
 import {
   CASE_PARAM,
   caseReloadKey,
@@ -47,6 +48,8 @@ export type CaseStudyItem = {
   tech: string[];
   demoUrl: string | null;
   repoUrls: string[];
+  /** Public figure views, stored order; empty on the home page, where the bento sends none. */
+  figures: FigureView[];
 };
 
 type CaseStudyPanelProps = {

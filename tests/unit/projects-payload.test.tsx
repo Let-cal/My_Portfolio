@@ -41,4 +41,15 @@ describe("Projects section payload", () => {
     for (const p of projects)
       expect(p.hasCaseStudy).toBe(caseItems.some((i) => i.id === p.id));
   });
+
+  it("the home bento payload carries no figures", () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={en}>
+        <Projects content={content} locale="en" />
+      </NextIntlClientProvider>,
+    );
+    const { projects, caseItems } = bento.props!;
+    for (const p of projects) expect(p).not.toHaveProperty("figures");
+    for (const item of caseItems) expect(item.figures).toEqual([]);
+  });
 });

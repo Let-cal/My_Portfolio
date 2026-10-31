@@ -8,6 +8,7 @@ import type {
   RoleKey,
 } from "@/content/schema";
 import { newestFirst } from "@/lib/featured";
+import { figureViews, type FigureView } from "@/lib/figures/view";
 import { formatDuration, formatPeriod, kanjiYear } from "@/lib/format";
 import { pickLocale } from "@/lib/i18n-text";
 import { companyName, stintShortLabel } from "@/lib/journey";
@@ -49,6 +50,8 @@ export type ArchiveRow = {
   /** Roles this project is evidence for; the role switcher highlights these rows. */
   roles: RoleKey[];
   caseStudy: CaseStudyView | null;
+  /** Public views of the project figures, stored order; empty without figures. */
+  figures: FigureView[];
 };
 
 /**
@@ -103,6 +106,7 @@ export function archiveRows(
           decisions: pickLocale(p.caseStudy.decisions, locale),
           result: pickLocale(p.caseStudy.result, locale),
         },
+        figures: figureViews(p.media, locale),
       };
     });
 }

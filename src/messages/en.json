@@ -282,6 +282,7 @@
     "codeMobile": "Code (Mobile)",
     "codeN": "Code {n}",
     "newTab": "(opens in new tab)",
+    "figureCount": "{count, plural, one {# figure} other {# figures}}",
     "viewAll": "View all {count, plural, one {# project} other {# projects}}"
   },
   "archive": {

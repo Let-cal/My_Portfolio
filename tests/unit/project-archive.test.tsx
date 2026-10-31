@@ -228,6 +228,29 @@ describe("ProjectArchive", () => {
     );
   });
 
+  it("shows a 図 N chip only on rows with figures", () => {
+    renderArchive();
+    const withFigures = base.projects.filter((p) => p.media.length > 0);
+    expect(withFigures.length).toBeGreaterThan(0);
+    const chips = [...document.querySelectorAll<HTMLElement>("[data-figures]")];
+    expect(chips).toHaveLength(withFigures.length);
+    for (const p of withFigures) {
+      const chip = document.querySelector<HTMLElement>(
+        `#row-${p.id} [data-figures]`,
+      )!;
+      expect(chip).not.toBeNull();
+      expect(chip.textContent).toBe(`図 ${p.media.length}`);
+      expect(
+        screen.getByLabelText(`${p.media.length} figures`, {
+          selector: `#row-${p.id} *`,
+        }),
+      ).toBe(chip);
+    }
+    expect(
+      document.querySelector("#row-skg-ai-agent [data-figures]"),
+    ).toBeNull();
+  });
+
   it("groups rows by year newest first", () => {
     renderArchive();
     const groups = screen.getAllByRole("region");

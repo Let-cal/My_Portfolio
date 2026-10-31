@@ -22,6 +22,7 @@ export function caseItemFromRow(
         tech: row.tech,
         demoUrl: row.demoUrl,
         repoUrls: row.repoUrls,
+        figures: row.figures,
       }
     : null;
 }
@@ -57,6 +58,7 @@ export function caseItemsFromJourney(
                 tech: c.tech,
                 demoUrl: c.demoUrl,
                 repoUrls: c.repoUrls,
+                figures: c.figures,
               },
             ]
           : [],

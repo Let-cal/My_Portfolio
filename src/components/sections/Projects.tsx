@@ -61,7 +61,8 @@ export function Projects({
   const caseItems = projects.flatMap((p): CaseStudyItem[] => {
     const row = rows.get(p.id);
     const item = row && caseItemFromRow(row, ta(`kinds.${row.whereKind}`));
-    return item ? [item] : [];
+    // The home bento never carries figures: the gallery lives on the archive and the experience tree.
+    return item ? [{ ...item, figures: [] }] : [];
   });
 
   return (

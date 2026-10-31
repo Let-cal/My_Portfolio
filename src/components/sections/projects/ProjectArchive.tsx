@@ -152,6 +152,7 @@ function panelTitle(ms: number): Promise<HTMLElement | null> {
  * - A project with a case study opens it in the shared case study panel from a button over its row (click or
  *   Enter), its title morphing into the panel title where View Transitions exist; previous / next walk the rows the
  *   current filter shows. `?case=<id>` opens it on load.
+ * - A row with figures shows a plain "図 N" count chip beside its title (text only, no interaction).
  * - With a mouse and motion allowed, a small preview card (poster, else the title) follows the pointer over a row.
  */
 export function ProjectArchive({ groups }: { groups: ArchiveGroup[] }) {
@@ -443,6 +444,20 @@ export function ProjectArchive({ groups }: { groups: ArchiveGroup[] }) {
                         ) : (
                           <span>{row.title}</span>
                         )}
+                        {row.figures.length > 0 ? (
+                          <span
+                            role="img"
+                            aria-label={tp("figureCount", {
+                              count: row.figures.length,
+                            })}
+                            data-figures=""
+                            className="pa-figs"
+                          >
+                            <span aria-hidden="true">
+                              <span lang="ja">図</span> {row.figures.length}
+                            </span>
+                          </span>
+                        ) : null}
                       </span>
                       <span className="pa-role">{row.role}</span>
                     </div>

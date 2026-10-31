@@ -282,6 +282,7 @@
     "codeMobile": "コード(モバイル)",
     "codeN": "コード{n}",
     "newTab": "(新しいタブで開きます)",
+    "figureCount": "図{count}点",
     "viewAll": "{count}件のプロジェクトをすべて見る"
   },
   "archive": {

@@ -282,6 +282,7 @@
     "codeMobile": "Code (Mobile)",
     "codeN": "Code {n}",
     "newTab": "(mở trong tab mới)",
+    "figureCount": "{count} hình",
     "viewAll": "Xem tất cả {count} dự án"
   },
   "archive": {
