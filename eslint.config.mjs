@@ -15,6 +15,8 @@ const eslintConfig = defineConfig([
     // Internal task briefs and local measurement probes are not application source.
     ".superpowers/**",
     ".lighthouseci/**",
+    // Local agent worktrees are other checkouts of this repo.
+    ".claude/worktrees/**",
   ]),
 ]);
 

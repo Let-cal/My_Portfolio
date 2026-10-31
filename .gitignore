@@ -57,3 +57,6 @@ lighthouse*.json
 
 # Supabase CLI local state
 supabase/.temp/
+
+# Local agent worktrees (Claude Code) are checkouts of this repo, not source.
+/.claude/worktrees/
