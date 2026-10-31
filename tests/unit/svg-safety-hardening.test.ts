@@ -277,3 +277,62 @@ describe("isSafeSvg trims URLs the way the URL parser does", () => {
     ).toEqual({ ok: true });
   });
 });
+
+// Round 5: inside an unquoted url( token an escaped quote is a literal URL character, not
+// a string delimiter, so "url(\22#a\22)" is the relative URL '"#a"' to the browser. The
+// checker therefore refuses any CSS escape inside url(...).
+describe("isSafeSvg refuses CSS escapes inside url()", () => {
+  it.each([
+    [
+      "escaped double quotes in a style element url()",
+      W(RED_RECT, `<style>svg{background-image:url(${BS}22#a${BS}22)}</style>`),
+    ],
+    [
+      "escaped single quotes in a style element url()",
+      W(RED_RECT, `<style>svg{background-image:url(${BS}27#a${BS}27)}</style>`),
+    ],
+    [
+      "escaped quotes with spaces in url()",
+      W(
+        RED_RECT,
+        `<style>svg{background-image:url( ${BS}22 #a${BS}22 )}</style>`,
+      ),
+    ],
+    [
+      "escaped quotes in a fill url()",
+      W(`<rect width="1" height="1" fill="url(${BS}22#a${BS}22)"/>`),
+    ],
+    [
+      "escaped quotes in a style attribute filter url()",
+      W(`<rect width="1" height="1" style="filter:url(${BS}22#f${BS}22)"/>`),
+    ],
+    [
+      "escaped quotes in a clip-path url()",
+      W(RED_RECT, `<style>rect{clip-path:url(${BS}22#c${BS}22)}</style>`),
+    ],
+    [
+      "escaped quotes around an embedded font data URL",
+      W(
+        RED_RECT,
+        `<style>@font-face{font-family:x;src:url(${BS}22 data:font/woff2;base64,AAAA/x/y${BS}22)}</style>`,
+      ),
+    ],
+    [
+      "an escaped closing parenthesis in url()",
+      W(RED_RECT, `<style>svg{background-image:url(#a${BS}29)}</style>`),
+    ],
+  ])("rejects %s", (_name, svg) => {
+    expect(isSafeSvg(svg).ok).toBe(false);
+  });
+
+  it("still reads an escaped function name and accepts plain fragments and fonts", () => {
+    expect(
+      isSafeSvg(
+        W(
+          `<rect width="1" height="1" fill="${BS}75 rl(#a)"/>`,
+          `<style>.a${BS}:b{clip-path:url("#c")}@font-face{font-family:x;src:url(data:font/woff2;base64,AAAA)}</style>`,
+        ),
+      ),
+    ).toEqual({ ok: true });
+  });
+});

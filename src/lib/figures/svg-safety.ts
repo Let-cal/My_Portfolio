@@ -74,28 +74,48 @@ function decodeAttributeValue(raw: string): string {
   return decodeEntities(raw.replace(/[\t\n\r]/g, " "));
 }
 
+/**
+ * CSS text with its escapes resolved. escaped[i] is true when text[i] came from an
+ * escape: an escaped quote or parenthesis is a literal character to the browser, never
+ * a string delimiter or the end of a url( token.
+ */
+type DecodedCss = { text: string; escaped: boolean[] };
+
 /** Resolves CSS escapes such as \75 rl( so they cannot hide a url() or @import. */
-function decodeCssEscapes(css: string): string {
+function decodeCss(css: string): DecodedCss {
   // CSS input preprocessing: CRLF, CR and FF all become LF before escapes are read, so
   // "\75" + CRLF + "rl(" is url( to the browser and must be url( here too.
-  return css
-    .replace(/\r\n?|\f/g, "\n")
-    .replace(/\\(?:([0-9a-f]{1,6})[ \t\n]?|([^\n]))/gi, (_m, hex, ch) => {
-      if (hex) {
-        const code = parseInt(hex, 16);
-        // The browser turns these into U+FFFD, which can make "url(\0 #a)" a relative
-        // URL instead of a fragment; nothing legitimate needs them.
-        if (
-          code === 0 ||
-          (code >= 0xd800 && code <= 0xdfff) ||
-          code > 0x10ffff
-        ) {
-          reject("SVG contains a CSS escape for an invalid code point.");
-        }
-        return String.fromCodePoint(code);
+  const pre = css.replace(/\r\n?|\f/g, "\n");
+  const re = /\\(?:([0-9a-f]{1,6})[ \t\n]?|([^\n]))/gi;
+  let text = "";
+  const escaped: boolean[] = [];
+  let pos = 0;
+  for (let m = re.exec(pre); m; m = re.exec(pre)) {
+    const literal = pre.slice(pos, m.index);
+    text += literal;
+    for (let k = 0; k < literal.length; k++) escaped.push(false);
+    let char = m[2];
+    if (m[1]) {
+      const code = parseInt(m[1], 16);
+      // The browser turns these into U+FFFD, which can make "url(\0 #a)" a relative
+      // URL instead of a fragment; nothing legitimate needs them.
+      if (code === 0 || (code >= 0xd800 && code <= 0xdfff) || code > 0x10ffff) {
+        reject("SVG contains a CSS escape for an invalid code point.");
       }
-      return ch as string;
-    });
+      char = String.fromCodePoint(code);
+    }
+    text += char;
+    for (let k = 0; k < char.length; k++) escaped.push(true);
+    pos = re.lastIndex;
+  }
+  const rest = pre.slice(pos);
+  text += rest;
+  for (let k = 0; k < rest.length; k++) escaped.push(false);
+  return { text, escaped };
+}
+
+function decodeCssEscapes(css: string): string {
+  return decodeCss(css).text;
 }
 
 /** Strips CSS whitespace only (JS trim() would also strip a no-break space). */
@@ -116,12 +136,19 @@ function checkCssFunctions(css: string): string | null {
 }
 
 /** Checks every url(...) in a piece of CSS or an attribute; data fonts only when allowed. */
-function checkUrls(css: string, allowFontData: boolean): string | null {
+function checkUrls(decoded: DecodedCss, allowFontData: boolean): string | null {
+  const css = decoded.text;
   if (/@import/i.test(css)) return "SVG contains a CSS @import.";
   const re = /url\s*\(/gi;
   while (re.exec(css)) {
     const close = css.indexOf(")", re.lastIndex);
     if (close === -1) return "SVG contains an unterminated url(.";
+    // Inside url( an escaped quote is a literal URL character ("url(\22#a\22)" is the
+    // relative URL '"#a"'), and an escaped ")" does not end the token. Neither Mermaid
+    // nor the embedded font writes escapes there, so any escape is refused.
+    for (let j = re.lastIndex; j <= close; j++) {
+      if (decoded.escaped[j]) return "SVG contains a CSS escape inside url(.";
+    }
     // Only what CSS strips is trimmed: "url(&#160;#a)" is a relative URL to the
     // browser, not a fragment.
     const raw = cssTrim(
@@ -419,8 +446,8 @@ function checkDocument(input: string): void {
   // in <style> only; url() elsewhere must be a #fragment. Text nodes are not CSS, so
   // only the unambiguous url( and @import tokens are looked for there.
   for (const css of styles) {
-    const decoded = decodeCssEscapes(css);
-    const problem = checkCssFunctions(decoded) ?? checkUrls(decoded, true);
+    const decoded = decodeCss(css);
+    const problem = checkCssFunctions(decoded.text) ?? checkUrls(decoded, true);
     if (problem) reject(problem);
   }
   for (const value of attrValues) {
@@ -428,7 +455,7 @@ function checkDocument(input: string): void {
     if (problem) reject(problem);
   }
   const problem = checkUrls(
-    decodeCssEscapes([...outside, ...attrValues].join("\n")),
+    decodeCss([...outside, ...attrValues].join("\n")),
     false,
   );
   if (problem) reject(problem);
