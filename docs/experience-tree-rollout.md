@@ -117,6 +117,8 @@ The PR preview was rendered before the migration and is cached on it: redeploy t
 
 ## 7. Rollback (in this order)
 
+> **Closed on 2026-10-31.** The rollout was accepted and `supabase/migrations/20261031100000_post_rollout_cleanup.sql` dropped `private.experience_tree_backup`, so the steps below can no longer run. They stay as the record of the plan. A fix from here goes forward as a new migration.
+
 1. **App first:** Vercel Instant Rollback of production to the deployment before the merge (the old app must not read the new schema longer than needed, and the new app must not read the old one).
 2. Run [experience-tree-rollback.sql](experience-tree-rollback.sql) in the hosted SQL editor (one transaction). It needs `private.experience_tree_backup`, so do it before the follow-up that drops the backup.
 3. Redeploy the old app so cached pages render from the restored data: revert the merge on `main` and let it deploy to production (or use "Redeploy" on the pre-merge deployment). Never redeploy the merged code against the rolled-back schema.

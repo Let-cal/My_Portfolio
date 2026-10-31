@@ -1,3 +1,5 @@
+-- CLOSED 2026-10-31: 20261031100000_post_rollout_cleanup.sql dropped private.experience_tree_backup,
+-- which this script reads. Kept as the record of the rollback plan; do not run it.
 -- Rollback for supabase/migrations/*_experience_tree_projects.sql (experience tree).
 -- Order (docs/experience-tree-rollout.md, section 7): roll the production app back first (Vercel
 -- Instant Rollback), then run this file in the SQL editor of the hosted project as one transaction,

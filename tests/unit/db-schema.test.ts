@@ -10,6 +10,7 @@ import {
   renderSchemaSql,
   VERSIONED_TABLES,
   REALTIME_SQL,
+  PROJECT_LINK_INDEXES_SQL,
   RESTORE_BARRIERS_SQL,
   REVIEWER_SQL,
   VERSIONS_SECURITY_SQL,
@@ -500,5 +501,31 @@ describe("read-only reviewer", () => {
       "utf8",
     ).replace(/\r\n/g, "\n");
     expect(migration).toContain(REVIEWER_SQL);
+  });
+});
+
+describe("post-rollout cleanup migration", () => {
+  const file = readdirSync("supabase/migrations").find((f) =>
+    /^\d{14}_post_rollout_cleanup\.sql$/.test(f),
+  );
+  const sql = file
+    ? readFileSync(`supabase/migrations/${file}`, "utf8").replace(/\r\n/g, "\n")
+    : "";
+
+  it("indexes the two project links in the migration and the generated schema", () => {
+    expect(file).toBeDefined();
+    for (const column of ["experience_id", "education_id"]) {
+      const line = `create index projects_${column} on public.projects (${column});`;
+      expect(PROJECT_LINK_INDEXES_SQL).toContain(line);
+      expect(sql).toContain(line);
+    }
+    expect(renderSchemaSql()).toContain(PROJECT_LINK_INDEXES_SQL);
+  });
+
+  it("drops the rollout backup, which ends the experience tree rollback", () => {
+    expect(sql).toContain("drop table private.experience_tree_backup;");
+    expect(renderSchemaSql()).not.toContain("experience_tree_backup");
+    const runbook = readFileSync("docs/experience-tree-rollout.md", "utf8");
+    expect(runbook).toContain(file);
   });
 });

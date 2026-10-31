@@ -105,6 +105,7 @@ export function renderSchemaSql(): string {
       REALTIME_SQL,
       REVIEWER_SQL,
       RESTORE_BARRIERS_SQL,
+      PROJECT_LINK_INDEXES_SQL,
     ].join("\n\n") + "\n"
   );
 }
@@ -452,3 +453,8 @@ end;
 $$;
 revoke execute on function public.admin_restore_version(bigint) from public, anon;
 grant execute on function public.admin_restore_version(bigint) to authenticated;`;
+
+/** Post-rollout cleanup (supabase/migrations/*_post_rollout_cleanup.sql): index the project links the tree joins on. */
+export const PROJECT_LINK_INDEXES_SQL = `-- Projects are read by the position or school they belong to.
+create index projects_experience_id on public.projects (experience_id);
+create index projects_education_id on public.projects (education_id);`;

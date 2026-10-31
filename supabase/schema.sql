@@ -563,3 +563,7 @@ end;
 $$;
 revoke execute on function public.admin_restore_version(bigint) from public, anon;
 grant execute on function public.admin_restore_version(bigint) to authenticated;
+
+-- Projects are read by the position or school they belong to.
+create index projects_experience_id on public.projects (experience_id);
+create index projects_education_id on public.projects (education_id);
