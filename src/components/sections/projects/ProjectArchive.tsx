@@ -41,6 +41,11 @@ const FLIP_MS = 300;
 const EASE = "cubic-bezier(0.2, 0.8, 0.2, 1)";
 /** Shared by the row title and the panel title while (and only while) the opening View Transition runs. */
 const TITLE_TRANSITION = "case-title";
+/**
+ * How long the opening transition waits for the panel title; the page is frozen meanwhile, so a cold panel chunk
+ * gets this much (an INP budget) and then the panel simply appears without the morph.
+ */
+const TITLE_WAIT_MS = 180;
 
 type TransitionDocument = Document & {
   startViewTransition?: (update: () => Promise<void>) => {
@@ -186,9 +191,12 @@ export function ProjectArchive({ groups }: { groups: ArchiveGroup[] }) {
   const shownItems = caseRows
     .filter((r) => active === "all" || r.kind === active)
     .map((r) => r.item);
-  // A deep-linked project that the filter hides still opens, walking the whole list.
+  // The last project opened, kept through the panel's close animation (the panel does the same with its item).
+  const [lastCaseId, setLastCaseId] = useState<string | null>(null);
+  if (caseId !== null && caseId !== lastCaseId) setLastCaseId(caseId);
+  // A deep-linked project that the filter hides still opens, walking the whole list, and closes with its fade.
   const panelItems =
-    caseId !== null && !shownItems.some((i) => i.id === caseId)
+    lastCaseId !== null && !shownItems.some((i) => i.id === lastCaseId)
       ? allItems
       : shownItems;
 
@@ -315,17 +323,26 @@ export function ProjectArchive({ groups }: { groups: ArchiveGroup[] }) {
     // The row title and the panel title share one name, each only on its side of the transition (two elements
     // with the same name at once would cancel it).
     let target: HTMLElement | null = null;
-    title.style.viewTransitionName = TITLE_TRANSITION;
-    const transition = start.call(document, async () => {
-      title.style.viewTransitionName = "";
-      flushSync(() => openCase(id));
-      target = await panelTitle(400);
-      if (target) target.style.viewTransitionName = TITLE_TRANSITION;
-    });
     const clear = () => {
       title.style.viewTransitionName = "";
       if (target) target.style.viewTransitionName = "";
     };
+    title.style.viewTransitionName = TITLE_TRANSITION;
+    let transition: ReturnType<typeof start>;
+    try {
+      transition = start.call(document, async () => {
+        title.style.viewTransitionName = "";
+        flushSync(() => openCase(id));
+        target = await panelTitle(TITLE_WAIT_MS);
+        if (target) target.style.viewTransitionName = TITLE_TRANSITION;
+      });
+    } catch (error) {
+      // Refused outright (another transition, a hidden document): no morph, but the panel still opens.
+      console.warn("[archive] view transition failed", error);
+      clear();
+      openCase(id);
+      return;
+    }
     transition.ready.catch(() => {});
     transition.updateCallbackDone.catch(() => {});
     transition.finished.then(clear, clear);

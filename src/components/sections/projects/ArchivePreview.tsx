@@ -93,14 +93,22 @@ export function ArchivePreview({
       setState({ id: key, on: true });
       run();
     }
-    /** While anchored to a focused row, re-aim only when the page moves under it (no per-frame polling). */
+    /**
+     * While anchored to a focused row, re-aim only when the page moves under it (no per-frame polling): a scroll, a
+     * resize, or the rows' box changing size without either (a filter change, a late web font).
+     */
     const onViewport = () => {
       if (anchored && row) run();
     };
+    const layout =
+      typeof ResizeObserver === "function"
+        ? new ResizeObserver(onViewport)
+        : null;
     function anchor() {
       if (!anchored) {
         window.addEventListener("scroll", onViewport, VIEWPORT);
         window.addEventListener("resize", onViewport, VIEWPORT);
+        layout?.observe(root);
       }
       anchored = true;
     }
@@ -108,6 +116,7 @@ export function ArchivePreview({
       if (anchored) {
         window.removeEventListener("scroll", onViewport, VIEWPORT);
         window.removeEventListener("resize", onViewport, VIEWPORT);
+        layout?.disconnect();
       }
       anchored = false;
     }
@@ -157,6 +166,7 @@ export function ArchivePreview({
     return () => {
       cancelAnimationFrame(frame);
       unanchor();
+      layout?.disconnect();
       root.removeEventListener("pointermove", onMove);
       root.removeEventListener("pointerout", onLeave);
       root.removeEventListener("pointerdown", hide);

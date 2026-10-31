@@ -12,6 +12,8 @@
   --jt-vermilion: #c8361f;
   --jt-seal-ink: #fbe9df;
   --jt-seal-line: #f0644a;
+  /* The filled hanko / seal: a shade darker than the vermilion, so the seal ink keeps 4.5:1 on it. */
+  --jt-seal-fill: #b02e19;
   --jt-gold: #c9a45c;
   --jt-gold-edge: #5b4a26;
   --jt-line: rgb(255 255 255 / 9%);
@@ -26,6 +28,8 @@
   --jt-bleed-teal: rgb(63 184 169 / 11%);
   --jt-glow:
     0 0 0 1px rgb(240 122 42 / 20%), 0 12px 40px -18px rgb(240 122 42 / 55%);
+  /* A card lifted over the page (the archive's hover preview). */
+  --jt-pop-shadow: 0 20px 50px -12px rgb(0 0 0 / 55%);
   --jt-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --jt-gutter: 2.75rem;
 
@@ -47,6 +51,7 @@
   --jt-bleed-teal: rgb(15 118 110 / 9%);
   --jt-glow:
     0 0 0 1px rgb(240 122 42 / 25%), 0 12px 36px -20px rgb(240 122 42 / 45%);
+  --jt-pop-shadow: 0 18px 40px -14px rgb(60 40 20 / 35%);
 }
 
 @media (min-width: 640px) {
@@ -154,7 +159,7 @@
 }
 .jt-hanko[data-state="open"] {
   /* A shade darker than the border so the 9 px seal text keeps 4.5:1 (axe checks it although it is aria-hidden). */
-  background: #b02e19;
+  background: var(--jt-seal-fill);
   color: var(--jt-seal-ink);
   box-shadow:
     0 0 0 3px var(--background),
