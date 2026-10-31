@@ -29,16 +29,17 @@ function decodeEntities(text: string): string {
 
 /** Resolves CSS escapes such as \75 rl( so they cannot hide a url() or @import. */
 function decodeCssEscapes(css: string): string {
-  return css.replace(
-    /\\(?:([0-9a-f]{1,6})[ \t\r\n\f]?|([^\n]))/gi,
-    (_m, hex, ch) => {
+  // CSS input preprocessing: CRLF, CR and FF all become LF before escapes are read, so
+  // "\75" + CRLF + "rl(" is url( to the browser and must be url( here too.
+  return css
+    .replace(/\r\n?|\f/g, "\n")
+    .replace(/\\(?:([0-9a-f]{1,6})[ \t\n]?|([^\n]))/gi, (_m, hex, ch) => {
       if (hex) {
         const code = parseInt(hex, 16);
         return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : "";
       }
       return ch as string;
-    },
-  );
+    });
 }
 
 /** CSS functions that can fetch a resource without url(); checked in CSS contexts only. */
@@ -244,9 +245,20 @@ function checkDocument(svg: string): void {
   if (/<!ENTITY/i.test(svg)) reject("SVG declares an XML ENTITY.");
   if (/<!DOCTYPE/i.test(svg)) reject("SVG contains a DOCTYPE declaration.");
 
+  // XML 1.0 forbids C0 controls other than tab, LF and CR (ESC switches ISO-2022-JP
+  // into double-byte mode, which can move the markup boundaries).
+  if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(svg)) {
+    reject("SVG contains a control character that XML does not allow.");
+  }
+
   let pos = 0;
-  // An optional XML declaration may open the file; no other processing instruction.
-  const prolog = /^\s*<\?xml\s[^>]*\?>/.exec(svg);
+  // An optional XML declaration may open the file, with no encoding or UTF-8 only (a
+  // declared ISO-2022-JP, Shift_JIS or UTF-16 changes how the bytes are read); no other
+  // processing instruction.
+  const prolog =
+    /^<\?xml\s+version\s*=\s*(["'])1\.\d+\1(?:\s+encoding\s*=\s*(["'])utf-8\2)?(?:\s+standalone\s*=\s*(["'])(?:yes|no)\3)?\s*\?>/i.exec(
+      svg,
+    );
   if (prolog) pos = prolog[0].length;
 
   const stack: string[] = [];
@@ -305,7 +317,11 @@ function checkDocument(svg: string): void {
     if (stack[stack.length - 1] === "style") {
       reject("SVG <style> may contain only text.");
     }
+    const seen = new Set<string>();
     for (const attr of tag.attrs) {
+      if (seen.has(attr.name))
+        reject("SVG repeats an attribute on one element.");
+      seen.add(attr.name);
       checkAttribute(attr.name, attr.value);
       attrValues.push(decodeEntities(attr.value));
     }
