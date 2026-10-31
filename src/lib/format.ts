@@ -81,17 +81,26 @@ export function monthsBetween(
 /**
  * `{count}` filled in a duration message. The production build precompiles message JSON (next-intl `precompile`),
  * so a message with an argument arrives as its parsed form, e.g. `[["count"], " yr"]`, rather than the source
- * string the tests and the dev server see; both are handled.
+ * string the tests and the dev server see; both are handled. Only the `count` argument is filled; any other part
+ * (an unknown argument, a stray value) is left out rather than shown as the count.
  */
 function fill(message: unknown, count: number): string {
   if (typeof message === "string")
-    return message.replace("{count}", String(count));
-  if (Array.isArray(message))
-    return message
-      .map((part) => (typeof part === "string" ? part : String(count)))
-      .join("");
-  return String(message);
+    return message.replaceAll("{count}", String(count));
+  if (!Array.isArray(message)) return "";
+  return message
+    .map((part) =>
+      typeof part === "string"
+        ? part
+        : Array.isArray(part) && part[0] === "count"
+          ? String(count)
+          : "",
+    )
+    .join("");
 }
+
+/** What goes between the year and the month part of a duration: nothing in Japanese ("1年2か月"), else a space. */
+const DURATION_GAP: Record<Locale, string> = { en: " ", ja: "", vi: " " };
 
 /**
  * A span as years and months: "1 yr 2 mos", "3 mos", "1 yr" (EN), "1 năm 2 tháng" (VI), "1年2か月" (JA). The
@@ -113,7 +122,7 @@ export function formatDuration(
     ...(years > 0 ? [part(years, words.yearOne, words.yearOther)] : []),
     ...(months > 0 ? [part(months, words.monthOne, words.monthOther)] : []),
   ];
-  return parts.join(locale === "ja" ? "" : " ");
+  return parts.join(DURATION_GAP[locale]);
 }
 
 /**

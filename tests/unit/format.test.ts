@@ -85,6 +85,28 @@ describe("formatDuration with precompiled messages", () => {
     expect(compiled("2025-08", "2026-09", "en")).toBe("1 yr 2 mos");
     vi.doUnmock("@/messages/en.json");
   });
+
+  it("fills only the count argument, and every {count} of a source string", async () => {
+    vi.resetModules();
+    vi.doMock("@/messages/en.json", async (importOriginal) => {
+      const actual = (await importOriginal()) as {
+        default: typeof import("@/messages/en.json");
+      };
+      const en = structuredClone(actual.default);
+      (en.common.duration as unknown as Record<string, unknown>) = {
+        yearOne: [["count"], " yr", ["other"]],
+        yearOther: [["count"], " yrs", 7],
+        monthOne: "{count} mo ({count})",
+        monthOther: { bad: true },
+      };
+      return { default: en };
+    });
+    const { formatDuration: compiled } = await import("@/lib/format");
+    expect(compiled("2025-08", "2026-08", "en")).toBe("1 yr 1 mo (1)");
+    expect(compiled("2024-01", "2025-12", "en")).toBe("2 yrs");
+    expect(compiled("2025-01", "2025-03", "en")).toBe("");
+    vi.doUnmock("@/messages/en.json");
+  });
 });
 
 describe("kanjiYear", () => {

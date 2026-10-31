@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { contentSchema, type Content, type Project } from "@/content/schema";
+import {
+  contentSchema,
+  type Content,
+  type Experience,
+  type Project,
+} from "@/content/schema";
 import seed from "@/content/seed.json";
 import {
   buildJourney,
@@ -444,6 +449,55 @@ describe("buildJourney stints and timeline", () => {
     expect(skg.timeline!.months).toBe(17);
     expect(skg.duration).toBe("1 yr 5 mos");
     expect(skg.timeline!.segments[0].to).toBe(1);
+  });
+
+  it("marks no promotion between two full-time, two internship or a full-time then internship stint", () => {
+    const promoted = (older: string, newer: string) => {
+      const c = base();
+      c.experiences.find((e) => e.id === "skg-intern")!.employmentType =
+        older as Experience["employmentType"];
+      c.experiences.find((e) => e.id === "skg-engineer")!.employmentType =
+        newer as Experience["employmentType"];
+      const skg = buildJourney(c, "en", t).find(
+        (p) => p.anchor === "exp-skg-software",
+      )!;
+      return [skg.stints.map((s) => s.promotedFrom), skg.summaryLabel];
+    };
+    expect(promoted("full-time", "full-time")).toEqual([[null, null], null]);
+    expect(promoted("internship", "internship")).toEqual([[null, null], null]);
+    expect(promoted("full-time", "internship")).toEqual([[null, null], null]);
+  });
+
+  it("a company with a single project has no timeline", () => {
+    const c = base();
+    c.projects = c.projects.filter(
+      (p) => p.kind !== "work" || p.id === "skg-coa",
+    );
+    const skg = buildJourney(c, "en", t).find(
+      (p) => p.anchor === "exp-skg-software",
+    )!;
+    expect(skg.children.map((ch) => ch.id)).toEqual(["skg-coa"]);
+    expect(skg.chip).toEqual({ count: 1 });
+    expect(skg.timeline).toBeNull();
+  });
+
+  it("an open-ended project runs its duration and bar up to now", () => {
+    const c = base();
+    c.experiences.find((e) => e.id === "skg-engineer")!.end = null;
+    c.projects.find((p) => p.id === "skg-ai-agent")!.end = null;
+    const skg = buildJourney(c, "en", t, new Date(2026, 11, 5)).find(
+      (p) => p.anchor === "exp-skg-software",
+    )!;
+    const child = skg.children.find((ch) => ch.id === "skg-ai-agent")!;
+    expect(child.period).toBe("Apr 2026 – Present");
+    expect(child.duration).toBe("9 mos");
+    const bar = skg.timeline!.bars.find((b) => b.id === "skg-ai-agent")!;
+    // 2025-08 .. 2026-12 is 17 months; the project runs from month 8 to the end.
+    expect(bar.from).toBeCloseTo(8 / 17);
+    expect(bar.to).toBe(1);
+    // A closed project keeps its own end.
+    const closed = skg.timeline!.bars.find((b) => b.id === "skg-coa")!;
+    expect(closed.to).toBeCloseTo(8 / 17);
   });
 
   it("child result and duration", () => {

@@ -237,6 +237,8 @@ function stintsOf(
       children: children.filter((c) => c.stintId === s.id),
     };
   });
+  // Defensive only: `buildJourney` hands in just the projects whose stint is in this group, so today this is always
+  // empty. Kept so a future caller that passes other projects still shows them instead of dropping them silently.
   const orphans = children.filter((c) => !c.stintId || !known.has(c.stintId));
   if (orphans.length > 0)
     result.push({
@@ -267,11 +269,11 @@ function axisOf(start: string, months: number, locale: Locale) {
   return axis;
 }
 
+/** `projects` are the company's projects in the order of its children (newest first), one bar each. */
 function timelineOf(
   range: { start: string; end: string | null },
   stints: JourneyStint[],
   projects: Project[],
-  children: JourneyChild[],
   locale: Locale,
   now: Date,
 ): Timeline {
@@ -281,7 +283,6 @@ function timelineOf(
     from: clamp01((monthIndex(start) - first) / months),
     to: clamp01((monthIndex(end ?? currentMonth(now)) + 1 - first) / months),
   });
-  const byId = new Map(projects.map((p) => [p.id, p]));
   return {
     start: range.start,
     months,
@@ -289,15 +290,12 @@ function timelineOf(
     segments: stints
       .filter((s) => s.id !== "")
       .map((s) => ({ id: s.id, label: s.shortLabel, ...frac(s.start, s.end) })),
-    bars: children.map((c) => {
-      const p = byId.get(c.id)!;
-      return {
-        id: c.id,
-        anchor: c.anchor,
-        title: c.title,
-        ...frac(p.start, p.end),
-      };
-    }),
+    bars: projects.map((p) => ({
+      id: p.id,
+      anchor: `tree-${p.id}`,
+      title: p.title,
+      ...frac(p.start, p.end),
+    })),
   };
 }
 
@@ -382,18 +380,20 @@ export function buildJourney(
 ): JourneyParent[] {
   const projects = content.projects.filter((p) => p.published);
 
-  const childrenFor = (match: (p: Project) => boolean) =>
+  const projectsFor = (match: (p: Project) => boolean) =>
     projects
       .filter(match)
-      .sort((a, b) => newestStart(a, b) || a.sortIndex - b.sortIndex)
-      .map((p) => childOf(p, locale, t, now));
+      .sort((a, b) => newestStart(a, b) || a.sortIndex - b.sortIndex);
+  const childrenFor = (match: (p: Project) => boolean) =>
+    projectsFor(match).map((p) => childOf(p, locale, t, now));
 
   const companies = companyGroups(content).map(([name, stints]) => {
     const ids = new Set(stints.map((s) => s.id));
-    const children = childrenFor(
+    const own = projectsFor(
       (p) =>
         p.kind === "work" && p.experienceId !== null && ids.has(p.experienceId),
     );
+    const children = own.map((p) => childOf(p, locale, t, now));
     const { start, end } = span(stints);
     const summary = unique(stints.map((s) => pickLocale(s.summary, locale)));
     const stintList = stintsOf(stints, children, locale, now);
@@ -424,14 +424,7 @@ export function buildJourney(
         : null,
       timeline:
         children.length >= 2
-          ? timelineOf(
-              { start, end },
-              stintList,
-              projects,
-              children,
-              locale,
-              now,
-            )
+          ? timelineOf({ start, end }, stintList, own, locale, now)
           : null,
       children,
       chip:
