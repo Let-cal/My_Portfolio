@@ -265,7 +265,7 @@ test("case study opens from a child card", async ({ page }) => {
   await page.goto("/en");
   await page
     .locator("#tree-skg-coa")
-    .getByRole("button", { name: /case study: COA/ })
+    .getByRole("button", { name: /case study.*COA/ })
     .click();
   await expect(page.getByRole("dialog")).toBeVisible();
 });
