@@ -23,7 +23,13 @@
   --jt-chip: color-mix(in srgb, var(--muted-surface) 70%, transparent);
   --jt-gantt: linear-gradient(180deg, #14120f, #100f0d);
   --jt-bar: #3a342e;
+  /* Stint segments of the Gantt and the ink rail's stroke: koi into teal, the internship a lighter koi. Fixed in
+     both themes (the dark segment ink is checked against them). */
+  --jt-seg: linear-gradient(90deg, #f07a2a, #e0703b 60%, #3fb8a9);
+  --jt-seg-intern: linear-gradient(90deg, #ffb070, #f5a35a);
   --jt-seg-ink: #120c08;
+  --jt-rail-from: #f07a2a;
+  --jt-rail-to: #3fb8a9;
   --jt-bleed-koi: rgb(240 122 42 / 14%);
   --jt-bleed-teal: rgb(63 184 169 / 11%);
   --jt-glow:
@@ -128,6 +134,12 @@
 }
 .jt-rail-track {
   stroke: var(--jt-line-2);
+}
+.jt-rail stop:first-child {
+  stop-color: var(--jt-rail-from);
+}
+.jt-rail stop:last-child {
+  stop-color: var(--jt-rail-to);
 }
 /* The scroll engine writes the dash offset as an attribute; under reduced motion this rule draws the rail in full. */
 :root:not([data-motion="full"]) .jt-rail-fill {
@@ -269,11 +281,12 @@
 .jt-panel > div {
   min-height: 0;
   overflow: clip;
-  overflow-clip-margin: 1rem;
+  /* Room for the rows' hover glow (--jt-glow reaches about 2.1rem below a card). */
+  overflow-clip-margin: 2.25rem;
   clip-path: inset(0 0 100% 0);
 }
 .jt-panel[data-state="open"] > div {
-  clip-path: inset(-1rem -1rem -1rem -1rem);
+  clip-path: inset(-2.25rem);
 }
 :root[data-motion="full"] .jt-panel {
   transition:
@@ -611,29 +624,31 @@
   overflow: hidden;
   padding: 0 8px;
   border-radius: 6px;
-  background: linear-gradient(90deg, #f07a2a, #e0703b 60%, #3fb8a9);
+  background: var(--jt-seg);
   color: var(--jt-seg-ink);
   font-size: 0.6875rem;
   font-weight: 600;
   line-height: 20px;
   white-space: nowrap;
 }
-/* A label that would not fit is not painted (JourneyTimeline marks it); the layout, and so the check, stay the same. */
-.jt-seg[data-clip] {
-  color: transparent;
+/*
+ * A label that would not fit is not painted (JourneyTimeline marks it); the layout, and so the check, stay the same.
+ * Hidden by visibility on the text, not a transparent colour, which forced-colours mode would repaint.
+ */
+.jt-seg[data-clip] > span {
+  visibility: hidden;
 }
 .jt-blabel[data-clip] {
   visibility: hidden;
 }
 .jt-seg[data-intern] {
-  background: linear-gradient(90deg, #ffb070, #f5a35a);
+  background: var(--jt-seg-intern);
 }
 .jt-tick {
   position: absolute;
   top: -3px;
   color: var(--jt-teal);
   font-size: 0.625rem;
-  font-weight: 700;
   transform: translateX(-50%);
 }
 .jt-bar {

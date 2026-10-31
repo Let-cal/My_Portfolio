@@ -25,8 +25,9 @@ export function InkRail() {
           x2="0"
           y2="1000"
         >
-          <stop offset="0" stopColor="#f07a2a" />
-          <stop offset="1" stopColor="#3fb8a9" />
+          {/* Colours from journey.css (--jt-rail-from / --jt-rail-to). */}
+          <stop offset="0" />
+          <stop offset="1" />
         </linearGradient>
       </defs>
       <path className="jt-rail-track" d={D} />

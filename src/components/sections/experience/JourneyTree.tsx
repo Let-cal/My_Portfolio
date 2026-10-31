@@ -22,6 +22,7 @@ import { useRole } from "@/components/site/RoleProvider";
 import { caseItemsFromJourney } from "@/lib/case-items";
 import type { JourneyChild, JourneyParent } from "@/lib/journey";
 import { InkRail } from "./InkRail";
+import { PromotedArrow } from "./PromotedArrow";
 
 /**
  * The mini Gantt loads after first paint (initial JS budget); its slot reserves the exact height, so nothing shifts.
@@ -359,6 +360,7 @@ export function JourneyTree({ parents }: { parents: JourneyParent[] }) {
                 className="jt-more"
               >
                 {showDesc ? t("hideDescription") : t("showDescription")}
+                <span className="sr-only">: {child.title}</span>
               </button>
             ) : null}
             {child.links.map((link, i) => (
@@ -416,7 +418,10 @@ export function JourneyTree({ parents }: { parents: JourneyParent[] }) {
           const rows =
             stint.children.length > 0 ? (
               <ol className="jt-rows">
-                {stint.children.map((child) => renderChild(child, index++, 5))}
+                {/* Under a stint heading (h4) a row is an h5; the guard stint has no heading, so its rows stay h4. */}
+                {stint.children.map((child) =>
+                  renderChild(child, index++, stint.id ? 5 : 4),
+                )}
               </ol>
             ) : null;
           const next = parent.stints[i + 1];
@@ -437,19 +442,7 @@ export function JourneyTree({ parents }: { parents: JourneyParent[] }) {
               )}
               {next && stint.promotedFrom ? (
                 <p className="jt-promo">
-                  <svg
-                    aria-hidden="true"
-                    viewBox="0 0 8 10"
-                    width="0.7em"
-                    height="0.875em"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M4 9.25V1M1 4l3-3 3 3" />
-                  </svg>
+                  <PromotedArrow />
                   <span>{t("promoted", { month: stint.promotedFrom })}</span>
                 </p>
               ) : next ? (

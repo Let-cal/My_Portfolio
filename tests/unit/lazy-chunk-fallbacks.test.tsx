@@ -103,7 +103,7 @@ describe("a lazy chunk that fails to load", () => {
     expect(
       within(document.getElementById("tree-skg-ai-agent")!).getByRole(
         "button",
-        { name: /AI Agent/ },
+        { name: /case study: AI Agent/ },
       ),
     ).toBeInTheDocument();
     // The failure is not silent: one console warning with the error.

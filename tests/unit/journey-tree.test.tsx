@@ -209,7 +209,7 @@ describe("Experience journey tree", () => {
     const card = byId("tree-skg-coa");
     const coa = base.projects.find((p) => p.id === "skg-coa")!;
     const button = within(card).getByRole("button", {
-      name: "Show description",
+      name: "Show description: COA (Certificate of Analysis system)",
     });
     expect(button).toHaveAttribute("aria-expanded", "false");
     const region = byId(button.getAttribute("aria-controls")!);
@@ -223,6 +223,22 @@ describe("Experience journey tree", () => {
     await user.click(button);
     expect(button).toHaveAttribute("aria-expanded", "false");
     expect(region).toHaveAttribute("inert");
+  });
+
+  it("names every description button after its project", () => {
+    renderExperience();
+    const names = [...document.querySelectorAll("[data-journey-child]")]
+      .map((row) =>
+        within(row as HTMLElement).queryByRole("button", {
+          name: /^Show description/,
+          hidden: true,
+        }),
+      )
+      .filter((b): b is HTMLElement => b !== null)
+      .map((b) => b.textContent);
+    expect(names.length).toBeGreaterThan(3);
+    expect(new Set(names).size).toBe(names.length);
+    expect(names).toContain("Show description: AI Agent");
   });
 
   it("shows the result line in full and the duration on each row", () => {
@@ -471,7 +487,7 @@ describe("Case study sheet", () => {
     const user = userEvent.setup();
     renderExperience();
     const trigger = within(byId("tree-skg-ai-agent")).getByRole("button", {
-      name: /AI Agent/,
+      name: /case study: AI Agent/,
     });
     await user.click(trigger);
     const dialog = await screen.findByRole("dialog", {}, { timeout: 5000 });
