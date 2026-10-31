@@ -24,7 +24,7 @@ function markClipped(gantt: HTMLElement) {
 
 /**
  * The mini Gantt of a company (spec 5.1 A2, 5.2 B8): the month axis, the stint lane (koi gradient, the internship
- * lighter, a ↑ tick where a promotion starts) and one 10 px bar per project on the same axis.
+ * lighter, an up-arrow tick where a promotion starts) and one 10 px bar per project on the same axis.
  *
  * It is one `role="img"` labelled with a sentence listing the positions and project spans; the project rows below
  * are the accessible source, so nothing in here is focusable. A label that does not fit is hidden, never cut. Each bar carries `data-bar` and `data-sync=<project id>`: the tree's single delegated
