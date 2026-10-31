@@ -411,6 +411,19 @@ test("the default budget run also measures the project archive page", () =>
     mkdirSync(join(root, ".next/server/app/en"), { recursive: true });
     for (const route of ["en", "ja", "vi", "en/quick"])
       writeFileSync(join(root, ".next/server/app", `${route}.html`), "");
+    mkdirSync(join(root, ".next/static/chunks"), { recursive: true });
+    writeFileSync(join(root, ".next/static/chunks/figures.js"), "f()");
+    writeFileSync(
+      join(root, ".next/react-loadable-manifest.json"),
+      JSON.stringify({
+        "figures/LazyFigureScroll.tsx -> ./FigureScroll": {
+          files: ["static/chunks/figures.js"],
+        },
+        "figures/LazyFigureViewer.tsx -> ./FigureViewer": {
+          files: ["static/chunks/figures.js"],
+        },
+      }),
+    );
     const missing = spawnSync(process.execPath, [script, "--json"], {
       cwd: root,
       encoding: "utf8",
