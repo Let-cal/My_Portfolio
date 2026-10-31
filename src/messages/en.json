@@ -285,6 +285,21 @@
       "erd": "Data model",
       "flow": "Flow",
       "other": "Other"
+    },
+    "viewer": {
+      "close": "Close",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "fit": "Fit",
+      "actualSize": "Actual size",
+      "panLeft": "Pan left",
+      "panRight": "Pan right",
+      "panUp": "Pan up",
+      "panDown": "Pan down",
+      "index": "Figure index",
+      "canvas": "Figure canvas",
+      "count": "{count, plural, one {# figure} other {# figures}}",
+      "hint": "Esc closes · ←/→ change figure · + / - zoom · 0 fits"
     }
   },
   "projects": {

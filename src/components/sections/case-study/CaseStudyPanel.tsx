@@ -521,8 +521,7 @@ export function CaseStudyPanel({
                   figures={item.figures}
                   index={figIndex}
                   onIndexChange={(i) => setView({ figures: true, index: i })}
-                  // The full-screen viewer (spec 6.3) hooks in here.
-                  onEnlarge={() => {}}
+                  title={item.title}
                   theme={theme}
                 />
               </div>

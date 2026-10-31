@@ -279,3 +279,138 @@ test("reduced motion: switching views and figures animates no transform", async 
   );
   expect(moving).toEqual([]);
 });
+
+// ---- the full-screen viewer (spec 6.3) ----
+
+const viewer = (page: Page) => page.locator("[data-figure-viewer]");
+const zoomPercent = async (page: Page) =>
+  Number(
+    (await viewer(page).getByTestId("zoom-level").textContent())!.replace(
+      "%",
+      "",
+    ),
+  );
+
+/** Opens SitePlus on figure 2 (the diagram) and the viewer from the stage with Enter. */
+async function openViewer(page: Page) {
+  await page.goto("/en/projects?case=siteplus&fig=2");
+  await expect(tabs(page).nth(1)).toHaveAttribute("aria-selected", "true");
+  await hydrated(page, "[data-case-panel] [role=tabpanel]");
+  await panel(page).getByRole("tabpanel").focus();
+  await page.keyboard.press("Enter");
+  await expect(
+    page.getByRole("dialog", { name: `SitePlus — ${SECOND}` }),
+  ).toBeVisible();
+}
+
+test("viewer: opens from the stage with Enter, zooms with + and Fit, Esc returns to the same figure", async ({
+  page,
+}) => {
+  await openViewer(page);
+  await expect(
+    viewer(page).getByRole("group", { name: "Figure canvas" }),
+  ).toBeFocused();
+  const fitted = await zoomPercent(page);
+  await page.keyboard.press("+");
+  await page.keyboard.press("+");
+  expect(await zoomPercent(page)).toBeGreaterThanOrEqual(144);
+  // Zoomed: the pan buttons and the minimap are there.
+  await expect(
+    viewer(page).getByRole("button", { name: "Pan left" }),
+  ).toBeVisible();
+  await expect(viewer(page).locator("[data-minimap]")).toBeVisible();
+  // Every control is at least 24 px.
+  for (const button of await viewer(page).getByRole("button").all()) {
+    if (!(await button.isVisible())) continue;
+    const box = (await button.boundingBox())!;
+    expect(Math.min(box.width, box.height)).toBeGreaterThanOrEqual(24);
+  }
+  await viewer(page).getByRole("button", { name: "Fit" }).click();
+  expect(await zoomPercent(page)).toBe(fitted);
+  await expect(
+    viewer(page).getByRole("button", { name: "Pan left" }),
+  ).toHaveCount(0);
+  // ArrowLeft at fit changes figure; the panel behind follows.
+  await page.keyboard.press("ArrowLeft");
+  await expect(
+    page.getByRole("dialog", { name: `SitePlus — ${FIRST}` }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(viewer(page)).toHaveCount(0);
+  await expect(page.getByRole("dialog")).toHaveAccessibleName("SitePlus");
+  await expect(tabs(page).first()).toHaveAttribute("aria-selected", "true");
+  await expect(page).toHaveURL(/case=siteplus&fig=1$/);
+  await expect(panel(page).getByRole("tabpanel")).toBeFocused();
+});
+
+test("viewer: Esc during the open motion returns focus to the stage", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.addInitScript(() => sessionStorage.setItem("hello", "1"));
+  await page.goto("/en/projects?case=siteplus&fig=2");
+  await expect(page.locator("html")).toHaveAttribute("data-motion", "full");
+  await expect(tabs(page).nth(1)).toHaveAttribute("aria-selected", "true");
+  await hydrated(page, "[data-case-panel] [role=tabpanel]");
+  await panel(page).getByRole("tabpanel").focus();
+  await page.keyboard.press("Enter");
+  await expect(viewer(page)).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(viewer(page)).toHaveCount(0);
+  await expect(page.getByRole("dialog")).toHaveAccessibleName("SitePlus");
+  await expect(panel(page).getByRole("tabpanel")).toBeFocused();
+  await expect(tabs(page).nth(1)).toHaveAttribute("aria-selected", "true");
+});
+
+test("viewer: under 1024 px the index is a row of category chips", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 800, height: 700 });
+  await openViewer(page);
+  const index = viewer(page).getByRole("navigation", { name: "Figure index" });
+  const screens = index.getByRole("button", { name: "Screens · 1" });
+  const arch = index.getByRole("button", { name: "Architecture · 1" });
+  await expect(screens).toBeVisible();
+  await expect(arch).toBeVisible();
+  const a = (await screens.boundingBox())!;
+  const b = (await arch.boundingBox())!;
+  expect(Math.abs(a.y - b.y)).toBeLessThan(2);
+  expect(b.x).toBeGreaterThan(a.x + a.width - 1);
+  // The per-figure entries are left to the chips and the previous / next buttons.
+  await expect(index.getByRole("button", { name: FIRST })).toBeHidden();
+  // The chips sit above the canvas.
+  const canvas = (await viewer(page)
+    .getByRole("group", { name: "Figure canvas" })
+    .boundingBox())!;
+  expect(a.y + a.height).toBeLessThanOrEqual(canvas.y + 0.5);
+  await arch.focus();
+  await screens.click();
+  await expect(
+    page.getByRole("dialog", { name: `SitePlus — ${FIRST}` }),
+  ).toBeVisible();
+});
+
+for (const theme of ["dark", "light"] as const) {
+  test(`${theme}: the viewer passes axe, zoomed`, async ({ page }) => {
+    await page.addInitScript((theme) => {
+      localStorage.setItem("theme", theme);
+      sessionStorage.setItem("hello", "1");
+    }, theme);
+    await openViewer(page);
+    await expect(page.locator("html")).toHaveClass(new RegExp(theme));
+    await page.keyboard.press("+");
+    await expect(viewer(page).locator("[data-minimap]")).toBeVisible();
+    const { violations } = await new AxeBuilder({ page })
+      .include("[data-figure-viewer]")
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"])
+      .analyze();
+    const blocking = violations.filter(
+      ({ impact, id }) =>
+        impact === "serious" ||
+        impact === "critical" ||
+        id === "heading-order" ||
+        id === "label-content-name-mismatch",
+    );
+    expect(blocking, JSON.stringify(blocking, null, 2)).toEqual([]);
+  });
+}

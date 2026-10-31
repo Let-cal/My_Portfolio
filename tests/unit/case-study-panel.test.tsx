@@ -21,6 +21,14 @@ vi.mock(
     return { LazyFigureScroll: FigureScroll };
   },
 );
+vi.mock(
+  "@/components/sections/case-study/figures/LazyFigureViewer",
+  async () => {
+    const { FigureViewer } =
+      await import("@/components/sections/case-study/figures/FigureViewer");
+    return { LazyFigureViewer: FigureViewer };
+  },
+);
 import { contentSchema, type Content } from "@/content/schema";
 import {
   CaseStudyPanel,
@@ -633,6 +641,41 @@ describe("CaseStudyPanel figures view", () => {
     );
     // The spine shows the figure position in kanji numerals.
     expect(dialog).toHaveTextContent("図 一／二");
+  });
+
+  it("the viewer opens above the panel, its arrows move its own figure, and Esc returns to the stage on that figure", async () => {
+    const user = userEvent.setup();
+    window.history.replaceState(null, "", "/en/projects?case=siteplus");
+    renderPanel({ list: withFigures });
+    const panel = await screen.findByRole("dialog", { name: "SitePlus" });
+    await user.click(
+      within(panel).getByRole("button", { name: "Figures · 2" }),
+    );
+    await user.click(within(panel).getByRole("button", { name: "Enlarge" }));
+    const viewer = await screen.findByRole("dialog", {
+      name: "SitePlus — Mobile site-survey screen",
+    });
+    expect(viewer).toHaveAttribute("aria-modal", "true");
+    await user.keyboard("{ArrowRight}");
+    expect(viewer).toHaveAccessibleName(
+      "SitePlus — How the client, API and database connect",
+    );
+    // The panel moved with it (one step, not two) and is still on SitePlus.
+    await waitFor(() =>
+      expect(window.location.search).toBe("?case=siteplus&fig=2"),
+    );
+    await user.keyboard("{Escape}");
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: /Mobile|client, API/ }),
+      ).toBeNull(),
+    );
+    const panelAgain = screen.getByRole("dialog", { name: "SitePlus" });
+    expect(within(panelAgain).getAllByRole("tab")[1]).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(within(panelAgain).getByRole("tabpanel")).toHaveFocus();
   });
 
   it("with full motion the text leaves before 図 shows, and a project move cancels that exit", async () => {

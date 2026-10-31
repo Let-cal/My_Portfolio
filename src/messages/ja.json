@@ -285,6 +285,21 @@
       "erd": "データモデル",
       "flow": "フロー",
       "other": "その他"
+    },
+    "viewer": {
+      "close": "閉じる",
+      "zoomIn": "拡大",
+      "zoomOut": "縮小",
+      "fit": "全体表示",
+      "actualSize": "原寸",
+      "panLeft": "左へ移動",
+      "panRight": "右へ移動",
+      "panUp": "上へ移動",
+      "panDown": "下へ移動",
+      "index": "図の一覧",
+      "canvas": "図の表示領域",
+      "count": "図 {count} 点",
+      "hint": "Esc で閉じる · ←/→ で図を切り替え · + / - で拡大縮小 · 0 で全体表示"
     }
   },
   "projects": {

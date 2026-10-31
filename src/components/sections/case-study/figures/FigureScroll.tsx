@@ -18,6 +18,7 @@ import {
 import { jumpFigure, stepFigure, type FigureNav } from "@/lib/figures/nav";
 import type { FigureView } from "@/lib/figures/view";
 import { cn } from "@/lib/utils";
+import { LazyFigureViewer } from "./LazyFigureViewer";
 import styles from "./figures.module.css";
 
 export type FigureScrollProps = {
@@ -25,8 +26,8 @@ export type FigureScrollProps = {
   /** The current figure, 0-based. */
   index: number;
   onIndexChange: (i: number) => void;
-  /** Opens the full-screen viewer on figure `i`. */
-  onEnlarge: (i: number) => void;
+  /** The project title, for the full-screen viewer's label. */
+  title: string;
   theme: "light" | "dark";
 };
 
@@ -53,12 +54,15 @@ type Load = { key: string; state: "loaded" | "error" };
  * on the stage, the Enlarge button or a click on the figure call `onEnlarge`. A figure change cross-fades with the
  * Web Animations API (full motion: the old figure also drifts 12 px against the direction of travel); a new press
  * cancels the running transition instead of queueing it.
+ *
+ * Enlarge opens the full-screen viewer (spec 6.3) on the current figure. It is its own chunk, fetched on the first
+ * Enlarge; it moves this view along with it, so on close the stage shows the figure it ended on and gets focus.
  */
 export function FigureScroll({
   figures,
   index,
   onIndexChange,
-  onEnlarge,
+  title,
   theme,
 }: FigureScrollProps) {
   const t = useTranslations("caseStudy");
@@ -69,6 +73,11 @@ export function FigureScroll({
   const leavingRef = useRef<HTMLDivElement | null>(null);
   const currentRef = useRef<HTMLDivElement | null>(null);
   const running = useRef<Animation[]>([]);
+  const stageRef = useRef<HTMLDivElement | null>(null);
+
+  // The viewer chunk is requested on the first Enlarge only ("never" until then).
+  const [viewer, setViewer] = useState<"never" | "open" | "closed">("never");
+  const onEnlarge = () => setViewer("open");
 
   // The figure on screen and the one leaving it (kept only while its transition runs).
   const [shown, setShown] = useState(index);
@@ -163,148 +172,171 @@ export function FigureScroll({
   const leavingFigure = leaving ? figures[leaving.index] : undefined;
 
   return (
-    <div className={styles.scroll} onKeyDown={onKeyDown}>
-      <div className={styles.stageWrap}>
-        <div
-          role="tabpanel"
-          id={stageId}
-          aria-labelledby={tabId(index)}
-          tabIndex={0}
-          data-state={state}
-          className={cn(styles.stage, FOCUS)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && event.target === event.currentTarget) {
-              event.preventDefault();
-              onEnlarge(index);
-            }
-          }}
-        >
-          {leavingFigure ? (
-            <div
-              key={leaving!.n}
-              ref={leavingRef}
-              data-figure-leaving=""
-              aria-hidden="true"
-              className={styles.layer}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element -- figure urls are admin-supplied and may be any host */}
-              <img
-                src={figureSrc(leavingFigure, theme)}
-                alt=""
-                width={leavingFigure.width}
-                height={leavingFigure.height}
-                className={styles.figure}
-              />
-            </div>
-          ) : null}
-          <div ref={currentRef} className={styles.layer}>
-            {state === "error" ? (
-              <div className={styles.error}>
-                <p>{t("figureError")}</p>
-                <button
-                  type="button"
-                  onClick={() => setAttempt((a) => a + 1)}
-                  className={cn(styles.retry, FOCUS)}
-                >
-                  {t("retry")}
-                </button>
+    <>
+      <div className={styles.scroll} onKeyDown={onKeyDown}>
+        <div className={styles.stageWrap}>
+          <div
+            ref={stageRef}
+            role="tabpanel"
+            id={stageId}
+            aria-labelledby={tabId(index)}
+            tabIndex={0}
+            data-state={state}
+            className={cn(styles.stage, FOCUS)}
+            onKeyDown={(event) => {
+              if (
+                event.key === "Enter" &&
+                event.target === event.currentTarget
+              ) {
+                event.preventDefault();
+                onEnlarge();
+              }
+            }}
+          >
+            {leavingFigure ? (
+              <div
+                key={leaving!.n}
+                ref={leavingRef}
+                data-figure-leaving=""
+                aria-hidden="true"
+                className={styles.layer}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element -- figure urls are admin-supplied and may be any host */}
+                <img
+                  src={figureSrc(leavingFigure, theme)}
+                  alt=""
+                  width={leavingFigure.width}
+                  height={leavingFigure.height}
+                  className={styles.figure}
+                />
               </div>
-            ) : (
-              // eslint-disable-next-line @next/next/no-img-element -- figure urls are admin-supplied and may be any host
-              <img
-                key={loadKey}
-                src={src}
-                alt={current.alt}
-                width={current.width}
-                height={current.height}
-                className={styles.figure}
-                onLoad={() => setLoad({ key: loadKey, state: "loaded" })}
-                onError={() => setLoad({ key: loadKey, state: "error" })}
-                onClick={() => onEnlarge(index)}
-              />
-            )}
+            ) : null}
+            <div ref={currentRef} className={styles.layer}>
+              {state === "error" ? (
+                <div className={styles.error}>
+                  <p>{t("figureError")}</p>
+                  <button
+                    type="button"
+                    onClick={() => setAttempt((a) => a + 1)}
+                    className={cn(styles.retry, FOCUS)}
+                  >
+                    {t("retry")}
+                  </button>
+                </div>
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element -- figure urls are admin-supplied and may be any host
+                <img
+                  key={loadKey}
+                  src={src}
+                  alt={current.alt}
+                  width={current.width}
+                  height={current.height}
+                  className={styles.figure}
+                  onLoad={() => setLoad({ key: loadKey, state: "loaded" })}
+                  onError={() => setLoad({ key: loadKey, state: "error" })}
+                  onClick={onEnlarge}
+                />
+              )}
+            </div>
           </div>
+          <span className={styles.seal}>
+            <b aria-hidden="true" lang="ja">
+              {current.kanji}
+            </b>
+            <span>{t(`categories.${current.category}`)}</span>
+          </span>
+          <button
+            type="button"
+            onClick={onEnlarge}
+            className={cn(styles.enlarge, FOCUS)}
+          >
+            <Maximize2Icon aria-hidden="true" className="size-3.5" />
+            {t("enlarge")}
+          </button>
+          <button
+            type="button"
+            aria-label={t("prevFigure")}
+            aria-disabled={atStart || undefined}
+            onClick={() => go(stepFigure(nav, -1))}
+            className={cn(styles.side, styles.sidePrev, FOCUS)}
+          >
+            <ChevronLeftIcon aria-hidden="true" className="size-4" />
+          </button>
+          <button
+            type="button"
+            aria-label={t("nextFigure")}
+            aria-disabled={atEnd || undefined}
+            onClick={() => go(stepFigure(nav, 1))}
+            className={cn(styles.side, styles.sideNext, FOCUS)}
+          >
+            <ChevronRightIcon aria-hidden="true" className="size-4" />
+          </button>
         </div>
-        <span className={styles.seal}>
-          <b aria-hidden="true" lang="ja">
-            {current.kanji}
-          </b>
-          <span>{t(`categories.${current.category}`)}</span>
-        </span>
-        <button
-          type="button"
-          onClick={() => onEnlarge(index)}
-          className={cn(styles.enlarge, FOCUS)}
-        >
-          <Maximize2Icon aria-hidden="true" className="size-3.5" />
-          {t("enlarge")}
-        </button>
-        <button
-          type="button"
-          aria-label={t("prevFigure")}
-          aria-disabled={atStart || undefined}
-          onClick={() => go(stepFigure(nav, -1))}
-          className={cn(styles.side, styles.sidePrev, FOCUS)}
-        >
-          <ChevronLeftIcon aria-hidden="true" className="size-4" />
-        </button>
-        <button
-          type="button"
-          aria-label={t("nextFigure")}
-          aria-disabled={atEnd || undefined}
-          onClick={() => go(stepFigure(nav, 1))}
-          className={cn(styles.side, styles.sideNext, FOCUS)}
-        >
-          <ChevronRightIcon aria-hidden="true" className="size-4" />
-        </button>
-      </div>
 
-      <div className={styles.captionBox}>
-        <p className={styles.caption}>{current.caption}</p>
-        <p className={styles.note}>{current.note}</p>
-      </div>
-
-      <div className={styles.stripRow}>
-        <div role="tablist" aria-label={t("figures")} className={styles.strip}>
-          {figures.map((figure, i) => (
-            <button
-              key={figure.id}
-              ref={(el) => {
-                tabRefs.current[i] = el;
-              }}
-              type="button"
-              role="tab"
-              id={tabId(i)}
-              aria-selected={i === index}
-              aria-controls={stageId}
-              aria-label={figure.caption}
-              tabIndex={i === index ? 0 : -1}
-              onClick={() => go(jumpFigure(nav, i))}
-              className={cn(styles.tab, FOCUS)}
-              style={{ "--i": i } as CSSProperties}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element -- figure urls are admin-supplied and may be any host */}
-              <img
-                src={figureSrc(figure, theme)}
-                alt=""
-                loading="lazy"
-                width={figure.width}
-                height={figure.height}
-              />
-              <span aria-hidden="true" lang="ja" className={styles.tabKanji}>
-                {figure.kanji}
-              </span>
-            </button>
-          ))}
+        <div className={styles.captionBox}>
+          <p className={styles.caption}>{current.caption}</p>
+          <p className={styles.note}>{current.note}</p>
         </div>
-        <span aria-hidden="true" className={styles.count}>
-          {index + 1} / {count}
-        </span>
-      </div>
 
-      <p className="sr-only" aria-live="polite">
-        {`${t("figurePosition", { n: index + 1, count })}: ${current.caption}`}
-      </p>
-    </div>
+        <div className={styles.stripRow}>
+          <div
+            role="tablist"
+            aria-label={t("figures")}
+            className={styles.strip}
+          >
+            {figures.map((figure, i) => (
+              <button
+                key={figure.id}
+                ref={(el) => {
+                  tabRefs.current[i] = el;
+                }}
+                type="button"
+                role="tab"
+                id={tabId(i)}
+                aria-selected={i === index}
+                aria-controls={stageId}
+                aria-label={figure.caption}
+                tabIndex={i === index ? 0 : -1}
+                onClick={() => go(jumpFigure(nav, i))}
+                className={cn(styles.tab, FOCUS)}
+                style={{ "--i": i } as CSSProperties}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element -- figure urls are admin-supplied and may be any host */}
+                <img
+                  src={figureSrc(figure, theme)}
+                  alt=""
+                  loading="lazy"
+                  width={figure.width}
+                  height={figure.height}
+                />
+                <span aria-hidden="true" lang="ja" className={styles.tabKanji}>
+                  {figure.kanji}
+                </span>
+              </button>
+            ))}
+          </div>
+          <span aria-hidden="true" className={styles.count}>
+            {index + 1} / {count}
+          </span>
+        </div>
+
+        <p className="sr-only" aria-live="polite">
+          {`${t("figurePosition", { n: index + 1, count })}: ${current.caption}`}
+        </p>
+      </div>
+      {/* A sibling of the view, not a child: its keys must not reach the view's own handler. */}
+      {viewer === "never" ? null : (
+        <LazyFigureViewer
+          figures={figures}
+          index={index}
+          open={viewer === "open"}
+          onIndexChange={onIndexChange}
+          onClose={() => setViewer("closed")}
+          title={title}
+          theme={theme}
+          returnFocusRef={stageRef}
+        />
+      )}
+    </>
   );
 }

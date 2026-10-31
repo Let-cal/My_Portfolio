@@ -285,6 +285,21 @@
       "erd": "Mô hình dữ liệu",
       "flow": "Luồng",
       "other": "Khác"
+    },
+    "viewer": {
+      "close": "Đóng",
+      "zoomIn": "Phóng to",
+      "zoomOut": "Thu nhỏ",
+      "fit": "Vừa khung",
+      "actualSize": "Kích thước thật",
+      "panLeft": "Dịch sang trái",
+      "panRight": "Dịch sang phải",
+      "panUp": "Dịch lên",
+      "panDown": "Dịch xuống",
+      "index": "Mục lục hình",
+      "canvas": "Vùng xem hình",
+      "count": "{count} hình",
+      "hint": "Esc để đóng · ←/→ chuyển hình · + / - phóng to, thu nhỏ · 0 vừa khung"
     }
   },
   "projects": {

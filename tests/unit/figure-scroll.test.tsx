@@ -6,6 +6,36 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "@/messages/en.json";
 import { FigureScroll } from "@/components/sections/case-study/figures/FigureScroll";
 import type { FigureView } from "@/lib/figures/view";
+import type { FigureViewerProps } from "@/components/sections/case-study/figures/FigureViewer";
+
+// The viewer is its own chunk (figure-viewer.test.tsx covers it); here a stand-in records how it is opened.
+const viewerProps = vi.hoisted(() => ({
+  last: null as FigureViewerProps | null,
+}));
+vi.mock("@/components/sections/case-study/figures/LazyFigureViewer", () => ({
+  LazyFigureViewer: (props: FigureViewerProps) => {
+    viewerProps.last = props;
+    return props.open ? (
+      <div data-testid="viewer" data-index={props.index}>
+        <button
+          type="button"
+          onClick={() => props.onIndexChange(props.index + 1)}
+        >
+          viewer next
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            props.onClose();
+            props.returnFocusRef?.current?.focus();
+          }}
+        >
+          viewer close
+        </button>
+      </div>
+    ) : null;
+  },
+}));
 
 /** Six figures: images and diagrams, the second one a diagram with light and dark renderings. */
 const figures: FigureView[] = Array.from({ length: 6 }, (_, i) => {
@@ -29,11 +59,9 @@ const figures: FigureView[] = Array.from({ length: 6 }, (_, i) => {
 function Harness({
   initial = 0,
   theme = "light",
-  onEnlarge = () => {},
 }: {
   initial?: number;
   theme?: "light" | "dark";
-  onEnlarge?: (i: number) => void;
 }) {
   const [index, setIndex] = useState(initial);
   return (
@@ -41,7 +69,7 @@ function Harness({
       figures={figures}
       index={index}
       onIndexChange={setIndex}
-      onEnlarge={onEnlarge}
+      title="SitePlus"
       theme={theme}
     />
   );
@@ -262,17 +290,37 @@ describe("FigureScroll", () => {
     }
   });
 
-  it("Enter on the stage calls onEnlarge with the index", async () => {
+  it("Enter on the stage, Enlarge and a click on the figure open the viewer on the current figure", async () => {
     const user = userEvent.setup();
-    const onEnlarge = vi.fn();
-    renderScroll({ initial: 3, onEnlarge });
+    viewerProps.last = null;
+    renderScroll({ initial: 3 });
+    // The viewer chunk is not requested before the first Enlarge.
+    expect(viewerProps.last).toBeNull();
     stage().focus();
     await user.keyboard("{Enter}");
-    expect(onEnlarge).toHaveBeenCalledWith(3);
+    expect(screen.getByTestId("viewer")).toHaveAttribute("data-index", "3");
+    expect(viewerProps.last).toMatchObject({
+      open: true,
+      title: "SitePlus",
+      theme: "light",
+    });
+    await user.click(screen.getByRole("button", { name: "viewer close" }));
+    expect(screen.queryByTestId("viewer")).toBeNull();
     await user.click(screen.getByRole("button", { name: "Enlarge" }));
-    expect(onEnlarge).toHaveBeenCalledTimes(2);
-    expect(onEnlarge).toHaveBeenLastCalledWith(3);
+    expect(screen.getByTestId("viewer")).toHaveAttribute("data-index", "3");
+    await user.click(screen.getByRole("button", { name: "viewer close" }));
     await user.click(within(stage()).getByRole("img"));
-    expect(onEnlarge).toHaveBeenCalledTimes(3);
+    expect(screen.getByTestId("viewer")).toBeInTheDocument();
+  });
+
+  it("the stage follows the viewer and gets focus back when it closes", async () => {
+    const user = userEvent.setup();
+    renderScroll({ initial: 1 });
+    await user.click(screen.getByRole("button", { name: "Enlarge" }));
+    await user.click(screen.getByRole("button", { name: "viewer next" }));
+    expect(screen.getByTestId("viewer")).toHaveAttribute("data-index", "2");
+    await user.click(screen.getByRole("button", { name: "viewer close" }));
+    expect(tabs()[2]).toHaveAttribute("aria-selected", "true");
+    expect(stage()).toHaveFocus();
   });
 });
