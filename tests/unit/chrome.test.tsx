@@ -4,8 +4,10 @@ import { NextIntlClientProvider } from "next-intl";
 import type { ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // RoleProvider (used by the side rail) pulls in the routing helpers; a plain stub keeps the test free of the Next runtime.
+const route = vi.hoisted(() => ({ pathname: "/en" }));
 vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(""),
+  usePathname: () => route.pathname,
 }));
 vi.mock("@/i18n/navigation", () => ({
   useRouter: () => ({ replace: vi.fn() }),
@@ -119,6 +121,7 @@ const railProps = {
 };
 
 beforeEach(() => {
+  route.pathname = "/en";
   io.callbacks = [];
   io.options = [];
   vi.stubGlobal("IntersectionObserver", FakeObserver);
@@ -133,11 +136,14 @@ afterEach(() => {
 });
 
 describe("SideRail", () => {
-  it("marks the section crossing the reading line with aria-current and a long accent line", () => {
+  it("marks the section crossing the reading line with aria-current", () => {
     mountSections();
     render(withIntl(<SideRail {...railProps} />));
     const nav = screen.getByRole("navigation", { name: en.header.primaryNav });
-    expect(within(nav).getAllByRole("link")).toHaveLength(SECTION_IDS.length);
+    // The seven sections plus the all-projects page.
+    expect(within(nav).getAllByRole("link")).toHaveLength(
+      SECTION_IDS.length + 1,
+    );
     expect(nav.querySelector("[aria-current]")).toBeNull();
 
     io.fire([
@@ -147,9 +153,33 @@ describe("SideRail", () => {
     const active = within(nav).getByRole("link", { name: en.nav.projects });
     expect(active).toHaveAttribute("aria-current", "true");
     expect(nav.querySelectorAll("[aria-current]")).toHaveLength(1);
-    expect(active.querySelector("span")).toHaveClass("w-16");
+    // The ink-thread styling keys off aria-current (ink-thread.css); the other links stay plain.
     const other = within(nav).getByRole("link", { name: en.nav.skills });
-    expect(other.querySelector("span")).toHaveClass("w-8");
+    expect(other).not.toHaveAttribute("aria-current");
+  });
+
+  it("links to the all-projects page and marks it current there", () => {
+    render(withIntl(<SideRail {...railProps} />));
+    const nav = screen.getByRole("navigation", { name: en.header.primaryNav });
+    const all = within(nav).getByRole("link", { name: en.archive.nav });
+    expect(all).toHaveAttribute("href", "/en/projects");
+    expect(all).not.toHaveAttribute("aria-current");
+  });
+
+  it("on the archive page, marks the all-projects link current and keeps section links in-page", () => {
+    route.pathname = "/ja/projects";
+    render(withIntl(<SideRail {...railProps} />, "ja"));
+    const nav = screen.getByRole("navigation", { name: ja.header.primaryNav });
+    expect(
+      within(nav).getByRole("link", { name: ja.archive.nav }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      within(nav).getByRole("link", { name: ja.archive.nav }),
+    ).toHaveAttribute("href", "/ja/projects");
+    // The archive page itself sends these to the home page (no routing code in the home bundle).
+    expect(
+      within(nav).getByRole("link", { name: ja.nav.skills }),
+    ).toHaveAttribute("href", "#skills");
   });
 
   it("observes a thin band around the middle of the viewport", () => {

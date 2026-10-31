@@ -300,7 +300,7 @@ export function SkillMatrix({
                     <div className="absolute bottom-2 left-1/2 w-44 origin-bottom-left -rotate-45 text-left">
                       <Link
                         href={`/admin/${col.kind === "experience" ? "experiences" : "projects"}/${col.id}`}
-                        title={`${col.kind === "experience" ? "Kinh nghiệm" : "Dự án"}: ${col.label}${col.hidden ? " (đang ẩn)" : ""}`}
+                        title={`${col.kind === "experience" ? "Vị trí" : "Dự án"}: ${col.label}${col.hidden ? " (đang ẩn)" : ""}`}
                         className={cn(
                           "block truncate rounded-sm leading-4 transition-colors duration-150 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                           hot?.c === i && "font-semibold text-primary",

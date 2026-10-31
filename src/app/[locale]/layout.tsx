@@ -10,7 +10,6 @@ import { Footer } from "@/components/site/Footer";
 import { Header } from "@/components/site/Header";
 import { HelloIntro } from "@/components/site/HelloIntro";
 import { JapaneseTypography } from "@/components/site/JapaneseTypography";
-import { AccentTypography } from "@/components/site/AccentTypography";
 import { HighlightProvider } from "@/components/site/HighlightProvider";
 import { HELLO_SEEN_SCRIPT } from "@/components/site/hello-script";
 import {
@@ -36,7 +35,7 @@ import {
   buildPersonJsonLd,
   serializeJsonLd,
 } from "@/lib/metadata";
-import { SpeedInsights } from "@vercel/speed-insights/next";
+import { DeferredSpeedInsights } from "@/components/site/DeferredSpeedInsights";
 import { DeferredToaster } from "@/components/site/DeferredToaster";
 import { PreviewBanner } from "@/components/site/PreviewBanner";
 import { getPreviewContent } from "@/lib/data/preview-content";
@@ -135,7 +134,6 @@ export default async function LocaleLayout({
         />
         <NextIntlClientProvider>
           <ThemeSync />
-          <AccentTypography />
           {locale === "ja" && <JapaneseTypography />}
           <MotionProvider>
             <RoleProvider>
@@ -184,7 +182,7 @@ export default async function LocaleLayout({
           </MotionProvider>
         </NextIntlClientProvider>
         {/* The analytics script is served only by Vercel; other hosts would answer 404. */}
-        {process.env.VERCEL ? <SpeedInsights /> : null}
+        {process.env.VERCEL ? <DeferredSpeedInsights /> : null}
       </body>
     </html>
   );

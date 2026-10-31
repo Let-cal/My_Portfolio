@@ -15,6 +15,8 @@ window.addEventListener("admin:discard-edits", discarded);
 beforeEach(() => {
   listVersions.mockReset();
   restoreVersion.mockReset().mockResolvedValue({ ok: true });
+  toast.error.mockReset();
+  toast.success.mockReset();
   reload.mockReset();
   discarded.mockReset();
   Object.defineProperty(window, "location", {
@@ -89,6 +91,33 @@ describe("VersionHistory", () => {
     expect(reload).not.toHaveBeenCalled();
     expect(discarded).toHaveBeenCalled();
     expect(toast.success).toHaveBeenCalledWith("Đã khôi phục phiên bản");
+  });
+
+  it("shows why a restore was refused (a stint moved into a project) and stays open", async () => {
+    const reason =
+      'Không khôi phục được phiên bản này: nội dung đã chuyển sang dự án "skg-coa" (cây kinh nghiệm). Hãy khôi phục dự án đó.';
+    restoreVersion.mockResolvedValue({ ok: false, error: reason });
+    listVersions.mockResolvedValue({
+      ok: true,
+      versions,
+      current: { id: "x", name: "Tên mới" },
+    });
+    await open();
+    const sheet = screen.getByRole("dialog", { name: "Lịch sử thay đổi" });
+    await act(async () =>
+      fireEvent.click(within(sheet).getAllByRole("button", { name: /Sửa/ })[0]),
+    );
+    await act(async () =>
+      fireEvent.click(
+        within(sheet).getByRole("button", { name: "Khôi phục bản này" }),
+      ),
+    );
+    expect(toast.error).toHaveBeenCalledWith(reason, undefined);
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(discarded).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("dialog", { name: "Lịch sử thay đổi" }),
+    ).toBeTruthy();
   });
 
   it("explains an empty history", async () => {

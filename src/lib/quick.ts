@@ -5,12 +5,14 @@ import type {
   RoleKey,
   SkillGroup,
 } from "@/content/schema";
+import { newestFirst } from "./featured";
 import { formatPeriod } from "./format";
 import { pickLocale } from "./i18n-text";
-import { orderExperiences, orderSkillGroups } from "./roles";
+import { companyName } from "./journey";
+import { orderSkillGroups } from "./roles";
 
-/** How many experiences and certificates the one-page view shows. */
-export const QUICK_EXPERIENCE_COUNT = 4;
+/** How many work projects and certificates the one-page view shows. */
+export const QUICK_PROJECT_COUNT = 5;
 export const QUICK_CERTIFICATE_COUNT = 4;
 
 /**
@@ -63,13 +65,14 @@ export type QuickData = {
   roleTitle: string;
   summary: string;
   cvFileUrl: string;
-  /** The employer when every listed experience shares one (it is then printed once, not on every line). */
+  /** The employer when every listed project shares one (it is then printed once, not on every line). */
   employer: string | null;
-  experiences: {
+  /** Work projects, newest first. The employer of a line is set only when `employer` above is null. */
+  projects: {
     id: string;
-    company: string;
-    parentCompany: string | null;
-    position: string;
+    title: string;
+    employer: string | null;
+    role: string;
     period: string;
   }[];
   skillGroups: { group: SkillGroup; names: string[] }[];
@@ -98,16 +101,28 @@ export function buildQuickData(
   const { profile, roles, experiences, skills, certificates, education } =
     content;
   const role = roles.find((r) => r.key === roleKey) ?? roles[0];
-  const listed = orderExperiences(experiences, role).slice(
-    0,
-    QUICK_EXPERIENCE_COUNT,
+  // The role switcher highlights; it never reorders. Same rule as the journey tree: a work project whose
+  // stint is hidden is not shown (its employer would be unknown).
+  const stints = new Map(
+    experiences.filter((e) => e.published).map((e) => [e.id, e]),
   );
-  const employer =
-    listed.length > 0 &&
-    listed.every(
-      (e) => e.parentCompany && e.parentCompany === listed[0].parentCompany,
+  const listed = content.projects
+    .filter(
+      (p) =>
+        p.published &&
+        p.kind === "work" &&
+        p.experienceId !== null &&
+        stints.has(p.experienceId),
     )
-      ? listed[0].parentCompany
+    .sort(newestFirst)
+    .slice(0, QUICK_PROJECT_COUNT)
+    .map((p) => ({
+      project: p,
+      employer: companyName(stints.get(p.experienceId!)!),
+    }));
+  const employer =
+    listed.length > 0 && listed.every((l) => l.employer === listed[0].employer)
+      ? listed[0].employer
       : null;
   const school = [...education].sort((a, b) => a.sortIndex - b.sortIndex)[0];
 
@@ -123,12 +138,12 @@ export function buildQuickData(
     summary: pickLocale(profile.summaries[role.key], locale),
     cvFileUrl: role.cvFileUrl,
     employer,
-    experiences: listed.map((e) => ({
-      id: e.id,
-      company: e.company,
-      parentCompany: employer ? null : e.parentCompany,
-      position: pickLocale(e.position, locale),
-      period: formatPeriod(e.start, e.end, locale),
+    projects: listed.map(({ project: p, employer: who }) => ({
+      id: p.id,
+      title: p.title,
+      employer: employer ? null : who,
+      role: pickLocale(p.role, locale),
+      period: formatPeriod(p.start, p.end, locale),
     })),
     skillGroups: orderSkillGroups(role)
       .map((group) => ({

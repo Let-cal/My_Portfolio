@@ -1,7 +1,7 @@
 // Describes each editable list for the admin: its table, schema, form fields and row mappers.
 // The list page, the form and the server actions are all driven by this file.
 
-import type { z } from "zod";
+import { z } from "zod";
 import {
   activitySchema,
   CERT_TOPICS,
@@ -56,6 +56,8 @@ type Base = {
   virtual?: true;
   /** Forces the * marker when the kind is optional by default (e.g. a required upload). */
   required?: true;
+  /** A new item's starting value, when the kind's default does not fit. */
+  initial?: unknown;
 };
 export type FieldSpec = Base &
   (
@@ -70,6 +72,12 @@ export type FieldSpec = Base &
     | { kind: "order"; source: "experiences" | "skillGroups" }
     | { kind: "skills" }
     | { kind: "evidence"; nullable: true }
+    /** A project's place: one select that sets experienceId, educationId and kind together. */
+    | { kind: "where" }
+    /** Set by another control (`target`), which shows this field's errors. Nothing of its own. */
+    | { kind: "derived"; target: string }
+    /** Role tags: checkboxes for the roles the site's switcher highlights. */
+    | { kind: "roles" }
   );
 
 type AnyRow = Record<string, unknown>;
@@ -87,6 +95,21 @@ export type Resource = {
   toRow: (item: AnyRow) => AnyRow;
   fromRow: (row: AnyRow, links: SkillLinkRow[]) => AnyRow;
 };
+
+/**
+ * The form's schema: the item schema without the drag-and-drop position. `.omit()` refuses schemas
+ * with cross-field rules (projects), so the object is rebuilt from its shape and the rules are put
+ * back on it (a project's kind must match where it belongs). The server action checks the full schema.
+ */
+export function withoutSortIndex(schema: z.ZodObject): z.ZodObject {
+  const { sortIndex: _sortIndex, ...shape } = schema.shape;
+  void _sortIndex;
+  const rules = schema._zod.def.checks ?? [];
+  const form = z.object(shape);
+  return rules.length
+    ? form.check(...(rules as z.core.$ZodCheck<Record<string, unknown>>[]))
+    : form;
+}
 
 // The schema validates every item before toRow runs, so these widenings are safe.
 const toRows = <T, R>(fn: (item: T) => R) => fn as unknown as Resource["toRow"];
@@ -106,7 +129,7 @@ const published: FieldSpec = {
 
 export const resources: Record<ResourceKey, Resource> = {
   experiences: {
-    label: "Kinh nghiệm",
+    label: "Vị trí làm việc",
     table: "experiences",
     schema: experienceSchema,
     listColumns: ["company", "start", "end"],
@@ -187,7 +210,12 @@ export const resources: Record<ResourceKey, Resource> = {
       {
         id: "info",
         title: "Thông tin",
-        fields: ["id", "title", "role", "start", "end"],
+        fields: ["id", "title", "role", "start", "end", "teamSize"],
+      },
+      {
+        id: "where",
+        title: "Thuộc về & vai trò",
+        fields: ["experienceId", "educationId", "kind", "roles"],
       },
       {
         id: "content",
@@ -198,9 +226,13 @@ export const resources: Record<ResourceKey, Resource> = {
       {
         id: "links",
         title: "Liên kết & skills",
-        fields: ["demoUrl", "repoUrls", "skillIds"],
+        fields: ["demoUrl", "repoUrls", "links", "skillIds"],
       },
-      { id: "visibility", title: "Hiển thị", fields: ["published"] },
+      {
+        id: "visibility",
+        title: "Hiển thị",
+        fields: ["published", "featured", "featuredOrder"],
+      },
     ],
     fromRow: fromRows(rowToProject),
     fields: [
@@ -214,11 +246,39 @@ export const resources: Record<ResourceKey, Resource> = {
         kind: "month",
         nullable: true,
       },
+      { name: "teamSize", label: "Quy mô team", kind: "text", nullable: true },
+      {
+        name: "experienceId",
+        label: "Thuộc về",
+        kind: "where",
+        hint: "Vị trí ở công ty, trường, hoặc Cá nhân. Loại dự án tự suy ra từ lựa chọn này.",
+      },
+      {
+        name: "educationId",
+        label: "Trường",
+        kind: "derived",
+        target: "experienceId",
+        initial: null,
+      },
+      {
+        name: "kind",
+        label: "Loại dự án",
+        kind: "derived",
+        target: "experienceId",
+        initial: "personal",
+      },
+      {
+        name: "roles",
+        label: "Làm nổi bật khi khách chọn vai trò",
+        kind: "roles",
+        hint: "Trang chủ chỉ làm nổi bật, không đổi thứ tự.",
+      },
       { name: "summary", label: "Tóm tắt", kind: "i18n", multiline: true },
       { name: "caseStudy", label: "Case study", kind: "caseStudy" },
       { name: "tech", label: "Công nghệ", kind: "tags", suggest: "skills" },
       { name: "demoUrl", label: "Link demo", kind: "url", nullable: true },
       { name: "repoUrls", label: "Link repo", kind: "tags" },
+      { name: "links", label: "Liên kết khác", kind: "links" },
       {
         name: "posterUrl",
         label: "Ảnh poster",
@@ -238,6 +298,20 @@ export const resources: Record<ResourceKey, Resource> = {
         virtual: true,
       },
       published,
+      {
+        name: "featured",
+        label: "Nổi bật trên trang chủ (gắn sao)",
+        kind: "boolean",
+        initial: false,
+        hint: "Tối đa 3 dự án. Thứ tự đổi bằng cách kéo ở danh sách Dự án.",
+      },
+      {
+        name: "featuredOrder",
+        label: "Thứ tự nổi bật",
+        kind: "derived",
+        target: "featured",
+        initial: null,
+      },
     ],
   },
   skills: {
@@ -254,7 +328,7 @@ export const resources: Record<ResourceKey, Resource> = {
       { name: "group", label: "Nhóm", kind: "select", options: SKILL_GROUPS },
       {
         name: "experienceIds",
-        label: "Bằng chứng: kinh nghiệm",
+        label: "Bằng chứng: vị trí làm việc",
         kind: "relations",
         source: "experiences",
       },

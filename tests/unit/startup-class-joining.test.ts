@@ -9,7 +9,8 @@ import { describe, expect, it } from "vitest";
 const cases = [
   { file: "site/LanguageSwitch.tsx", eligible: [1], retained: [0] },
   { file: "site/PillNav.tsx", eligible: [0], retained: [] },
-  { file: "site/SideRail.tsx", eligible: [0, 1], retained: [] },
+  // The side rail is server markup styled by ink-thread.css; it has no conditional class joins.
+  { file: "site/SideRail.tsx", eligible: [], retained: [] },
   {
     file: "sections/certificates/CertificatesBoard.tsx",
     eligible: [0, 1, 2, 3],

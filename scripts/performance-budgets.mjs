@@ -4,6 +4,13 @@
 export const BLOCKING = { accessibility: 0.95, seo: 0.9, cls: 0.1 };
 export const ADVISORY = { performance: 0.85, lcp: 2500, tbt: 200 };
 
+// Routes Lighthouse audits (paths after the origin): the three home pages and the project archive.
+export const AUDITED_ROUTES = ["en", "ja", "vi", "en/projects"];
+
+/** Report file of one run: "en-1.json", "en-projects-2.json". */
+export const reportName = (route, run) =>
+  `${route.replaceAll("/", "-")}-${run}.json`;
+
 const fields = {
   performance: (report) => report.categories?.performance?.score,
   accessibility: (report) => report.categories?.accessibility?.score,

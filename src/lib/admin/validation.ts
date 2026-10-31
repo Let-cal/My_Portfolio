@@ -23,6 +23,9 @@ const OPTIONAL_KINDS = new Set([
   "skills",
   "caseStudy",
   "stat",
+  "where",
+  "derived",
+  "roles",
 ]);
 
 /** Whether the form must mark this field with `*`. */
@@ -90,6 +93,12 @@ function message(
       : "ID chỉ gồm chữ thường không dấu, số và dấu gạch ngang (ví dụ: aws-saa)";
   if (f.name === "evidenceLink")
     return "Chọn một kinh nghiệm hoặc dự án làm bằng chứng";
+  // A project's kind must match its link: both come from the "Thuộc về" select.
+  if (
+    f.kind === "where" ||
+    (f.kind === "derived" && f.target === "experienceId")
+  )
+    return "Loại dự án không khớp với mục “Thuộc về”. Chọn lại nơi dự án thuộc về.";
 
   switch (f.kind) {
     case "i18n":
@@ -119,6 +128,7 @@ function message(
     case "select":
     case "relations":
     case "order":
+    case "roles":
       return `Chọn ${lower(f.label)}`;
     case "tags":
       return rest.length

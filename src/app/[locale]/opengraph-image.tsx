@@ -3,10 +3,11 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { getContent } from "@/lib/data/get-content";
 import { pickLocale } from "@/lib/i18n-text";
+import { OG_IMAGE } from "@/lib/og-image";
 
-export const alt = "Le Tran Cat Lam — Software Engineer Portfolio";
-export const size = { width: 1200, height: 630 };
-export const contentType = "image/png";
+export const alt = OG_IMAGE.alt;
+export const size = { ...OG_IMAGE.size };
+export const contentType = OG_IMAGE.contentType;
 
 /** Reuses the portfolio's own rendered koi; no remote image service or paid asset is required. */
 export default async function OpenGraphImage() {

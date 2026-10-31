@@ -48,6 +48,20 @@ it("validates preview destinations without accepting an external redirect", asyn
     previewDestination(new URLSearchParams("target=//evil.test")),
   ).toThrow();
 });
+it("previews a project's row on the all-projects page, and no other page", async () => {
+  const { previewDestination } = await import("@/lib/admin/preview");
+  expect(
+    previewDestination(
+      new URLSearchParams("locale=en&target=row-side-project&page=projects"),
+    ),
+  ).toBe("/en/projects#row-side-project");
+  expect(() =>
+    previewDestination(new URLSearchParams("target=hero&page=//evil.test")),
+  ).toThrow();
+  expect(() =>
+    previewDestination(new URLSearchParams("target=hero&page=admin")),
+  ).toThrow();
+});
 it("enables draft mode only for a validated admin request", async () => {
   const { GET } = await import("@/app/admin/preview/route");
   const response = await GET(

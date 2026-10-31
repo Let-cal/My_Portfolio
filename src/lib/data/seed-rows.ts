@@ -1,5 +1,5 @@
 import type { Content } from "@/content/schema";
-import { TABLES, type TableName } from "./columns";
+import { creationOrder, TABLES, type Column, type TableName } from "./columns";
 import {
   activityToRow,
   certificateToRow,
@@ -17,18 +17,22 @@ export type SeedRows = { [T in TableName]: Record<string, unknown>[] };
 
 /** Every table's rows for a full content snapshot, in foreign-key order. */
 export function buildSeedRows(c: Content): SeedRows {
-  return {
+  const rows: SeedRows = {
     profile: [{ id: "me", ...profileToRow(c.profile) }],
     roles: c.roles.map(roleToRow),
     experiences: c.experiences.map(experienceToRow),
-    projects: c.projects.map(projectToRow),
     skills: c.skills.map(skillToRow),
     skill_links: c.skills.flatMap(skillToLinkRows),
     certificates: c.certificates.map(certificateToRow),
     activities: c.activities.map(activityToRow),
     education: c.education.map(educationToRow),
+    projects: c.projects.map(projectToRow),
     why_cards: c.whyCards.map(whyCardToRow),
   };
+  // Keys in creation order, so a table is written after the tables it references.
+  return Object.fromEntries(
+    creationOrder().map((t) => [t, rows[t]]),
+  ) as SeedRows;
 }
 
 /** Upsert key per table; skill_links are replaced as a whole instead. */
@@ -62,14 +66,22 @@ function literal(value: unknown, type: string): string {
   }
 }
 
-/** The same snapshot as one SQL script, for seeding through the SQL editor or an MCP client. */
-export function renderSeedSql(rows: SeedRows): string {
+/**
+ * The same snapshot as one SQL script, for seeding through the SQL editor or an MCP client.
+ * `omit` leaves columns out (data for a database that does not have them yet).
+ */
+export function renderSeedSql(
+  rows: SeedRows,
+  omit: Partial<Record<TableName, readonly string[]>> = {},
+): string {
   const out = ["begin;"];
   for (const [table, list] of Object.entries(rows) as [
     TableName,
     Record<string, unknown>[],
   ][]) {
-    const columns = TABLES[table].columns;
+    const columns = (TABLES[table].columns as readonly Column[]).filter(
+      (c) => !omit[table]?.includes(c.name),
+    );
     if (table === "skill_links") out.push("delete from public.skill_links;");
     if (!list.length) continue;
     const names = columns.map((c) => c.name);

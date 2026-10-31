@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { contentSchema, LOCALES, ROLE_KEYS } from "@/content/schema";
 import seed from "@/content/seed.json";
-import { buildQuickData, displayUrl, featuredCertificates } from "@/lib/quick";
+import {
+  buildQuickData,
+  displayUrl,
+  featuredCertificates,
+  QUICK_PROJECT_COUNT,
+} from "@/lib/quick";
 
 const content = contentSchema.parse(seed);
 
@@ -65,42 +70,104 @@ describe("buildQuickData", () => {
     );
   });
 
-  it("lists the first four experiences of the role, in the role order", () => {
-    expect(
-      buildQuickData(content, "en", "pm").experiences.map((e) => e.id),
-    ).toEqual([
-      "skg-ai-agent",
-      "skg-flexybox-p2",
-      "skg-coa",
-      "skg-flexybox-p1",
-    ]);
-    expect(buildQuickData(content, "en", "techlead").experiences[0].id).toBe(
-      "skg-flexybox-p1",
+  const SKG_NEWEST_FIRST = [
+    "skg-ai-agent",
+    "skg-flexybox-p2",
+    "skg-coa",
+    "skg-flexybox-p1",
+    "tongue-ai-driver-ms",
+  ];
+
+  it("quick lists the five SKG projects newest first", () => {
+    expect(QUICK_PROJECT_COUNT).toBe(5);
+    for (const role of ROLE_KEYS) {
+      expect(
+        buildQuickData(content, "en", role).projects.map((p) => p.id),
+      ).toEqual(SKG_NEWEST_FIRST);
+    }
+  });
+
+  it("prints the project title, the role in the project and its period", () => {
+    const coa = buildQuickData(content, "en", "pm").projects.find(
+      (p) => p.id === "skg-coa",
+    )!;
+    expect(coa.title).toBe("COA (Certificate of Analysis system)");
+    expect(coa.role).toBe("Software Engineer, Tech Lead / Developer");
+    expect(coa.period).toMatch(/2025/);
+    expect(buildQuickData(content, "ja", "pm").projects[0].role).toContain(
+      "ソフトウェアエンジニア",
     );
+  });
+
+  it("leaves out university and personal projects, hidden projects, and projects of a hidden stint", () => {
+    const hiddenProject = {
+      ...content,
+      projects: content.projects.map((p) =>
+        p.id === "skg-coa" ? { ...p, published: false } : p,
+      ),
+    };
+    expect(
+      buildQuickData(hiddenProject, "en", "pm").projects.map((p) => p.id),
+    ).not.toContain("skg-coa");
+    const hiddenStint = {
+      ...content,
+      experiences: content.experiences.map((e) =>
+        e.id === "skg-intern" ? { ...e, published: false } : e,
+      ),
+    };
+    expect(
+      buildQuickData(hiddenStint, "en", "pm").projects.map((p) => p.id),
+    ).toEqual(["skg-ai-agent", "skg-flexybox-p2", "skg-coa"]);
+    for (const id of ["siteplus", "zodiacgems", "meet-my-lecturer"])
+      expect(SKG_NEWEST_FIRST).not.toContain(id);
+  });
+
+  it("shows at most the limit, newest first", () => {
+    const extra = {
+      ...content,
+      projects: [
+        ...content.projects,
+        {
+          ...content.projects.find((p) => p.id === "skg-coa")!,
+          id: "skg-newest",
+          start: "2026-09",
+          end: "2026-09",
+        },
+      ],
+    };
+    const ids = buildQuickData(extra, "en", "pm").projects.map((p) => p.id);
+    expect(ids).toHaveLength(QUICK_PROJECT_COUNT);
+    expect(ids[0]).toBe("skg-newest");
+    expect(ids).not.toContain("tongue-ai-driver-ms");
   });
 
   it("prints a shared employer once, and per line only when the employers differ", () => {
     const d = buildQuickData(content, "en", "pm");
     expect(d.employer).toBe("SKG Software (Splus)");
-    expect(d.experiences.every((e) => e.parentCompany === null)).toBe(true);
+    expect(d.projects.every((p) => p.employer === null)).toBe(true);
     const mixed = {
       ...content,
       experiences: content.experiences.map((e) =>
-        e.id === "skg-coa" ? { ...e, parentCompany: "Other Co" } : e,
+        e.id === "skg-engineer"
+          ? { ...e, company: "Other Co", parentCompany: "Other Co" }
+          : e,
       ),
     };
     const m = buildQuickData(mixed, "en", "pm");
     expect(m.employer).toBeNull();
-    expect(m.experiences.find((e) => e.id === "skg-coa")?.parentCompany).toBe(
+    expect(m.projects.find((p) => p.id === "skg-coa")?.employer).toBe(
       "Other Co",
+    );
+    expect(m.projects.find((p) => p.id === "skg-flexybox-p1")?.employer).toBe(
+      "SKG Software (Splus)",
     );
   });
 
-  it("never prints Present for SKG and has a period for every entry", () => {
+  it("never prints Present and has a period for every project", () => {
     for (const role of ROLE_KEYS) {
-      for (const e of buildQuickData(content, "en", role).experiences) {
-        expect(e.period).toMatch(/\d{4}/);
-        expect(e.period).not.toMatch(/present/i);
+      for (const p of buildQuickData(content, "en", role).projects) {
+        expect(p.period).toMatch(/\d{4}/);
+        expect(p.period).not.toMatch(/present/i);
       }
     }
   });
@@ -131,7 +198,7 @@ describe("buildQuickData", () => {
         expect(d.roleTitle).not.toBe("");
         expect(d.summary).not.toBe("");
         expect(d.certificates).toHaveLength(4);
-        expect(d.experiences).toHaveLength(4);
+        expect(d.projects).toHaveLength(5);
         expect(d.education?.school).toBe("FPT University");
       }
     }

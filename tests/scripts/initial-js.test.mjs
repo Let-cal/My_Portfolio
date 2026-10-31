@@ -405,3 +405,69 @@ test(
     }
   },
 );
+
+test("the default budget run also measures the project archive page", () =>
+  fixture((root) => {
+    mkdirSync(join(root, ".next/server/app/en"), { recursive: true });
+    for (const route of ["en", "ja", "vi", "en/quick"])
+      writeFileSync(join(root, ".next/server/app", `${route}.html`), "");
+    const missing = spawnSync(process.execPath, [script, "--json"], {
+      cwd: root,
+      encoding: "utf8",
+    });
+    assert.equal(missing.status, 1, "a missing /en/projects build must fail");
+    writeFileSync(join(root, ".next/server/app/en/projects.html"), "");
+    const result = spawnSync(process.execPath, [script, "--json"], {
+      cwd: root,
+      encoding: "utf8",
+    });
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(
+      JSON.parse(result.stdout).map(({ route }) => route),
+      ["/en", "/ja", "/vi", "/en/quick", "/en/projects"],
+    );
+  }));
+
+test(
+  "the home page does not load the project archive's table code",
+  { skip: !existsSync(".next/server/app/en.html") },
+  () => {
+    const result = spawnSync(process.execPath, [script, "en", "--json"], {
+      encoding: "utf8",
+    });
+    const [{ chunks }] = JSON.parse(result.stdout);
+    for (const { src } of chunks) {
+      const path = join(
+        ".next",
+        decodeURIComponent(src.replace(/^\/_next\//, "")),
+      );
+      assert.equal(
+        readFileSync(path, "utf8").includes("data-archive-rows"),
+        false,
+        `${src} ships the archive table`,
+      );
+    }
+  },
+);
+
+test(
+  "Speed Insights loads after startup, outside the home page's initial scripts",
+  { skip: !existsSync(".next/server/app/en.html") },
+  () => {
+    const result = spawnSync(process.execPath, [script, "en", "--json"], {
+      encoding: "utf8",
+    });
+    const [{ chunks }] = JSON.parse(result.stdout);
+    for (const { src } of chunks) {
+      const path = join(
+        ".next",
+        decodeURIComponent(src.replace(/^\/_next\//, "")),
+      );
+      assert.equal(
+        readFileSync(path, "utf8").includes("@vercel/speed-insights"),
+        false,
+        `${src} ships Speed Insights at startup`,
+      );
+    }
+  },
+);

@@ -6,7 +6,7 @@ import { useAdminAccess } from "./AdminAccessProvider";
 
 const ITEMS = [
   { href: "/admin/projects/new", label: "Dự án", Icon: FolderPlus },
-  { href: "/admin/experiences/new", label: "Kinh nghiệm", Icon: Briefcase },
+  { href: "/admin/experiences/new", label: "Vị trí làm việc", Icon: Briefcase },
   { href: "/admin/certificates/new", label: "Chứng chỉ", Icon: Award },
   { href: "/admin/skills/new", label: "Kỹ năng", Icon: Sparkles },
 ];

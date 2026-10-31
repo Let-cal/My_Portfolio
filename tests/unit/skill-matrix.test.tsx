@@ -68,7 +68,7 @@ describe("SkillMatrix (edit, then save)", () => {
     expect(saveSkillLinks.mock.calls[0][0]).toEqual(
       expect.arrayContaining([
         { skillId: "csharp", projectId: "siteplus", linked: true },
-        { skillId: "typescript", experienceId: "skg-ai-agent", linked: false },
+        { skillId: "typescript", projectId: "skg-ai-agent", linked: false },
       ]),
     );
     expect(saveButton()).toBeNull();

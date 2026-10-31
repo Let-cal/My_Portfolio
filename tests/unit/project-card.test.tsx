@@ -70,7 +70,7 @@ describe("Projects bento", () => {
     ).toBeInTheDocument();
   });
 
-  it("gives every published project a #proj-<id> element in sortIndex order, skipping unpublished ones", () => {
+  it("gives each featured project a #proj-<id> element, filling an unpublished star with the newest published project", () => {
     const content: Content = {
       ...base,
       projects: base.projects.map((p) =>
@@ -82,7 +82,11 @@ describe("Projects bento", () => {
     const ids = Array.from(document.querySelectorAll("[id^='proj-']")).map(
       (n) => n.id,
     );
-    expect(ids).toEqual(["proj-siteplus", "proj-meet-my-lecturer"]);
+    expect(ids).toEqual([
+      "proj-siteplus",
+      "proj-meet-my-lecturer",
+      "proj-skg-ai-agent",
+    ]);
   });
 
   it("labels each card with its position and kind: NN · WEB / MOBILE / WEB + MOBILE", () => {
@@ -248,10 +252,7 @@ describe("Projects bento", () => {
     renderProjects();
     const siteplus = card("siteplus");
     const demo = within(siteplus).getByRole("link", { name: /Demo/ });
-    expect(demo).toHaveAttribute(
-      "href",
-      "https://site-plus-15hdsvfpr-let-cals-projects.vercel.app/",
-    );
+    expect(demo).toHaveAttribute("href", "https://site-plus-fe.vercel.app");
     expect(demo).toHaveAttribute("target", "_blank");
     expect(demo).toHaveAttribute("rel", "noopener noreferrer");
     expect(demo).toHaveTextContent("(opens in new tab)");

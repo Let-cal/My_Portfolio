@@ -24,6 +24,7 @@ import { describeIssues } from "@/lib/admin/validation";
 import { requireAdmin } from "@/lib/admin/session";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { profileSchema, roleSchema, type Skill } from "@/content/schema";
+import { starRefusal } from "@/lib/featured";
 
 /** `fieldErrors` maps a form path (e.g. "description.en") to the message shown under that input. */
 /** Why a write failed, for the client to react: sign in again, refuse, or offer a retry. */
@@ -124,8 +125,23 @@ function check(error: { message: string } | null) {
   if (error) throw new Error(error.message);
 }
 
+/**
+ * Why the database refused to restore a version (SQLSTATE 22023), in Vietnamese. The experience tree
+ * migration blocks the old versions of the stints whose content moved into a project, and names that project.
+ */
+function restoreRefusal(message: string): string {
+  const reason = message.replace(/^cannot restore version \d+:\s*/, "");
+  const moved = /content moved to project (\S+) \(experience tree\)/.exec(
+    reason,
+  );
+  return moved
+    ? `Không khôi phục được phiên bản này: nội dung đã chuyển sang dự án "${moved[1]}" (cây kinh nghiệm). Hãy khôi phục dự án đó.`
+    : `Không khôi phục được phiên bản này: ${reason}`;
+}
+
 /** Like `check`, for the history RPCs: a missing function means migration 0004 is not applied. */
 function checkRpc(error: { message: string; code?: string } | null) {
+  if (error?.code === "22023") throw new Error(restoreRefusal(error.message));
   if (
     error &&
     (error.code === "PGRST202" ||
@@ -136,6 +152,36 @@ function checkRpc(error: { message: string; code?: string } | null) {
     );
   }
   check(error);
+}
+
+type Supabase = Awaited<ReturnType<typeof createServerSupabase>>;
+/** A project's star as stored: the action, never the form, decides `featured_order`. */
+type StarRow = {
+  id: string;
+  featured?: boolean | null;
+  featured_order?: number | null;
+};
+
+const stars = (rows: StarRow[]) =>
+  rows.map((r) => ({ id: r.id, featured: Boolean(r.featured) }));
+
+/** The order a new star takes: after the last starred project. */
+function nextFeaturedOrder(rows: StarRow[]): number {
+  return (
+    Math.max(
+      0,
+      ...rows.filter((r) => r.featured).map((r) => r.featured_order ?? 0),
+    ) + 1
+  );
+}
+
+async function starRows(supabase: Supabase): Promise<StarRow[]> {
+  const { data, error } = await supabase
+    .from("projects")
+    .select("id, featured, featured_order")
+    .order("sort_index");
+  check(error);
+  return (data ?? []) as StarRow[];
 }
 
 /** Creates or updates one item. New items go to the end of the list. */
@@ -152,7 +198,12 @@ export async function saveResource(
     const id = String(data.id ?? "");
     const { data: existing, error } = await supabase
       .from(resource.table)
-      .select("id, sort_index")
+      // Projects also read their star, for the limit and the featured order (typed as the common columns).
+      .select(
+        (k === "projects"
+          ? "id, sort_index, featured, featured_order"
+          : "id, sort_index") as "id, sort_index",
+      )
       .order("sort_index", { ascending: false });
     check(error);
     const current = existing?.find((row) => row.id === id);
@@ -173,6 +224,20 @@ export async function saveResource(
       resource.fields,
       data,
     );
+    if (k === "projects") {
+      // The star obeys the limit of three; its place in the order belongs to the featured strip.
+      const rows = (existing ?? []) as unknown as StarRow[];
+      if (item.featured) {
+        const refusal = starRefusal(stars(rows), id);
+        if (refusal) throw new FormError(refusal, { featured: refusal });
+      }
+      const was = rows.find((r) => r.id === id);
+      item.featuredOrder = !item.featured
+        ? null
+        : was?.featured && was.featured_order != null
+          ? was.featured_order
+          : nextFeaturedOrder(rows);
+    }
 
     const { error: upsertError } = await supabase
       .from(resource.table)
@@ -323,13 +388,45 @@ export async function saveSkillLinks(
   }
 }
 
+/** Projects point at their stint or school; the database refuses to delete one that still has projects. */
+const PROJECT_OWNER: Partial<Record<ResourceKey, string>> = {
+  experiences: "experience_id",
+  education: "education_id",
+};
+
+const stillHasProjects = (n: number) =>
+  `Còn ${n} dự án thuộc mục này. Chuyển các dự án sang mục khác trước khi xóa.`;
+
+async function projectsIn(
+  supabase: Supabase,
+  column: string,
+  id: string,
+): Promise<number> {
+  const { data, error } = await supabase
+    .from("projects")
+    .select("id")
+    .eq(column, id);
+  check(error);
+  return data?.length ?? 0;
+}
+
 export async function deleteResource(key: string, id: string) {
   return adminWrite(key, async (k) => {
     const supabase = await createServerSupabase();
+    const owner = PROJECT_OWNER[k];
+    if (owner) {
+      const attached = await projectsIn(supabase, owner, id);
+      if (attached > 0) throw new Error(stillHasProjects(attached));
+    }
     const { error, count } = await supabase
       .from(resources[k].table)
       .delete({ count: "exact" })
       .eq("id", id);
+    // A project moved here between the check and the delete: the foreign key (on delete restrict) refuses.
+    if (owner && error?.code === "23503")
+      throw new Error(
+        stillHasProjects(Math.max(1, await projectsIn(supabase, owner, id))),
+      );
     check(error);
     if (!count) throw new Error(`Không xóa được "${id}".`);
   });
@@ -372,6 +469,11 @@ export async function duplicateResource(
     copy.id = newId;
     copy.sort_index = (all?.[0]?.sort_index ?? -1) + 1;
     copy.published = false;
+    // A copy never takes a star: the home page holds at most three.
+    if (k === "projects") {
+      copy.featured = false;
+      copy.featured_order = null;
+    }
     check((await supabase.from(resource.table).insert(copy)).error);
   });
   // Keep the failure's code (e.g. FORBIDDEN, SESSION_EXPIRED) so the client can react to it.
@@ -386,6 +488,68 @@ export async function reorderResource(key: string, ids: string[]) {
     const results = await Promise.all(
       ids.map((id, index) =>
         supabase.from(table).update({ sort_index: index }).eq("id", id),
+      ),
+    );
+    for (const { error } of results) check(error);
+  });
+}
+
+const projectId = z.string().min(1).max(200);
+
+/**
+ * Stars or unstars a project for the home page. A star goes to the end of the featured order; a 4th star is
+ * refused with the limit message. Removing a star is never refused.
+ */
+export async function toggleFeatured(id: string): Promise<ActionResult> {
+  return adminWrite("projects", async () => {
+    const parsed = projectId.safeParse(id);
+    if (!parsed.success) throw new Error("Dự án không hợp lệ.");
+    const supabase = await createServerSupabase();
+    const rows = await starRows(supabase);
+    const target = rows.find((r) => r.id === parsed.data);
+    if (!target) throw new Error(`Không tìm thấy "${parsed.data}".`);
+    let change: { featured: boolean; featured_order: number | null };
+    if (target.featured) {
+      change = { featured: false, featured_order: null };
+    } else {
+      const refusal = starRefusal(stars(rows), target.id);
+      if (refusal) throw new Error(refusal);
+      change = { featured: true, featured_order: nextFeaturedOrder(rows) };
+    }
+    check(
+      (await supabase.from("projects").update(change).eq("id", target.id))
+        .error,
+    );
+  });
+}
+
+/**
+ * Saves the order of the featured strip: `ids` must be exactly the starred projects (no other id, none
+ * missing, no repeat), and each gets its position as `featured_order` 1..n.
+ */
+export async function reorderFeatured(ids: string[]): Promise<ActionResult> {
+  return adminWrite("projects", async () => {
+    const parsed = z.array(projectId).max(50).safeParse(ids);
+    if (!parsed.success) throw new Error("Thứ tự không hợp lệ.");
+    const wanted = parsed.data;
+    const supabase = await createServerSupabase();
+    const starred = new Set(
+      (await starRows(supabase)).filter((r) => r.featured).map((r) => r.id),
+    );
+    const same =
+      new Set(wanted).size === wanted.length &&
+      wanted.length === starred.size &&
+      wanted.every((id) => starred.has(id));
+    if (!same)
+      throw new Error(
+        "Danh sách dự án nổi bật vừa thay đổi. Tải lại trang rồi sắp xếp lại.",
+      );
+    const results = await Promise.all(
+      wanted.map((id, index) =>
+        supabase
+          .from("projects")
+          .update({ featured_order: index + 1 })
+          .eq("id", id),
       ),
     );
     for (const { error } of results) check(error);

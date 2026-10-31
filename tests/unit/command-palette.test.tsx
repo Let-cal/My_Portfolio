@@ -237,7 +237,7 @@ describe("CommandPalette", () => {
       expect(within(dialog).getByRole("group", { name })).toBeInTheDocument();
     }
     expect(within(dialog).getAllByRole("option")).toHaveLength(
-      7 + 3 + 3 + 2 + 3 + 3,
+      7 + 3 + 3 + 2 + 3 + 4,
     );
     expect(within(dialog).getByRole("combobox")).toHaveAccessibleName(
       "Search commands",
@@ -338,6 +338,26 @@ describe("CommandPalette", () => {
       await screen.findByRole("option", { name: "60-second view" }),
     );
     expect(assign).toHaveBeenCalledWith("/en/quick?role=fullstack");
+  });
+
+  it("opens the all-projects page", async () => {
+    const user = userEvent.setup();
+    render(palette());
+    openPalette();
+    await user.click(
+      await screen.findByRole("option", {
+        name: en.command.actions.allProjects,
+      }),
+    );
+    expect(assign).toHaveBeenCalledWith("/en/projects");
+  });
+
+  it("go-to a section that is not on this page loads the home page at it", async () => {
+    const user = userEvent.setup();
+    render(palette());
+    openPalette();
+    await user.click(await screen.findByRole("option", { name: "Contact" }));
+    await waitFor(() => expect(assign).toHaveBeenCalledWith("/en#contact"));
   });
 
   it("go-to closes the palette, scrolls through Lenis when it is active and focuses the section heading", async () => {

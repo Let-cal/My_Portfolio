@@ -21,6 +21,7 @@ import {
   skillToLinkRows,
   skillToRow,
   whyCardToRow,
+  type ProjectRow,
 } from "@/lib/data/mappers";
 
 const c = contentSchema.parse(seed);
@@ -52,6 +53,47 @@ describe("mappers round-trip", () => {
   it.each(c.skills)("skill $id", (s) => {
     const back = rowToSkill(skillToRow(s), skillToLinkRows(s));
     expect(back).toEqual(s);
+  });
+});
+
+describe("project new fields", () => {
+  it("project round-trips the new fields", () => {
+    const row: ProjectRow = {
+      id: "coa-dashboard",
+      title: "COA dashboard",
+      role: { en: "Tech lead" },
+      start_month: "2025-10",
+      end_month: "2026-03",
+      summary: { en: "Dashboard" },
+      case_study: null,
+      tech: ["Next.js"],
+      demo_url: null,
+      repo_urls: [],
+      poster_url: null,
+      video_url: null,
+      published: true,
+      sort_index: 3,
+      experience_id: "skg-coa",
+      education_id: null,
+      kind: "work",
+      featured: true,
+      featured_order: 2,
+      roles: ["techlead", "fullstack"],
+      team_size: "5",
+      links: [{ label: "Write-up", url: "https://example.com/post" }],
+    };
+    const project = rowToProject(row);
+    expect(project).toMatchObject({
+      experienceId: "skg-coa",
+      educationId: null,
+      kind: "work",
+      featured: true,
+      featuredOrder: 2,
+      roles: ["techlead", "fullstack"],
+      teamSize: "5",
+      links: [{ label: "Write-up", url: "https://example.com/post" }],
+    });
+    expect(projectToRow(project)).toEqual(row);
   });
 });
 

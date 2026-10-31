@@ -8,7 +8,7 @@ import {
 } from "@/content/schema";
 import seed from "@/content/seed.json";
 import { emptyItem } from "@/lib/admin/empty-item";
-import { resources } from "@/lib/admin/resources";
+import { resources, withoutSortIndex } from "@/lib/admin/resources";
 import { describeIssues, isRequired } from "@/lib/admin/validation";
 
 const content = contentSchema.parse(seed);
@@ -19,7 +19,7 @@ function errorsFor(
   fields = certFields,
   values: Record<string, unknown>,
 ) {
-  const result = schema.omit({ sortIndex: true } as never).safeParse(values);
+  const result = withoutSortIndex(schema).safeParse(values);
   if (result.success) return {};
   return Object.fromEntries(
     describeIssues(result.error.issues, fields, values).map((e) => [

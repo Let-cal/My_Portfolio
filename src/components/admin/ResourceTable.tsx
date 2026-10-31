@@ -3,7 +3,7 @@ import { TranslationProgress } from "./TranslationProgress";
 import { useAdminRouter as useRouter } from "@/lib/admin/use-admin-router";
 
 import { runAction } from "@/lib/admin/action-errors";
-import { Copy, Search, Trash2, TriangleAlert } from "lucide-react";
+import { Copy, Search, Star, Trash2, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
@@ -11,7 +11,9 @@ import { toast } from "sonner";
 import {
   deleteResource,
   duplicateResource,
+  reorderFeatured,
   reorderResource,
+  toggleFeatured,
   togglePublished,
   undoDelete,
   type ActionResult,
@@ -35,6 +37,7 @@ import {
   type RowStatus,
 } from "@/lib/admin/list-view";
 import { mergeRows, signature } from "@/lib/admin/sync";
+import { FEATURED_LIMIT, starRefusal } from "@/lib/featured";
 import type { ResourceKey } from "@/lib/admin/resources";
 import { tableFor } from "@/lib/admin/versions";
 import { cn } from "@/lib/utils";
@@ -66,6 +69,16 @@ function chipsFor(
         ]
       : []),
   ];
+}
+
+/** Starred rows in their featured order (a star without an order last, then list order). */
+function starredRows(rows: ListRow[]): ListRow[] {
+  const at = (r: ListRow) => r.featuredOrder ?? Number.POSITIVE_INFINITY;
+  return rows
+    .map((row, index) => ({ row, index }))
+    .filter(({ row }) => row.featured)
+    .sort((a, b) => at(a.row) - at(b.row) || a.index - b.index)
+    .map(({ row }) => row);
 }
 
 /** Rows in a given id order (a reorder still saving); rows not in it keep their place at the end. */
@@ -144,6 +157,13 @@ export function ResourceTable({
   const [status, setStatus] = useState<RowStatus>("all");
   const [toDelete, setToDelete] = useState<ListRow | null>(null);
   const [pending, startTransition] = useTransition();
+  // Projects: the inline answer to a star the limit refuses, shown under that row.
+  const [starRefused, setStarRefused] = useState<{
+    id: string;
+    message: string;
+  } | null>(null);
+  const stars = resourceKey === "projects";
+  const starred = stars ? starredRows(rows) : [];
 
   const filtered = filterRows(rows, { q, status });
   const isFiltered = q.trim() !== "" || status !== "all";
@@ -192,6 +212,58 @@ export function ResourceTable({
         ),
       () => settle(row.id),
       () => setPublished(row, value),
+    );
+  }
+
+  function toggleStar(row: ListRow) {
+    const next = !row.featured;
+    if (next) {
+      const refusal = starRefusal(
+        rows.map((r) => ({ id: r.id, featured: Boolean(r.featured) })),
+        row.id,
+      );
+      if (refusal) {
+        setStarRefused({ id: row.id, message: refusal });
+        return;
+      }
+    }
+    setStarRefused(null);
+    const change = {
+      featured: next,
+      featuredOrder: next
+        ? Math.max(0, ...starred.map((r) => r.featuredOrder ?? 0)) + 1
+        : null,
+    };
+    const before = { featured: row.featured, featuredOrder: row.featuredOrder };
+    setRows(rows.map((r) => (r.id === row.id ? { ...r, ...change } : r)));
+    track(row.id, change);
+    run(
+      () => toggleFeatured(row.id),
+      next ? `Đã gắn sao ${row.label}` : `Đã bỏ sao ${row.label}`,
+      () =>
+        setRows((current) =>
+          current.map((r) => (r.id === row.id ? { ...r, ...before } : r)),
+        ),
+      () => settle(row.id),
+      () => toggleStar(row),
+    );
+  }
+
+  function reorderStars(next: ListRow[]) {
+    const previous = rows;
+    const order = new Map(next.map((r, i) => [r.id, i + 1]));
+    setRows(
+      rows.map((r) =>
+        order.has(r.id) ? { ...r, featuredOrder: order.get(r.id)! } : r,
+      ),
+    );
+    for (const [id, featuredOrder] of order) track(id, { featuredOrder });
+    run(
+      () => reorderFeatured(next.map((r) => r.id)),
+      "Đã lưu thứ tự nổi bật",
+      () => setRows(previous),
+      () => next.forEach((r) => settle(r.id)),
+      () => reorderStars(next),
     );
   }
 
@@ -271,7 +343,7 @@ export function ResourceTable({
     <div
       id={`row-${row.id}`}
       data-highlight={flash === row.id || undefined}
-      className="flex items-center gap-2 px-2 py-2 text-sm transition-colors duration-700 data-[highlight=true]:bg-primary/15 sm:gap-3"
+      className="flex flex-wrap items-center gap-2 px-2 py-2 text-sm transition-colors duration-700 data-[highlight=true]:bg-primary/15 sm:gap-3"
     >
       {handle}
       <div className="min-w-0 flex-1">
@@ -304,6 +376,45 @@ export function ResourceTable({
           </Badge>
         ))}
       </div>
+      {stars &&
+        (readOnly ? (
+          row.featured && (
+            <Badge variant="outline" className="gap-1">
+              <Star
+                aria-hidden
+                className="size-3 fill-amber-400 text-amber-500"
+              />
+              Nổi bật
+            </Badge>
+          )
+        ) : (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            aria-pressed={Boolean(row.featured)}
+            aria-label={`Nổi bật trên trang chủ: ${row.label}`}
+            title={
+              row.featured
+                ? "Bỏ sao"
+                : `Gắn sao để hiện trên trang chủ (tối đa ${FEATURED_LIMIT})`
+            }
+            // One change at a time per item: no second click while the first is saving.
+            disabled={inflight.has(row.id)}
+            onClick={() => toggleStar(row)}
+          >
+            <Star
+              aria-hidden
+              className={cn(
+                "size-4",
+                row.featured
+                  ? "fill-amber-400 text-amber-500"
+                  : "text-muted-foreground",
+              )}
+            />
+          </Button>
+        ))}
       {row.canHide && !readOnly && (
         <Switch
           checked={!row.hidden}
@@ -343,11 +454,74 @@ export function ResourceTable({
           </Button>
         </>
       )}
+      {starRefused?.id === row.id && (
+        <p
+          role="alert"
+          className="basis-full rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-800 dark:text-amber-300"
+        >
+          {starRefused.message}
+        </p>
+      )}
     </div>
+  );
+
+  const starredLine = (row: ListRow, i: number, handle: React.ReactNode) => (
+    <div className="flex items-center gap-2 px-2 py-1.5 text-sm">
+      {handle}
+      <span className="w-5 text-right tabular-nums text-muted-foreground">
+        {i + 1}.
+      </span>
+      <span className="min-w-0 flex-1 truncate font-medium">{row.label}</span>
+      {row.hidden && (
+        <Badge variant="outline" className="text-muted-foreground">
+          Đang ẩn
+        </Badge>
+      )}
+    </div>
+  );
+  const featuredStrip = stars && (
+    <section
+      aria-labelledby="featured-strip-title"
+      className="flex flex-col gap-2 rounded-md border border-amber-500/30 bg-amber-500/5 p-3"
+    >
+      <h2 id="featured-strip-title" className="text-sm font-semibold">
+        Nổi bật trên trang chủ ({starred.length}/{FEATURED_LIMIT})
+      </h2>
+      <p className="text-xs text-muted-foreground">
+        {starred.length === 0
+          ? `Chưa gắn sao dự án nào: trang chủ đang hiện ${FEATURED_LIMIT} dự án mới nhất.`
+          : starred.length < FEATURED_LIMIT
+            ? `Còn ${FEATURED_LIMIT - starred.length} chỗ: trang chủ lấp bằng dự án mới nhất.`
+            : readOnly
+              ? "Thứ tự trên trang chủ."
+              : "Kéo biểu tượng ⠿ (hoặc Space rồi phím mũi tên) để đổi thứ tự trên trang chủ."}
+      </p>
+      {starred.length > 0 &&
+        (readOnly ? (
+          <ol
+            aria-label="Thứ tự dự án nổi bật"
+            className="flex flex-col divide-y rounded-md border bg-background"
+          >
+            {starred.map((row, i) => (
+              <li key={row.id}>{starredLine(row, i, null)}</li>
+            ))}
+          </ol>
+        ) : (
+          <SortableList
+            label="Thứ tự dự án nổi bật"
+            items={starred}
+            onReorder={reorderStars}
+            renderItem={(row, handle) =>
+              starredLine(row, starred.indexOf(row), handle)
+            }
+          />
+        ))}
+    </section>
   );
 
   return (
     <div className="flex flex-col gap-3" aria-busy={pending}>
+      {featuredStrip}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <div className="relative sm:max-w-xs sm:flex-1">
           <Search
@@ -412,13 +586,21 @@ export function ResourceTable({
           Không có mục nào khớp bộ lọc.
         </p>
       ) : isFiltered || readOnly ? (
-        <ul className="flex flex-col divide-y rounded-md border">
+        <ul
+          className="flex flex-col divide-y rounded-md border"
+          aria-label="Danh sách"
+        >
           {filtered.map((row) => (
             <li key={row.id}>{renderRow(row, null)}</li>
           ))}
         </ul>
       ) : (
-        <SortableList items={rows} onReorder={reorder} renderItem={renderRow} />
+        <SortableList
+          label="Danh sách"
+          items={rows}
+          onReorder={reorder}
+          renderItem={renderRow}
+        />
       )}
 
       <Dialog

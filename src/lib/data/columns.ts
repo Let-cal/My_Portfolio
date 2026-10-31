@@ -98,6 +98,32 @@ export const TABLES = {
       { name: "video_url", type: "text", nullable: true },
       published,
       sortIndex,
+      {
+        name: "experience_id",
+        type: "text",
+        nullable: true,
+        constraint: "references public.experiences (id) on delete restrict",
+      },
+      {
+        name: "education_id",
+        type: "text",
+        nullable: true,
+        constraint: "references public.education (id) on delete restrict",
+      },
+      {
+        name: "kind",
+        type: "text",
+        default: "'personal'",
+        constraint: "check (kind in ('work', 'university', 'personal'))",
+      },
+      { name: "featured", type: "boolean", default: "false" },
+      { name: "featured_order", type: "integer", nullable: true },
+      { name: "roles", type: "text[]", default: "'{}'" },
+      { name: "team_size", type: "text", nullable: true },
+      { name: "links", type: "jsonb", default: "'[]'" },
+    ],
+    tableConstraints: [
+      "constraint projects_kind_matches_link check ((kind = 'work' and experience_id is not null and education_id is null) or (kind = 'university' and education_id is not null and experience_id is null) or (kind = 'personal' and experience_id is null and education_id is null))",
     ],
   },
   skills: {
@@ -192,3 +218,23 @@ export type TableName = keyof typeof TABLES;
 
 /** Storage buckets for admin uploads; both are publicly readable. */
 export const BUCKETS = ["media", "files"] as const;
+
+/**
+ * Table names in creation (and seeding) order: a table comes after every table its columns
+ * reference. Without references it keeps its place in TABLES.
+ */
+export function creationOrder(): TableName[] {
+  const done = new Set<string>();
+  const out: TableName[] = [];
+  const visit = (name: TableName) => {
+    if (done.has(name)) return;
+    done.add(name);
+    for (const col of (TABLES[name] as Table).columns) {
+      const ref = /references public\.(\w+)/.exec(col.constraint ?? "");
+      if (ref && ref[1] in TABLES) visit(ref[1] as TableName);
+    }
+    out.push(name);
+  };
+  (Object.keys(TABLES) as TableName[]).forEach(visit);
+  return out;
+}

@@ -7,6 +7,10 @@ const EMPTY_I18N = { en: "", ja: "", vi: "" };
 export function emptyItem(key: ResourceKey): Record<string, unknown> {
   const values: Record<string, unknown> = {};
   for (const f of resources[key].fields) {
+    if (f.initial !== undefined) {
+      values[f.name] = f.initial;
+      continue;
+    }
     values[f.name] =
       f.kind === "i18n"
         ? f.nullable
@@ -20,7 +24,8 @@ export function emptyItem(key: ResourceKey): Record<string, unknown> {
                 f.kind === "links" ||
                 f.kind === "relations" ||
                 f.kind === "order" ||
-                f.kind === "skills"
+                f.kind === "skills" ||
+                f.kind === "roles"
               ? []
               : f.kind === "colors"
                 ? ["#0ea5e9", "#e0a84e"]

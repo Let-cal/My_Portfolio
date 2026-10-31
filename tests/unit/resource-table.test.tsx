@@ -40,9 +40,7 @@ describe("ResourceTable", () => {
         initialRows={listRows("experiences", content)}
       />,
     );
-    const row = screen
-      .getByText("COA (Certificate of Analysis system)")
-      .closest("li")!;
+    const row = screen.getByText("FPT Japan").closest("li")!;
     expect(within(row).getByText(/ – /)).toBeTruthy();
   });
 
@@ -50,7 +48,11 @@ describe("ResourceTable", () => {
     const rows = listRows("projects", content);
     rows[0] = { ...rows[0], hidden: true };
     render(<ResourceTable resourceKey="projects" initialRows={rows} />);
-    const list = () => screen.getAllByRole("listitem");
+    // The main list only (the projects screen also has the featured strip).
+    const list = () =>
+      within(screen.getByRole("list", { name: "Danh sách" })).getAllByRole(
+        "listitem",
+      );
     expect(list()).toHaveLength(rows.length);
 
     await act(async () =>

@@ -12,6 +12,8 @@ import type { MediaFile } from "@/lib/admin/media";
 const a = vi.hoisted(() => ({
   listVersions: vi.fn(),
   listMedia: vi.fn(),
+  toggleFeatured: vi.fn(),
+  reorderFeatured: vi.fn(),
   toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }),
 }));
 vi.mock("next/navigation", () => ({
@@ -23,6 +25,8 @@ vi.mock("@/app/admin/actions", () => ({
   duplicateResource: vi.fn(),
   reorderResource: vi.fn(),
   togglePublished: vi.fn(),
+  toggleFeatured: a.toggleFeatured,
+  reorderFeatured: a.reorderFeatured,
   undoDelete: vi.fn(),
   saveResource: vi.fn(),
   saveSkillLinks: vi.fn(),
@@ -184,6 +188,44 @@ describe("ResourceTable", () => {
     expect(screen.getAllByRole("link", { name: "Sửa" }).length).toBeGreaterThan(
       0,
     );
+  });
+});
+
+describe("projects: stars and the featured strip", () => {
+  const projects = (kind: Kind) =>
+    as(
+      kind,
+      <ResourceTable
+        resourceKey="projects"
+        initialRows={listRows("projects", content)}
+      />,
+    );
+  const strip = () =>
+    screen.getByRole("list", { name: "Thứ tự dự án nổi bật" });
+
+  it("no star toggles for reviewer, and no drag in the featured strip", () => {
+    projects("reviewer");
+    expect(
+      screen.queryAllByRole("button", { name: /Nổi bật trên trang chủ/ }),
+    ).toHaveLength(0);
+    expect(screen.queryAllByRole("button", { name: /Kéo để sắp xếp/ })).toEqual(
+      [],
+    );
+    // The stars stay visible as plain marks, in the strip's order.
+    expect(screen.getAllByText("Nổi bật")).toHaveLength(3);
+    expect(within(strip()).getAllByRole("listitem")).toHaveLength(3);
+    expect(a.toggleFeatured).not.toHaveBeenCalled();
+    expect(a.reorderFeatured).not.toHaveBeenCalled();
+  });
+
+  it("admin: a star toggle per row and a draggable strip", () => {
+    projects("admin");
+    expect(
+      screen.getAllByRole("button", { name: /Nổi bật trên trang chủ/ }),
+    ).toHaveLength(content.projects.length);
+    expect(
+      within(strip()).getAllByRole("button", { name: /Kéo để sắp xếp/ }),
+    ).toHaveLength(3);
   });
 });
 

@@ -7,7 +7,7 @@ import {
   type PointerEvent,
   type ReactNode,
 } from "react";
-import type { CaseStudyView } from "@/components/sections/experience/CaseStudySheet";
+import type { CaseStudyView } from "@/components/sections/case-study/CaseStudyPanel";
 import { GlowCard } from "@/components/fx/GlowCard";
 import { usePrefersReducedMotion } from "@/components/fx/use-media-query";
 import { useIsHighlighted } from "@/components/site/HighlightProvider";

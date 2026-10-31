@@ -10,7 +10,16 @@
     "skills": "Skills",
     "certificates": "Certificates",
     "why": "Why me",
-    "contact": "Contact"
+    "contact": "Contact",
+    "peek": {
+      "hero": "Introduction, role and CV",
+      "experience": "Companies, positions and their projects",
+      "projects": "Featured work and case studies",
+      "skills": "Skills and the evidence behind them",
+      "certificates": "Courses, certificates and activities",
+      "why": "Why work with me: the koi becomes a dragon",
+      "contact": "Email, LinkedIn and GitHub"
+    }
   },
   "pill": {
     "hero": "Home",
@@ -81,7 +90,8 @@
     "actions": {
       "downloadCv": "Download CV",
       "copyEmail": "Copy email",
-      "quickView": "60-second view"
+      "quickView": "60-second view",
+      "allProjects": "All projects"
     }
   },
   "roles": {
@@ -209,7 +219,17 @@
     "moreTech": "+{count} more",
     "skgIntern": "Software Engineer Intern",
     "skgEngineer": "Software Engineer — acting Project Manager / Tech Lead",
-    "gpa": "GPA {gpa}"
+    "gpa": "GPA {gpa}",
+    "projectsCount": "{count, plural, one {# project} other {# projects}}",
+    "internshipChip": "internship",
+    "intern": "Intern",
+    "expand": "Show details",
+    "collapse": "Hide details",
+    "promoted": "Promoted to full-time · {month}",
+    "positionsCount": "{count, plural, one {# position} other {# positions}}",
+    "showDescription": "Show description",
+    "hideDescription": "Hide description",
+    "timelineLabel": "{company} timeline. Positions: {positions}. Projects: {projects}."
   },
   "skills": {
     "intro": "Pick a skill to see which experience and projects it comes from.",
@@ -239,7 +259,17 @@
     "decisions": "Decisions",
     "result": "Result",
     "tech": "Tech stack",
-    "team": "Team size: {size}"
+    "team": "Team size: {size}",
+    "copyLink": "Copy link",
+    "copied": "Link copied",
+    "prev": "Previous project: {title}",
+    "next": "Next project: {title}",
+    "position": "{index} of {total}",
+    "chapterTree": "第一章 経歴",
+    "chapterProjects": "第二章 作品",
+    "where": "Where",
+    "period": "Period",
+    "teamLabel": "Team"
   },
   "projects": {
     "viewCaseStudy": "View case study",
@@ -250,7 +280,29 @@
     "codeWeb": "Code (Web)",
     "codeMobile": "Code (Mobile)",
     "codeN": "Code {n}",
-    "newTab": "(opens in new tab)"
+    "newTab": "(opens in new tab)",
+    "viewAll": "View all {count, plural, one {# project} other {# projects}}"
+  },
+  "archive": {
+    "metaTitle": "All projects | Le Tran Cat Lam",
+    "description": "Every project Le Tran Cat Lam has worked on: client work, university projects and personal projects, with the role, tech stack and links of each.",
+    "title": "All projects",
+    "intro": "Client work, university projects and personal projects, newest first. Select a project name to read its case study, where there is one.",
+    "summary": "{count, plural, one {# project} other {# projects}} · {from} – {to}",
+    "back": "Back to home",
+    "nav": "All projects",
+    "filterLabel": "Filter projects by where they were done",
+    "kinds": {
+      "all": "All",
+      "work": "Work",
+      "university": "University",
+      "personal": "Personal"
+    },
+    "personal": "Personal",
+    "stint": "Position:",
+    "featured": "Featured on the home page",
+    "showing": "Showing {count} of {total} projects",
+    "empty": "No projects of this kind yet."
   },
   "certificates": {
     "intro": "Courses, certificates and school activities. Pick a lantern to see its credential.",
@@ -313,6 +365,12 @@
   },
   "common": {
     "present": "Present",
-    "close": "Close"
+    "close": "Close",
+    "duration": {
+      "yearOne": "{count} yr",
+      "yearOther": "{count} yrs",
+      "monthOne": "{count} mo",
+      "monthOther": "{count} mos"
+    }
   }
 }

@@ -244,7 +244,7 @@ describe("Skills evidence", () => {
     expect(panel.querySelectorAll("[data-evidence-card]")).toHaveLength(3);
   });
 
-  it("links each card to its #exp-/#proj- anchor and lists projects too", async () => {
+  it("links each project card to its #tree- child in the experience tree", async () => {
     const user = userEvent.setup();
     renderSkills();
     await user.click(chip("React"));
@@ -255,12 +255,26 @@ describe("Skills evidence", () => {
     ].map((a) => a.getAttribute("href"));
     expect(links).toEqual(
       expect.arrayContaining([
-        "#exp-skg-ai-agent",
-        "#exp-skg-flexybox-p2",
-        "#proj-siteplus",
-        "#proj-zodiacgems",
+        "#tree-skg-ai-agent",
+        "#tree-skg-flexybox-p2",
+        "#tree-siteplus",
+        "#tree-zodiacgems",
       ]),
     );
+    expect(links).toHaveLength(4);
+  });
+
+  it("links an experience card to its #exp-<group> parent in the tree", async () => {
+    const user = userEvent.setup();
+    renderSkills();
+    await user.click(chip("Requirements definition"));
+    const links = [
+      ...section().querySelectorAll<HTMLAnchorElement>(
+        "[data-evidence-card] a",
+      ),
+    ].map((a) => a.getAttribute("href"));
+    expect(links).toContain("#exp-fpt-japan");
+    expect(links).toContain("#tree-skg-ai-agent");
   });
 
   it("says so when a skill has no linked evidence", async () => {
@@ -327,25 +341,37 @@ describe("Skills evidence", () => {
     expect(section().querySelector("svg[data-beam]")).toBeNull();
   });
 
-  it("marks the related #exp-/#proj- elements data-highlight through the provider", async () => {
+  it("marks the related tree children (and bento cards) data-highlight through the provider", async () => {
     const user = userEvent.setup();
     renderSkills({ withCards: true });
-    const exp = (id: string) =>
-      document.getElementById(`exp-${id}`) as HTMLElement;
-    expect(exp("skg-flexybox-p2")).not.toHaveAttribute("data-highlight");
+    const node = (id: string) => document.getElementById(id) as HTMLElement;
+    expect(node("tree-skg-flexybox-p2")).not.toHaveAttribute("data-highlight");
     await user.click(chip("Next.js"));
-    for (const id of ["skg-flexybox-p2", "skg-flexybox-p1", "skg-intern"])
-      expect(exp(id)).toHaveAttribute("data-highlight", "true");
-    expect(exp("skg-coa")).not.toHaveAttribute("data-highlight");
+    for (const id of [
+      "tree-skg-flexybox-p2",
+      "tree-skg-flexybox-p1",
+      "tree-tongue-ai-driver-ms",
+    ])
+      expect(node(id)).toHaveAttribute("data-highlight", "true");
+    expect(node("tree-skg-coa")).not.toHaveAttribute("data-highlight");
     await user.click(chip("React"));
-    expect(document.getElementById("proj-siteplus")).toHaveAttribute(
+    expect(node("tree-siteplus")).toHaveAttribute("data-highlight", "true");
+    expect(node("proj-siteplus")).toHaveAttribute("data-highlight", "true");
+    expect(node("tree-tongue-ai-driver-ms")).not.toHaveAttribute(
+      "data-highlight",
+    );
+    await user.click(chip("React"));
+    expect(node("tree-siteplus")).not.toHaveAttribute("data-highlight");
+    expect(node("proj-siteplus")).not.toHaveAttribute("data-highlight");
+  });
+
+  it("marks an experience parent data-highlight", async () => {
+    const user = userEvent.setup();
+    renderSkills({ withCards: true });
+    await user.click(chip("Requirements definition"));
+    expect(document.getElementById("exp-fpt-japan")).toHaveAttribute(
       "data-highlight",
       "true",
-    );
-    expect(exp("skg-intern")).not.toHaveAttribute("data-highlight");
-    await user.click(chip("React"));
-    expect(document.getElementById("proj-siteplus")).not.toHaveAttribute(
-      "data-highlight",
     );
   });
 });

@@ -10,7 +10,16 @@
     "skills": "Kỹ năng",
     "certificates": "Chứng chỉ",
     "why": "Vì sao chọn tôi",
-    "contact": "Liên hệ"
+    "contact": "Liên hệ",
+    "peek": {
+      "hero": "Giới thiệu, vai trò và CV",
+      "experience": "Công ty, vị trí và dự án",
+      "projects": "Dự án nổi bật và case study",
+      "skills": "Kỹ năng và bằng chứng đi kèm",
+      "certificates": "Khóa học, chứng chỉ và hoạt động",
+      "why": "Vì sao chọn tôi: cá chép hóa rồng",
+      "contact": "Email, LinkedIn và GitHub"
+    }
   },
   "pill": {
     "hero": "Trang chủ",
@@ -81,7 +90,8 @@
     "actions": {
       "downloadCv": "Tải CV",
       "copyEmail": "Sao chép email",
-      "quickView": "Xem nhanh 60 giây"
+      "quickView": "Xem nhanh 60 giây",
+      "allProjects": "Tất cả dự án"
     }
   },
   "roles": {
@@ -209,7 +219,17 @@
     "moreTech": "+{count} nữa",
     "skgIntern": "Thực tập sinh kỹ sư phần mềm",
     "skgEngineer": "Kỹ sư phần mềm, kiêm Project Manager / Tech Lead",
-    "gpa": "GPA {gpa}"
+    "gpa": "GPA {gpa}",
+    "projectsCount": "{count} dự án",
+    "internshipChip": "thực tập",
+    "intern": "Thực tập",
+    "expand": "Xem chi tiết",
+    "collapse": "Thu gọn",
+    "promoted": "Lên nhân viên chính thức · {month}",
+    "positionsCount": "{count} vị trí",
+    "showDescription": "Xem mô tả",
+    "hideDescription": "Thu gọn mô tả",
+    "timelineLabel": "Dòng thời gian {company}. Vị trí: {positions}. Dự án: {projects}."
   },
   "skills": {
     "intro": "Chọn một kỹ năng để xem nó đến từ kinh nghiệm và dự án nào.",
@@ -239,7 +259,17 @@
     "decisions": "Quyết định",
     "result": "Kết quả",
     "tech": "Công nghệ",
-    "team": "Quy mô team: {size}"
+    "team": "Quy mô team: {size}",
+    "copyLink": "Sao chép link",
+    "copied": "Đã sao chép link",
+    "prev": "Dự án trước: {title}",
+    "next": "Dự án tiếp theo: {title}",
+    "position": "{index} trên {total}",
+    "chapterTree": "第一章 経歴",
+    "chapterProjects": "第二章 作品",
+    "where": "Nơi làm",
+    "period": "Thời gian",
+    "teamLabel": "Team"
   },
   "projects": {
     "viewCaseStudy": "Xem case study",
@@ -250,7 +280,29 @@
     "codeWeb": "Code (Web)",
     "codeMobile": "Code (Mobile)",
     "codeN": "Code {n}",
-    "newTab": "(mở trong tab mới)"
+    "newTab": "(mở trong tab mới)",
+    "viewAll": "Xem tất cả {count} dự án"
+  },
+  "archive": {
+    "metaTitle": "Tất cả dự án | Lê Trần Cát Lâm",
+    "description": "Mọi dự án Lê Trần Cát Lâm đã tham gia: dự án ở công ty, đồ án đại học và dự án cá nhân, kèm vai trò, công nghệ và liên kết của từng dự án.",
+    "title": "Tất cả dự án",
+    "intro": "Dự án ở công ty, đồ án đại học và dự án cá nhân, mới nhất trước. Chọn tên dự án để đọc case study nếu có.",
+    "summary": "{count} dự án · {from} – {to}",
+    "back": "Về trang chủ",
+    "nav": "Tất cả dự án",
+    "filterLabel": "Lọc dự án theo nơi thực hiện",
+    "kinds": {
+      "all": "Tất cả",
+      "work": "Công ty",
+      "university": "Đại học",
+      "personal": "Cá nhân"
+    },
+    "personal": "Cá nhân",
+    "stint": "Vị trí:",
+    "featured": "Nổi bật trên trang chủ",
+    "showing": "Đang hiện {count} trên {total} dự án",
+    "empty": "Chưa có dự án nào thuộc loại này."
   },
   "certificates": {
     "intro": "Các khóa học, chứng chỉ và hoạt động ở trường. Chọn một chiếc đèn lồng để xem thông tin chứng chỉ.",
@@ -313,6 +365,12 @@
   },
   "common": {
     "present": "Hiện tại",
-    "close": "Đóng"
+    "close": "Đóng",
+    "duration": {
+      "yearOne": "{count} năm",
+      "yearOther": "{count} năm",
+      "monthOne": "{count} tháng",
+      "monthOther": "{count} tháng"
+    }
   }
 }

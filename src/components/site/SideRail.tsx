@@ -1,14 +1,15 @@
-"use client";
-
-import { MailIcon } from "@/components/site/icons";
-import { useTranslations } from "next-intl";
-import { TextScramble } from "@/components/fx/TextScramble";
-import type { RoleKey } from "@/content/schema";
-import { clsx } from "clsx";
-import { useRole } from "./RoleProvider";
-import { SECTION_IDS } from "./sections";
+import { useLocale, useTranslations } from "next-intl";
 import type { ReactNode } from "react";
-import { useActiveSection } from "./use-active-section";
+import { MailIcon } from "@/components/site/icons";
+import type { RoleKey } from "@/content/schema";
+import "./ink-thread.css";
+import {
+  ArchiveLink,
+  ChapterLink,
+  InkThread,
+  RoleTitle,
+} from "./SideRailClient";
+import { SECTION_CHAPTERS, SECTION_IDS } from "./sections";
 
 export type SideRailProps = {
   name: string;
@@ -18,17 +19,19 @@ export type SideRailProps = {
   icons: { github: ReactNode; linkedin: ReactNode };
 };
 
-const ACCENT = "var(--role-accent, #f97316)";
-
 /**
- * Sticky left column (desktop, 1024px and up): name, the title of the chosen role, the seven section links
- * and the contact icons. Each link has a 32px line; the section crossing the reading line gets a 64px line
- * in the role accent colour and `aria-current`.
+ * Sticky left column (desktop, 1024px and up): name, the title of the chosen role, the chapter navigation and the
+ * contact icons. The navigation is the 墨の糸 ink thread (Emaki spec 5.5): a kanji numeral per chapter on one thin
+ * swaying line, inked down to the reader's position, with a progress hairline under each label and a peek card on
+ * hover or focus. "All projects" is a dashed spur off the thread. Section links are in-page `#id` links; on another
+ * page the project archive sends them to the home page (no code for that ships here).
+ *
+ * This is a server component: only the active chapter, the archive check and the role title are client islands
+ * (`SideRailClient`), and the thread engine (`ink-thread.ts`) loads when the browser is idle.
  */
 export function SideRail({ name, titles, links, icons }: SideRailProps) {
   const t = useTranslations();
-  const { role } = useRole();
-  const active = useActiveSection();
+  const locale = useLocale();
 
   const socials = [
     { label: t("footer.github"), href: links.github, icon: icons.github },
@@ -55,7 +58,7 @@ export function SideRail({ name, titles, links, icons }: SideRailProps) {
             data-scene-avoid=""
             className="mt-3 font-[family-name:var(--font-serif)] text-xl text-balance text-brand-text italic [&:lang(ja)]:not-italic"
           >
-            <TextScramble text={titles[role]} />
+            <RoleTitle titles={titles} />
           </p>
 
           <nav
@@ -63,37 +66,83 @@ export function SideRail({ name, titles, links, icons }: SideRailProps) {
             data-scene-avoid=""
             className="mt-14"
           >
-            <ul className="flex flex-col gap-1">
-              {SECTION_IDS.map((id) => {
-                const current = active === id;
-                return (
+            <InkThread className="it">
+              <svg
+                data-ink-svg=""
+                className="it-svg it-base"
+                width="20"
+                height="0"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path data-ink-path="" />
+              </svg>
+              <svg
+                data-ink-svg=""
+                data-ink=""
+                className="it-svg it-ink"
+                width="20"
+                height="0"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <defs>
+                  <linearGradient
+                    id="it-ink-gradient"
+                    data-ink-gradient=""
+                    gradientUnits="userSpaceOnUse"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop data-ink-stop="" className="it-stop-role" />
+                    <stop data-ink-stop="" className="it-stop-teal" />
+                  </linearGradient>
+                </defs>
+                <path data-ink-path="" stroke="url(#it-ink-gradient)" />
+              </svg>
+              <span data-ink-drop="" className="it-drop" aria-hidden="true" />
+              <ul data-ink-list="" className="it-list">
+                {SECTION_IDS.map((id) => (
                   <li key={id}>
-                    <a
-                      href={`#${id}`}
-                      aria-current={current ? "true" : undefined}
-                      className={clsx(
-                        "group flex items-center gap-4 rounded-sm py-2 text-xs font-semibold tracking-[0.18em] uppercase outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-                        current
-                          ? "text-foreground"
-                          : "text-muted-foreground hover:text-foreground focus-visible:text-foreground",
-                      )}
-                    >
+                    <ChapterLink id={id} className="it-link">
                       <span
+                        data-numeral=""
                         aria-hidden="true"
-                        className={clsx(
-                          "h-px shrink-0 bg-current transition-[width] duration-300 ease-out group-hover:w-16 group-focus-visible:w-16 motion-reduce:transition-none",
-                          current ? "w-16" : "w-8",
-                        )}
-                        style={
-                          current ? { backgroundColor: ACCENT } : undefined
-                        }
-                      />
-                      {t(`nav.${id}`)}
-                    </a>
+                        lang="ja"
+                        className="it-numeral"
+                      >
+                        {SECTION_CHAPTERS[id].numeral}
+                      </span>
+                      <span className="it-label">{t(`nav.${id}`)}</span>
+                      <span
+                        data-progress=""
+                        aria-hidden="true"
+                        className="it-progress"
+                      >
+                        <span />
+                      </span>
+                      <span data-peek="" aria-hidden="true" className="it-peek">
+                        <b lang="ja">{SECTION_CHAPTERS[id].kanji}</b>
+                        {t(`nav.peek.${id}`)}
+                      </span>
+                    </ChapterLink>
+                    {id === "projects" ? (
+                      <ArchiveLink
+                        href={`/${locale}/projects`}
+                        className="it-spur"
+                      >
+                        {t("archive.nav")}
+                        <span aria-hidden="true" className="it-arrow">
+                          ↗
+                        </span>
+                      </ArchiveLink>
+                    ) : null}
                   </li>
-                );
-              })}
-            </ul>
+                ))}
+              </ul>
+            </InkThread>
           </nav>
         </div>
 

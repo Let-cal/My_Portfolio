@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { contentSchema } from "@/content/schema";
 import seed from "@/content/seed.json";
-import { TABLES } from "@/lib/data/columns";
+import { creationOrder, TABLES } from "@/lib/data/columns";
 import { buildSeedRows, renderSeedSql } from "@/lib/data/seed-rows";
 
 const content = contentSchema.parse(seed);
@@ -9,10 +9,17 @@ const rows = buildSeedRows(content);
 
 describe("seed rows", () => {
   it("covers every table, in the order foreign keys need", () => {
-    expect(Object.keys(rows)).toEqual(Object.keys(TABLES));
     const order = Object.keys(rows);
+    expect(order).toEqual(creationOrder());
+    expect([...order].sort()).toEqual(Object.keys(TABLES).sort());
     expect(order.indexOf("skill_links")).toBeGreaterThan(
       order.indexOf("projects"),
+    );
+    expect(order.indexOf("projects")).toBeGreaterThan(
+      order.indexOf("experiences"),
+    );
+    expect(order.indexOf("projects")).toBeGreaterThan(
+      order.indexOf("education"),
     );
   });
 

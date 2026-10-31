@@ -4,7 +4,7 @@
 // Modern browsers ignore nomodule scripts, so their legacy polyfills are excluded.
 // Lazy chunks (the 3D scene, dialogs) are not in the HTML, so they are not counted.
 //
-//   node scripts/measure-initial-js.mjs            -> /en, /ja, /vi, /en/quick (quick only if prerendered)
+//   node scripts/measure-initial-js.mjs            -> /en, /ja, /vi, /en/quick, /en/projects
 //   node scripts/measure-initial-js.mjs en --json  -> one route, machine-readable
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -15,7 +15,9 @@ const root = process.cwd();
 const args = process.argv.slice(2);
 const json = args.includes("--json");
 const routes = args.filter((a) => !a.startsWith("--"));
-const list = routes.length ? routes : ["en", "ja", "vi", "en/quick"];
+const list = routes.length
+  ? routes
+  : ["en", "ja", "vi", "en/quick", "en/projects"];
 
 function scriptsOf(html) {
   const found = new Set();

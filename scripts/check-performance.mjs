@@ -8,8 +8,10 @@ import {
 import { join } from "node:path";
 import {
   ADVISORY,
+  AUDITED_ROUTES,
   BLOCKING,
   evaluatePerformance,
+  reportName,
 } from "./performance-budgets.mjs";
 
 const origin = process.env.PERF_ORIGIN ?? "http://localhost:3100";
@@ -18,17 +20,17 @@ const output = process.env.PERF_OUTPUT ?? ".lighthouseci";
 mkdirSync(output, { recursive: true });
 
 const summary = [];
-for (const locale of routes.length ? routes : ["en", "ja", "vi"]) {
-  if (!["en", "ja", "vi"].includes(locale))
-    throw new Error(`Unknown locale: ${locale}`);
+for (const route of routes.length ? routes : AUDITED_ROUTES) {
+  if (!AUDITED_ROUTES.includes(route))
+    throw new Error(`Unknown route: ${route}`);
   const reports = [];
   for (let run = 1; run <= 3; run++) {
-    const file = join(output, `${locale}-${run}.json`);
+    const file = join(output, reportName(route, run));
     const result = spawnSync(
       process.execPath,
       [
         "node_modules/lighthouse/cli/index.js",
-        `${origin}/${locale}`,
+        `${origin}/${route}`,
         "--form-factor=mobile",
         "--only-categories=performance,accessibility,best-practices,seo",
         "--output=json",
@@ -43,7 +45,7 @@ for (const locale of routes.length ? routes : ["en", "ja", "vi"]) {
     );
     if (result.status !== 0)
       throw new Error(
-        `Lighthouse failed for ${locale} run ${run}: ${result.error?.message ?? result.stderr}`,
+        `Lighthouse failed for ${route} run ${run}: ${result.error?.message ?? result.stderr}`,
       );
     const report = JSON.parse(readFileSync(file, "utf8"));
     if (report.runtimeError)
@@ -51,10 +53,10 @@ for (const locale of routes.length ? routes : ["en", "ja", "vi"]) {
         `Lighthouse runtime error: ${report.runtimeError.message}`,
       );
     reports.push(report);
-    console.log(`${locale}: collected run ${run}/3`);
+    console.log(`${route}: collected run ${run}/3`);
   }
   const result = {
-    route: `/${locale}`,
+    route: `/${route}`,
     origin,
     ...evaluatePerformance(reports),
   };

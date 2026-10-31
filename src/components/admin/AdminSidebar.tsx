@@ -37,7 +37,7 @@ export const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
     title: "Nội dung",
     items: [
       { href: "/admin/skills", label: "Kỹ năng", icon: Sparkles },
-      { href: "/admin/experiences", label: "Kinh nghiệm", icon: Briefcase },
+      { href: "/admin/experiences", label: "Vị trí làm việc", icon: Briefcase },
       { href: "/admin/projects", label: "Dự án", icon: FolderKanban },
       { href: "/admin/certificates", label: "Chứng chỉ", icon: Award },
       { href: "/admin/activities", label: "Hoạt động", icon: CalendarHeart },

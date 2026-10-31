@@ -2,12 +2,19 @@ import { describe, expect, it } from "vitest";
 import { contentSchema, profileSchema, type Content } from "@/content/schema";
 import seed from "@/content/seed.json";
 
+/** The two SKG position stints and their end dates. */
 const SKG_ENDS: Record<string, string> = {
+  "skg-engineer": "2026-09",
+  "skg-intern": "2025-10",
+};
+
+/** The SKG projects (moved from experiences) and their end dates. */
+const SKG_PROJECT_ENDS: Record<string, string> = {
   "skg-ai-agent": "2026-09",
   "skg-flexybox-p2": "2026-09",
   "skg-coa": "2026-03",
   "skg-flexybox-p1": "2025-10",
-  "skg-intern": "2025-09",
+  "tongue-ai-driver-ms": "2025-09",
 };
 
 describe("content schema", () => {
@@ -38,10 +45,18 @@ describe("content schema", () => {
 
   it("groups every skg-* experience under SKG with the fixed end date", () => {
     const skg = content.experiences.filter((e) => e.id.startsWith("skg-"));
-    expect(skg).toHaveLength(5);
+    expect(skg).toHaveLength(2);
     for (const exp of skg) {
       expect(exp.parentCompany).toBe("SKG Software (Splus)");
       expect(exp.end).toBe(SKG_ENDS[exp.id]);
+    }
+  });
+
+  it("keeps the SKG projects with their fixed end dates", () => {
+    for (const [id, end] of Object.entries(SKG_PROJECT_ENDS)) {
+      const project = content.projects.find((p) => p.id === id);
+      expect(project?.kind, id).toBe("work");
+      expect(project?.end, id).toBe(end);
     }
   });
 
@@ -68,6 +83,7 @@ describe("content schema", () => {
     const anchors = new Set([
       ...content.experiences.map((e) => `#exp-${e.id}`),
       ...content.projects.map((p) => `#proj-${p.id}`),
+      ...content.projects.map((p) => `#tree-${p.id}`),
     ]);
     for (const card of content.whyCards) {
       if (card.evidenceLink) expect(anchors).toContain(card.evidenceLink);
@@ -82,6 +98,8 @@ describe("content schema", () => {
       if (node && typeof node === "object") {
         const obj = node as Record<string, unknown>;
         if (typeof obj.en === "string") {
+          // An optional text left empty in every locale (a stint without a summary).
+          if (!obj.en && obj.ja === undefined && obj.vi === undefined) return;
           for (const l of ["ja", "vi"]) {
             if (typeof obj[l] !== "string" || !(obj[l] as string).trim())
               missing.push(`${path}.${l}`);

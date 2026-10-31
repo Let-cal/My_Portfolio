@@ -24,10 +24,13 @@ export function SortableList<T extends { id: string }>({
   items,
   onReorder,
   renderItem,
+  label,
 }: {
   items: T[];
   onReorder: (items: T[]) => void;
   renderItem: (item: T, handle: React.ReactNode) => React.ReactNode;
+  /** Accessible name of the list, when a screen has more than one. */
+  label?: string;
 }) {
   // A stable id keeps dnd-kit's aria-describedby the same on the server and in the browser.
   const id = useId();
@@ -56,7 +59,10 @@ export function SortableList<T extends { id: string }>({
         items={items.map((i) => i.id)}
         strategy={verticalListSortingStrategy}
       >
-        <ul className="flex flex-col divide-y rounded-md border">
+        <ul
+          className="flex flex-col divide-y rounded-md border"
+          aria-label={label}
+        >
           {items.map((item) => (
             <SortableRow key={item.id} id={item.id}>
               {(handle) => renderItem(item, handle)}

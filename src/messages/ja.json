@@ -10,7 +10,16 @@
     "skills": "スキル",
     "certificates": "資格",
     "why": "強み",
-    "contact": "連絡先"
+    "contact": "連絡先",
+    "peek": {
+      "hero": "自己紹介・役割・履歴書",
+      "experience": "会社・役職・担当プロジェクト",
+      "projects": "注目の作品とケーススタディ",
+      "skills": "スキルとその裏付け",
+      "certificates": "講座・資格・活動",
+      "why": "一緒に働く理由：鯉が龍になる",
+      "contact": "メール・LinkedIn・GitHub"
+    }
   },
   "pill": {
     "hero": "ホーム",
@@ -81,7 +90,8 @@
     "actions": {
       "downloadCv": "CVをダウンロード",
       "copyEmail": "メールをコピー",
-      "quickView": "60秒で見る"
+      "quickView": "60秒で見る",
+      "allProjects": "すべてのプロジェクト"
     }
   },
   "roles": {
@@ -209,7 +219,17 @@
     "moreTech": "ほか{count}件",
     "skgIntern": "ソフトウェアエンジニアインターン",
     "skgEngineer": "ソフトウェアエンジニア(プロジェクトマネージャー/テックリード代行)",
-    "gpa": "GPA {gpa}"
+    "gpa": "GPA {gpa}",
+    "projectsCount": "{count}件のプロジェクト",
+    "internshipChip": "インターンシップ",
+    "intern": "インターン",
+    "expand": "詳細を表示",
+    "collapse": "詳細を閉じる",
+    "promoted": "正社員に登用 · {month}",
+    "positionsCount": "{count}つの役職",
+    "showDescription": "説明を表示",
+    "hideDescription": "説明を閉じる",
+    "timelineLabel": "{company}のタイムライン。役職: {positions}。プロジェクト: {projects}。"
   },
   "skills": {
     "intro": "スキルを選ぶと、どの経験・プロジェクトで使ったかが分かります。",
@@ -239,7 +259,17 @@
     "decisions": "判断",
     "result": "結果",
     "tech": "技術スタック",
-    "team": "チーム規模: {size}"
+    "team": "チーム規模: {size}",
+    "copyLink": "リンクをコピー",
+    "copied": "リンクをコピーしました",
+    "prev": "前のプロジェクト: {title}",
+    "next": "次のプロジェクト: {title}",
+    "position": "{total}件中{index}件目",
+    "chapterTree": "第一章 経歴",
+    "chapterProjects": "第二章 作品",
+    "where": "所属",
+    "period": "期間",
+    "teamLabel": "チーム"
   },
   "projects": {
     "viewCaseStudy": "事例を見る",
@@ -250,7 +280,29 @@
     "codeWeb": "コード(Web)",
     "codeMobile": "コード(モバイル)",
     "codeN": "コード{n}",
-    "newTab": "(新しいタブで開きます)"
+    "newTab": "(新しいタブで開きます)",
+    "viewAll": "{count}件のプロジェクトをすべて見る"
+  },
+  "archive": {
+    "metaTitle": "すべてのプロジェクト | レ・チャン・カット・ラム",
+    "description": "レ・チャン・カット・ラムが携わったすべてのプロジェクトです。業務案件、大学のプロジェクト、個人開発を、担当、技術スタック、リンクとともに掲載しています。",
+    "title": "すべてのプロジェクト",
+    "intro": "業務案件、大学のプロジェクト、個人開発を新しい順に掲載しています。ケーススタディがあるプロジェクトは、名前を選ぶと詳細を読めます。",
+    "summary": "{count}件のプロジェクト · {from} – {to}",
+    "back": "ホームに戻る",
+    "nav": "すべてのプロジェクト",
+    "filterLabel": "プロジェクトの種類で絞り込む",
+    "kinds": {
+      "all": "すべて",
+      "work": "業務",
+      "university": "大学",
+      "personal": "個人"
+    },
+    "personal": "個人",
+    "stint": "職位：",
+    "featured": "ホームで紹介中",
+    "showing": "{total}件中{count}件を表示",
+    "empty": "この種類のプロジェクトはまだありません。"
   },
   "certificates": {
     "intro": "講座、資格、学校での活動です。提灯を選ぶと認定情報が見られます。",
@@ -313,6 +365,12 @@
   },
   "common": {
     "present": "現在",
-    "close": "閉じる"
+    "close": "閉じる",
+    "duration": {
+      "yearOne": "{count}年",
+      "yearOther": "{count}年",
+      "monthOne": "{count}か月",
+      "monthOther": "{count}か月"
+    }
   }
 }
