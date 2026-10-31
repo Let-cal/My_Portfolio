@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import { useState } from "react";
@@ -290,6 +296,55 @@ describe("FigureViewer", () => {
     renderViewer({ onClose });
     await user.click(button("Close"));
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("a reopen starts fitted and plays the open motion again", async () => {
+    const user = userEvent.setup();
+    // Web Animations stand-in: every animation finishes at once.
+    const animate = vi.fn(() => ({
+      finished: Promise.resolve(),
+      cancel: () => {},
+    }));
+    (HTMLElement.prototype as { animate?: unknown }).animate = animate;
+    try {
+      function Reopen() {
+        const [open, setOpen] = useState(true);
+        return (
+          <>
+            <button type="button" onClick={() => setOpen(true)}>
+              reopen
+            </button>
+            <FigureViewer
+              figures={figures}
+              index={0}
+              open={open}
+              onIndexChange={() => {}}
+              onClose={() => setOpen(false)}
+              title="SitePlus"
+              theme="light"
+            />
+          </>
+        );
+      }
+      render(
+        <NextIntlClientProvider locale="en" messages={en}>
+          <Reopen />
+        </NextIntlClientProvider>,
+      );
+      expect(animate).toHaveBeenCalled();
+      await user.click(button(/Actual size/));
+      expect(zoomLabel()).toHaveTextContent("100%");
+      await user.keyboard("{Escape}");
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      animate.mockClear();
+      await user.click(screen.getByRole("button", { name: "reopen" }));
+      expect(await screen.findByRole("dialog")).toBeInTheDocument();
+      expect(zoomLabel()).toHaveTextContent("50%");
+      expect(screen.queryByRole("button", { name: "Pan left" })).toBeNull();
+      expect(animate).toHaveBeenCalled();
+    } finally {
+      delete (HTMLElement.prototype as { animate?: unknown }).animate;
+    }
   });
 
   it("every control has an accessible name", async () => {

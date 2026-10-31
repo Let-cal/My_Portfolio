@@ -252,11 +252,13 @@ export function FigureViewer({
     return `translate(${f.x}px, ${f.y}px) scale(${f.s})`;
   };
 
+  // Runs once per open, in the commit where the content is mounted and measured: the Radix portal mounts the
+  // content one commit after `open`, and a reopen measures the same box, so the canvas element is the key.
   useLayoutEffect(() => {
-    if (!open || opened.current || box.w <= 0) return;
-    opened.current = true;
     const root = rootRef.current;
-    if (!canAnimate(root)) return;
+    if (!open || opened.current || !canvas || box.w <= 0 || !canAnimate(root))
+      return;
+    opened.current = true;
     stop();
     const full = document.documentElement.dataset.motion === "full";
     const fade = (el: Element | null, duration: number) =>
@@ -287,9 +289,9 @@ export function FigureViewer({
         easing: EASE,
       }),
     ];
-    // flipToStage reads the current view and box, which this effect is keyed on through `open` and `box`.
+    // flipToStage reads the current view and box, which this effect is keyed on through `open`, `canvas` and `box`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, box.w]);
+  }, [open, canvas, box.w]);
 
   function requestClose() {
     if (closing.current) return;
@@ -394,6 +396,14 @@ export function FigureViewer({
 
   const pointers = useRef(new Map<number, Point>());
   const [dragging, setDragging] = useState(false);
+  // Closed: the next open starts fitted, with no pointer left over from this one.
+  if (!open && (stored !== null || dragging)) {
+    setStored(null);
+    setDragging(false);
+  }
+  useEffect(() => {
+    if (!open) pointers.current.clear();
+  }, [open]);
   const local = (event: { clientX: number; clientY: number }): Point => {
     const r = canvasRef.current!.getBoundingClientRect();
     return { x: event.clientX - r.left, y: event.clientY - r.top };
