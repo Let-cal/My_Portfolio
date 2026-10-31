@@ -1,0 +1,254 @@
+/*
+ * 墨の糸 Ink thread: the side rail's chapter navigation (Emaki spec 5.5). Same visual language as the experience
+ * tree (journey.css): thin ink lines, kanji in the mincho serif, the role accent turning teal at 第五章 昇龍.
+ * The markup is server-rendered; ink-thread.ts sets the path, `--sp` per item, the accent clip, the drop's
+ * transform and `data-dragon`/`data-inked`/`data-ink-ready` on `.it`. Dark is the default theme; `.light` on <html>
+ * switches the tokens. Transitions only run under <html data-motion="full">; otherwise positions are set instantly.
+ */
+
+.it {
+  --it-ink: var(--role-accent);
+  --it-ink-text: var(--role-accent-text);
+  --it-teal: #3fb8a9;
+  --it-line: rgb(255 255 255 / 16%);
+  --it-track: rgb(255 255 255 / 9%);
+  --it-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --it-gutter: 26px;
+
+  position: relative;
+}
+.light .it {
+  --it-teal: #0f766e;
+  --it-line: rgb(0 0 0 / 18%);
+  --it-track: rgb(0 0 0 / 9%);
+}
+.it[data-dragon] {
+  --it-ink: var(--it-teal);
+  --it-ink-text: var(--it-teal);
+}
+
+/* ---- The thread: a base hairline and the accent stroke revealed from the top down to the reader. ---- */
+.it-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+.it-svg path {
+  fill: none;
+}
+.it-base path {
+  stroke: var(--it-line);
+  stroke-width: 1;
+}
+.it-ink path {
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.it-stop-role {
+  stop-color: var(--role-accent);
+}
+.it-stop-teal {
+  stop-color: var(--it-teal);
+}
+.it-ink {
+  clip-path: inset(0 0 100% 0);
+}
+.it:not([data-inked]) .it-ink {
+  visibility: hidden;
+}
+
+/* The ink drop at the leading edge: a 9 px dot with a soft glow, moved with a transform (no layout shift). */
+.it-drop {
+  position: absolute;
+  top: -4.5px;
+  left: 5.5px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--it-ink);
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--it-ink) 22%, transparent),
+    0 0 14px var(--it-ink);
+  opacity: 0;
+  pointer-events: none;
+}
+.it[data-inked] .it-drop {
+  opacity: 1;
+}
+
+/* A straight placeholder thread until the engine has measured the numerals and drawn the swaying one. */
+.it-list {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding-left: var(--it-gutter);
+}
+.it-list::before {
+  content: "";
+  position: absolute;
+  top: 1.25rem;
+  bottom: 1.4rem;
+  left: 9.5px;
+  border-left: 1px solid var(--it-line);
+}
+.it[data-ink-ready] .it-list::before {
+  display: none;
+}
+
+/* ---- Chapter items: numeral | label, with the progress hairline under the label. ---- */
+.it-link {
+  position: relative;
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  column-gap: 8px;
+  align-items: baseline;
+  padding: 8px 0;
+  border-radius: 4px;
+  color: var(--muted);
+  outline: none;
+}
+.it-link:hover,
+.it-link:focus-visible,
+.it-link[aria-current] {
+  color: var(--foreground);
+}
+.it-link:focus-visible,
+.it-spur:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.it-numeral {
+  font: 500 15px/1 var(--font-mincho);
+  color: var(--muted);
+}
+.it-link[aria-current] .it-numeral {
+  color: var(--it-ink-text);
+}
+.it-label {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.it-link[aria-current] .it-label {
+  font-weight: 700;
+}
+.it-progress {
+  position: relative;
+  grid-column: 2;
+  width: 72%;
+  height: 1px;
+  margin-top: 6px;
+  overflow: hidden;
+  background: var(--it-track);
+}
+.it-progress > span {
+  position: absolute;
+  inset: 0;
+  background: var(--it-ink);
+  transform: scaleX(var(--sp, 0));
+  transform-origin: left;
+}
+
+/* ---- "All projects": a dashed spur off the thread; inked on the archive page. ---- */
+.it-spur {
+  position: relative;
+  display: inline-block;
+  margin-left: 30px;
+  padding: 2px 0 8px;
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  outline: none;
+}
+.it-spur::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: calc(10px - var(--it-gutter) - 30px);
+  width: calc(var(--it-gutter) + 30px - 16px);
+  height: 16px;
+  border-bottom: 1px dashed var(--it-line);
+  border-left: 1px dashed var(--it-line);
+  border-bottom-left-radius: 8px;
+}
+.it-spur:hover,
+.it-spur:focus-visible,
+.it-spur[aria-current="page"] {
+  color: var(--foreground);
+}
+.it-spur[aria-current="page"]::before {
+  border-color: var(--it-ink);
+}
+.it-arrow {
+  margin-left: 0.35em;
+}
+
+/* ---- Peek card: chapter kanji and a one-line hint, on hover and keyboard focus (decorative, aria-hidden). ---- */
+.it-peek {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 14px);
+  z-index: 5;
+  padding: 8px 12px;
+  border: 1px solid var(--it-line);
+  border-radius: 10px;
+  background: var(--card);
+  box-shadow: 0 14px 34px -14px rgb(0 0 0 / 55%);
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.35;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-6px, -50%);
+  pointer-events: none;
+}
+.it-peek b {
+  display: block;
+  color: var(--foreground);
+  font: 600 13px/1.5 var(--font-mincho);
+}
+.it-link:hover .it-peek,
+.it-link:focus-visible .it-peek {
+  opacity: 1;
+  transform: translate(0, -50%);
+}
+
+/* ---- Motion (the site's Motion toggle, else the OS setting). ---- */
+:root[data-motion="full"] {
+  .it-ink {
+    transition: clip-path 0.5s var(--it-ease);
+  }
+  .it-drop {
+    transition:
+      transform 0.5s var(--it-ease),
+      opacity 0.3s,
+      background-color 0.6s,
+      box-shadow 0.6s;
+  }
+  .it-link,
+  .it-numeral,
+  .it-spur {
+    transition: color 0.22s;
+  }
+  .it-spur::before {
+    transition: border-color 0.6s;
+  }
+  .it-progress > span {
+    transition: background-color 0.6s;
+  }
+  .it-peek {
+    transition:
+      opacity 0.18s,
+      transform 0.18s var(--it-ease);
+  }
+}

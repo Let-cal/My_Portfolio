@@ -1,41 +1,36 @@
 "use client";
 
 import { useRef, useState, type ReactNode } from "react";
-import dynamic from "next/dynamic";
+import type { CaseStudyItem } from "@/components/sections/case-study/CaseStudyPanel";
+import { LazyCaseStudyPanel } from "@/components/sections/case-study/LazyCaseStudyPanel";
+import { useCaseParam } from "@/components/sections/case-study/use-case-param";
 import { ProjectCard, type ProjectView } from "./ProjectCard";
-
-const CaseStudySheet = dynamic(
-  () =>
-    import("@/components/sections/experience/CaseStudySheet").then(
-      (module) => module.CaseStudySheet,
-    ),
-  { ssr: false },
-);
 
 export type { ProjectView };
 
 /**
  * Bento grid of projects: one column on phones, two from md up with the first card across both. A lone last card in
- * the two-column rows also spans both so the grid never ends on a hole. Owns the case study sheet.
+ * the two-column rows also spans both so the grid never ends on a hole. Owns the case study panel, whose previous /
+ * next walk `caseItems` (the cards with a case study, in grid order).
  */
 export function ProjectsBento({
   projects,
+  caseItems,
   bodies,
 }: {
   projects: ProjectView[];
+  caseItems: CaseStudyItem[];
   bodies: Record<string, ReactNode>;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
-  const [shownId, setShownId] = useState<string | null>(null);
+  const openCase = useCaseParam(caseItems, setOpenId, "bento");
   const returnFocusRef = useRef<HTMLElement | null>(null);
 
-  const shown = projects.find((p) => p.id === shownId);
   const loneLast = projects.length > 1 && (projects.length - 1) % 2 === 1;
 
   function openCaseStudy(id: string, trigger: HTMLElement) {
     returnFocusRef.current = trigger;
-    setShownId(id);
-    setOpenId(id);
+    openCase(id);
   }
 
   return (
@@ -55,19 +50,13 @@ export function ProjectsBento({
         ))}
       </div>
 
-      {shown?.caseStudy ? (
-        <CaseStudySheet
-          open={openId !== null}
-          onOpenChange={(next) => {
-            if (!next) setOpenId(null);
-          }}
-          title={shown.title}
-          description={[shown.role, shown.period].join(" · ")}
-          caseStudy={shown.caseStudy}
-          tech={shown.tech}
-          returnFocusRef={returnFocusRef}
-        />
-      ) : null}
+      <LazyCaseStudyPanel
+        items={caseItems}
+        openId={openId}
+        context="bento"
+        onOpenChange={openCase}
+        returnFocusRef={returnFocusRef}
+      />
     </>
   );
 }

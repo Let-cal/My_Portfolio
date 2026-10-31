@@ -2,6 +2,7 @@ import { useTranslations } from "next-intl";
 import type { Content, Locale } from "@/content/schema";
 import { buildJourney } from "@/lib/journey";
 import { JourneyTree } from "./experience/JourneyTree";
+import "./experience/journey.css";
 import { Reveal } from "@/components/site/Reveal";
 
 /**
@@ -12,14 +13,20 @@ import { Reveal } from "@/components/site/Reveal";
 export function Experience({
   content,
   locale,
+  now,
 }: {
   content: Content;
   locale: Locale;
+  /** The month open-ended spans run up to; the prerendered page passes a cached date. */
+  now?: Date;
 }) {
   const ts = useTranslations("sections");
   const tp = useTranslations("projects");
-  const parents = buildJourney(content, locale, (key) =>
-    tp(key as "code" | "demo"),
+  const parents = buildJourney(
+    content,
+    locale,
+    (key) => tp(key as "code" | "demo"),
+    now,
   );
 
   return (

@@ -13,7 +13,7 @@ test.describe("motion preference and scene fallbacks", () => {
     await page.goto("/en");
     await expect(page.locator("[data-why-card]")).toHaveCount(4);
     await expect(page.locator("#hero-heading")).toBeVisible();
-    const beam = page.locator("[data-tracing-beam]");
+    const beam = page.locator("[data-ink-rail]");
     await beam.evaluate((element) => {
       const box = element.getBoundingClientRect();
       window.scrollTo(

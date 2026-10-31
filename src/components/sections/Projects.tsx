@@ -1,5 +1,8 @@
 import { useTranslations } from "next-intl";
+import type { CaseStudyItem } from "@/components/sections/case-study/CaseStudyPanel";
 import type { Content, Locale } from "@/content/schema";
+import { archiveRows } from "@/lib/archive";
+import { caseItemFromRow } from "@/lib/case-items";
 import { featuredProjects } from "@/lib/featured";
 import { formatPeriod } from "@/lib/format";
 import { pickLocale } from "@/lib/i18n-text";
@@ -21,17 +24,21 @@ function initialsOf(title: string): string {
 /**
  * Projects section. Builds localized view-models for the featured projects (the starred ones in order, filled with
  * the newest published when fewer than three are starred) and hands them to the client bento grid, which owns hover
- * video previews and the case study sheet. A link below the grid goes to the page with every published project.
+ * video previews and the case study panel. A link below the grid goes to the page with every published project.
+ * `now` is the month an open-ended project's duration runs up to (a cached date on the prerendered page).
  */
 export function Projects({
   content,
   locale,
+  now,
 }: {
   content: Content;
   locale: Locale;
+  now?: Date;
 }) {
   const t = useTranslations("projects");
   const ts = useTranslations("sections");
+  const ta = useTranslations("archive");
 
   const projects = featuredProjects(content.projects).map((p): ProjectView => ({
     id: p.id,
@@ -53,6 +60,14 @@ export function Projects({
     },
   }));
   const total = content.projects.filter((p) => p.published).length;
+  const rows = new Map(
+    archiveRows(content, locale, now).map((row) => [row.id, row]),
+  );
+  const caseItems = projects.flatMap((p): CaseStudyItem[] => {
+    const row = rows.get(p.id);
+    const item = row && caseItemFromRow(row, ta(`kinds.${row.whereKind}`));
+    return item ? [item] : [];
+  });
 
   return (
     <section
@@ -72,6 +87,7 @@ export function Projects({
       <div className="mt-10">
         <ProjectsBento
           projects={projects}
+          caseItems={caseItems}
           bodies={Object.fromEntries(
             projects.map((project, index) => [
               project.id,

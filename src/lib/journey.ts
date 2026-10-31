@@ -7,9 +7,29 @@ import type {
   Project,
   RoleKey,
 } from "@/content/schema";
-import type { CaseStudyView } from "@/components/sections/experience/CaseStudySheet";
-import { formatPeriod } from "@/lib/format";
+import type { CaseStudyView } from "@/components/sections/case-study/CaseStudyPanel";
+import {
+  currentMonth,
+  formatDuration,
+  formatMonth,
+  formatPeriod,
+  kanjiYear,
+  monthIndex,
+  monthsBetween,
+  shortTitle,
+} from "@/lib/format";
 import { pickLocale } from "@/lib/i18n-text";
+import en from "@/messages/en.json";
+import ja from "@/messages/ja.json";
+import vi from "@/messages/vi.json";
+
+export { shortTitle } from "@/lib/format";
+
+const INTERN: Record<Locale, string> = {
+  en: en.experience.intern,
+  ja: ja.experience.intern,
+  vi: vi.experience.intern,
+};
 
 export type JourneyChild = {
   id: string;
@@ -22,8 +42,52 @@ export type JourneyChild = {
   tech: string[];
   teamSize: string | null;
   links: Link[];
+  /** The raw demo and repository URLs (also in `links`, labelled), for the case study panel's actions. */
+  demoUrl: string | null;
+  repoUrls: string[];
   caseStudy: CaseStudyView | null;
   roles: RoleKey[];
+  /** The localized `caseStudy.result`; null without a case study. */
+  result: string | null;
+  /** Length of the project, months counted inclusively: "6 mos". */
+  duration: string;
+  /** Id of the stint a work project belongs to; null for university projects. */
+  stintId: string | null;
+};
+
+/** One position at a company, with the projects done during it. */
+export type JourneyStint = {
+  /** The experience id; "" for the guard stint that collects projects whose stint is missing. */
+  id: string;
+  title: string;
+  /** Short position label, or the localized "Intern" for an internship; "" for the guard stint. */
+  shortLabel: string;
+  period: string;
+  duration: string;
+  start: string;
+  end: string | null;
+  employmentType: Experience["employmentType"];
+  /** Month label of this stint's start when the next older stint was an internship and this one is not. */
+  promotedFrom: string | null;
+  children: JourneyChild[];
+};
+
+/** The mini Gantt of a company: a month axis, one segment per stint and one bar per project. */
+export type Timeline = {
+  /** First month of the axis, `YYYY-MM`. */
+  start: string;
+  months: number;
+  /** Labelled ticks: `index` is the month offset from `start`. */
+  axis: { label: string; index: number }[];
+  /** Stints, newest first. `from` / `to` are fractions in [0, 1] of the axis; an end month counts inclusively. */
+  segments: { id: string; label: string; from: number; to: number }[];
+  bars: {
+    id: string;
+    anchor: string;
+    title: string;
+    from: number;
+    to: number;
+  }[];
 };
 
 export type JourneyParent = {
@@ -41,6 +105,17 @@ export type JourneyParent = {
   /** Grade average of a school as entered ("7.66/10"); null for companies. */
   gpa: string | null;
   tech: string[];
+  /** Duration of the whole span, months counted inclusively: "1 yr 2 mos". */
+  duration: string;
+  /** The hanko's text: the year of the span's last month in kanji ("二〇二六"); the year of `now` when open-ended. */
+  hankoYear: string;
+  /** Companies: the positions, newest first, each with its projects. Schools: empty. */
+  stints: JourneyStint[];
+  /** "Intern → Software Engineer": the short labels oldest first, only when a promotion exists. */
+  summaryLabel: string | null;
+  /** Only for a company with at least two projects. */
+  timeline: Timeline | null;
+  /** Every project, newest first (the flat list the stints split up). */
   children: JourneyChild[];
   /** "N projects" when there are children, "internship" for an all-internship company without any, else none. */
   chip: { count: number } | { label: "internship" } | null;
@@ -67,6 +142,9 @@ export function groupSlug(name: string): string | null {
 /** Sorts so an open-ended (null) end comes first, then the later end; shared by parents and spans. */
 const endKey = (end: string | null) => end ?? "9999-99";
 
+const hankoYearOf = (end: string | null, now: Date) =>
+  kanjiYear(end === null ? now.getFullYear() : Number(end.slice(0, 4)));
+
 function span(items: { start: string; end: string | null }[]): {
   start: string;
   end: string | null;
@@ -82,10 +160,21 @@ function span(items: { start: string; end: string | null }[]): {
 /** Distinct, non-empty values in first-seen order. */
 const unique = (values: string[]) => [...new Set(values.filter(Boolean))];
 
+/** Short label of a stint: the localized "Intern" for an internship, else the position up to its first separator. */
+export function stintShortLabel(
+  stint: Pick<Experience, "employmentType" | "position">,
+  locale: Locale,
+): string {
+  return stint.employmentType === "internship"
+    ? INTERN[locale]
+    : shortTitle(pickLocale(stint.position, locale));
+}
+
 function childOf(
   p: Project,
   locale: Locale,
   t: (key: string) => string,
+  now: Date,
 ): JourneyChild {
   const repos = p.repoUrls.map((url, i) => ({
     label: p.repoUrls.length === 1 ? t("code") : `${t("code")} ${i + 1}`,
@@ -105,6 +194,8 @@ function childOf(
       ...repos,
       ...p.links,
     ],
+    demoUrl: p.demoUrl,
+    repoUrls: p.repoUrls,
     caseStudy: p.caseStudy && {
       problem: pickLocale(p.caseStudy.problem, locale),
       role: pickLocale(p.caseStudy.role, locale),
@@ -112,6 +203,101 @@ function childOf(
       result: pickLocale(p.caseStudy.result, locale),
     },
     roles: p.roles,
+    result: p.caseStudy && pickLocale(p.caseStudy.result, locale),
+    duration: formatDuration(p.start, p.end, locale, now),
+    stintId: p.kind === "work" ? p.experienceId : null,
+  };
+}
+
+const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
+
+/** The stints of a company with their projects; projects without a matching stint go into a final stint with `id: ""`. */
+function stintsOf(
+  stints: Experience[],
+  children: JourneyChild[],
+  locale: Locale,
+  now: Date,
+): JourneyStint[] {
+  const known = new Set(stints.map((s) => s.id));
+  const result = stints.map((s, i): JourneyStint => {
+    const older = stints[i + 1];
+    const promoted =
+      older?.employmentType === "internship" &&
+      s.employmentType !== "internship";
+    return {
+      id: s.id,
+      title: pickLocale(s.position, locale),
+      shortLabel: stintShortLabel(s, locale),
+      period: formatPeriod(s.start, s.end, locale),
+      duration: formatDuration(s.start, s.end, locale, now),
+      start: s.start,
+      end: s.end,
+      employmentType: s.employmentType,
+      promotedFrom: promoted ? formatMonth(s.start, locale) : null,
+      children: children.filter((c) => c.stintId === s.id),
+    };
+  });
+  const orphans = children.filter((c) => !c.stintId || !known.has(c.stintId));
+  if (orphans.length > 0)
+    result.push({
+      id: "",
+      title: "",
+      shortLabel: "",
+      period: "",
+      duration: "",
+      start: "",
+      end: null,
+      employmentType: "full-time",
+      promotedFrom: null,
+      children: orphans,
+    });
+  return result;
+}
+
+/** Ticks for the month axis: the first month and then every `ceil(months / 7)`-th, so at most 7 labels. */
+function axisOf(start: string, months: number, locale: Locale) {
+  const step = Math.max(1, Math.ceil(months / 7));
+  const first = monthIndex(start);
+  const axis: { label: string; index: number }[] = [];
+  for (let index = 0; index < months; index += step) {
+    const m = first + index;
+    const ym = `${Math.floor(m / 12)}-${String((m % 12) + 1).padStart(2, "0")}`;
+    axis.push({ label: formatMonth(ym, locale), index });
+  }
+  return axis;
+}
+
+function timelineOf(
+  range: { start: string; end: string | null },
+  stints: JourneyStint[],
+  projects: Project[],
+  children: JourneyChild[],
+  locale: Locale,
+  now: Date,
+): Timeline {
+  const first = monthIndex(range.start);
+  const months = monthsBetween(range.start, range.end, now);
+  const frac = (start: string, end: string | null) => ({
+    from: clamp01((monthIndex(start) - first) / months),
+    to: clamp01((monthIndex(end ?? currentMonth(now)) + 1 - first) / months),
+  });
+  const byId = new Map(projects.map((p) => [p.id, p]));
+  return {
+    start: range.start,
+    months,
+    axis: axisOf(range.start, months, locale),
+    segments: stints
+      .filter((s) => s.id !== "")
+      .map((s) => ({ id: s.id, label: s.shortLabel, ...frac(s.start, s.end) })),
+    bars: children.map((c) => {
+      const p = byId.get(c.id)!;
+      return {
+        id: c.id,
+        anchor: c.anchor,
+        title: c.title,
+        ...frac(p.start, p.end),
+      };
+    }),
   };
 }
 
@@ -186,11 +372,13 @@ export function journeyAnchors(content: Content): {
  *   appear here.
  * - Every text goes through `pickLocale`, so an empty JA/VI field shows the EN text.
  * - `t` supplies the link labels ("code", "demo") from the `projects` namespace.
+ * - `now` is the month an open-ended span runs up to (durations, timeline); it defaults to today.
  */
 export function buildJourney(
   content: Content,
   locale: Locale,
   t: (key: string) => string,
+  now: Date = new Date(),
 ): JourneyParent[] {
   const projects = content.projects.filter((p) => p.published);
 
@@ -198,7 +386,7 @@ export function buildJourney(
     projects
       .filter(match)
       .sort((a, b) => newestStart(a, b) || a.sortIndex - b.sortIndex)
-      .map((p) => childOf(p, locale, t));
+      .map((p) => childOf(p, locale, t, now));
 
   const companies = companyGroups(content).map(([name, stints]) => {
     const ids = new Set(stints.map((s) => s.id));
@@ -208,6 +396,8 @@ export function buildJourney(
     );
     const { start, end } = span(stints);
     const summary = unique(stints.map((s) => pickLocale(s.summary, locale)));
+    const stintList = stintsOf(stints, children, locale, now);
+    const promoted = stintList.some((s) => s.promotedFrom !== null);
     const parent: JourneyParent = {
       key: `company:${name}`,
       anchor: companyAnchor(name, stints),
@@ -222,6 +412,27 @@ export function buildJourney(
       summary: summary.length > 0 ? summary.join("\n\n") : null,
       gpa: null,
       tech: unique(stints.flatMap((s) => s.tech)),
+      duration: formatDuration(start, end, locale, now),
+      hankoYear: hankoYearOf(end, now),
+      stints: stintList,
+      summaryLabel: promoted
+        ? stintList
+            .filter((s) => s.id !== "")
+            .map((s) => s.shortLabel)
+            .reverse()
+            .join(" → ")
+        : null,
+      timeline:
+        children.length >= 2
+          ? timelineOf(
+              { start, end },
+              stintList,
+              projects,
+              children,
+              locale,
+              now,
+            )
+          : null,
       children,
       chip:
         children.length > 0
@@ -258,6 +469,11 @@ export function buildJourney(
       summary: notes || null,
       gpa: e.gpa,
       tech: [],
+      duration: formatDuration(e.start, e.end, locale, now),
+      hankoYear: hankoYearOf(e.end, now),
+      stints: [],
+      summaryLabel: null,
+      timeline: null,
       children,
       chip: children.length > 0 ? { count: children.length } : null,
     };

@@ -22,6 +22,7 @@ Desktop preview with Motion off. [Dark](docs/images/portfolio-dark.webp) · [Lig
 - **Three roles, one evidence base.** A circular selector changes the introduction, accents, CV selection, and ordering of relevant experience and skills.
 - **Three languages.** English, Japanese, and Vietnamese pages and metadata at `/en`, `/ja`, and `/vi`.
 - **Work with context.** Experience timeline, project case studies, skill evidence, certificates, and contact details.
+- **Career in one scan.** Experience reads company, position, then the projects done in that position, with a month-axis timeline per company and a scroll-drawn ink rail. The projects archive groups work by year with a filter and a hover preview. Case studies open in one shared hanging-scroll panel that fits common desktop sizes without an inner scrollbar and supports deep links and previous/next. The side rail is a chapter navigation with per-chapter progress. Initial JavaScript stays at or under 200 KB gzip on `/` and `/[locale]/projects`.
 - **One continuous scene.** Desktop WebGL combines a koi/dragon, chapter cameras, lotus pond, waterfall, lanterns, day/night lighting, and pointer interactions. Mobile, reduced-motion, and unavailable-WebGL paths use static backgrounds.
 - **Reader controls.** Keyboard navigation, Motion switch, command palette, and a printable 60-second view at `/en/quick`, `/ja/quick`, and `/vi/quick`.
 

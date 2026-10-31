@@ -13,6 +13,7 @@ import { AccentTypography } from "@/components/site/AccentTypography";
 import { SectionLabel } from "@/components/site/SectionLabel";
 import { SECTION_CHAPTERS, SECTION_IDS } from "@/components/site/sections";
 import { routing } from "@/i18n/routing";
+import { cachedNow } from "@/lib/data/cached-now";
 import { getContent } from "@/lib/data/get-content";
 import { KoiCanvas } from "@/scene/KoiCanvas";
 
@@ -23,6 +24,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
   const t = await getTranslations("sections");
   const tn = await getTranslations("nav");
   const content = await getContent();
+  const now = await cachedNow();
 
   // Each section after the hero sits in a `relative` wrapper that carries its chapter label, with a slow
   // water wave on top as the divider. Section backgrounds stay transparent for the 3D canvas behind.
@@ -38,9 +40,9 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
           id === "hero" ? (
             <Hero content={content} locale={locale} />
           ) : id === "experience" ? (
-            <Experience content={content} locale={locale} />
+            <Experience content={content} locale={locale} now={now} />
           ) : id === "projects" ? (
-            <Projects content={content} locale={locale} />
+            <Projects content={content} locale={locale} now={now} />
           ) : id === "skills" ? (
             <Skills content={content} locale={locale} />
           ) : id === "certificates" ? (

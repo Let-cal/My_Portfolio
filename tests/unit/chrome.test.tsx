@@ -136,7 +136,7 @@ afterEach(() => {
 });
 
 describe("SideRail", () => {
-  it("marks the section crossing the reading line with aria-current and a long accent line", () => {
+  it("marks the section crossing the reading line with aria-current", () => {
     mountSections();
     render(withIntl(<SideRail {...railProps} />));
     const nav = screen.getByRole("navigation", { name: en.header.primaryNav });
@@ -153,9 +153,9 @@ describe("SideRail", () => {
     const active = within(nav).getByRole("link", { name: en.nav.projects });
     expect(active).toHaveAttribute("aria-current", "true");
     expect(nav.querySelectorAll("[aria-current]")).toHaveLength(1);
-    expect(active.querySelector("span")).toHaveClass("w-16");
+    // The ink-thread styling keys off aria-current (ink-thread.css); the other links stay plain.
     const other = within(nav).getByRole("link", { name: en.nav.skills });
-    expect(other.querySelector("span")).toHaveClass("w-8");
+    expect(other).not.toHaveAttribute("aria-current");
   });
 
   it("links to the all-projects page and marks it current there", () => {

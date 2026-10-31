@@ -26,7 +26,12 @@ import { ProjectArchive } from "@/components/sections/projects/ProjectArchive";
 import { RoleProvider } from "@/components/site/RoleProvider";
 import { RoleSwitcher } from "@/components/site/RoleSwitcher";
 import sitemap from "@/app/sitemap";
-import { archiveMetadata, archiveRows, parseKind } from "@/lib/archive";
+import {
+  archiveMetadata,
+  archiveRows,
+  groupByYear,
+  parseKind,
+} from "@/lib/archive";
 import {
   ARCHIVE_FILTER_CSS,
   ARCHIVE_FILTER_SCRIPT,
@@ -71,18 +76,18 @@ function renderArchive(
     <NextIntlClientProvider locale={locale} messages={messages[locale]}>
       <RoleProvider>
         {opts.withSwitcher && <RoleSwitcher />}
-        <ProjectArchive rows={rows} />
+        <ProjectArchive groups={groupByYear(rows)} />
       </RoleProvider>
     </NextIntlClientProvider>,
   );
 }
 
 const rowIds = () =>
-  [...document.querySelectorAll<HTMLElement>("tr[id^='row-']")].map(
+  [...document.querySelectorAll<HTMLElement>("li[id^='row-']")].map(
     (n) => n.id,
   );
 const visibleRowIds = () =>
-  [...document.querySelectorAll<HTMLElement>("tr[id^='row-']")]
+  [...document.querySelectorAll<HTMLElement>("li[id^='row-']")]
     .filter((n) => getComputedStyle(n).display !== "none")
     .map((n) => n.id);
 const chip = (name: RegExp) => screen.getByRole("button", { name });
@@ -223,14 +228,51 @@ describe("ProjectArchive", () => {
     );
   });
 
-  it("is a table with the six column headers", () => {
+  it("groups rows by year newest first", () => {
     renderArchive();
-    const table = screen.getByRole("table");
+    const groups = screen.getAllByRole("region");
+    expect(groups.map((g) => g.getAttribute("aria-labelledby"))).toEqual([
+      "year-2026",
+      "year-2025",
+      "year-2024",
+      "year-2023",
+    ]);
     expect(
-      within(table)
-        .getAllByRole("columnheader")
-        .map((h) => h.textContent),
-    ).toEqual(Object.values(en.archive.columns));
+      groups.map(
+        (g) => within(g).getByRole("heading", { level: 2 }).textContent,
+      ),
+    ).toEqual(["2026", "2025", "2024", "2023"]);
+    expect(groups[0]).toHaveAccessibleName("2026");
+    // The kanji year is decoration: hidden from assistive technology, marked as Japanese.
+    const kanji = groups[0].querySelector("[lang='ja']")!;
+    expect(kanji).toHaveTextContent("二〇二六");
+    expect(kanji).toHaveAttribute("aria-hidden", "true");
+    const ids = (g: HTMLElement) =>
+      within(g)
+        .getAllByRole("listitem")
+        .filter((li) => li.id.startsWith("row-"))
+        .map((li) => li.id);
+    expect(ids(groups[0])).toEqual(["row-skg-ai-agent", "row-skg-flexybox-p2"]);
+    expect(ids(groups[3])).toEqual(["row-meet-my-lecturer"]);
+    expect(groups.flatMap(ids)).toEqual(rowIds());
+  });
+
+  it("year group hides when the filter empties it", async () => {
+    // The pre-paint CSS hides a year with no row of the active kind, in its own rule so a browser without :has()
+    // still hides the rows (the year header then stays).
+    expect(ARCHIVE_FILTER_CSS).toContain(
+      '[data-archive-filter="university"] [data-archive-year]:not(:has([data-archive-kind="university"])){display:none}',
+    );
+    expect(ARCHIVE_FILTER_CSS).toMatch(
+      /\{display:none\}\[data-archive-filter="work"\] \[data-archive-year\]:not\(:has/,
+    );
+    const user = userEvent.setup();
+    renderArchive();
+    await user.click(chip(/^University/));
+    for (const year of ["2026", "2025", "2024", "2023"])
+      expect(
+        document.querySelector(`[data-archive-year="${year}"]`),
+      ).toBeInTheDocument();
   });
 
   it("filter chips update ?kind and the visible rows", async () => {
@@ -386,18 +428,56 @@ describe("ProjectArchive", () => {
     expect(row).toHaveTextContent("ZodiacGems");
   });
 
-  it("marks featured projects with a labelled star", () => {
+  it("featured row shows the seal with an accessible label", () => {
     renderArchive();
+    const row = document.getElementById("row-siteplus")!;
+    const seal = row.querySelector("[data-seal]")!;
+    expect(seal).toHaveAttribute("aria-hidden", "true");
+    expect(seal).toHaveTextContent("★");
+    expect(within(row).getByText(new RegExp(en.archive.featured))).toHaveClass(
+      "sr-only",
+    );
+    const plain = document.getElementById("row-skg-coa")!;
+    expect(plain.querySelector("[data-seal]")).toBeNull();
     expect(
-      within(document.getElementById("row-siteplus")!).getByText(
-        new RegExp(en.archive.featured),
-      ),
-    ).toBeInTheDocument();
-    expect(
-      within(document.getElementById("row-skg-coa")!).queryByText(
-        new RegExp(en.archive.featured),
-      ),
+      within(plain).queryByText(new RegExp(en.archive.featured)),
     ).toBeNull();
+  });
+
+  it("where shows the stint label for work projects", () => {
+    renderArchive({ content: withPersonal });
+    const where = (id: string) =>
+      document.getElementById(id)!.querySelector("[data-where]")!;
+    expect(where("row-skg-flexybox-p1")).toHaveTextContent(
+      /Work.*SKG Software \(Splus\).*Intern/,
+    );
+    expect(where("row-skg-ai-agent")).toHaveTextContent(/Software Engineer/);
+    expect(where("row-skg-ai-agent")).toHaveTextContent(en.archive.stint);
+    expect(where("row-siteplus")).toHaveTextContent(
+      /University.*FPT University/,
+    );
+    expect(where("row-siteplus")).not.toHaveTextContent(en.archive.stint);
+    // The stored role text stays on the row, under the title.
+    const siteplus = base.projects.find((p) => p.id === "siteplus")!;
+    expect(document.getElementById("row-siteplus")).toHaveTextContent(
+      siteplus.role.en,
+    );
+    // A personal project is not named twice.
+    expect(where("row-side-project").textContent).toBe(
+      en.archive.kinds.personal,
+    );
+  });
+
+  it("tech shows three names, then +N, and keeps the rest for screen readers", () => {
+    renderArchive();
+    const row = base.projects.find((p) => p.id === "skg-ai-agent")!;
+    const tech = document
+      .getElementById("row-skg-ai-agent")!
+      .querySelector("[data-tech]")!;
+    expect(row.tech.length).toBeGreaterThan(3);
+    for (const name of row.tech) expect(tech).toHaveTextContent(name);
+    const more = tech.querySelector("[aria-hidden='true']")!;
+    expect(more).toHaveTextContent(`+${row.tech.length - 3}`);
   });
 
   it("rows whose roles include the selected role get data-highlight, order unchanged", async () => {
@@ -405,7 +485,7 @@ describe("ProjectArchive", () => {
     renderArchive({ withSwitcher: true });
     const order = rowIds();
     const lit = () =>
-      [...document.querySelectorAll("tr[data-highlight='true']")].map(
+      [...document.querySelectorAll("li[data-highlight='true']")].map(
         (n) => n.id,
       );
     expect(lit()).toEqual([
@@ -438,10 +518,34 @@ describe("ProjectArchive", () => {
     renderArchive({ locale: "ja" });
     expect(chip(new RegExp(`^${ja.archive.kinds.university}`))).toBeVisible();
     expect(
-      within(screen.getByRole("table"))
-        .getAllByRole("columnheader")
-        .map((h) => h.textContent),
-    ).toEqual(Object.values(ja.archive.columns));
+      document
+        .getElementById("row-skg-flexybox-p1")!
+        .querySelector("[data-where]"),
+    ).toHaveTextContent(`${ja.archive.kinds.work}`);
+    expect(
+      document
+        .getElementById("row-skg-flexybox-p1")!
+        .querySelector("[data-where]"),
+    ).toHaveTextContent("インターン");
+  });
+
+  it("?kind= and #row- deep links still work", async () => {
+    Element.prototype.scrollIntoView = vi.fn();
+    window.history.replaceState(
+      null,
+      "",
+      "/en/projects?kind=work#row-siteplus",
+    );
+    renderArchive();
+    await waitFor(() =>
+      expect(chip(/^All/)).toHaveAttribute("aria-pressed", "true"),
+    );
+    expect(visibleRowIds()).toContain("row-siteplus");
+    expect(window.location.search).toBe("");
+    window.history.replaceState(null, "", "/en/projects?kind=work");
+    act(() => window.dispatchEvent(new HashChangeEvent("hashchange")));
+    expect(chip(/^Work/)).toHaveAttribute("aria-pressed", "true");
+    expect(visibleRowIds()).not.toContain("row-siteplus");
   });
 
   it("announces the number of shown rows", async () => {

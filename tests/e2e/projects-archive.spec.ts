@@ -5,7 +5,9 @@ const chip = (page: Page, name: RegExp) =>
   page
     .getByRole("group", { name: "Filter projects by where they were done" })
     .getByRole("button", { name });
-const visibleRows = (page: Page) => page.locator("tr[id^='row-']:visible");
+const visibleRows = (page: Page) => page.locator("li[id^='row-']:visible");
+const year = (page: Page, y: string) =>
+  page.locator(`section[data-archive-year="${y}"]`);
 
 /** True when the element's top sits inside the viewport. */
 const inViewport = (page: Page, id: string) =>
@@ -27,7 +29,50 @@ test("the home page links to the archive, which lists every project", async ({
   await expect(
     page.getByRole("heading", { level: 1, name: "All projects" }),
   ).toBeVisible();
+  await expect(page.getByText("8 projects · 2023 – 2026")).toBeVisible();
   await expect(visibleRows(page)).toHaveCount(8);
+  // Year groups, newest first, each named by its year.
+  await expect(page.getByRole("region")).toHaveText(
+    ["2026", "2025", "2024", "2023"].map((y) => new RegExp(`^${y}`)),
+  );
+});
+
+test("filter chips change the visible rows and hide empty years", async ({
+  page,
+}) => {
+  await page.goto("/en/projects");
+  await chip(page, /^University/).click();
+  await expect(visibleRows(page)).toHaveCount(3);
+  await expect(year(page, "2026")).toBeHidden();
+  for (const y of ["2025", "2024", "2023"])
+    await expect(year(page, y)).toBeVisible();
+  await expect(chip(page, /^University/)).toBeFocused();
+
+  await chip(page, /^Work/).click();
+  await expect(visibleRows(page)).toHaveCount(5);
+  for (const y of ["2024", "2023"]) await expect(year(page, y)).toBeHidden();
+  for (const y of ["2026", "2025"]) await expect(year(page, y)).toBeVisible();
+
+  await chip(page, /^All/).click();
+  await expect(visibleRows(page)).toHaveCount(8);
+  await expect(page.locator("section[data-archive-year]:visible")).toHaveCount(
+    4,
+  );
+});
+
+test("a reload with ?kind=university shows no flash: rows and empty years are hidden before any script loads", async ({
+  page,
+}) => {
+  // No client chunks at all: only the server HTML and its inline pre-paint script decide what shows.
+  await page.route("**/_next/static/chunks/**", (route) => route.abort());
+  await page.goto("/en/projects?kind=university");
+  await expect(page.locator("[data-archive-rows]")).toHaveAttribute(
+    "data-archive-filter",
+    "university",
+  );
+  await expect(visibleRows(page)).toHaveCount(3);
+  await expect(year(page, "2026")).toBeHidden();
+  await expect(year(page, "2025")).toBeVisible();
 });
 
 test("filter + reload keeps the filter", async ({ page }) => {
@@ -173,19 +218,68 @@ test("mobile 375px shows stacked rows without horizontal scroll", async ({
       document.documentElement.clientWidth,
   );
   expect(overflow).toBeLessThanOrEqual(0);
-  // Stacked: the title cell sits below the year cell instead of beside it.
-  const [year, title] = await page
-    .locator("#row-skg-coa td")
-    .evaluateAll((cells) =>
-      cells.slice(0, 2).map((c) => c.getBoundingClientRect()),
+  // Stacked: the "where" block sits below the title block instead of beside it, and the year above the rows.
+  const [main, where] = await page
+    .locator("#row-skg-coa")
+    .evaluate((row) =>
+      [".pa-main", "[data-where]"].map((s) =>
+        row.querySelector(s)!.getBoundingClientRect(),
+      ),
     );
-  expect(title.top).toBeGreaterThanOrEqual(year.bottom - 1);
-  // Column headers stay for screen readers but take no visual space.
-  const head = await page.locator("thead").evaluate((el) => {
-    const box = el.getBoundingClientRect();
-    return box.width * box.height;
+  expect(where.top).toBeGreaterThanOrEqual(main.bottom - 1);
+  const head = await year(page, "2025")
+    .locator("[data-year-head]")
+    .boundingBox();
+  const row = await page.locator("#row-skg-coa").boundingBox();
+  expect(row!.y).toBeGreaterThanOrEqual(head!.y + head!.height - 1);
+});
+
+test.describe("with motion", () => {
+  test.use({ reducedMotion: "no-preference" });
+
+  test("filtering animates to the same result, a hover preview follows a row, and the title morphs into the panel", async ({
+    page,
+  }) => {
+    await page.goto("/en/projects");
+    await expect(page.locator("html")).toHaveAttribute("data-motion", "full");
+    await chip(page, /^University/).click();
+    await expect(visibleRows(page)).toHaveCount(3);
+    await expect(year(page, "2026")).toBeHidden();
+    await chip(page, /^All/).click();
+    await expect(visibleRows(page)).toHaveCount(8);
+
+    // A decorative card that follows the pointer over a row.
+    const preview = page.locator("[data-archive-preview]");
+    const row = page.locator("#row-zodiacgems");
+    await row.scrollIntoViewIfNeeded();
+    const box = (await row.boundingBox())!;
+    await page.mouse.move(box.x + 40, box.y + box.height / 2);
+    await page.mouse.move(box.x + 60, box.y + box.height / 2);
+    await expect(preview).toHaveAttribute("data-on", "");
+    await expect(preview).toHaveAttribute("aria-hidden", "true");
+    await expect(preview).toHaveText("ZodiacGems");
+    await page.mouse.move(2, 2);
+    await expect(preview).not.toHaveAttribute("data-on", "");
+
+    // Opening a case study: the dialog opens and no view-transition name is left behind.
+    const button = page.locator("#row-skg-coa").getByRole("button");
+    await button.click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole("heading", { name: /COA/ })).toBeVisible();
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          [...document.querySelectorAll<HTMLElement>("*")].some(
+            (el) => el.style.viewTransitionName,
+          ),
+        ),
+      )
+      .toBe(false);
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    await expect(button).toBeFocused();
   });
-  expect(head).toBeLessThanOrEqual(1);
 });
 
 for (const theme of ["dark", "light"] as const) {

@@ -43,19 +43,26 @@ export const FILTER_ATTR = "data-archive-filter";
 const FILTERED = ARCHIVE_KINDS.filter((k) => k !== "all");
 
 /**
- * Hides the rows the active filter leaves out, and shows the "nothing of this kind" row of an empty kind. Unlayered
- * on purpose so it wins over the responsive utilities of the rows.
+ * Hides the rows the active filter leaves out, the year groups (`data-archive-year`) left with no row, and shows the
+ * "nothing of this kind" note of an empty kind. Unlayered on purpose so it wins over the utilities of the rows.
+ * Each `:has()` rule stands alone: a browser without `:has()` drops only that rule (the year header then stays) and
+ * still hides the rows.
  */
 export const ARCHIVE_FILTER_CSS =
   FILTERED.map(
     (k) =>
       `[${FILTER_ATTR}="${k}"] [data-archive-kind]:not([data-archive-kind="${k}"])`,
   ).join(",") +
-  "{display:none}[data-archive-empty]{display:none}" +
+  "{display:none}" +
+  FILTERED.map(
+    (k) =>
+      `[${FILTER_ATTR}="${k}"] [data-archive-year]:not(:has([data-archive-kind="${k}"])){display:none}`,
+  ).join("") +
+  "[data-archive-empty]{display:none}" +
   FILTERED.map(
     (k) => `[${FILTER_ATTR}="${k}"] [data-archive-empty="${k}"]`,
   ).join(",") +
-  "{display:table-row}";
+  "{display:block}";
 
 /**
  * `initialKind` for the server HTML, run inline right after the table so the filter of a shared link is in place
