@@ -40,7 +40,13 @@ function renderArchive() {
   );
 }
 
-type Doc = Document & { startViewTransition?: unknown };
+/** Installs a stand-in for `document.startViewTransition` (jsdom has none). */
+const setViewTransition = (fn: unknown) =>
+  Object.defineProperty(document, "startViewTransition", {
+    value: fn,
+    configurable: true,
+    writable: true,
+  });
 
 let style: HTMLStyleElement;
 beforeEach(() => {
@@ -52,7 +58,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   style.remove();
-  delete (document as Doc).startViewTransition;
+  Reflect.deleteProperty(document, "startViewTransition");
   vi.restoreAllMocks();
 });
 
@@ -62,7 +68,7 @@ describe("ProjectArchive opening a case study", () => {
     const start = vi.fn(() => {
       throw new DOMException("Transition was skipped", "InvalidStateError");
     });
-    (document as Doc).startViewTransition = start;
+    setViewTransition(start);
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     renderArchive();
     const row = document.getElementById("row-skg-coa")!;
@@ -81,10 +87,12 @@ describe("ProjectArchive opening a case study", () => {
     const user = userEvent.setup();
     let update: (() => Promise<void>) | null = null;
     const done = Promise.resolve();
-    (document as Doc).startViewTransition = vi.fn((cb: () => Promise<void>) => {
-      update = cb;
-      return { ready: done, finished: done, updateCallbackDone: done };
-    });
+    setViewTransition(
+      vi.fn((cb: () => Promise<void>) => {
+        update = cb;
+        return { ready: done, finished: done, updateCallbackDone: done };
+      }),
+    );
     renderArchive();
     const row = document.getElementById("row-skg-coa")!;
     await user.click(within(row).getByRole("button", { name: /COA/ }));
