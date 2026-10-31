@@ -29,5 +29,9 @@ export const adminScenarios = Object.freeze(
       "offline",
       "network simulation: offline edits recover and save to the real backend",
     ],
+    [
+      "figures",
+      "project figures: an uploaded image and a Mermaid diagram are saved and counted on the public archive",
+    ],
   ].map(([id, title]) => Object.freeze({ id, title })),
 );

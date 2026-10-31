@@ -157,7 +157,9 @@ async function renderNow(
 
 /**
  * Renders Mermaid source with the site theme. Needs a real browser (Mermaid measures
- * text), so it has no unit test; the admin end-to-end test covers it.
+ * text), so it has no unit test. The "project figures" scenario in
+ * tests/e2e-admin/admin-flows.spec.ts runs it in Chrome against the disposable
+ * Supabase stack (CI only): render, Storage upload, the server re-check, the archive.
  */
 export function renderDiagram(
   source: string,

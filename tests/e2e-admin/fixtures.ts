@@ -37,6 +37,46 @@ const certificateRowsSchema = z
   .max(1);
 export type CertificateRow = z.infer<typeof certificateRowsSchema>[number];
 
+const projectRowsSchema = z
+  .array(
+    z
+      .object({
+        id: z.literal("task4-project-figures"),
+        published: z.boolean(),
+        media: z.array(z.record(z.string(), z.unknown())).max(12),
+      })
+      .strict(),
+  )
+  .max(1);
+export type ProjectRow = z.infer<typeof projectRowsSchema>[number];
+
+// Local endpoints the harness may call. Certificates for the CRUD scenarios; for the
+// figures scenario only its own seeded project row and the media bucket's image/ and
+// diagram/ objects (listing, deletion and public reads).
+const PROBES = [
+  /^\/rest\/v1\/certificates(?:\?[^#\r\n]*)?$/,
+  /^\/rest\/v1\/projects\?id=eq\.task4-project-figures(?:&[^#\r\n]*)?$/,
+  /^\/storage\/v1\/object\/list\/media$/,
+  /^\/storage\/v1\/object\/media$/,
+  /^\/storage\/v1\/object\/public\/media\/(?:image|diagram)\/[a-z0-9.-]+$/,
+];
+/** Whether the harness may call this local API path (see PROBES). */
+export function isFixtureProbe(path: string): boolean {
+  return !path.includes("..") && PROBES.some((probe) => probe.test(path));
+}
+
+/** Storage objects the figures scenario may create, by prefix and name pattern. */
+const FIGURE_OBJECTS = [
+  {
+    prefix: "image",
+    name: /^[a-z0-9]+-task4-figure\.png$/,
+  },
+  {
+    prefix: "diagram",
+    name: /^task4-project-figures-[a-z0-9-]+-(?:light|dark)-[0-9a-f]{8}\.svg$/,
+  },
+] as const;
+
 type RealtimeConnection = {
   socket: WebSocket;
   joinRef?: string;
@@ -58,6 +98,8 @@ function realtimeFrame(payload: string | Buffer) {
 export class AdminHarness {
   private adminAccess?: Access;
   private readonly ownedIds = new Set<string>();
+  /** Set once the figures scenario starts; cleanup then restores the project and storage. */
+  private figuresTouched = false;
   private readonly connections = new WeakMap<Page, RealtimeConnection>();
 
   constructor(
@@ -285,8 +327,8 @@ export class AdminHarness {
       anonymous?: boolean;
     } = {},
   ) {
-    if (!/^\/rest\/v1\/certificates(?:\?[^#\r\n]*)?$/.test(path))
-      throw new Error("Only local certificate probes are authorized");
+    if (!isFixtureProbe(path))
+      throw new Error("Only local fixture probes are authorized");
     const access = options.access ?? this.adminAccess;
     if (!access)
       throw new Error("UI authentication is required before backend probes");
@@ -333,7 +375,72 @@ export class AdminHarness {
     await expect(row).toHaveCount(0);
   }
 
+  /** The figures fixture project as the admin reads it (one row). */
+  async readProject(): Promise<ProjectRow> {
+    const response = await this.api(
+      `/rest/v1/projects?id=eq.${this.settings.fixtures.projectId}&select=id,published,media`,
+    );
+    if (!response.ok()) throw new Error("Local project read failed");
+    const result = projectRowsSchema.safeParse(await response.json());
+    if (!result.success || result.data.length !== 1)
+      throw new Error("Unexpected disposable project response schema");
+    return result.data[0];
+  }
+
+  /** Marks the figures fixture as changed by this test, before the first write. */
+  touchFigures() {
+    if (!this.adminAccess)
+      throw new Error("UI authentication is required before backend probes");
+    this.figuresTouched = true;
+  }
+
+  /** The storage objects the figures scenario created, as "prefix/name". */
+  async figureObjects(): Promise<string[]> {
+    const paths: string[] = [];
+    // The whole folder is listed and filtered here: the disposable bucket holds only
+    // this suite's files, and Storage's own search matching is not relied on.
+    for (const { prefix, name } of FIGURE_OBJECTS) {
+      const response = await this.api("/storage/v1/object/list/media", {
+        method: "POST",
+        data: { prefix, limit: 1000, offset: 0 },
+      });
+      if (!response.ok()) throw new Error("Local storage listing failed");
+      const entries = z
+        .array(z.object({ name: z.string() }).passthrough())
+        .max(1000)
+        .parse(await response.json());
+      for (const entry of entries)
+        if (name.test(entry.name)) paths.push(`${prefix}/${entry.name}`);
+    }
+    return paths;
+  }
+
+  private async cleanupFigures() {
+    const restore = await this.api(
+      `/rest/v1/projects?id=eq.${this.settings.fixtures.projectId}`,
+      { method: "PATCH", data: { media: [] } },
+    );
+    if (!restore.ok()) throw new Error("Owned local project cleanup failed");
+    if ((await this.readProject()).media.length)
+      throw new Error("Owned local project still has figures after cleanup");
+    const objects = await this.figureObjects();
+    if (objects.length) {
+      const removed = await this.api("/storage/v1/object/media", {
+        method: "DELETE",
+        data: { prefixes: objects },
+      });
+      if (!removed.ok()) throw new Error("Owned local storage cleanup failed");
+    }
+    if ((await this.figureObjects()).length)
+      throw new Error("Owned local storage objects remain after cleanup");
+  }
+
   async cleanup() {
+    if (this.figuresTouched) {
+      if (!this.adminAccess)
+        throw new Error("Missing admin session for owned cleanup");
+      await this.cleanupFigures();
+    }
     if (!this.ownedIds.size) return;
     if (!this.adminAccess)
       throw new Error("Missing admin session for owned cleanup");

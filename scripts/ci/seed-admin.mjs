@@ -1,6 +1,8 @@
 import { randomBytes } from "node:crypto";
 import { assertLocalSupabase } from "./local-supabase.mjs";
 
+export const FIGURES_PROJECT_ID = "task4-project-figures";
+
 export function syntheticRows() {
   const text = {
     en: "Synthetic integration fixture",
@@ -43,6 +45,35 @@ export function syntheticRows() {
       published: key === "public",
       sort_index: i,
     })),
+    // The figures scenario edits this published personal project in the admin and
+    // then reads its archive row on the public site. It starts with no figures.
+    projects: [
+      {
+        id: FIGURES_PROJECT_ID,
+        title: "Task4 figures fixture",
+        role: text,
+        start_month: "2026-01",
+        end_month: null,
+        summary: text,
+        case_study: null,
+        tech: [],
+        demo_url: null,
+        repo_urls: [],
+        poster_url: null,
+        video_url: null,
+        published: true,
+        sort_index: 0,
+        experience_id: null,
+        education_id: null,
+        kind: "personal",
+        featured: false,
+        featured_order: null,
+        roles: [],
+        team_size: null,
+        links: [],
+        media: [],
+      },
+    ],
   };
 }
 
@@ -122,6 +153,7 @@ export async function seedAdmin({ apiUrl, serviceRoleKey, runId }) {
     ...identities,
     fixtures: {
       certificateIds: ["task4-certificate-a", "task4-certificate-b"],
+      projectId: FIGURES_PROJECT_ID,
     },
   };
 }

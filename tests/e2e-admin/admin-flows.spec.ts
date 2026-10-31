@@ -358,3 +358,98 @@ test("network simulation: offline edits recover and save to the real backend", a
     await context.setOffline(false);
   }
 });
+
+// A valid 1x1 PNG, uploaded through the real Storage policy as the image figure.
+const FIGURE_PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+  "base64",
+);
+
+test("project figures: an uploaded image and a Mermaid diagram are saved and counted on the public archive", async ({
+  page,
+  suite,
+}) => {
+  test.setTimeout(150_000);
+  await suite.login(page);
+  const projectId = suite.settings.fixtures.projectId;
+  expect((await suite.readProject()).media).toEqual([]);
+  suite.touchFigures();
+  const edit = `/admin/projects/${projectId}`;
+  await page.goto(edit);
+  await expect(
+    page.getByRole("heading", { name: `Sửa ${projectId}`, exact: true }),
+  ).toBeVisible();
+  const field = (path: string) => page.locator(`[id="field-media.${path}"]`);
+
+  // Image: uploaded from the add-image dialog, then captioned.
+  await page.getByRole("button", { name: "Thêm ảnh", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Thêm ảnh" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByLabel("Tải ảnh mới lên").setInputFiles({
+    name: "task4-figure.png",
+    mimeType: "image/png",
+    buffer: FIGURE_PNG,
+  });
+  await expect(dialog).toHaveCount(0);
+  await field("0.caption.en").fill("Task4 image figure");
+  await field("0.alt.en").fill("A one-pixel synthetic image.");
+
+  // Diagram: a syntax error shows the parser message; the fixed source previews.
+  await page.getByRole("button", { name: "Thêm sơ đồ", exact: true }).click();
+  await field("1.caption.en").fill("Task4 diagram figure");
+  await field("1.alt.en").fill("Box A points to box B.");
+  const preview = page.getByRole("img", { name: "Xem trước sơ đồ" });
+  await expect(preview).toHaveAttribute("data-stale", "false", {
+    timeout: 30_000,
+  });
+  await field("1.source").fill("flowchart LR; A-->");
+  const parser = page.getByRole("alert").filter({ hasText: "Parse error" });
+  await expect(parser).toBeVisible({ timeout: 30_000 });
+  await expect(preview).toHaveAttribute("data-stale", "true");
+  await field("1.source").fill("flowchart LR; A-->B");
+  await expect(parser).toHaveCount(0, { timeout: 30_000 });
+  await expect(preview).toHaveAttribute("data-stale", "false");
+
+  // Save renders light and dark, uploads both, and the server re-checks them.
+  await page.getByRole("button", { name: "Lưu", exact: true }).click();
+  await expect(page).toHaveURL(/\/admin\/projects\?highlight=/, {
+    timeout: 60_000,
+  });
+  const media = (await suite.readProject()).media;
+  expect(media.map((f) => [f.kind, (f.caption as { en: string }).en])).toEqual([
+    ["image", "Task4 image figure"],
+    ["diagram", "Task4 diagram figure"],
+  ]);
+  const storage = `${suite.settings.apiUrl}/storage/v1/object/public/media`;
+  expect(String(media[0].url)).toMatch(
+    new RegExp(`^${storage}/image/[a-z0-9]+-task4-figure\.png$`),
+  );
+  for (const theme of ["Light", "Dark"]) {
+    const url = String(media[1][`svg${theme}`]);
+    expect(url).toMatch(
+      new RegExp(
+        `^${storage}/diagram/${projectId}-[a-z0-9-]+-${theme.toLowerCase()}-[0-9a-f]{8}\.svg$`,
+      ),
+    );
+    const svg = await suite.api(url.slice(suite.settings.apiUrl.length));
+    expect(svg.status()).toBe(200);
+    expect(svg.headers()["content-type"]).toMatch(/^image\/svg\+xml/);
+    expect(await svg.text()).toMatch(/^\s*<svg[\s>]/);
+  }
+  expect(media[1]).toMatchObject({ source: "flowchart LR; A-->B" });
+  expect(Number(media[1].themeVersion)).toBeGreaterThan(0);
+
+  // Reload: both figures are listed in their saved order.
+  await page.goto(edit);
+  await expect(page.getByTestId("figure-caption")).toHaveText([
+    "Task4 image figure",
+    "Task4 diagram figure",
+  ]);
+
+  // The public archive row counts the two figures once the content tag refreshes.
+  const chip = page.locator(`[id="row-${projectId}"] [data-figures]`);
+  await expect(async () => {
+    await page.goto("/en/projects");
+    await expect(chip).toHaveText("図 2", { timeout: 2_000 });
+  }).toPass({ timeout: 45_000 });
+});

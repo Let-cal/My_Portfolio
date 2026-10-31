@@ -406,6 +406,62 @@ describe("project save with figures", () => {
       fireEvent.click(screen.getByRole("button", { name: "Lưu" })),
     );
 
+  // Every control that would add, edit, reorder, render or save, by accessible name.
+  const WRITE_CONTROLS = [
+    /^Thêm ảnh$/,
+    /^Thêm sơ đồ$/,
+    /^Sửa hình \d+$/,
+    /^Vẽ lại tất cả sơ đồ$/,
+    /^Đưa hình \d+ lên$/,
+    /^Đưa hình \d+ xuống$/,
+    /^Xóa hình \d+$/,
+    /^Kéo để sắp xếp /,
+    /^Lưu$/,
+  ];
+  const renderAs = (kind: "admin" | "reviewer") =>
+    render(
+      <AdminAccessProvider kind={kind}>
+        <ResourceForm
+          resourceKey="projects"
+          isNew={false}
+          initial={{ ...siteplus, media: [kept, fresh] }}
+          options={{}}
+        />
+      </AdminAccessProvider>,
+    );
+
+  it("the admin form has every figure write control and the real save bar", () => {
+    renderAs("admin");
+    for (const name of WRITE_CONTROLS)
+      expect(
+        screen.queryAllByRole("button", { name }).length,
+        String(name),
+      ).toBeGreaterThan(0);
+  });
+
+  it("the reviewer form lists the figures with previews, and has none of those controls", async () => {
+    h.saveResource.mockReset();
+    h.render.mockReset();
+    h.upload.mockReset();
+    renderAs("reviewer");
+    expect(captions()).toEqual(["kept", "fresh"]);
+    expect(
+      screen.getByRole("img", { name: "Hình 1" }).getAttribute("src"),
+    ).toBe(kept.svgLight);
+    for (const name of WRITE_CONTROLS)
+      expect(screen.queryAllByRole("button", { name }), String(name)).toEqual(
+        [],
+      );
+    expect(document.getElementById("field-media.1.source")).toBeNull();
+    // The save shortcut does nothing either: no render, upload or save action.
+    await act(async () => {
+      fireEvent.keyDown(window, { key: "s", ctrlKey: true });
+    });
+    expect(h.render).not.toHaveBeenCalled();
+    expect(h.upload).not.toHaveBeenCalled();
+    expect(h.saveResource).not.toHaveBeenCalled();
+  });
+
   it("renders and uploads new diagrams, then saves their URLs", async () => {
     h.saveResource.mockReset().mockResolvedValue({ ok: true });
     h.render

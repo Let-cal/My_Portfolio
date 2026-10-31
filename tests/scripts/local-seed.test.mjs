@@ -23,6 +23,17 @@ test("synthetic seed is explicit and contains no recruiter content or production
   assert.ok(!JSON.stringify(rows).includes("letcal"));
 });
 
+test("the figures scenario owns one published personal project with no figures", () => {
+  const projects = api.syntheticRows().projects;
+  assert.equal(api.FIGURES_PROJECT_ID, "task4-project-figures");
+  assert.deepEqual(
+    projects.map((p) => [p.id, p.published, p.kind, p.media.length]),
+    [["task4-project-figures", true, "personal", 0]],
+  );
+  assert.equal(projects[0].experience_id, null);
+  assert.equal(projects[0].education_id, null);
+});
+
 test("public write-denial control is a separate published synthetic certificate", () => {
   const certificates = api.syntheticRows().certificates;
   const publicRows = certificates.filter((c) => c.published);
@@ -61,6 +72,7 @@ test("browser fixture keeps the strict browser shape and drops reviewer credenti
     },
     fixtures: {
       certificateIds: ["task4-certificate-a", "task4-certificate-b"],
+      projectId: "task4-project-figures",
     },
   };
   const projected = api.browserFixture(fixture);
