@@ -1,7 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
-import { CASE_PARAM, parseCaseParam, type CaseContext } from "@/lib/case-list";
+import {
+  CASE_PARAM,
+  FIG_PARAM,
+  parseCaseParam,
+  type CaseContext,
+} from "@/lib/case-list";
 
 /** Lists that read `?case=` in this hydration pass; the first to know the id opens it (tree before bento). */
 type Claim = { known: Set<string>; rank: number; open: (id: string) => void };
@@ -9,11 +14,17 @@ let claims: Claim[] = [];
 let pending = false;
 const RANK: Record<CaseContext, number> = { tree: 0, bento: 1, archive: 2 };
 
-/** Rewrites `?case=` in place (no history entry), keeping the other params and the hash. */
+/**
+ * Rewrites `?case=` in place (no history entry), keeping the other params and the hash. Closing (null) also drops
+ * `&fig=`; on a move the panel rewrites `fig` for the new project itself.
+ */
 function writeCase(id: string | null) {
   const url = new URL(window.location.href);
   if (id) url.searchParams.set(CASE_PARAM, id);
-  else url.searchParams.delete(CASE_PARAM);
+  else {
+    url.searchParams.delete(CASE_PARAM);
+    url.searchParams.delete(FIG_PARAM);
+  }
   window.history.replaceState(null, "", url);
 }
 

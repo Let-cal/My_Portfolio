@@ -1,0 +1,299 @@
+/*
+ * Emaki figures view inside the case study panel (spec 6.2). Rendered inside the panel frame, so the --kk-* tokens
+ * of kakejiku.module.css (and their light-theme values) apply here too.
+ *
+ * Wide panel: the stage takes what is left after the caption and the filmstrip; its height comes from the panel,
+ * never from the image. Scroll mode (`[data-mode="scroll"]` on the panel content, small screens included): the
+ * stage is full width at 16:10 and the rows size to their content. The lazy fallback uses these same classes, so
+ * the box is reserved before the chunk arrives.
+ */
+
+.scroll {
+  display: grid;
+  grid-template-rows: minmax(240px, 1fr) auto auto;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.stageWrap {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border: 1px solid var(--kk-pane-edge);
+  border-radius: 14px;
+  background:
+    radial-gradient(120% 90% at 20% 0%, var(--kk-wash-koi), transparent 70%),
+    var(--kk-pane);
+}
+
+/* Washi skeleton while the figure loads. */
+.stage[data-state="loading"]::before {
+  content: "";
+  position: absolute;
+  inset: 44px 56px 14px;
+  border-radius: 10px;
+  background: linear-gradient(
+    100deg,
+    var(--kk-chip) 30%,
+    var(--kk-hover) 50%,
+    var(--kk-chip) 70%
+  );
+  background-size: 300% 100%;
+  opacity: 0.6;
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 44px 56px 14px;
+}
+
+.figure {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  cursor: zoom-in;
+}
+
+.seal {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 9px 2px 3px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--kk-paper) 82%, transparent);
+  color: var(--kk-koi-ink);
+  font-size: 12px;
+  font-weight: 600;
+  pointer-events: none;
+}
+.seal b {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 1.5px solid var(--kk-koi);
+  border-radius: 4px;
+  font-family: var(--font-mincho), "Yu Mincho", "Hiragino Mincho ProN", serif;
+  font-size: 14px;
+}
+
+.enlarge {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  z-index: 1;
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid var(--kk-chip-edge);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--kk-paper) 82%, transparent);
+  color: var(--kk-ink);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.enlarge:hover {
+  border-color: var(--kk-koi);
+}
+
+.side {
+  position: absolute;
+  top: 50%;
+  z-index: 1;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  margin-top: -18px;
+  border: 1px solid var(--kk-chip-edge);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--kk-paper) 82%, transparent);
+  color: var(--kk-ink);
+  cursor: pointer;
+}
+.side:hover {
+  border-color: var(--kk-koi);
+}
+.side[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: default;
+}
+.side[aria-disabled="true"]:hover {
+  border-color: var(--kk-chip-edge);
+}
+.sidePrev {
+  left: 10px;
+}
+.sideNext {
+  right: 10px;
+}
+
+.error {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+  color: var(--kk-muted);
+  font-size: 14px;
+}
+.retry {
+  min-height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--kk-btn-edge);
+  border-radius: 8px;
+  background: var(--kk-btn);
+  color: var(--kk-koi-ink);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.captionBox {
+  min-width: 0;
+}
+.caption,
+.note {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.caption {
+  min-height: 20px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--kk-ink);
+}
+.note {
+  min-height: 18px;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--kk-muted);
+}
+
+.stripRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.strip {
+  display: flex;
+  flex: 1;
+  gap: 8px;
+  min-width: 0;
+  min-height: 58px;
+  padding: 3px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+  scrollbar-color: var(--kk-chip-edge) transparent;
+}
+.tab {
+  position: relative;
+  flex: none;
+  width: 84px;
+  height: 52px;
+  overflow: hidden;
+  border: 1px solid var(--kk-chip-edge);
+  border-radius: 7px;
+  background: var(--kk-chip);
+  scroll-snap-align: start;
+  cursor: pointer;
+}
+.tab img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.7;
+}
+.tab:hover img,
+.tab[aria-selected="true"] img {
+  opacity: 1;
+}
+/* An outline, not a box-shadow: the keyboard focus ring is a box-shadow and must stay visible on the current tab. */
+.tab[aria-selected="true"] {
+  border-color: var(--kk-koi);
+  outline: 2px solid var(--kk-koi);
+  outline-offset: 1px;
+}
+.tabKanji {
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  padding: 0 3px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--kk-paper) 80%, transparent);
+  color: var(--kk-koi-ink);
+  font-family: var(--font-mincho), "Yu Mincho", "Hiragino Mincho ProN", serif;
+  font-size: 12px;
+  line-height: 16px;
+}
+.count {
+  flex: none;
+  color: var(--kk-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Scroll mode: the stage keeps 16:10 at full width; caption lines may wrap. A plain block stack, not the grid: grid
+ * row sizing resolves the empty 16:10 box against a min-content width and lets the caption slide under the stage.
+ */
+:global([data-mode="scroll"]) .scroll {
+  display: block;
+}
+:global([data-mode="scroll"]) .scroll > * + * {
+  margin-top: 8px;
+}
+:global([data-mode="scroll"]) .stageWrap {
+  aspect-ratio: 16 / 10;
+}
+:global([data-mode="scroll"]) .caption,
+:global([data-mode="scroll"]) .note {
+  white-space: normal;
+}
+@media (max-width: 1023px), (max-height: 679px) {
+  .layer {
+    padding: 40px 10px 10px;
+  }
+  .stage[data-state="loading"]::before {
+    inset: 40px 10px 10px;
+  }
+}
+
+/* ---- motion (full only): thumbnails rise in with a 30 ms stagger, the skeleton shimmers ---- */
+@keyframes fs-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes fs-shimmer {
+  to {
+    background-position: -100% 0;
+  }
+}
+:global([data-motion="full"]) .tab {
+  animation: fs-rise 240ms cubic-bezier(0.2, 0.7, 0.2, 1)
+    calc(var(--i, 0) * 30ms) both;
+}
+:global([data-motion="full"]) .stage[data-state="loading"]::before {
+  animation: fs-shimmer 1.4s linear infinite;
+}

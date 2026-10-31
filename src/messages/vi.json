@@ -270,7 +270,22 @@
     "chapterProjects": "第二章 作品",
     "where": "Nơi làm",
     "period": "Thời gian",
-    "teamLabel": "Team"
+    "teamLabel": "Team",
+    "content": "Nội dung",
+    "figures": "Hình ảnh",
+    "enlarge": "Phóng to",
+    "figurePosition": "Hình {n} trên {count}",
+    "figureError": "Không tải được hình này",
+    "retry": "Thử lại",
+    "prevFigure": "Hình trước",
+    "nextFigure": "Hình tiếp theo",
+    "categories": {
+      "screen": "Màn hình",
+      "architecture": "Kiến trúc",
+      "erd": "Mô hình dữ liệu",
+      "flow": "Luồng",
+      "other": "Khác"
+    }
   },
   "projects": {
     "viewCaseStudy": "Xem case study",
