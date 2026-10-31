@@ -42,9 +42,12 @@ export function InkThread({ className, children }: Box) {
             engine.current = m.attachInkThread(ref.current);
         },
         // A failed decorative chunk leaves the static rail, which still links and marks the current chapter.
-        () => {},
+        (error) => console.warn("[nav] ink thread chunk failed", error),
       );
-    (window.requestIdleCallback ?? setTimeout)(start);
+    // Idle, but not later than 2 s on a page that never goes idle.
+    if (window.requestIdleCallback)
+      window.requestIdleCallback(start, { timeout: 2000 });
+    else setTimeout(start);
     return () => {
       cancelled = true;
       engine.current?.stop();

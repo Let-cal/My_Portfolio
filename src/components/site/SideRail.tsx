@@ -1,5 +1,5 @@
 import { useLocale, useTranslations } from "next-intl";
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 import { MailIcon } from "@/components/site/icons";
 import type { RoleKey } from "@/content/schema";
 import "./ink-thread.css";
@@ -32,6 +32,8 @@ export type SideRailProps = {
 export function SideRail({ name, titles, links, icons }: SideRailProps) {
   const t = useTranslations();
   const locale = useLocale();
+  // Unique per rail, so a second rail on the page never strokes with the first one's gradient.
+  const gradientId = `${useId()}-ink`;
 
   const socials = [
     { label: t("footer.github"), href: links.github, icon: icons.github },
@@ -88,7 +90,7 @@ export function SideRail({ name, titles, links, icons }: SideRailProps) {
               >
                 <defs>
                   <linearGradient
-                    id="it-ink-gradient"
+                    id={gradientId}
                     data-ink-gradient=""
                     gradientUnits="userSpaceOnUse"
                     x1="0"
@@ -100,7 +102,7 @@ export function SideRail({ name, titles, links, icons }: SideRailProps) {
                     <stop data-ink-stop="" className="it-stop-teal" />
                   </linearGradient>
                 </defs>
-                <path data-ink-path="" stroke="url(#it-ink-gradient)" />
+                <path data-ink-path="" stroke={`url(#${gradientId})`} />
               </svg>
               <span data-ink-drop="" className="it-drop" aria-hidden="true" />
               <ul data-ink-list="" className="it-list">

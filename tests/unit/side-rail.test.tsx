@@ -1,4 +1,4 @@
-import { act, render, screen, within } from "@testing-library/react";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -109,19 +109,142 @@ beforeEach(() => {
   vi.stubGlobal("IntersectionObserver", FakeIntersectionObserver);
   vi.stubGlobal("ResizeObserver", FakeResizeObserver);
   // The thread engine loads when the browser is idle; run that at once.
-  vi.stubGlobal("requestIdleCallback", (cb: () => void) => {
-    cb();
-    return 1;
-  });
+  idle.mockClear();
+  vi.stubGlobal("requestIdleCallback", idle);
 });
 
+const idle = vi.fn((cb: () => void) => {
+  cb();
+  return 1;
+});
+
+/** Renders the rail over mounted sections, waits for the engine and draws the thread once. */
+async function drawnRail() {
+  mountSections();
+  const view = render(withIntl(<SideRail {...props} />));
+  const nav = screen.getByRole("navigation", { name: en.header.primaryNav });
+  const height = vi
+    .spyOn(HTMLElement.prototype, "offsetHeight", "get")
+    .mockReturnValue(400);
+  placeNumerals(nav, 40);
+  await vi.waitFor(() => expect(ro.observed.length).toBeGreaterThan(0));
+  ro.fire();
+  const root = nav.querySelector<HTMLElement>("[data-ink-root]")!;
+  return { view, nav, root, height };
+}
+
+const frame = () =>
+  new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
 afterEach(() => {
+  // Unmount first: a cached engine chunk would otherwise attach after the stubs below are gone.
+  cleanup();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   document.querySelectorAll("body > section").forEach((el) => el.remove());
 });
 
 describe("SideRail ink thread", () => {
+  it("loads the thread engine when idle, within 2 s at the latest", async () => {
+    await drawnRail();
+    expect(idle).toHaveBeenCalledWith(expect.any(Function), { timeout: 2000 });
+  });
+
+  it("forgets the numeral positions while the rail is hidden, so a scroll draws nothing stale", async () => {
+    const { root, height } = await drawnRail();
+    const drop = root.querySelector<HTMLElement>("[data-ink-drop]")!;
+    // The window narrows below 1024 px: the rail is display:none and measures 0 high.
+    height.mockReturnValue(0);
+    ro.fire();
+    drop.style.transform = "";
+    root.removeAttribute("data-inked");
+    io.fire([
+      { isIntersecting: true, target: document.getElementById("projects")! },
+    ]);
+    window.dispatchEvent(new Event("scroll"));
+    await frame();
+    await frame();
+    expect(drop.style.transform).toBe("");
+    expect(root).not.toHaveAttribute("data-inked");
+  });
+
+  it("does not measure after it stopped, even when the fonts finish later", async () => {
+    let ready!: () => void;
+    Object.defineProperty(document, "fonts", {
+      configurable: true,
+      value: { ready: new Promise<void>((resolve) => (ready = resolve)) },
+    });
+    try {
+      mountSections();
+      const view = render(withIntl(<SideRail {...props} />));
+      const nav = screen.getByRole("navigation", {
+        name: en.header.primaryNav,
+      });
+      vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockReturnValue(
+        400,
+      );
+      await vi.waitFor(() => expect(ro.observed.length).toBeGreaterThan(0));
+      const root = nav.querySelector<HTMLElement>("[data-ink-root]")!;
+      view.unmount();
+      ready();
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(root).not.toHaveAttribute("data-ink-ready");
+    } finally {
+      delete (document as { fonts?: unknown }).fonts;
+    }
+  });
+
+  it("Esc hides the peek card until the pointer or focus moves to another chapter (WCAG 1.4.13)", async () => {
+    const { nav, root } = await drawnRail();
+    const link = (id: string) =>
+      nav.querySelector<HTMLElement>(`a[data-chapter="${id}"]`)!;
+    act(() => {
+      link("projects").dispatchEvent(
+        new PointerEvent("pointerover", { bubbles: true }),
+      );
+    });
+    expect(root).not.toHaveAttribute("data-peek-off");
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    });
+    expect(root).toHaveAttribute("data-peek-off");
+    // Still on the same chapter: stays dismissed.
+    act(() => {
+      link("projects").dispatchEvent(
+        new PointerEvent("pointerover", { bubbles: true }),
+      );
+    });
+    expect(root).toHaveAttribute("data-peek-off");
+    // Another chapter shows its peek again.
+    act(() => {
+      link("skills").focus();
+    });
+    expect(root).not.toHaveAttribute("data-peek-off");
+  });
+
+  it("gives the thread's gradient an id of its own and strokes with it", async () => {
+    render(
+      withIntl(
+        <>
+          <SideRail {...props} />
+          <SideRail {...props} />
+        </>,
+      ),
+    );
+    const gradients = [...document.querySelectorAll("[data-ink-gradient]")].map(
+      (g) => g.id,
+    );
+    expect(gradients).toHaveLength(2);
+    expect(new Set(gradients).size).toBe(2);
+    const strokes = [...document.querySelectorAll("[data-ink] path")].map((p) =>
+      p.getAttribute("stroke"),
+    );
+    expect(strokes).toEqual(gradients.map((id) => `url(#${id})`));
+    // Let both engines attach before the stubs go.
+    await vi.waitFor(() => expect(ro.observed).toHaveLength(2));
+  });
+
   it("renders numerals hidden from assistive tech", () => {
     render(withIntl(<SideRail {...props} />));
     const nav = screen.getByRole("navigation", { name: en.header.primaryNav });
