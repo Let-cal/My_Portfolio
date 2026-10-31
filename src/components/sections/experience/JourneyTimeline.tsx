@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import { useLayoutEffect, useRef, type CSSProperties } from "react";
 import type { JourneyParent } from "@/lib/journey";
+import { PromotedArrow } from "./PromotedArrow";
 
 const pct = (n: number) => `${n * 100}%`;
 
@@ -47,13 +48,19 @@ export function JourneyTimeline({ parent }: { parent: JourneyParent }) {
   useLayoutEffect(() => {
     const gantt = ref.current;
     if (!gantt) return;
-    const check = () => markClipped(gantt);
+    let alive = true;
+    const check = () => {
+      if (alive) markClipped(gantt);
+    };
     check();
     void document.fonts?.ready.then(check);
-    if (typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(check);
-    observer.observe(gantt);
-    return () => observer.disconnect();
+    const observer =
+      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(check);
+    observer?.observe(gantt);
+    return () => {
+      alive = false;
+      observer?.disconnect();
+    };
   }, []);
   return (
     <div
@@ -89,7 +96,7 @@ export function JourneyTimeline({ parent }: { parent: JourneyParent }) {
                 } as CSSProperties
               }
             >
-              {s.label}
+              <span>{s.label}</span>
             </span>
           ))}
         {segments.map((s) =>
@@ -99,19 +106,7 @@ export function JourneyTimeline({ parent }: { parent: JourneyParent }) {
               className="jt-tick"
               style={{ left: pct(s.from) }}
             >
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 8 10"
-                width="0.7em"
-                height="0.875em"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M4 9.25V1M1 4l3-3 3 3" />
-              </svg>
+              <PromotedArrow />
             </span>
           ) : null,
         )}

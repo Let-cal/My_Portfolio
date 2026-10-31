@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { contentSchema } from "@/content/schema";
 import seed from "@/content/seed.json";
-import { archiveRows, groupByYear, type ArchiveRow } from "@/lib/archive";
+import {
+  archiveRows,
+  groupByYear,
+  yearSpan,
+  type ArchiveRow,
+} from "@/lib/archive";
 
 const content = () => contentSchema.parse(structuredClone(seed));
 const row = (id: string, year: string) => ({ id, year }) as ArchiveRow;
@@ -23,6 +28,22 @@ describe("groupByYear", () => {
     expect(
       groupByYear([row("a", "2024"), row("b", "2026")]).map((g) => g.year),
     ).toEqual(["2026", "2024"]);
+  });
+});
+
+describe("yearSpan", () => {
+  it("spans the oldest to the newest start year", () => {
+    expect(
+      yearSpan([row("a", "2026"), row("b", "2023"), row("c", "2025")]),
+    ).toBe("2023 – 2026");
+  });
+
+  it("shows a single year once", () => {
+    expect(yearSpan([row("a", "2026"), row("b", "2026")])).toBe("2026");
+  });
+
+  it("is null without rows", () => {
+    expect(yearSpan([])).toBeNull();
   });
 });
 

@@ -137,13 +137,13 @@ test("a row description opens and closes by keyboard and stays in the DOM", asyn
     '#tree-skg-coa button[aria-controls="desc-skg-coa"]',
   );
   const region = page.locator("#desc-skg-coa");
-  await expect(button).toHaveText("Show description");
+  await expect(button).toHaveText(/^Show description/);
   await expect(region).toBeHidden();
   await expect(region).toHaveText(/./);
   await button.focus();
   await page.keyboard.press("Enter");
   await expect(button).toHaveAttribute("aria-expanded", "true");
-  await expect(button).toHaveText("Hide description");
+  await expect(button).toHaveText(/^Hide description/);
   await expect(button).toBeFocused();
   await expect(region).toBeVisible();
   await page.keyboard.press("Space");
@@ -239,7 +239,9 @@ for (const { locale, width } of [
     const cut = await gantt.evaluate((root) => {
       const bad: string[] = [];
       for (const seg of root.querySelectorAll<HTMLElement>(".jt-seg")) {
-        const painted = getComputedStyle(seg).color !== "rgba(0, 0, 0, 0)";
+        const text = seg.firstElementChild;
+        const painted =
+          !!text && getComputedStyle(text).visibility !== "hidden";
         if (painted && seg.scrollWidth > seg.clientWidth)
           bad.push(`segment "${seg.textContent}"`);
       }
@@ -263,7 +265,7 @@ test("case study opens from a child card", async ({ page }) => {
   await page.goto("/en");
   await page
     .locator("#tree-skg-coa")
-    .getByRole("button", { name: /COA/ })
+    .getByRole("button", { name: /case study.*COA/ })
     .click();
   await expect(page.getByRole("dialog")).toBeVisible();
 });

@@ -222,33 +222,36 @@
   opacity: 1;
   transform: translate(0, -50%);
 }
+/* Esc dismissed it (ink-thread.ts), until the pointer or focus reaches another chapter. */
+.it[data-peek-off] .it-link .it-peek {
+  opacity: 0;
+  transform: translate(-6px, -50%);
+}
 
-/* ---- Motion (the site's Motion toggle, else the OS setting). ---- */
-:root[data-motion="full"] {
-  .it-ink {
-    transition: clip-path 0.5s var(--it-ease);
-  }
-  .it-drop {
-    transition:
-      transform 0.5s var(--it-ease),
-      opacity 0.3s,
-      background-color 0.6s,
-      box-shadow 0.6s;
-  }
-  .it-link,
-  .it-numeral,
-  .it-spur {
-    transition: color 0.22s;
-  }
-  .it-spur::before {
-    transition: border-color 0.6s;
-  }
-  .it-progress > span {
-    transition: background-color 0.6s;
-  }
-  .it-peek {
-    transition:
-      opacity 0.18s,
-      transform 0.18s var(--it-ease);
-  }
+/* ---- Motion (the site's Motion toggle, else the OS setting). Flat selectors: no CSS nesting needed. ---- */
+:root[data-motion="full"] .it-ink {
+  transition: clip-path 0.5s var(--it-ease);
+}
+:root[data-motion="full"] .it-drop {
+  transition:
+    transform 0.5s var(--it-ease),
+    opacity 0.3s,
+    background-color 0.6s,
+    box-shadow 0.6s;
+}
+:root[data-motion="full"] .it-link,
+:root[data-motion="full"] .it-numeral,
+:root[data-motion="full"] .it-spur {
+  transition: color 0.22s;
+}
+:root[data-motion="full"] .it-spur::before {
+  transition: border-color 0.6s;
+}
+:root[data-motion="full"] .it-progress > span {
+  transition: background-color 0.6s;
+}
+:root[data-motion="full"] .it-peek {
+  transition:
+    opacity 0.18s,
+    transform 0.18s var(--it-ease);
 }

@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useState, type ComponentProps } from "react";
-import { CASE_PARAM } from "@/lib/case-list";
+import { CASE_PARAM, caseReloadKey } from "@/lib/case-list";
 import type { CaseStudyPanel } from "./CaseStudyPanel";
 
 type Props = ComponentProps<typeof CaseStudyPanel>;
@@ -16,7 +16,7 @@ type Props = ComponentProps<typeof CaseStudyPanel>;
 function ReloadOnDeepLink({ openId }: Props) {
   useEffect(() => {
     if (openId === null || navigator.onLine === false) return;
-    const key = `case-reload:${openId}`;
+    const key = caseReloadKey(openId);
     try {
       if (window.sessionStorage.getItem(key)) return;
       window.sessionStorage.setItem(key, "1");
@@ -34,7 +34,10 @@ const Panel = dynamic(
   () =>
     import("./CaseStudyPanel").then(
       (module) => module.CaseStudyPanel,
-      () => ReloadOnDeepLink,
+      (error) => {
+        console.warn("[case study] panel chunk failed", error);
+        return ReloadOnDeepLink;
+      },
     ),
   { ssr: false },
 );

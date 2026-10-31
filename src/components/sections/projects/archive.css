@@ -161,6 +161,14 @@
   transition: opacity 0.4s;
   pointer-events: none;
 }
+.pa-row[data-highlight] {
+  background: color-mix(in srgb, var(--role-accent) 6%, transparent);
+  box-shadow: inset 3px 0 0 var(--role-accent);
+}
+.pa-row:target {
+  background: color-mix(in srgb, var(--role-accent) 10%, transparent);
+}
+/* After the highlight and target tints, so hover and focus still light those rows (the accent bar stays). */
 .pa-row-case:hover,
 .pa-row:focus-within {
   background: var(--jt-card-lit);
@@ -168,13 +176,6 @@
 .pa-row-case:hover::after,
 .pa-row:focus-within::after {
   opacity: 1;
-}
-.pa-row[data-highlight] {
-  background: color-mix(in srgb, var(--role-accent) 6%, transparent);
-  box-shadow: inset 3px 0 0 var(--role-accent);
-}
-.pa-row:target {
-  background: color-mix(in srgb, var(--role-accent) 10%, transparent);
 }
 
 .pa-main {
@@ -223,7 +224,7 @@
   height: 18px;
   border-radius: 3px;
   /* The hanko's filled shade: the seal ink keeps 4.5:1 on it. */
-  background: #b02e19;
+  background: var(--jt-seal-fill);
   color: var(--jt-seal-ink);
   font-size: 10px;
   line-height: 1;
@@ -344,13 +345,10 @@
     radial-gradient(circle at 30% 30%, var(--jt-bleed-koi), transparent 60%),
     radial-gradient(circle at 80% 80%, var(--jt-bleed-teal), transparent 60%),
     var(--card);
-  box-shadow: 0 20px 50px -12px rgb(0 0 0 / 55%);
+  box-shadow: var(--jt-pop-shadow);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s;
-}
-.light .pa-preview {
-  box-shadow: 0 18px 40px -14px rgb(60 40 20 / 35%);
 }
 .pa-preview[data-on] {
   opacity: 1;

@@ -26,7 +26,7 @@ export function ProjectCardBody({
   featured?: boolean;
 }) {
   const t = useTranslations("projects");
-  const { videoUrl, posterUrl, caseStudy: cs } = project;
+  const { videoUrl, posterUrl, hasCaseStudy: cs } = project;
   const kind = projectKind(project.tech);
   const label = `${String(index + 1).padStart(2, "0")}${kind ? ` · ${kind}` : ""}`;
   return (

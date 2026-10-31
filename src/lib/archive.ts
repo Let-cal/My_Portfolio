@@ -127,6 +127,15 @@ export function groupByYear(rows: ArchiveRow[]): ArchiveGroup[] {
     }));
 }
 
+/** The start years the rows span, "2023 – 2026", or one year alone ("2026"); null without rows. */
+export function yearSpan(rows: Pick<ArchiveRow, "year">[]): string | null {
+  if (rows.length === 0) return null;
+  const years = rows.map((r) => r.year).sort();
+  const from = years[0];
+  const to = years[years.length - 1];
+  return from === to ? from : `${from} – ${to}`;
+}
+
 /**
  * Title, description, canonical `/<locale>/projects` with its hreflang alternatives, and the share image. A child
  * route that sets its own `openGraph` does not inherit the image file of `[locale]`, so the locale's card is named

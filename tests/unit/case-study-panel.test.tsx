@@ -5,6 +5,13 @@ import { useRef, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "@/messages/en.json";
 import seed from "@/content/seed.json";
+
+// The toast outlet is not mounted here: the toast is recorded instead.
+const toast = vi.hoisted(() => vi.fn());
+vi.mock("sonner", () => ({ toast }));
+vi.mock("@/components/site/toast-readiness", () => ({
+  ensureToaster: () => Promise.resolve(),
+}));
 import { contentSchema, type Content } from "@/content/schema";
 import {
   CaseStudyPanel,
@@ -140,7 +147,8 @@ describe("CaseStudyPanel", () => {
         name: /Previous project: SitePlus/,
       }),
     ).toBeInTheDocument();
-    expect(within(dialog).getByText("1 of 6")).toBeInTheDocument();
+    // The position is stated once, in the live region with the title.
+    expect(within(dialog).getByText("AI Agent, 1 of 6")).toBeInTheDocument();
     await user.click(
       within(dialog).getByRole("button", {
         name: /Next project: FlexyBox Phase 2/,
@@ -278,6 +286,126 @@ describe("CaseStudyPanel", () => {
     );
     expect(modes).not.toContain("wide");
     expect(modes.length).toBeGreaterThan(0);
+  });
+
+  it("re-measures when a web font finishes loading after fonts.ready", async () => {
+    let tall = false;
+    vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockImplementation(
+      function (this: HTMLElement) {
+        return this.hasAttribute("data-case-content") ? (tall ? 900 : 600) : 0;
+      },
+    );
+    vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockImplementation(
+      function (this: HTMLElement) {
+        return this.hasAttribute("data-case-content") ? 600 : 0;
+      },
+    );
+    const fonts = new EventTarget();
+    Object.defineProperty(fonts, "ready", { value: Promise.resolve() });
+    // jsdom has no FontFaceSet.
+    Object.defineProperty(document, "fonts", {
+      value: fonts,
+      configurable: true,
+    });
+    try {
+      renderPanel({ initial: "skg-coa" });
+      const dialog = await screen.findByRole("dialog");
+      const contentEl = dialog.querySelector("[data-case-content]")!;
+      await waitFor(() =>
+        expect(contentEl).toHaveAttribute("data-mode", "wide"),
+      );
+      // A Japanese face arrives late (a lazily used unicode-range subset): the text grows past the panel.
+      tall = true;
+      act(() => {
+        fonts.dispatchEvent(new Event("loadingdone"));
+      });
+      expect(contentEl).toHaveAttribute("data-mode", "scroll");
+    } finally {
+      delete (document as { fonts?: unknown }).fonts;
+    }
+  });
+
+  it("keeps the reading position when a resize re-measures the scrolling layout", async () => {
+    vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockImplementation(
+      function (this: HTMLElement) {
+        return this.hasAttribute("data-case-content") ? 900 : 0;
+      },
+    );
+    vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockImplementation(
+      function (this: HTMLElement) {
+        return this.hasAttribute("data-case-content") ? 600 : 0;
+      },
+    );
+    renderPanel({ initial: "skg-flexybox-p2" });
+    const dialog = await screen.findByRole("dialog");
+    const contentEl = dialog.querySelector<HTMLElement>("[data-case-content]")!;
+    await waitFor(() =>
+      expect(contentEl).toHaveAttribute("data-mode", "scroll"),
+    );
+    // A browser clamps the scroll position while the shorter wide layout is tried; jsdom does not, so mimic it.
+    let top = 250;
+    Object.defineProperty(contentEl, "scrollTop", {
+      configurable: true,
+      get: () => top,
+      set: (value: number) => {
+        top = value;
+      },
+    });
+    const setAttribute = contentEl.setAttribute.bind(contentEl);
+    vi.spyOn(contentEl, "setAttribute").mockImplementation((name, value) => {
+      if (name === "data-mode" && value === "wide") top = 0;
+      setAttribute(name, value);
+    });
+    act(() => {
+      for (const cb of resizeCallbacks) cb([], {} as ResizeObserver);
+    });
+    expect(contentEl).toHaveAttribute("data-mode", "scroll");
+    expect(top).toBe(250);
+  });
+
+  it("names the dialog by the project and describes it by where it was done", async () => {
+    renderPanel({ initial: "skg-coa" });
+    const dialog = await screen.findByRole("dialog", { name: /^COA/ });
+    expect(dialog).toHaveAccessibleDescription(
+      `${byId("skg-coa").where} · Software Engineer`,
+    );
+  });
+
+  it("states the position once for screen readers", async () => {
+    renderPanel({ initial: "skg-coa" });
+    const dialog = await screen.findByRole("dialog");
+    const position = en.caseStudy.position
+      .replace("{index}", String(items.indexOf(byId("skg-coa")) + 1))
+      .replace("{total}", String(items.length));
+    expect(within(dialog).getAllByText(new RegExp(position))).toHaveLength(1);
+  });
+
+  it("forgets the reload guard of a project once its panel has loaded", async () => {
+    window.sessionStorage.setItem("case-reload:skg-coa", "1");
+    window.sessionStorage.setItem("case-reload:siteplus", "1");
+    renderPanel({ initial: "skg-coa" });
+    await screen.findByRole("dialog");
+    await waitFor(() =>
+      expect(window.sessionStorage.getItem("case-reload:skg-coa")).toBeNull(),
+    );
+    expect(window.sessionStorage.getItem("case-reload:siteplus")).toBe("1");
+    window.sessionStorage.clear();
+  });
+
+  it("when the clipboard refuses, says so and shows the link to copy by hand", async () => {
+    const user = userEvent.setup();
+    toast.mockClear();
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: vi.fn().mockRejectedValue(new Error("denied")) },
+      configurable: true,
+    });
+    renderPanel({ initial: "skg-coa" });
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Copy link" }));
+    await waitFor(() => expect(toast).toHaveBeenCalled());
+    expect(toast).toHaveBeenCalledWith(en.caseStudy.copyFailed, {
+      description: "http://localhost:3000/en/projects?case=skg-coa",
+    });
   });
 
   it("copies the ?case= link and confirms with a toast", async () => {

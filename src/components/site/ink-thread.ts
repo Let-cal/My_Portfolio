@@ -48,7 +48,8 @@ const READING_LINE = 0.5;
 /**
  * Drives the thread inside `root` (the rail's `[data-ink-root]`):
  * - a ResizeObserver (and `document.fonts.ready`) measures the numerals and rebuilds the path: all reads, then writes;
- * - scroll and resize write `--sp` per item, the accent clip, the drop and `data-dragon` once per animation frame.
+ * - scroll and resize write `--sp` per item, the accent clip, the drop and `data-dragon` once per animation frame;
+ * - Esc hides the peek card (`data-peek-off`) until the pointer or focus reaches another chapter (WCAG 1.4.13).
  * The active chapter is the link React marked with `aria-current` (`useActiveSection`); call `update` when it changes.
  */
 export function attachInkThread(root: HTMLElement) {
@@ -65,6 +66,7 @@ export function attachInkThread(root: HTMLElement) {
   let ys: number[] = [];
   let height = 0;
   let frame = 0;
+  let stopped = false;
 
   const flush = () => {
     frame = 0;
@@ -102,7 +104,11 @@ export function attachInkThread(root: HTMLElement) {
   const measure = () => {
     // Reads.
     height = list.offsetHeight;
-    if (!height) return; // The rail is hidden below 1024 px.
+    if (!height) {
+      // The rail is hidden below 1024 px: forget the old positions so a scroll draws nothing until it shows again.
+      ys = [];
+      return;
+    }
     const top = list.getBoundingClientRect().top;
     ys = numerals.map((n) => {
       const r = n.getBoundingClientRect();
@@ -127,19 +133,46 @@ export function attachInkThread(root: HTMLElement) {
     flush();
   };
 
+  // The chapter under the pointer or focus, and the one whose peek Esc dismissed.
+  let current: Element | null = null;
+  let dismissed: Element | null = null;
+  const onEnter = (event: Event) => {
+    const link = (event.target as Element).closest?.("a[data-chapter]");
+    if (!link) return;
+    current = link;
+    if (link !== dismissed) {
+      dismissed = null;
+      root.removeAttribute("data-peek-off");
+    }
+  };
+  const onKey = (event: KeyboardEvent) => {
+    if (event.key !== "Escape" || !current) return;
+    dismissed = current;
+    root.setAttribute("data-peek-off", "");
+  };
+
   const observer = new ResizeObserver(measure);
   observer.observe(list);
-  void document.fonts?.ready.then(measure);
+  void document.fonts?.ready.then(() => {
+    if (!stopped) measure();
+  });
   window.addEventListener("scroll", update, { passive: true });
   window.addEventListener("resize", update);
+  root.addEventListener("pointerover", onEnter);
+  root.addEventListener("focusin", onEnter);
+  document.addEventListener("keydown", onKey);
 
   return {
     update,
     stop() {
+      stopped = true;
       if (frame) cancelAnimationFrame(frame);
       observer.disconnect();
       window.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
+      root.removeEventListener("pointerover", onEnter);
+      root.removeEventListener("focusin", onEnter);
+      document.removeEventListener("keydown", onKey);
     },
   };
 }

@@ -28,7 +28,7 @@ test("opens from the tree, and Esc returns focus to the opener", async ({
   await hydrated(page, "#tree-skg-coa button");
   const trigger = page
     .locator("#tree-skg-coa")
-    .getByRole("button", { name: /COA/ });
+    .getByRole("button", { name: /case study.*COA/ });
   await trigger.click();
   await expect(dialog(page)).toBeVisible();
   await expect(dialog(page)).toHaveAccessibleName(/^COA/);

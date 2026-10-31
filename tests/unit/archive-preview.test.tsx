@@ -58,20 +58,41 @@ beforeEach(() => {
   document.body.append(root);
   rowTop = 200;
   vi.spyOn(row, "getBoundingClientRect").mockImplementation(() => rect(rowTop));
-  // jsdom has no keyboard modality: treat the focused button as :focus-visible.
-  const matches = Element.prototype.matches;
-  vi.spyOn(Element.prototype, "matches").mockImplementation(function (
-    this: Element,
-    selector: string,
-  ) {
-    return selector === ":focus-visible"
-      ? this === button
-      : matches.call(this, selector);
-  });
+  // jsdom has no keyboard modality: treat this button as :focus-visible (only this element is stubbed).
+  const matches = button.matches.bind(button);
+  vi.spyOn(button, "matches").mockImplementation((selector: string) =>
+    selector === ":focus-visible" ? true : matches(selector),
+  );
+  observers = [];
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      targets: Element[] = [];
+      constructor(public cb: ResizeObserverCallback) {
+        observers.push(this);
+      }
+      observe(target: Element) {
+        this.targets.push(target);
+      }
+      unobserve() {}
+      disconnect() {
+        this.targets = [];
+      }
+    },
+  );
 });
+
+type FakeObserver = { cb: ResizeObserverCallback; targets: Element[] };
+let observers: FakeObserver[] = [];
+/** Reports a size change of every element an observer still watches. */
+const resized = () => {
+  for (const o of observers)
+    if (o.targets.length) o.cb([], o as unknown as ResizeObserver);
+};
 afterEach(() => {
   root.remove();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 const card = () =>
@@ -118,6 +139,31 @@ describe("ArchivePreview", () => {
     expect(queue).toHaveLength(0);
   });
 
+  it("anchored, it re-aims when the rows move without a scroll (a filter change, a late font)", () => {
+    render(
+      <ArchivePreview
+        root={root}
+        items={{ coa: { title: "COA", posterUrl: null } }}
+      />,
+    );
+    act(() => {
+      button.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
+      settle();
+    });
+    expect(card().style.transform).toBe("translate3d(480px, 268px, 0)");
+    const after = calls;
+    // The rows above shrink: the focused row moves up 100px and the list's box changes size.
+    rowTop = 100;
+    act(() => resized());
+    expect(calls).toBe(after + 1);
+    act(() => {
+      expect(settle()).toBeLessThan(500);
+    });
+    expect(card().style.transform).toMatch(
+      /^translate3d\(480px, 168\.\d+px, 0\)$/,
+    );
+  });
+
   it("a scroll after the focus leaves the row schedules nothing", () => {
     const other = document.createElement("button");
     document.body.append(other);
@@ -141,6 +187,7 @@ describe("ArchivePreview", () => {
     act(() => {
       window.dispatchEvent(new Event("scroll"));
       window.dispatchEvent(new Event("resize"));
+      resized();
     });
     expect(calls).toBe(after);
     other.remove();
