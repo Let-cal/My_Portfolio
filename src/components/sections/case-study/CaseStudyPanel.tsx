@@ -48,7 +48,7 @@ export type CaseStudyItem = {
   tech: string[];
   demoUrl: string | null;
   repoUrls: string[];
-  /** Public figure views, stored order; empty on the home page, where the bento sends none. */
+  /** Public figure views, stored order; empty for a project without figures. */
   figures: FigureView[];
 };
 
