@@ -28,9 +28,8 @@ describe.each(RESOURCE_KEYS)("resource %s", (key) => {
   });
 
   it("its form edits every field except the drag-and-drop position", () => {
-    // TODO(case-study-gallery admin task): project `media` gets its `figures` form field there; drop the exclusion then.
     const schemaKeys = Object.keys(resource.schema.shape)
-      .filter((k) => k !== "sortIndex" && k !== "media")
+      .filter((k) => k !== "sortIndex")
       .sort();
     expect(
       resource.fields

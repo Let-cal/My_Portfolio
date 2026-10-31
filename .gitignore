@@ -60,3 +60,6 @@ supabase/.temp/
 
 # Local agent worktrees (Claude Code) are checkouts of this repo, not source.
 /.claude/worktrees/
+
+# Copied from node_modules by scripts/copy-mermaid.mjs (prebuild, predev)
+/public/vendor/

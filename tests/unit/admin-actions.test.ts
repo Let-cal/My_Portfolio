@@ -335,7 +335,8 @@ describe("admin actions", () => {
     expect(
       await saveResource(
         "projects",
-        { ...data, skillIds: ["react", "dart"] },
+        // The seed's figures point at /seed files, which a save refuses (not storage URLs).
+        { ...data, media: [], skillIds: ["react", "dart"] },
         false,
       ),
     ).toEqual({ ok: true });
@@ -353,6 +354,46 @@ describe("admin actions", () => {
     expect(
       calls.filter((c) => c.op === "delete.match").map((c) => c.args[0]),
     ).toEqual([{ skill_id: "flutter", project_id: "siteplus" }]);
+  });
+
+  it("saveResource rejects an unsafe diagram", async () => {
+    const project = content.projects.find((p) => p.id === "siteplus")!;
+    existing.push({ id: "siteplus", sort_index: 0 });
+    const base = "https://proj.supabase.co";
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", base);
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          '<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"><rect/></svg>',
+          { headers: { "content-type": "image/svg+xml; charset=utf-8" } },
+        ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    try {
+      const { sortIndex: _s, ...data } = project;
+      void _s;
+      const publicMedia = `${base}/storage/v1/object/public/media`;
+      const diagram = {
+        ...project.media.find((m) => m.kind === "diagram")!,
+        svgLight: `${publicMedia}/diagram/siteplus-system-overview-light-0123abcd.svg`,
+        svgDark: `${publicMedia}/diagram/siteplus-system-overview-dark-0123abcd.svg`,
+      };
+      const result = await saveResource(
+        "projects",
+        { ...data, media: [diagram] },
+        false,
+      );
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.error).toMatch(/Sơ đồ .* không an toàn/);
+      expect(result.fieldErrors).toEqual({ "media.0": result.error });
+      expect(fetchMock).toHaveBeenCalled();
+      expect(calls.filter((c) => c.op !== "select")).toEqual([]);
+      expect(updateTag).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+      vi.unstubAllEnvs();
+    }
   });
 
   it("duplicate a certificate as a hidden copy at the end", async () => {

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
-import { isSafeSvg, sanitizeSvg } from "@/lib/figures/svg-safety";
+import { sanitizeSvg } from "@/lib/admin/sanitize-svg";
+import { isSafeSvg } from "@/lib/figures/svg-safety";
 
 const FONT_STYLE =
   `<style>@font-face{font-family:"Space Grotesk";font-weight:300 700;` +

@@ -8,8 +8,9 @@
   },
   "type": "module",
   "scripts": {
-    "prebuild": "node scripts/generate-portrait-props.mjs --use-committed && node scripts/generate-fallback-formats.mjs --use-committed && node scripts/generate-site-icons.mjs --check && tsx scripts/generate-skill-sprite.ts --check",
+    "prebuild": "node scripts/generate-portrait-props.mjs --use-committed && node scripts/generate-fallback-formats.mjs --use-committed && node scripts/generate-site-icons.mjs --check && tsx scripts/generate-skill-sprite.ts --check && node scripts/copy-mermaid.mjs",
     "generate:assets": "node scripts/generate-portrait-props.mjs && node scripts/generate-fallback-formats.mjs && node scripts/generate-site-icons.mjs && tsx scripts/generate-skill-sprite.ts",
+    "predev": "node scripts/copy-mermaid.mjs",
     "dev": "next dev",
     "build": "next build --webpack",
     "check:bundle": "node scripts/measure-initial-js.mjs",

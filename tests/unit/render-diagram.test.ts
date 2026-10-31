@@ -5,6 +5,8 @@ import {
   bytesToBase64,
   DIAGRAM_FONT_URL,
   embedFont,
+  MERMAID_SCRIPT_URL,
+  MERMAID_VERSION,
   readViewBox,
   setIntrinsicSize,
 } from "@/lib/admin/render-diagram";
@@ -63,5 +65,28 @@ describe("render-diagram helpers", () => {
   it("refuses input without a root element", () => {
     expect(() => embedFont("<g/>", "AAAA")).toThrow(/svg/);
     expect(() => setIntrinsicSize("<g/>")).toThrow();
+  });
+});
+
+describe("vendored Mermaid", () => {
+  it("names the installed Mermaid version, so a package upgrade busts the cached copy", () => {
+    const pkg = JSON.parse(
+      readFileSync(
+        join(process.cwd(), "node_modules/mermaid/package.json"),
+        "utf8",
+      ),
+    ) as { version: string };
+    expect(MERMAID_VERSION).toBe(pkg.version);
+    expect(MERMAID_SCRIPT_URL).toBe(`/vendor/mermaid.min.js?v=${pkg.version}`);
+  });
+
+  it("is copied before every build and dev server", () => {
+    const scripts = (
+      JSON.parse(readFileSync(join(process.cwd(), "package.json"), "utf8")) as {
+        scripts: Record<string, string>;
+      }
+    ).scripts;
+    expect(scripts.prebuild).toContain("node scripts/copy-mermaid.mjs");
+    expect(scripts.predev).toContain("node scripts/copy-mermaid.mjs");
   });
 });

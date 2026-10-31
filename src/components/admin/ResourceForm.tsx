@@ -82,6 +82,13 @@ import { SkillPicker, type SkillOption } from "./SkillPicker";
 import { SortableList } from "./SortableList";
 import { TagCombobox } from "./TagCombobox";
 import { UploadField } from "./UploadField";
+import { FiguresField } from "./FiguresField";
+import type { Figure } from "@/content/schema";
+import { prepareFigures } from "@/lib/admin/figures-save";
+import {
+  lazyRenderDiagram,
+  uploadDiagramSvg,
+} from "@/lib/admin/figures-client";
 
 type Values = Record<string, unknown>;
 
@@ -108,6 +115,11 @@ export type Options = Partial<
   /** Where the saved item shows on the site (tree parent, tree child, home card or archive row); edits only. */
   publicTarget?: PublicTarget;
 };
+
+/** What a form does between validation and the save action (e.g. render and upload diagrams). */
+export type PrepareResult =
+  | { ok: true; patch: Values }
+  | { ok: false; error: string; fieldErrors: Record<string, string> };
 
 /** Field that seeds a new item's ID, in order of preference. */
 const ID_SOURCES = ["name", "title", "company", "school"];
@@ -144,7 +156,10 @@ export function FieldsForm({
   sections,
   idScope,
   active = true,
+  prepare,
 }: {
+  /** Runs after validation, before `onSave`; its patch is saved and kept as the form's value. */
+  prepare?: (values: Values) => Promise<PrepareResult>;
   /** False for forms on hidden tabs: they keep their state but ignore Ctrl/⌘+S. */
   active?: boolean;
   sections?: FormSection[];
@@ -194,6 +209,15 @@ export function FieldsForm({
   const errorTarget = (e: { path: string; field: string }) => {
     const spec = specOf.get(e.field);
     if (spec?.kind === "derived") return fid(spec.target);
+    // A figure error points at its input when the row has one, else at the row itself.
+    if (spec?.kind === "figures") {
+      const parts = e.path.split(".");
+      const input =
+        /^(?:caption|note|alt)\.(?:en|ja|vi)$|^(?:source|category)$/.test(
+          parts.slice(2).join("."),
+        );
+      return fid(input ? e.path : parts.slice(0, 2).join("."));
+    }
     return spec?.kind === "tags" || spec?.kind === "upload"
       ? fid(e.field)
       : fid(e.path);
@@ -242,8 +266,22 @@ export function FieldsForm({
       startTransition(async () => {
         // The resolver drops keys the schema does not know, so put virtual fields back.
         const raw = form.getValues();
-        const values = { ...parsed };
+        let values = { ...parsed };
         for (const f of fields) if (f.virtual) values[f.name] = raw[f.name];
+        // Nothing is saved, and the form keeps its values, when the preparation fails.
+        let patch: Values = {};
+        if (prepare) {
+          const prepared = await prepare(values);
+          if (!prepared.ok) {
+            for (const [path, message] of Object.entries(prepared.fieldErrors))
+              setError(path, { type: "server", message });
+            setFocusKey((k) => k + 1);
+            toast.error(prepared.error);
+            return;
+          }
+          patch = prepared.patch;
+          values = { ...values, ...patch };
+        }
         // Field errors show on their inputs; session and network problems are reported globally.
         const save = saveAsNew.current && onSaveAsNew ? onSaveAsNew : onSave;
         saveAsNew.current = false;
@@ -263,7 +301,7 @@ export function FieldsForm({
         }
         if (draftId) clearDraft(localStorage, draftId);
         // Mark the current values as saved so the unsaved-changes guard lets go.
-        form.reset(raw);
+        form.reset({ ...raw, ...patch });
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
         if (onSaved) {
@@ -642,6 +680,31 @@ export function FieldsForm({
             )}
           />
         );
+      case "figures": {
+        const values = translationValues as Values;
+        return (
+          <Controller
+            key={f.name}
+            control={control}
+            name={f.name}
+            render={({ field }) => (
+              <FiguresField
+                id={id}
+                name={f.name}
+                idPrefix={scoped(f.name)}
+                label={f.label}
+                hint={f.hint}
+                value={(field.value as Figure[]) ?? []}
+                onChange={field.onChange}
+                errors={errors.filter((e) => e.field === f.name)}
+                projectKind={
+                  typeof values.kind === "string" ? values.kind : undefined
+                }
+              />
+            )}
+          />
+        );
+      }
       case "relations":
         return (
           <Controller
@@ -1329,6 +1392,25 @@ export function FieldsForm({
   );
 }
 
+/** Renders and uploads the diagrams a project save needs; on failure names the figure. */
+async function prepareProjectFigures(
+  values: Values,
+  previous: Figure[],
+): Promise<PrepareResult> {
+  const media = (values.media as Figure[] | undefined) ?? [];
+  const result = await prepareFigures(String(values.id), media, previous, {
+    render: lazyRenderDiagram,
+    upload: uploadDiagramSvg,
+  });
+  if (result.ok) return { ok: true, patch: { media: result.media } };
+  const index = media.findIndex((f) => f.id === result.figureId);
+  return {
+    ok: false,
+    error: `Chưa lưu. ${result.message}`,
+    fieldErrors: { [`media.${index}.source`]: result.message },
+  };
+}
+
 export function ResourceForm({
   resourceKey,
   initial,
@@ -1416,6 +1498,15 @@ export function ResourceForm({
         options={options}
         lockId={!isNew}
         onSave={(values) => saveResource(resourceKey, values, isNew)}
+        prepare={
+          resourceKey === "projects"
+            ? (values) =>
+                prepareProjectFigures(
+                  values,
+                  (initial.media as Figure[] | undefined) ?? [],
+                )
+            : undefined
+        }
         doneHref={`/admin/${resourceKey}`}
         onSaved={onSaved}
         draftId={draftKey(resource.table, isNew ? "new" : String(initial.id))}

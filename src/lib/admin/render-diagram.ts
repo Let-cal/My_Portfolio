@@ -1,13 +1,14 @@
 // Admin only. Renders Mermaid source to a themed, sanitised SVG in the browser.
-// Mermaid is loaded with a dynamic import inside renderDiagram, so it lands in an
-// admin chunk. Nothing under src/app/[locale] or src/components/sections may import
-// this module (the bundle budget would catch it).
+// Mermaid itself is loaded on first render from public/vendor (see loadMermaid), so
+// it is never part of a webpack chunk. Nothing under src/app/[locale] or
+// src/components/sections may import this module (the bundle budget would catch it).
 import {
   DIAGRAM_FONT_FAMILY,
   mermaidConfig,
   type DiagramTheme,
 } from "@/lib/figures/mermaid-theme";
-import { sanitizeSvg } from "@/lib/figures/svg-safety";
+import type { Mermaid } from "mermaid";
+import { sanitizeSvg } from "@/lib/admin/sanitize-svg";
 
 export { diagramPath } from "@/lib/figures/mermaid-theme";
 
@@ -93,6 +94,42 @@ function loadFont(): Promise<string> {
   return fontBase64;
 }
 
+/** Version of public/vendor/mermaid.min.js; a unit test keeps it equal to the package. */
+export const MERMAID_VERSION = "12.2.0";
+export const MERMAID_SCRIPT_URL = `/vendor/mermaid.min.js?v=${MERMAID_VERSION}`;
+
+let mermaidScript: Promise<Mermaid> | null = null;
+
+/**
+ * Loads Mermaid's self-contained build from public/vendor with a classic <script>
+ * (the file declares a top-level var and then sets globalThis.mermaid, so it cannot
+ * run as a module). It stays outside the webpack graph: bundling it would add lazy
+ * chunks, and every lazy chunk adds an entry to the runtime each public page loads.
+ */
+function loadMermaid(): Promise<Mermaid> {
+  mermaidScript ??= new Promise<Mermaid>((resolve, reject) => {
+    const loaded = (globalThis as { mermaid?: Mermaid }).mermaid;
+    if (loaded) return resolve(loaded);
+    const script = document.createElement("script");
+    script.src = MERMAID_SCRIPT_URL;
+    script.async = true;
+    script.onload = () => {
+      const mermaid = (globalThis as { mermaid?: Mermaid }).mermaid;
+      if (mermaid) resolve(mermaid);
+      else reject(new Error("Mermaid did not load."));
+    };
+    script.onerror = () => {
+      script.remove();
+      reject(new Error(`Could not load Mermaid (${MERMAID_SCRIPT_URL}).`));
+    };
+    document.head.appendChild(script);
+  }).catch((error: unknown) => {
+    mermaidScript = null;
+    throw error;
+  });
+  return mermaidScript;
+}
+
 // Mermaid keeps global configuration, so renders run one at a time.
 let queue: Promise<unknown> = Promise.resolve();
 
@@ -101,7 +138,7 @@ async function renderNow(
   theme: DiagramTheme,
 ): Promise<RenderedDiagram> {
   const font = await loadFont();
-  const { default: mermaid } = await import("mermaid");
+  const mermaid = await loadMermaid();
   mermaid.initialize(mermaidConfig(theme));
   // A fixed id keeps the output of equal sources equal, so the content hash is stable.
   const id = `figure-diagram-${theme}`;

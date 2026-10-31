@@ -2,6 +2,12 @@
 // The public content schema stays as is; only the admin decides how to explain its rules.
 import type { FieldErrors, Resolver } from "react-hook-form";
 import type { ZodObject } from "zod";
+import {
+  MAX_DIAGRAM_SOURCE,
+  MAX_FIGURE_CAPTION,
+  MAX_FIGURE_NOTE,
+  MAX_FIGURES,
+} from "@/content/schema";
 import type { FieldSpec } from "./resources";
 
 export type Locale = "en" | "ja" | "vi";
@@ -26,6 +32,7 @@ const OPTIONAL_KINDS = new Set([
   "where",
   "derived",
   "roles",
+  "figures",
 ]);
 
 /** Whether the form must mark this field with `*`. */
@@ -136,6 +143,8 @@ function message(
         : `${label} chưa hợp lệ`;
     case "upload":
       return `Tải lên ${lower(f.label)}`;
+    case "figures":
+      return figureMessage(rest, blank, locale);
     case "text":
       if (blank) return `Nhập ${lower(f.label)}`;
       if (/email/i.test(f.name)) return `${label} phải là địa chỉ email hợp lệ`;
@@ -144,6 +153,40 @@ function message(
       return `${label} chưa đúng định dạng${f.hint ? ` (${f.hint})` : ""}`;
     default:
       return `${label} chưa hợp lệ`;
+  }
+}
+
+/** A project figure: rest is [] for the list, else [index, part, (locale)]. */
+function figureMessage(rest: string[], blank: boolean, locale: string): string {
+  if (rest.length === 0) return `Tối đa ${MAX_FIGURES} hình cho mỗi dự án`;
+  switch (rest[1]) {
+    case "caption":
+      return blank
+        ? `Nhập chú thích${locale}`
+        : `Chú thích tối đa ${MAX_FIGURE_CAPTION} ký tự${locale}`;
+    case "alt":
+      return `Nhập mô tả hình${locale}`;
+    case "note":
+      return `Ghi chú tối đa ${MAX_FIGURE_NOTE} ký tự${locale}`;
+    case "source":
+      return blank
+        ? "Nhập mã Mermaid của sơ đồ"
+        : `Mã Mermaid tối đa ${MAX_DIAGRAM_SOURCE.toLocaleString("vi-VN")} ký tự`;
+    case "url":
+    case "width":
+    case "height":
+      return "Chọn ảnh đã tải lên thư viện";
+    case "svgLight":
+    case "svgDark":
+    case "renderedAt":
+    case "themeVersion":
+      return "Sơ đồ chưa được vẽ. Lưu lại để vẽ sơ đồ.";
+    case "id":
+      return "Mỗi hình cần một ID riêng (chữ thường, số và dấu gạch ngang)";
+    case "category":
+      return "Chọn loại hình";
+    default:
+      return "Hình chưa hợp lệ";
   }
 }
 
