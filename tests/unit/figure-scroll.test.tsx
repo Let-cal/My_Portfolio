@@ -224,6 +224,33 @@ describe("FigureScroll", () => {
     ).toBeNull();
   });
 
+  it("Retry moves focus to the stage, not to the dialog behind it", async () => {
+    const user = userEvent.setup();
+    renderScroll();
+    fireEvent.error(within(stage()).getByRole("img"));
+    const retry = within(stage()).getByRole("button", { name: "Retry" });
+    retry.focus();
+    await user.keyboard("{Enter}");
+    expect(within(stage()).getByRole("img", { name: "Alt 1" })).toBeTruthy();
+    expect(document.activeElement).toBe(stage());
+  });
+
+  it("the caption and the note carry their full text in a title (they may be clamped)", async () => {
+    const user = userEvent.setup();
+    renderScroll({ initial: 1 });
+    const caption = screen.getByText("Caption 2", { selector: "p" });
+    const note = screen.getByText("Note two", { selector: "p" });
+    expect(caption).toHaveAttribute("title", "Caption 2");
+    expect(note).toHaveAttribute("title", "Note two");
+    // A figure without a note has no empty tooltip.
+    await user.click(tabs()[0]);
+    expect(screen.getByText("Caption 1", { selector: "p" })).toHaveAttribute(
+      "title",
+      "Caption 1",
+    );
+    expect(document.querySelector("p[title='']")).toBeNull();
+  });
+
   it("rapid presses cancel the running figure transition", async () => {
     document.documentElement.dataset.motion = "full";
     const animations: { cancel: ReturnType<typeof vi.fn> }[] = [];

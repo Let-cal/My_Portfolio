@@ -217,7 +217,11 @@ export function FigureScroll({
                   <p>{t("figureError")}</p>
                   <button
                     type="button"
-                    onClick={() => setAttempt((a) => a + 1)}
+                    onClick={() => {
+                      // The button unmounts with the retry; the stage keeps focus inside the view.
+                      stageRef.current?.focus();
+                      setAttempt((a) => a + 1);
+                    }}
                     className={cn(styles.retry, FOCUS)}
                   >
                     {t("retry")}
@@ -274,8 +278,13 @@ export function FigureScroll({
         </div>
 
         <div className={styles.captionBox}>
-          <p className={styles.caption}>{current.caption}</p>
-          <p className={styles.note}>{current.note}</p>
+          {/* Clamped to two lines (the note to one) in the wide panel: the full text is in the title. */}
+          <p className={styles.caption} title={current.caption}>
+            {current.caption}
+          </p>
+          <p className={styles.note} title={current.note ?? undefined}>
+            {current.note}
+          </p>
         </div>
 
         <div className={styles.stripRow}>
@@ -306,6 +315,7 @@ export function FigureScroll({
                   src={figureSrc(figure, theme)}
                   alt=""
                   loading="lazy"
+                  decoding="async"
                   width={figure.width}
                   height={figure.height}
                 />

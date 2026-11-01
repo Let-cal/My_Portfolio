@@ -123,6 +123,37 @@ for (const viewport of [
   });
 }
 
+test("a 140-character caption wraps to two lines in the space the fit measure already reserved", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.goto("/en/projects?case=siteplus&fig=1");
+  await expect(tabs(page)).toHaveCount(2);
+  await page.evaluate(() => document.fonts.ready);
+  const content = page.locator("[data-case-content]");
+  await expect(content).toHaveAttribute("data-mode", "wide");
+  // Found by its title, which keeps the full caption while the text is replaced below.
+  const caption = panel(page).locator(`p[title="${FIRST}"]`);
+  await expect(caption).toHaveText(FIRST);
+  const before = (await caption.boundingBox())!;
+  const scrollBefore = await content.evaluate((el) => el.scrollHeight);
+  // The longest caption the schema allows, as words: what a real figure could carry.
+  const long = Array.from({ length: 20 }, () => "caption")
+    .join(" ")
+    .slice(0, 140);
+  await caption.evaluate((el, text) => {
+    el.textContent = text;
+  }, long);
+  const after = (await caption.boundingBox())!;
+  // Two 20 px lines, and the block was that tall already: nothing moves, the panel still fits.
+  expect(before.height).toBe(40);
+  expect(after.height).toBe(40);
+  expect(
+    await caption.evaluate((el) => el.scrollHeight <= el.clientHeight + 1),
+  ).toBe(true);
+  expect(await content.evaluate((el) => el.scrollHeight)).toBe(scrollBefore);
+});
+
 test("figures in scroll mode keep caption and strip visible at 375x740", async ({
   page,
 }) => {
@@ -341,6 +372,34 @@ test("viewer: opens from the stage with Enter, zooms with + and Fit, Esc returns
   await expect(tabs(page).first()).toHaveAttribute("aria-selected", "true");
   await expect(page).toHaveURL(/case=siteplus&fig=1$/);
   await expect(panel(page).getByRole("tabpanel")).toBeFocused();
+});
+
+test("viewer: the current index item keeps a visible focus ring over its koi bar", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await openViewer(page);
+  const item = viewer(page)
+    .getByRole("navigation", { name: "Figure index" })
+    .getByRole("button", { name: SECOND });
+  await expect(item).toHaveAttribute("aria-current", "true");
+  // The last input was the keyboard (Enter), so this focus is :focus-visible.
+  await item.focus();
+  const style = await item.evaluate((el) => {
+    const s = getComputedStyle(el);
+    return {
+      focusVisible: el.matches(":focus-visible"),
+      shadow: s.boxShadow,
+      bar: s.borderLeftColor,
+      barWidth: s.borderLeftWidth,
+    };
+  });
+  expect(style.focusVisible).toBe(true);
+  // The ring (a box-shadow from the focus utilities) is drawn; the koi bar is the left border, not an inset shadow.
+  expect(style.shadow).not.toBe("none");
+  expect(style.shadow).not.toContain("inset");
+  expect(style.barWidth).toBe("2px");
+  expect(style.bar).not.toBe("rgba(0, 0, 0, 0)");
 });
 
 test("viewer: Esc during the open motion returns focus to the stage", async ({

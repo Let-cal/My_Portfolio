@@ -167,19 +167,27 @@
 .captionBox {
   min-width: 0;
 }
-.caption,
-.note {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+/*
+ * The caption wraps to at most two lines (captions run to 140 characters) and always reserves both, so the
+ * panel's fit measure, taken on open, already sees the tallest caption block and a figure change cannot overflow
+ * it. The note stays one line. Both carry their full text in a title.
+ */
 .caption {
-  min-height: 20px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  min-height: 40px;
   font-size: 14px;
   line-height: 20px;
   color: var(--kk-ink);
 }
 .note {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   min-height: 18px;
   font-size: 12.5px;
   line-height: 18px;
@@ -264,7 +272,12 @@
 :global([data-mode="scroll"]) .stageWrap {
   aspect-ratio: 16 / 10;
 }
-:global([data-mode="scroll"]) .caption,
+:global([data-mode="scroll"]) .caption {
+  display: block;
+  -webkit-line-clamp: unset;
+  line-clamp: none;
+  min-height: 20px;
+}
 :global([data-mode="scroll"]) .note {
   white-space: normal;
 }

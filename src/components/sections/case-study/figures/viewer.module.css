@@ -121,7 +121,8 @@
   width: 100%;
   min-height: 28px;
   overflow: hidden;
-  padding: 4px 8px;
+  padding: 4px 8px 4px 6px;
+  border-left: 2px solid transparent;
   border-radius: 6px;
   color: var(--fv-muted);
   font-size: 12.5px;
@@ -130,9 +131,10 @@
   white-space: nowrap;
   cursor: pointer;
 }
+/* A border, not a box-shadow: the keyboard focus ring is a box-shadow and must stay visible on the current item. */
 .item[aria-current="true"] {
+  border-left-color: var(--fv-koi);
   background: var(--fv-chip);
-  box-shadow: inset 2px 0 0 var(--fv-koi);
   color: var(--fv-ink);
 }
 .hint {
