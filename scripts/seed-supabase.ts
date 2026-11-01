@@ -7,10 +7,12 @@ import {
   buildSeedRows,
   CONFLICT_KEY,
   renderSeedSql,
+  withoutSeedFigures,
 } from "../src/lib/data/seed-rows";
 import { createServiceSupabase } from "../src/lib/supabase/service";
 
-const rows = buildSeedRows(contentSchema.parse(seed));
+// Projects go up without the seed's figures (local /seed and /images files): add figures in the admin.
+const rows = withoutSeedFigures(buildSeedRows(contentSchema.parse(seed)));
 
 if (process.argv.includes("--sql")) {
   process.stdout.write(renderSeedSql(rows));

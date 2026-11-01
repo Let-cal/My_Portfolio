@@ -8,7 +8,7 @@
 //
 //   node scripts/measure-initial-js.mjs            -> /en, /ja, /vi, /en/quick, /en/projects + figure chunks
 //   node scripts/measure-initial-js.mjs en --json  -> one route, machine-readable
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { gzipSync } from "node:zlib";
@@ -148,8 +148,22 @@ function main() {
   process.exitCode = failed ? 1 : 0;
 }
 
-if (
-  process.argv[1] &&
-  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
-)
-  main();
+/**
+ * True when `argv1` (the path node was started with) is this module. Node resolves links for the module URL but
+ * not for argv[1], and Windows paths may differ in case, so real paths are compared, case-folded on Windows.
+ */
+export function isEntryPoint(argv1, moduleUrl) {
+  if (!argv1) return false;
+  const real = (p) => {
+    try {
+      const r = realpathSync(resolve(p));
+      return process.platform === "win32" ? r.toLowerCase() : r;
+    } catch {
+      return null;
+    }
+  };
+  const self = real(fileURLToPath(moduleUrl));
+  return self !== null && real(argv1) === self;
+}
+
+if (isEntryPoint(process.argv[1], import.meta.url)) main();
