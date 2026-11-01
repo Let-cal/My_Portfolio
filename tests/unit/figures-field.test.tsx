@@ -30,6 +30,7 @@ const h = vi.hoisted(() => ({
   saveResource: vi.fn(),
   render: vi.fn(),
   upload: vi.fn(),
+  uploadImage: vi.fn(),
   toastError: vi.fn(),
 }));
 vi.mock("sonner", () => ({
@@ -45,8 +46,9 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/lib/admin/figures-client", () => ({
   lazyRenderDiagram: h.render,
   uploadDiagramSvg: h.upload,
-  uploadImage: vi.fn(),
+  uploadImage: h.uploadImage,
   readImageSize: vi.fn(),
+  encodeFigureWebp: vi.fn(),
 }));
 Element.prototype.scrollIntoView ??= function () {};
 globalThis.ResizeObserver ??= class {
@@ -193,6 +195,76 @@ describe("FiguresField", () => {
     );
     await waitFor(() => expect(captions()).toHaveLength(1));
     expect(screen.queryByText(/màn hình hoặc dữ liệu của khách/)).toBeNull();
+  });
+
+  it("a new upload is encoded as WebP before it is uploaded, and keeps the encoded size", async () => {
+    h.uploadImage.mockReset();
+    h.uploadImage.mockResolvedValue(`${PUBLIC}/image/abc-shot.webp`);
+    const readImageSize = vi.fn(async () => ({ width: 1, height: 1 }));
+    const encodeImage = vi.fn(async () => ({
+      blob: new Blob([new Uint8Array(100)], { type: "image/webp" }),
+      width: 1920,
+      height: 1200,
+    }));
+    const onSaved: Figure[][] = [];
+    function Spy() {
+      const [value, setValue] = useState<Figure[]>([]);
+      onSaved.push(value);
+      return (
+        <AdminAccessProvider kind="admin">
+          <FiguresField
+            id="field-media"
+            name="media"
+            idPrefix="media"
+            label="Hình ảnh & sơ đồ"
+            value={value}
+            onChange={setValue}
+            errors={[]}
+            readImageSize={readImageSize}
+            encodeImage={encodeImage}
+          />
+        </AdminAccessProvider>
+      );
+    }
+    render(<Spy />);
+    fireEvent.click(screen.getByRole("button", { name: "Thêm ảnh" }));
+    const input = screen.getByLabelText("Tải ảnh mới lên");
+    const original = new File([new Uint8Array(4000)], "shot.png", {
+      type: "image/png",
+    });
+    fireEvent.change(input, { target: { files: [original] } });
+    await waitFor(() => expect(captions()).toHaveLength(1));
+    expect(encodeImage).toHaveBeenCalledWith(original);
+    const uploaded = h.uploadImage.mock.calls[0][0] as File;
+    expect(uploaded.type).toBe("image/webp");
+    expect(uploaded.name).toBe("shot.webp");
+    expect(readImageSize).not.toHaveBeenCalled();
+    const added = onSaved.at(-1)![0] as ImageFigure;
+    expect(added).toMatchObject({
+      url: `${PUBLIC}/image/abc-shot.webp`,
+      width: 1920,
+      height: 1200,
+    });
+  });
+
+  it("without WebP encoding, an original over 5 MB is refused and nothing is uploaded", async () => {
+    h.uploadImage.mockReset();
+    h.toastError.mockReset();
+    render(<Harness initial={[]} encodeImage={async () => null} />);
+    fireEvent.click(screen.getByRole("button", { name: "Thêm ảnh" }));
+    const big = new File([new Uint8Array(5 * 1024 * 1024 + 1)], "big.png", {
+      type: "image/png",
+    });
+    fireEvent.change(screen.getByLabelText("Tải ảnh mới lên"), {
+      target: { files: [big] },
+    });
+    await waitFor(() =>
+      expect(h.toastError).toHaveBeenCalledWith(
+        "Tải lên thất bại: Tệp lớn hơn 5 MB.",
+      ),
+    );
+    expect(h.uploadImage).not.toHaveBeenCalled();
+    expect(screen.queryAllByTestId("figure-caption")).toHaveLength(0);
   });
 
   it("a diagram older than the theme version shows Cần vẽ lại", () => {

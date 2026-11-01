@@ -19,6 +19,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  type EncodeFigureImage,
+  type ImageSize,
+  prepareFigureImage,
+} from "@/lib/admin/figure-image";
+import {
+  encodeFigureWebp,
   lazyRenderDiagram,
   readImageSize as readImageSizeDefault,
   uploadImage,
@@ -85,6 +91,7 @@ export function FiguresField({
   projectKind,
   render = lazyRenderDiagram,
   readImageSize = readImageSizeDefault,
+  encodeImage = encodeFigureWebp,
 }: {
   /** Id of the list as a whole (list-level errors are announced and focused there). */
   id: string;
@@ -100,6 +107,8 @@ export function FiguresField({
   projectKind?: string;
   render?: RenderFn;
   readImageSize?: (url: string) => Promise<{ width: number; height: number }>;
+  /** Encodes a new upload as WebP at most 1920 px wide; null when the browser cannot. */
+  encodeImage?: EncodeFigureImage;
 }) {
   const { readOnly } = useAdminAccess();
   const [open, setOpen] = useState<Set<string>>(new Set());
@@ -141,10 +150,11 @@ export function FiguresField({
     setOpen((prev) => new Set(prev).add(figure.id));
   };
 
-  async function addImage(url: string) {
+  /** Adds an image figure; the size is read from the image unless the upload already knows it. */
+  async function addImage(url: string, known?: ImageSize) {
     setBusy(true);
     try {
-      const size = await readImageSize(url);
+      const size = known ?? (await readImageSize(url));
       append({
         id: newId(value),
         kind: "image",
@@ -165,12 +175,15 @@ export function FiguresField({
     }
   }
 
+  /** A new upload goes up as WebP at most 1920 px wide (spec 6.2), or as the original when the browser cannot encode. */
   async function uploadAndAdd(file: File) {
     setBusy(true);
     try {
-      const url = await uploadImage(file);
+      const prepared = await prepareFigureImage(file, encodeImage);
+      if (!prepared.ok) throw new Error(prepared.reason);
+      const url = await uploadImage(prepared.file);
       setBusy(false);
-      await addImage(url);
+      await addImage(url, prepared.size ?? undefined);
     } catch (error) {
       toast.error(
         `Tải lên thất bại: ${error instanceof Error ? error.message : String(error)}`,

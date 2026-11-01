@@ -8,6 +8,11 @@ import {
   renderDiagram,
   type RenderedDiagram,
 } from "@/lib/admin/render-diagram";
+import {
+  FIGURE_WEBP_QUALITY,
+  figureTargetSize,
+  type EncodedImage,
+} from "@/lib/admin/figure-image";
 import { storagePath, validateUpload } from "@/lib/admin/upload";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
 
@@ -50,6 +55,36 @@ export async function uploadImage(file: File): Promise<string> {
   const { error } = await bucket.upload(path, file, { contentType: file.type });
   if (error) throw new Error(error.message);
   return bucket.getPublicUrl(path).data.publicUrl;
+}
+
+/**
+ * Encodes an image file as WebP, at most 1920 px wide (spec 6.2). Null when this browser has no
+ * createImageBitmap or canvas, or its toBlob ignores the WebP type (the caller then uploads the original).
+ * A file the browser cannot decode throws.
+ */
+export async function encodeFigureWebp(
+  file: File,
+): Promise<EncodedImage | null> {
+  if (typeof createImageBitmap !== "function") return null;
+  const bitmap = await createImageBitmap(file);
+  try {
+    const size = figureTargetSize(bitmap.width, bitmap.height);
+    const canvas = document.createElement("canvas");
+    canvas.width = size.width;
+    canvas.height = size.height;
+    const context = canvas.getContext("2d");
+    if (!context) return null;
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
+    context.drawImage(bitmap, 0, 0, size.width, size.height);
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/webp", FIGURE_WEBP_QUALITY),
+    );
+    if (!blob || blob.type !== "image/webp") return null;
+    return { blob, ...size };
+  } finally {
+    bitmap.close();
+  }
 }
 
 /** Natural size of an image URL, read by loading it. */
