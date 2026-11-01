@@ -420,15 +420,18 @@ test("project figures: an uploaded image and a Mermaid diagram are saved and cou
     ["image", "Task4 image figure"],
     ["diagram", "Task4 diagram figure"],
   ]);
-  const storage = `${suite.settings.apiUrl}/storage/v1/object/public/media`;
+  const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const storage = escapeRegExp(
+    `${suite.settings.apiUrl}/storage/v1/object/public/media`,
+  );
   expect(String(media[0].url)).toMatch(
-    new RegExp(`^${storage}/image/[a-z0-9]+-task4-figure\.png$`),
+    new RegExp(`^${storage}/image/[a-z0-9]+-task4-figure\\.png$`),
   );
   for (const theme of ["Light", "Dark"]) {
     const url = String(media[1][`svg${theme}`]);
     expect(url).toMatch(
       new RegExp(
-        `^${storage}/diagram/${projectId}-[a-z0-9-]+-${theme.toLowerCase()}-[0-9a-f]{8}\.svg$`,
+        `^${storage}/diagram/${escapeRegExp(projectId)}-[a-z0-9-]+-${theme.toLowerCase()}-[0-9a-f]{8}\\.svg$`,
       ),
     );
     const svg = await suite.api(url.slice(suite.settings.apiUrl.length));
