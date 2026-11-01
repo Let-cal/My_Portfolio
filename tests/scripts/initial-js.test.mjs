@@ -484,3 +484,30 @@ test(
     }
   },
 );
+
+test(
+  "the pointer spotlight and the scroll-progress thread load after startup",
+  { skip: !existsSync(".next/server/app/en.html") },
+  () => {
+    const result = spawnSync(process.execPath, [script, "en", "--json"], {
+      encoding: "utf8",
+    });
+    const [{ chunks }] = JSON.parse(result.stdout);
+    for (const { src } of chunks) {
+      const code = readFileSync(
+        join(".next", decodeURIComponent(src.replace(/^\/_next\//, ""))),
+        "utf8",
+      );
+      assert.equal(
+        code.includes("--fx-spot-x"),
+        false,
+        `${src} ships the pointer spotlight at startup`,
+      );
+      assert.equal(
+        code.includes("--fx-progress"),
+        false,
+        `${src} ships the scroll-progress thread at startup`,
+      );
+    }
+  },
+);
