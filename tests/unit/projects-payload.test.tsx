@@ -50,8 +50,6 @@ describe("Projects section payload", () => {
     );
     const { projects, caseItems } = bento.props!;
     for (const p of projects) expect(p).not.toHaveProperty("figures");
-    expect(caseItems.find((i) => i.id === "siteplus")?.figures).toHaveLength(
-      2,
-    );
+    expect(caseItems.find((i) => i.id === "siteplus")?.figures).toHaveLength(2);
   });
 });
