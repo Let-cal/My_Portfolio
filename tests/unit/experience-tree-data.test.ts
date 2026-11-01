@@ -26,6 +26,14 @@ describe("experience tree dry-run data", () => {
     );
   });
 
+  it("leaves out project columns added by later migrations", () => {
+    expect(data.beforeSql).not.toMatch(/\bmedia\b/);
+    for (const p of data.expectedBefore.projects)
+      expect(p).not.toHaveProperty("media");
+    for (const p of data.expectedAfter.projects)
+      expect(p).not.toHaveProperty("media");
+  });
+
   it("gives one moved row Code, Demo and another link, mapped after the migration", () => {
     const { id, code, demo, other } = LINKS_VARIANT;
     expect(
@@ -52,7 +60,11 @@ describe("experience tree dry-run data", () => {
       ),
     );
     const strip = (list: Record<string, unknown>[]) =>
-      list.filter((r) => r.id !== LINKS_VARIANT.id);
+      list
+        .filter((r) => r.id !== LINKS_VARIANT.id)
+        .map((r) =>
+          Object.fromEntries(Object.entries(r).filter(([k]) => k !== "media")),
+        );
     expect(strip(data.expectedAfter.projects)).toEqual(strip(rows.projects));
     expect(data.expectedAfter.experiences).toEqual(rows.experiences);
     expect(data.expectedAfter.skill_links).toEqual(rows.skill_links);
