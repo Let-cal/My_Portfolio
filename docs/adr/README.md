@@ -19,6 +19,7 @@ Format: a lightweight [MADR](https://adr.github.io/madr/) variant with Status, D
 | [0011](0011-fail-closed-release-evaluator.md) | A fail-closed evaluator for preview review evidence | Accepted | 2026-10-22 |
 | [0012](0012-hosted-migrations-through-reviewed-sql.md) | Hosted migrations go through reviewed SQL; file names match the hosted history | Accepted | 2026-10-25 |
 | [0013](0013-read-only-reviewer-role.md) | A read-only reviewer role for signed-in preview checks | Accepted | 2026-10-25 |
+| [0014](0014-figures-rendered-in-the-admin.md) | Case-study diagrams are rendered in the admin on save | Proposed | 2026-10-31 |
 
 ## Adding a record
 
