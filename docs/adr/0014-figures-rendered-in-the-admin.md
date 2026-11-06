@@ -1,6 +1,6 @@
 # ADR-0014: Case-study diagrams are rendered in the admin on save
 
-- Status: Proposed (branch `feat/case-study-gallery`, not merged yet)
+- Status: Accepted ([PR #33](https://github.com/Let-cal/My_Portfolio/pull/33))
 - Date: 2026-10-31
 
 ## Context
