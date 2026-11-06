@@ -529,3 +529,36 @@ describe("post-rollout cleanup migration", () => {
     expect(runbook).toContain(file);
   });
 });
+
+describe("project figures migration", () => {
+  const file = readdirSync("supabase/migrations").find((f) =>
+    /^\d{14}_project_figures\.sql$/.test(f),
+  );
+  const sql = file
+    ? readFileSync(`supabase/migrations/${file}`, "utf8").replace(/\r\n/g, "\n")
+    : "";
+
+  it("is a CLI-style migration file", () => {
+    expect(file).toBeDefined();
+  });
+
+  it("adds the media column and the array check", () => {
+    expect(sql).toContain(
+      "alter table public.projects add column media jsonb not null default '[]'::jsonb;",
+    );
+    expect(sql).toContain("projects_media_is_array");
+    expect(sql).toContain("check (jsonb_typeof(media) = 'array')");
+  });
+
+  it("is additive: nothing is dropped", () => {
+    expect(sql.toLowerCase()).not.toMatch(/\bdrop\b/);
+  });
+
+  it("is mirrored in the generated schema", () => {
+    const schema = renderSchemaSql();
+    expect(schema).toContain("media jsonb not null default '[]'");
+    expect(schema).toContain(
+      "constraint projects_media_is_array check (jsonb_typeof(media) = 'array')",
+    );
+  });
+});

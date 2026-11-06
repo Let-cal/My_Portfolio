@@ -230,6 +230,13 @@
   line-height: 1;
   transform: rotate(-3deg);
 }
+.pa-figs {
+  margin-left: 0.5rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
 .pa-role {
   color: var(--jt-koi-ink);
   font-size: 0.8125rem;

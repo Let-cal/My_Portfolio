@@ -6,11 +6,20 @@ import {
   useEffect,
   useId,
   useLayoutEffect,
+  useRef,
   useState,
   type RefObject,
 } from "react";
 import { ensureToaster } from "@/components/site/toast-readiness";
 import { CopyIcon, XIcon } from "@/components/site/icons";
+import { useTheme } from "@/components/site/theme";
+import {
+  figureNumeral,
+  parseFigParam,
+  stepFigure,
+  writeFigParam,
+} from "@/lib/figures/nav";
+import type { FigureView } from "@/lib/figures/view";
 import {
   CASE_PARAM,
   caseReloadKey,
@@ -19,6 +28,7 @@ import {
 } from "@/lib/case-list";
 import { repoLinks } from "@/lib/repo-links";
 import { cn } from "@/lib/utils";
+import { LazyFigureScroll } from "./figures/LazyFigureScroll";
 import styles from "./kakejiku.module.css";
 
 /** A case study with its text already picked for the current locale. */
@@ -47,6 +57,8 @@ export type CaseStudyItem = {
   tech: string[];
   demoUrl: string | null;
   repoUrls: string[];
+  /** Public figure views, stored order; empty for a project without figures. */
+  figures: FigureView[];
 };
 
 type CaseStudyPanelProps = {
@@ -69,6 +81,12 @@ const PANES = [
 ] as const;
 
 const pad = (n: number) => String(n).padStart(2, "0");
+const FOCUS =
+  "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none";
+
+/** Which view of the case study is open: the text (content) or the figures, on figure `index` (0-based). */
+type View = { figures: boolean; index: number };
+const TEXT: View = { figures: false, index: 0 };
 
 /** ←/→ belong to a text field when one has the keypress. */
 function inTextField(target: EventTarget | null): boolean {
@@ -93,7 +111,11 @@ function keepScroll(content: HTMLElement, top: number) {
  * web fonts finish loading (`ready`, then each later `loadingdone`, e.g. a Japanese subset used for the first
  * time). A re-measure that ends in the scrolling layout keeps the reader's scroll position.
  */
-function useFitMode(content: HTMLElement | null, itemId: string | null) {
+function useFitMode(
+  content: HTMLElement | null,
+  itemId: string | null,
+  figures: boolean,
+) {
   useLayoutEffect(() => {
     const frame = content?.parentElement;
     if (!content || !frame) return;
@@ -131,7 +153,7 @@ function useFitMode(content: HTMLElement | null, itemId: string | null) {
       small?.removeEventListener?.("change", measure);
       fonts?.removeEventListener?.("loadingdone", measure);
     };
-  }, [content, itemId]);
+  }, [content, itemId, figures]);
 }
 
 /**
@@ -139,6 +161,11 @@ function useFitMode(content: HTMLElement | null, itemId: string | null) {
  * opener) mounted like a hanging scroll. Spine with the chapter and position, header with the meta row and the
  * actions, the result banner with its 果 seal, the Problem / Role / Decisions panes, and a footer with every tech
  * chip and the previous / next projects of the list it was opened from (also ←/→ outside text fields).
+ *
+ * A project with figures gets a Content / Figures toggle (spec 6.1): the figures view takes the grid area of the
+ * result banner and the panes, so the fit measure stays one code path. While it is open, the arrow keys move
+ * between figures (not projects), the spine shows the figure position and `&fig=` follows the figure. Moving to
+ * another project keeps the figures view on its first figure, or falls back to the content when it has none.
  */
 export function CaseStudyPanel({
   items,
@@ -163,8 +190,48 @@ export function CaseStudyPanel({
     shownId ?? "",
   );
   const titleOf = (id: string) => items.find((i) => i.id === id)?.title ?? "";
+  const { theme } = useTheme();
 
-  useFitMode(open ? content : null, shownId);
+  // The view belongs to a project: a fresh open reads `?fig=`, a move keeps the figures view on figure 1 when the
+  // new project has figures. `entered` marks a view the visitor switched to (it plays the switch motion).
+  const [view, setView] = useState<View>(TEXT);
+  const [viewFor, setViewFor] = useState<string | null>(null);
+  const [entered, setEntered] = useState(false);
+  if (open && item && viewFor !== item.id) {
+    const count = item.figures.length;
+    let next = TEXT;
+    if (viewFor === null) {
+      const fig = parseFigParam(window.location.search, count);
+      if (fig !== null) next = { figures: true, index: fig };
+    } else if (view.figures && count > 0) next = { figures: true, index: 0 };
+    setViewFor(item.id);
+    setView(next);
+    setEntered(false);
+  }
+  if (!open && viewFor !== null) setViewFor(null);
+  const figureCount = item?.figures.length ?? 0;
+  const inFigures = view.figures && figureCount > 0;
+  const figIndex = Math.min(view.index, Math.max(figureCount - 1, 0));
+
+  useFitMode(open ? content : null, shownId, inFigures);
+
+  // `&fig=` mirrors the open figure (1-based) and is removed in the content view.
+  const figParam = open && inFigures ? figIndex + 1 : null;
+  useEffect(() => {
+    if (open) writeFigParam(figParam);
+  }, [open, shownId, figParam]);
+
+  // The view on screen, for the exit motion of a switch; a newer switch cancels a running one.
+  const viewRef = useRef<HTMLDivElement | null>(null);
+  const exiting = useRef<Animation[]>([]);
+  // A move, a close or unmounting drops a switch still on its way out (its fill would keep the view hidden).
+  useEffect(
+    () => () => {
+      for (const a of exiting.current) a.cancel();
+      exiting.current = [];
+    },
+    [open, shownId],
+  );
 
   // This chunk loaded and the project is on screen: a reload tried for it earlier (LazyCaseStudyPanel) is done.
   useEffect(() => {
@@ -188,6 +255,20 @@ export function CaseStudyPanel({
         inTextField(event.target)
       )
         return;
+      // In the figures view the arrows belong to the figures (the visitor is looking at them); no wrap, and the
+      // projects stay on their own buttons.
+      if (inFigures) {
+        const delta =
+          event.key === "ArrowLeft" ? -1 : event.key === "ArrowRight" ? 1 : 0;
+        if (!delta) return;
+        event.preventDefault();
+        setView((v) => ({
+          figures: true,
+          index: stepFigure({ index: v.index, count: figureCount }, delta)
+            .index,
+        }));
+        return;
+      }
       const to =
         event.key === "ArrowLeft"
           ? prev
@@ -200,7 +281,7 @@ export function CaseStudyPanel({
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [open, prev, next, onOpenChange]);
+  }, [open, prev, next, onOpenChange, inFigures, figureCount]);
 
   if (!item) return null;
   const cs = item.caseStudy;
@@ -239,6 +320,57 @@ export function CaseStudyPanel({
   const position = t("position", { index: index + 1, total });
   const id = (key: string) => `${uid}-${key}`;
 
+  /**
+   * Content <-> figures. With full motion the view on screen leaves first (the text slides 24 px left and fades in
+   * 180 ms; the figures roll back up to the right edge in 240 ms), then the other view enters with its CSS motion.
+   */
+  function switchView(toFigures: boolean) {
+    for (const a of exiting.current) a.cancel();
+    exiting.current = [];
+    if (toFigures === inFigures) return;
+    const apply = () => {
+      setView(toFigures ? { figures: true, index: 0 } : TEXT);
+      setEntered(true);
+    };
+    const region = viewRef.current;
+    if (
+      document.documentElement.dataset.motion !== "full" ||
+      !region ||
+      typeof region.animate !== "function"
+    ) {
+      apply();
+      return;
+    }
+    const easing = "cubic-bezier(0.2, 0.7, 0.2, 1)";
+    const anims = inFigures
+      ? [
+          region.animate(
+            [{ clipPath: "inset(0)" }, { clipPath: "inset(0 0 0 100%)" }],
+            { duration: 240, easing, fill: "forwards" },
+          ),
+        ]
+      : Array.from(region.children, (el) =>
+          el.animate(
+            [
+              { opacity: 1, transform: "translateX(0)" },
+              { opacity: 0, transform: "translateX(-24px)" },
+            ],
+            { duration: 180, easing: "ease-in", fill: "forwards" },
+          ),
+        );
+    exiting.current = anims;
+    Promise.all(anims.map((a) => a.finished)).then(
+      () => {
+        if (exiting.current !== anims) return;
+        exiting.current = [];
+        apply();
+      },
+      () => {
+        // Cancelled by a newer switch, which owns the view now.
+      },
+    );
+  }
+
   return (
     <DialogPrimitive.Root
       open={open}
@@ -272,6 +404,11 @@ export function CaseStudyPanel({
             <span lang="ja" className={styles.chapter}>
               {context === "tree" ? t("chapterTree") : t("chapterProjects")}
             </span>
+            {inFigures ? (
+              <span lang="ja" className={styles.figCount}>
+                図 {figureNumeral(figIndex + 1)}／{figureNumeral(figureCount)}
+              </span>
+            ) : null}
             {total > 0 ? (
               <span className={styles.count}>
                 {pad(index + 1)} / {pad(total)}
@@ -279,7 +416,12 @@ export function CaseStudyPanel({
             ) : null}
           </div>
 
-          <div ref={setContent} data-case-content="" className={styles.content}>
+          <div
+            ref={setContent}
+            data-case-content=""
+            data-view={inFigures ? "figures" : "text"}
+            className={styles.content}
+          >
             <header className={styles.head}>
               <div className="min-w-0">
                 <DialogPrimitive.Description className={styles.where}>
@@ -302,6 +444,32 @@ export function CaseStudyPanel({
                 </dl>
               </div>
               <div className={styles.actions}>
+                {figureCount > 0 ? (
+                  <div className={styles.seg}>
+                    <button
+                      type="button"
+                      aria-pressed={!inFigures}
+                      onClick={() => switchView(false)}
+                      className={cn(styles.segBtn, FOCUS)}
+                    >
+                      <span aria-hidden="true" lang="ja">
+                        文
+                      </span>
+                      {t("content")}
+                    </button>
+                    <button
+                      type="button"
+                      aria-pressed={inFigures}
+                      onClick={() => switchView(true)}
+                      className={cn(styles.segBtn, FOCUS)}
+                    >
+                      <span aria-hidden="true" lang="ja">
+                        図
+                      </span>
+                      {t("figures")} · {figureCount}
+                    </button>
+                  </div>
+                ) : null}
                 {links.map((link) => (
                   <a
                     key={link.url}
@@ -341,42 +509,70 @@ export function CaseStudyPanel({
               </div>
             </header>
 
-            <section aria-labelledby={id("result")} className={styles.result}>
-              <span aria-hidden="true" lang="ja" className={styles.seal}>
-                果
-              </span>
-              <div className="relative z-[1] min-w-0">
-                <h3 id={id("result")} className={styles.resultLabel}>
-                  {t("result")}
-                </h3>
-                <p className={styles.resultText}>{cs.result}</p>
+            {inFigures ? (
+              <div
+                key="figures"
+                ref={viewRef}
+                data-enter={entered ? "" : undefined}
+                className={styles.figView}
+              >
+                <LazyFigureScroll
+                  key={item.id}
+                  figures={item.figures}
+                  index={figIndex}
+                  onIndexChange={(i) => setView({ figures: true, index: i })}
+                  title={item.title}
+                  theme={theme}
+                />
               </div>
-            </section>
-
-            <div className={styles.panes}>
-              {PANES.map(([key, numeral]) => (
+            ) : (
+              <div
+                key="text"
+                ref={viewRef}
+                data-enter={entered ? "" : undefined}
+                className={styles.textView}
+              >
                 <section
-                  key={key}
-                  aria-labelledby={id(key)}
-                  data-pane={key}
-                  className={styles.pane}
+                  aria-labelledby={id("result")}
+                  className={styles.result}
                 >
-                  <div className={styles.paneHead}>
-                    <span
-                      aria-hidden="true"
-                      lang="ja"
-                      className={styles.numeral}
-                    >
-                      {numeral}
-                    </span>
-                    <h3 id={id(key)} className={styles.paneLabel}>
-                      {t(key)}
+                  <span aria-hidden="true" lang="ja" className={styles.seal}>
+                    果
+                  </span>
+                  <div className="relative z-[1] min-w-0">
+                    <h3 id={id("result")} className={styles.resultLabel}>
+                      {t("result")}
                     </h3>
+                    <p className={styles.resultText}>{cs.result}</p>
                   </div>
-                  <p className={styles.paneText}>{cs[key]}</p>
                 </section>
-              ))}
-            </div>
+
+                <div className={styles.panes}>
+                  {PANES.map(([key, numeral]) => (
+                    <section
+                      key={key}
+                      aria-labelledby={id(key)}
+                      data-pane={key}
+                      className={styles.pane}
+                    >
+                      <div className={styles.paneHead}>
+                        <span
+                          aria-hidden="true"
+                          lang="ja"
+                          className={styles.numeral}
+                        >
+                          {numeral}
+                        </span>
+                        <h3 id={id(key)} className={styles.paneLabel}>
+                          {t(key)}
+                        </h3>
+                      </div>
+                      <p className={styles.paneText}>{cs[key]}</p>
+                    </section>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <footer className={styles.foot}>
               <div className={styles.tech}>

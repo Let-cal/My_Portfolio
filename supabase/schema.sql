@@ -137,9 +137,11 @@ create table public.projects (
   roles text[] not null default '{}',
   team_size text,
   links jsonb not null default '[]',
+  media jsonb not null default '[]',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  constraint projects_kind_matches_link check ((kind = 'work' and experience_id is not null and education_id is null) or (kind = 'university' and education_id is not null and experience_id is null) or (kind = 'personal' and experience_id is null and education_id is null))
+  constraint projects_kind_matches_link check ((kind = 'work' and experience_id is not null and education_id is null) or (kind = 'university' and education_id is not null and experience_id is null) or (kind = 'personal' and experience_id is null and education_id is null)),
+  constraint projects_media_is_array check (jsonb_typeof(media) = 'array')
 );
 create trigger projects_updated_at before update on public.projects for each row execute function public.set_updated_at();
 alter table public.projects enable row level security;

@@ -61,6 +61,7 @@ export function Projects({
   const caseItems = projects.flatMap((p): CaseStudyItem[] => {
     const row = rows.get(p.id);
     const item = row && caseItemFromRow(row, ta(`kinds.${row.whereKind}`));
+    // Panel items keep their figures (the bento opens the same panel); only the card views above carry none.
     return item ? [item] : [];
   });
 

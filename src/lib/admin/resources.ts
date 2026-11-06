@@ -5,6 +5,7 @@ import { z } from "zod";
 import {
   activitySchema,
   CERT_TOPICS,
+  MAX_FIGURES,
   certificateSchema,
   educationSchema,
   experienceSchema,
@@ -31,6 +32,7 @@ import {
   whyCardToRow,
   type SkillLinkRow,
 } from "@/lib/data/mappers";
+import { figureDraftSchema } from "./figures-save";
 import type { UploadKind } from "./upload";
 
 export const RESOURCE_KEYS = [
@@ -78,6 +80,8 @@ export type FieldSpec = Base &
     | { kind: "derived"; target: string }
     /** Role tags: checkboxes for the roles the site's switcher highlights. */
     | { kind: "roles" }
+    /** A project's figures: images and Mermaid diagrams, rendered and uploaded on save. */
+    | { kind: "figures" }
   );
 
 type AnyRow = Record<string, unknown>;
@@ -100,10 +104,13 @@ export type Resource = {
  * The form's schema: the item schema without the drag-and-drop position. `.omit()` refuses schemas
  * with cross-field rules (projects), so the object is rebuilt from its shape and the rules are put
  * back on it (a project's kind must match where it belongs). The server action checks the full schema.
+ * Figures are checked as drafts: a diagram gets its renderings when the form saves.
  */
 export function withoutSortIndex(schema: z.ZodObject): z.ZodObject {
   const { sortIndex: _sortIndex, ...shape } = schema.shape;
   void _sortIndex;
+  if ("media" in shape)
+    shape.media = z.array(figureDraftSchema).max(MAX_FIGURES).default([]);
   const rules = schema._zod.def.checks ?? [];
   const form = z.object(shape);
   return rules.length
@@ -223,6 +230,7 @@ export const resources: Record<ResourceKey, Resource> = {
         fields: ["summary", "tech", "posterUrl", "videoUrl"],
       },
       { id: "case-study", title: "Case study", fields: ["caseStudy"] },
+      { id: "figures", title: "Hình ảnh & sơ đồ", fields: ["media"] },
       {
         id: "links",
         title: "Liên kết & skills",
@@ -275,6 +283,13 @@ export const resources: Record<ResourceKey, Resource> = {
       },
       { name: "summary", label: "Tóm tắt", kind: "i18n", multiline: true },
       { name: "caseStudy", label: "Case study", kind: "caseStudy" },
+      {
+        name: "media",
+        label: "Hình ảnh & sơ đồ",
+        kind: "figures",
+        initial: [],
+        hint: "Tối đa 12 hình. Sơ đồ được vẽ lại và tải lên khi lưu.",
+      },
       { name: "tech", label: "Công nghệ", kind: "tags", suggest: "skills" },
       { name: "demoUrl", label: "Link demo", kind: "url", nullable: true },
       { name: "repoUrls", label: "Link repo", kind: "tags" },

@@ -23,6 +23,7 @@ Desktop preview with Motion off. [Dark](docs/images/portfolio-dark.webp) · [Lig
 - **Three languages.** English, Japanese, and Vietnamese pages and metadata at `/en`, `/ja`, and `/vi`.
 - **Work with context.** Experience timeline, project case studies, skill evidence, certificates, and contact details.
 - **Career in one scan.** Experience reads company, position, then the projects done in that position, with a month-axis timeline per company and a scroll-drawn ink rail. The projects archive groups work by year with a filter and a hover preview. Case studies open in one shared hanging-scroll panel that fits common desktop sizes without an inner scrollbar and supports deep links and previous/next. The side rail is a chapter navigation with per-chapter progress. Initial JavaScript stays at or under 200 KB gzip on `/` and `/[locale]/projects`.
+- **Figures (図) beside the case study.** One click in the case-study panel switches to a handscroll of screenshots and Mermaid diagrams (architecture, data model, flows) with captions in three languages, and a full-screen viewer zooms and pans with buttons, keys or the pointer; diagrams are rendered to static SVG in the admin, so visitors download no Mermaid.
 - **One continuous scene.** Desktop WebGL combines a koi/dragon, chapter cameras, lotus pond, waterfall, lanterns, day/night lighting, and pointer interactions. Mobile, reduced-motion, and unavailable-WebGL paths use static backgrounds.
 - **Reader controls.** Keyboard navigation, Motion switch, command palette, and a printable 60-second view at `/en/quick`, `/ja/quick`, and `/vi/quick`.
 
@@ -149,6 +150,7 @@ AI coding agents do much of the typing in this repository, under fixed limits:
 - [0011](docs/adr/0011-fail-closed-release-evaluator.md) A fail-closed evaluator for preview review evidence
 - [0012](docs/adr/0012-hosted-migrations-through-reviewed-sql.md) Hosted migrations through reviewed SQL; file names match the hosted history
 - [0013](docs/adr/0013-read-only-reviewer-role.md) Read-only reviewer role
+- [0014](docs/adr/0014-figures-rendered-in-the-admin.md) Case-study diagrams rendered in the admin on save (proposed)
 
 ## Local setup
 

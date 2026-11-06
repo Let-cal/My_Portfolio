@@ -41,4 +41,15 @@ describe("Projects section payload", () => {
     for (const p of projects)
       expect(p.hasCaseStudy).toBe(caseItems.some((i) => i.id === p.id));
   });
+
+  it("bento case items carry figures while the card views carry none", () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={en}>
+        <Projects content={content} locale="en" />
+      </NextIntlClientProvider>,
+    );
+    const { projects, caseItems } = bento.props!;
+    for (const p of projects) expect(p).not.toHaveProperty("figures");
+    expect(caseItems.find((i) => i.id === "siteplus")?.figures).toHaveLength(2);
+  });
 });

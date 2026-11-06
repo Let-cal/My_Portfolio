@@ -270,7 +270,37 @@
     "chapterProjects": "第二章 作品",
     "where": "Where",
     "period": "Period",
-    "teamLabel": "Team"
+    "teamLabel": "Team",
+    "content": "Content",
+    "figures": "Figures",
+    "enlarge": "Enlarge",
+    "figurePosition": "Figure {n} of {count}",
+    "figureError": "Could not load this figure",
+    "retry": "Retry",
+    "prevFigure": "Previous figure",
+    "nextFigure": "Next figure",
+    "categories": {
+      "screen": "Screens",
+      "architecture": "Architecture",
+      "erd": "Data model",
+      "flow": "Flow",
+      "other": "Other"
+    },
+    "viewer": {
+      "close": "Close",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "fit": "Fit",
+      "actualSize": "Actual size",
+      "panLeft": "Pan left",
+      "panRight": "Pan right",
+      "panUp": "Pan up",
+      "panDown": "Pan down",
+      "index": "Figure index",
+      "canvas": "Figure canvas",
+      "count": "{count, plural, one {# figure} other {# figures}}",
+      "hint": "Esc closes · ←/→ change figure · + / - zoom · 0 fits"
+    }
   },
   "projects": {
     "viewCaseStudy": "View case study",
@@ -282,6 +312,7 @@
     "codeMobile": "Code (Mobile)",
     "codeN": "Code {n}",
     "newTab": "(opens in new tab)",
+    "figureCount": "{count, plural, one {# figure} other {# figures}}",
     "viewAll": "View all {count, plural, one {# project} other {# projects}}"
   },
   "archive": {

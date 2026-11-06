@@ -102,6 +102,7 @@ describe("form sections", () => {
       "Thuộc về & vai trò",
       "Nội dung",
       "Case study",
+      "Hình ảnh & sơ đồ",
       "Liên kết & skills",
       "Hiển thị",
     ]);

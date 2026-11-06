@@ -73,3 +73,16 @@ describe("archiveRows stintLabel", () => {
     );
   });
 });
+
+describe("archiveRows figures", () => {
+  it("an archive row carries its figure views", () => {
+    const rows = archiveRows(content(), "en");
+    const siteplus = rows.find((r) => r.id === "siteplus")!;
+    expect(siteplus.figures.map((f) => f.id)).toEqual([
+      "mobile-survey-screen",
+      "system-overview",
+    ]);
+    expect(JSON.stringify(siteplus.figures)).not.toContain("flowchart");
+    expect(rows.find((r) => r.id === "skg-ai-agent")!.figures).toEqual([]);
+  });
+});

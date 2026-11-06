@@ -35,6 +35,18 @@ export function buildSeedRows(c: Content): SeedRows {
   ) as SeedRows;
 }
 
+/**
+ * The rows `npm run db:seed` writes to Supabase: every project with `media: []`. The seed's figures point at local
+ * /seed and /images files, which the server refuses as figure URLs (only uploaded media URLs), so a seeded
+ * project could not be saved again. They stay in seed.json for the local seed fallback and e2e.
+ */
+export function withoutSeedFigures(rows: SeedRows): SeedRows {
+  return {
+    ...rows,
+    projects: rows.projects.map((row) => ({ ...row, media: [] })),
+  };
+}
+
 /** Upsert key per table; skill_links are replaced as a whole instead. */
 export const CONFLICT_KEY: Record<Exclude<TableName, "skill_links">, string> = {
   profile: "id",

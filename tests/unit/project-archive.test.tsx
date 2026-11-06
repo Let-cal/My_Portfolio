@@ -228,6 +228,53 @@ describe("ProjectArchive", () => {
     );
   });
 
+  it("shows a 図 N chip only on rows with figures and a case study", () => {
+    renderArchive();
+    const withFigures = base.projects.filter(
+      (p) => p.media.length > 0 && p.caseStudy,
+    );
+    expect(withFigures.length).toBeGreaterThan(0);
+    const chips = [...document.querySelectorAll<HTMLElement>("[data-figures]")];
+    expect(chips).toHaveLength(withFigures.length);
+    for (const p of withFigures) {
+      const chip = document.querySelector<HTMLElement>(
+        `#row-${p.id} [data-figures]`,
+      )!;
+      expect(chip).not.toBeNull();
+      expect(chip.textContent).toBe(`図 ${p.media.length}`);
+      expect(
+        screen.getByLabelText(`${p.media.length} figures`, {
+          selector: `#row-${p.id} *`,
+        }),
+      ).toBe(chip);
+    }
+    expect(
+      document.querySelector("#row-skg-ai-agent [data-figures]"),
+    ).toBeNull();
+  });
+
+  it("no 図 chip on a row whose figures cannot open (no case study)", () => {
+    const withFigures = base.projects.find((p) => p.media.length > 0)!;
+    const noCase: Project = {
+      ...personal,
+      id: "figures-no-case",
+      title: "Figures Without Case",
+      caseStudy: null,
+      media: withFigures.media,
+    };
+    renderArchive({
+      content: { ...base, projects: [...base.projects, noCase] },
+    });
+    expect(document.querySelector("#row-figures-no-case")).not.toBeNull();
+    expect(
+      document.querySelector("#row-figures-no-case [data-figures]"),
+    ).toBeNull();
+    // The project the figures came from still has its chip.
+    expect(
+      document.querySelector(`#row-${withFigures.id} [data-figures]`),
+    ).not.toBeNull();
+  });
+
   it("groups rows by year newest first", () => {
     renderArchive();
     const groups = screen.getAllByRole("region");
@@ -344,11 +391,12 @@ describe("ProjectArchive", () => {
       "/en/projects?kind=university#row-skg-coa",
     );
     renderArchive();
-    await waitFor(() =>
-      expect(chip(/^All/)).toHaveAttribute("aria-pressed", "true"),
-    );
+    // "All" is also the state before the deep link is read (a frame after mount): wait for the URL rewrite too.
+    await waitFor(() => {
+      expect(chip(/^All/)).toHaveAttribute("aria-pressed", "true");
+      expect(window.location.search).toBe("");
+    });
     expect(visibleRowIds()).toContain("row-skg-coa");
-    expect(window.location.search).toBe("");
     expect(window.location.hash).toBe("#row-skg-coa");
     await waitFor(() => expect(scroll).toHaveBeenCalled());
     expect(scroll.mock.contexts[0]).toBe(

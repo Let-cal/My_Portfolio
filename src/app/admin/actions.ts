@@ -23,7 +23,13 @@ import { VERSIONED_TABLES } from "@/lib/data/schema-sql";
 import { describeIssues } from "@/lib/admin/validation";
 import { requireAdmin } from "@/lib/admin/session";
 import { createServerSupabase } from "@/lib/supabase/server";
-import { profileSchema, roleSchema, type Skill } from "@/content/schema";
+import {
+  profileSchema,
+  roleSchema,
+  type Figure,
+  type Skill,
+} from "@/content/schema";
+import { assertFiguresSafe, fetchSvgText } from "@/lib/admin/figures-save";
 import { starRefusal } from "@/lib/featured";
 
 /** `fieldErrors` maps a form path (e.g. "description.en") to the message shown under that input. */
@@ -225,6 +231,14 @@ export async function saveResource(
       data,
     );
     if (k === "projects") {
+      // Figure URLs come from the browser: each must be an uploaded file, and each diagram
+      // rendering is fetched back and checked before the row can point visitors at it.
+      const media = (item.media ?? []) as Figure[];
+      const safe = await assertFiguresSafe(media, fetchSvgText);
+      if (!safe.ok) {
+        const index = media.findIndex((f) => f.id === safe.figureId);
+        throw new FormError(safe.message, { [`media.${index}`]: safe.message });
+      }
       // The star obeys the limit of three; its place in the order belongs to the featured strip.
       const rows = (existing ?? []) as unknown as StarRow[];
       if (item.featured) {

@@ -113,6 +113,13 @@ describe("content schema", () => {
     expect(missing).toEqual([]);
   });
 
+  it("gives one seed project exactly one image and one diagram figure", () => {
+    const withFigures = content.projects.filter((p) => p.media.length > 0);
+    expect(withFigures.map((p) => p.id)).toEqual(["siteplus"]);
+    const kinds = withFigures[0].media.map((f) => f.kind).sort();
+    expect(kinds).toEqual(["diagram", "image"]);
+  });
+
   it("rejects a phone field on the profile", () => {
     const withPhone = { ...seed.profile, phone: "000" };
     expect(profileSchema.safeParse(withPhone).success).toBe(false);

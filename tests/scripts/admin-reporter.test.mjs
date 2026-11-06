@@ -18,8 +18,17 @@ const titles = [
   "two tabs receive real updates, retain conflicting edits and notice deletion",
   "cross-tab signout preserves the form and real reauthentication resumes saving",
   "network simulation: offline edits recover and save to the real backend",
+  "project figures: an uploaded image and a Mermaid diagram are saved and counted on the public archive",
 ];
-const selected = ["auth", "crud", "drafts", "realtime", "session", "offline"];
+const selected = [
+  "auth",
+  "crud",
+  "drafts",
+  "realtime",
+  "session",
+  "offline",
+  "figures",
+];
 const executions = {
   auth: 1,
   crud: 1,
@@ -27,6 +36,7 @@ const executions = {
   realtime: 1,
   session: 1,
   offline: 1,
+  figures: 1,
 };
 const diagnostics = selected.map((id) => ({ id, outcome: "passed" }));
 const file = fileURLToPath(
@@ -49,13 +59,13 @@ const summarize = (
   metadata = meta,
 ) => adminSummary(records, selection.length, status, metadata, selection);
 
-test("all six exact identities pass once with current run metadata and safe evidence", () => {
+test("all seven exact identities pass once with current run metadata and safe evidence", () => {
   assert.deepEqual(summarize(), {
     version: 1,
     status: "PASS",
-    expected: 6,
-    attempts: 6,
-    passed: 6,
+    expected: 7,
+    attempts: 7,
+    passed: 7,
     rejected: 0,
     selected,
     executions,
@@ -70,7 +80,7 @@ test("all six exact identities pass once with current run metadata and safe evid
   );
 });
 
-test("six passing replacements, duplicates and wrong file/project cannot satisfy discovery", () => {
+test("seven passing replacements, duplicates and wrong file/project cannot satisfy discovery", () => {
   const mutations = [
     (r) => {
       r[0].title = "SECRET-SENTINEL replacement";
@@ -104,7 +114,7 @@ test("six passing replacements, duplicates and wrong file/project cannot satisfy
     assert.equal(result.status, "FAIL");
     assert.ok(!JSON.stringify(result).includes("SECRET-SENTINEL"));
   }
-  assert.equal(adminSummary(rows(), 6, "passed", meta).status, "FAIL");
+  assert.equal(adminSummary(rows(), 7, "passed", meta).status, "FAIL");
   assert.equal(summarize(rows(), discovered().slice(1)).status, "FAIL");
   assert.equal(
     summarize(rows(), [
@@ -287,6 +297,7 @@ test("onTestEnd retains only bounded annotations for each mandatory scenario", (
     "navigation",
     "settings",
     "other",
+    "seed-fixture",
   ];
   for (const [i, entry] of tests.entries()) {
     reporter.onTestEnd(entry, {
@@ -320,9 +331,10 @@ test("onTestEnd retains only bounded annotations for each mandatory scenario", (
     { id: "realtime", outcome: "failed", category: "navigation" },
     { id: "session", outcome: "failed", category: "settings" },
     { id: "offline", outcome: "failed", category: "other" },
+    { id: "figures", outcome: "failed", category: "seed-fixture" },
   ]);
   assert.equal(result.status, "FAIL");
-  assert.equal(result.rejected, 6);
+  assert.equal(result.rejected, 7);
   assert.deepEqual(
     projectAdminSummary(JSON.parse(JSON.stringify(result)), meta),
     result,
@@ -350,7 +362,7 @@ test("fixed login helper categories survive independent report projection", () =
       projectAdminSummary(result, meta).diagnostics[0].category,
       category,
     );
-    assert.equal(result.passed, 5);
+    assert.equal(result.passed, 6);
   }
 });
 
