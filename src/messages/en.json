@@ -334,7 +334,14 @@
     "stint": "Position:",
     "featured": "Featured on the home page",
     "showing": "Showing {count} of {total} projects",
-    "empty": "No projects of this kind yet."
+    "empty": "No projects of this kind yet.",
+    "legendLabel": "Role marks",
+    "legendLead": "Marking projects where I worked as",
+    "legendCount": "{count} of {total} projects",
+    "hideMarks": "Hide marks",
+    "showMarks": "Show marks",
+    "marksHidden": "Marks hidden",
+    "matches": "(matches {role})"
   },
   "certificates": {
     "intro": "Courses, certificates and school activities. Pick a lantern to see its credential.",

@@ -334,7 +334,14 @@
     "stint": "職位：",
     "featured": "ホームで紹介中",
     "showing": "{total}件中{count}件を表示",
-    "empty": "この種類のプロジェクトはまだありません。"
+    "empty": "この種類のプロジェクトはまだありません。",
+    "legendLabel": "役割の印",
+    "legendLead": "次の役割で関わったプロジェクトに印を付けています",
+    "legendCount": "{total}件中{count}件",
+    "hideMarks": "印を隠す",
+    "showMarks": "印を表示",
+    "marksHidden": "印は非表示",
+    "matches": "（{role}に該当）"
   },
   "certificates": {
     "intro": "講座、資格、学校での活動です。提灯を選ぶと認定情報が見られます。",

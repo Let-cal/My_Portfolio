@@ -141,6 +141,15 @@ describe("CaseStudyPanel", () => {
     ).toBeInTheDocument();
   });
 
+  it("the Where line shows the kind's crest beside its label", async () => {
+    renderPanel({ initial: "siteplus" });
+    const dialog = await screen.findByRole("dialog");
+    const crest = dialog.querySelector(".kamon")!;
+    expect(crest).toHaveAttribute("data-kind", "university");
+    expect(crest).toHaveAttribute("aria-hidden", "true");
+    expect(crest.parentElement).toHaveTextContent(en.archive.kinds.university);
+  });
+
   it("lists every tech chip", async () => {
     renderPanel({ initial: "skg-ai-agent" });
     const dialog = await screen.findByRole("dialog");

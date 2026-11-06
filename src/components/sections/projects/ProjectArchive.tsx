@@ -20,6 +20,7 @@ import { LazyCaseStudyPanel } from "@/components/sections/case-study/LazyCaseStu
 import { useCaseParam } from "@/components/sections/case-study/use-case-param";
 import { ChevronRightIcon } from "@/components/site/icons";
 import { useRole } from "@/components/site/RoleProvider";
+import { ROLE_KEYS } from "@/content/constants";
 import { SECTION_IDS } from "@/components/site/sections";
 import type { ArchiveGroup } from "@/lib/archive";
 import {
@@ -33,6 +34,7 @@ import { caseItemFromRow } from "@/lib/case-items";
 import { repoLinks } from "@/lib/repo-links";
 import { cn } from "@/lib/utils";
 import { ArchivePreview } from "./ArchivePreview";
+import { Kamon, KIND_KANJI } from "./Kamon";
 import "../experience/journey.css";
 import "./archive.css";
 
@@ -148,7 +150,10 @@ function panelTitle(ms: number): Promise<HTMLElement | null> {
  *   the shown ones fade in.
  * - A `#row-<id>` deep link that the filter would hide resets the filter to "all", then the row scrolls into view.
  * - A section link of the site navigation (`#experience`, ...) loads the home page at that section.
- * - The role switcher only highlights rows whose roles include it (`data-highlight`); the order never changes.
+ * - Each kind has a colour and a crest (Kamon): the row strip, the chip and the badge (spec 2026-11-06 kamon kinds).
+ * - The role legend marks rows whose roles include the site role (`data-highlight`, a diamond before the role and a
+ *   visually hidden "(matches ...)"); its buttons change the site role, "Hide marks" turns the marks off for the
+ *   visit. The order never changes.
  * - A project with a case study opens it in the shared case study panel from a button over its row (click or
  *   Enter), its title morphing into the panel title where View Transitions exist; previous / next walk the rows the
  *   current filter shows. `?case=<id>` opens it on load.
@@ -160,7 +165,10 @@ export function ProjectArchive({ groups }: { groups: ArchiveGroup[] }) {
   const t = useTranslations("archive");
   const tp = useTranslations("projects");
   const locale = useLocale();
-  const { role } = useRole();
+  const tr = useTranslations("roles");
+  const { role, setRole } = useRole();
+  const [marks, setMarks] = useState(true);
+  const showKanji = locale !== "ja";
   const reduced = usePrefersReducedMotion();
   const finePointer = useMediaQuery("(hover: hover) and (pointer: fine)");
   // null until the URL has been read after hydration; the server HTML (and the inline script) cover that moment.
@@ -212,6 +220,11 @@ export function ProjectArchive({ groups }: { groups: ArchiveGroup[] }) {
     for (const row of rows) result[row.whereKind] += 1;
     return result;
   }, [rows]);
+
+  const marked = useMemo(
+    () => rows.filter((r) => r.roles.includes(role)).length,
+    [rows, role],
+  );
 
   const previews = useMemo(
     () =>
@@ -371,7 +384,14 @@ export function ProjectArchive({ groups }: { groups: ArchiveGroup[] }) {
               {pressed ? (
                 <span aria-hidden="true" data-pill="" className="pa-pill" />
               ) : null}
-              {t(`kinds.${k}`)} <span className="pa-count">{counts[k]}</span>
+              {k !== "all" ? <Kamon kind={k} className="pa-kamon" /> : null}
+              {t(`kinds.${k}`)}
+              {k !== "all" && showKanji ? (
+                <span aria-hidden="true" lang="ja" className="pa-jp">
+                  {KIND_KANJI[k]}
+                </span>
+              ) : null}{" "}
+              <span className="pa-count">{counts[k]}</span>
             </button>
           );
         })}
@@ -379,6 +399,43 @@ export function ProjectArchive({ groups }: { groups: ArchiveGroup[] }) {
       <p role="status" className="sr-only">
         {t("showing", { count: counts[active], total: rows.length })}
       </p>
+      <div
+        role="group"
+        aria-label={t("legendLabel")}
+        data-off={marks ? undefined : ""}
+        className="pa-legend"
+      >
+        <span aria-hidden="true" className="pa-legend-mark" />
+        <span>{t("legendLead")}</span>
+        <span className="pa-legend-roles">
+          {ROLE_KEYS.map((r) => (
+            <button
+              key={r}
+              type="button"
+              aria-pressed={marks && role === r}
+              onClick={() => {
+                setRole(r);
+                setMarks(true);
+              }}
+              className="pa-legend-role"
+            >
+              {tr(r)}
+            </button>
+          ))}
+        </span>
+        <span className="pa-legend-count">
+          {marks
+            ? t("legendCount", { count: marked, total: rows.length })
+            : t("marksHidden")}
+        </span>
+        <button
+          type="button"
+          onClick={() => setMarks((on) => !on)}
+          className="pa-legend-toggle"
+        >
+          {marks ? t("hideMarks") : t("showMarks")}
+        </button>
+      </div>
 
       <div ref={setWrapNode} data-archive-rows="" className="pa-groups">
         {groups.map((group) => (
@@ -399,7 +456,7 @@ export function ProjectArchive({ groups }: { groups: ArchiveGroup[] }) {
             <ul className="pa-rows">
               {group.rows.map((row) => {
                 const cs = row.caseStudy;
-                const matched = row.roles.includes(role);
+                const matched = marks && row.roles.includes(role);
                 const extra = row.tech.slice(MAX_TECH);
                 const links = [
                   ...(row.demoUrl
@@ -460,11 +517,25 @@ export function ProjectArchive({ groups }: { groups: ArchiveGroup[] }) {
                           </span>
                         ) : null}
                       </span>
-                      <span className="pa-role">{row.role}</span>
+                      <span className="pa-role">
+                        {row.role}
+                        {matched ? (
+                          <span className="sr-only">
+                            {" "}
+                            {t("matches", { role: tr(role) })}
+                          </span>
+                        ) : null}
+                      </span>
                     </div>
                     <p data-where="" className="pa-where">
                       <span className="pa-badge" data-kind={row.whereKind}>
+                        <Kamon kind={row.whereKind} className="pa-kamon" />
                         {t(`kinds.${row.whereKind}`)}
+                        {showKanji ? (
+                          <span aria-hidden="true" lang="ja" className="pa-jp">
+                            {KIND_KANJI[row.whereKind]}
+                          </span>
+                        ) : null}
                       </span>
                       {row.whereKind !== "personal" && row.where ? (
                         <>
