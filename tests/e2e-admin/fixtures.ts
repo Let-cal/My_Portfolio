@@ -69,7 +69,8 @@ export function isFixtureProbe(path: string): boolean {
 const FIGURE_OBJECTS = [
   {
     prefix: "image",
-    name: /^[a-z0-9]+-task4-figure\.png$/,
+    // New image figures are re-encoded as WebP before upload.
+    name: /^[a-z0-9]+-task4-figure\.webp$/,
   },
   {
     prefix: "diagram",

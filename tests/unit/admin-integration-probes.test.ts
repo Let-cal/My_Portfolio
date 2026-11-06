@@ -9,7 +9,7 @@ describe("disposable admin harness probe allowlist", () => {
     "/rest/v1/projects?id=eq.task4-project-figures&select=id,published,media",
     "/storage/v1/object/list/media",
     "/storage/v1/object/media",
-    "/storage/v1/object/public/media/image/abc12345-task4-figure.png",
+    "/storage/v1/object/public/media/image/abc12345-task4-figure.webp",
     "/storage/v1/object/public/media/diagram/task4-project-figures-fig-a1-light-0123abcd.svg",
   ])("allows %s", (path) => expect(isFixtureProbe(path)).toBe(true));
 

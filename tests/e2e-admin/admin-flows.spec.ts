@@ -425,8 +425,12 @@ test("project figures: an uploaded image and a Mermaid diagram are saved and cou
     `${suite.settings.apiUrl}/storage/v1/object/public/media`,
   );
   expect(String(media[0].url)).toMatch(
-    new RegExp(`^${storage}/image/[a-z0-9]+-task4-figure\\.png$`),
+    new RegExp(`^${storage}/image/[a-z0-9]+-task4-figure\\.webp$`),
   );
+  const image = await suite.api(
+    String(media[0].url).slice(suite.settings.apiUrl.length),
+  );
+  expect(image.headers()["content-type"]).toMatch(/^image\/webp/);
   for (const theme of ["Light", "Dark"]) {
     const url = String(media[1][`svg${theme}`]);
     expect(url).toMatch(
