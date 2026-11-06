@@ -55,7 +55,6 @@
 }
 .pa-chip .pa-jp {
   font-size: 0.72rem;
-  opacity: 0.75;
 }
 
 /* ---- Role legend: what the diamond means, the role buttons and Hide marks. ---- */
@@ -377,7 +376,6 @@
 .pa-jp {
   font: 500 0.66rem/1 var(--font-mincho);
   letter-spacing: 0.1em;
-  opacity: 0.85;
 }
 .pa-stint {
   flex-basis: 100%;
