@@ -32,6 +32,13 @@ test("the figures scenario owns one published personal project with no figures",
   );
   assert.equal(projects[0].experience_id, null);
   assert.equal(projects[0].education_id, null);
+  // The archive shows the figure chip only on rows with a case study.
+  assert.deepEqual(Object.keys(projects[0].case_study).sort(), [
+    "decisions",
+    "problem",
+    "result",
+    "role",
+  ]);
 });
 
 test("public write-denial control is a separate published synthetic certificate", () => {

@@ -46,7 +46,8 @@ export function syntheticRows() {
       sort_index: i,
     })),
     // The figures scenario edits this published personal project in the admin and
-    // then reads its archive row on the public site. It starts with no figures.
+    // then reads its archive row on the public site. It starts with no figures. It has a
+    // case study because the archive only shows the figure chip on rows whose panel opens.
     projects: [
       {
         id: FIGURES_PROJECT_ID,
@@ -55,7 +56,12 @@ export function syntheticRows() {
         start_month: "2026-01",
         end_month: null,
         summary: text,
-        case_study: null,
+        case_study: {
+          problem: text,
+          role: text,
+          decisions: text,
+          result: text,
+        },
         tech: [],
         demo_url: null,
         repo_urls: [],
