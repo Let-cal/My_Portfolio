@@ -510,10 +510,10 @@ describe("ProjectArchive", () => {
     expect(document.getElementById("row-siteplus")).toHaveTextContent(
       siteplus.role.en,
     );
-    // A personal project is not named twice.
-    expect(where("row-side-project").textContent).toBe(
-      en.archive.kinds.personal,
-    );
+    // A personal project is not named twice (the crest and the kanji are decorative, hidden from readers).
+    const spoken = where("row-side-project").cloneNode(true) as Element;
+    spoken.querySelectorAll("[aria-hidden=true]").forEach((n) => n.remove());
+    expect(spoken.textContent).toBe(en.archive.kinds.personal);
   });
 
   it("tech shows three names, then +N, and keeps the rest for screen readers", () => {
@@ -549,6 +549,82 @@ describe("ProjectArchive", () => {
       "row-skg-flexybox-p1",
     ]);
     expect(rowIds()).toEqual(order);
+  });
+
+  it("every kind chip and row badge carries its crest, with the kanji name outside Japanese", () => {
+    renderArchive({ content: withPersonal });
+    for (const k of ["work", "university", "personal"] as const) {
+      const button = chip(new RegExp(`^${en.archive.kinds[k]}`));
+      expect(button.querySelector(`.kamon[data-kind='${k}']`)).not.toBeNull();
+    }
+    // "All" has no crest.
+    expect(chip(/^All/).querySelector(".kamon")).toBeNull();
+    const badge = (id: string) =>
+      document.querySelector(`#row-${id} .pa-badge`)!;
+    expect(badge("siteplus").querySelector(".kamon")).toHaveAttribute(
+      "data-kind",
+      "university",
+    );
+    expect(badge("side-project").querySelector(".kamon")).toHaveAttribute(
+      "data-kind",
+      "personal",
+    );
+    const kanji = badge("skg-coa").querySelector("[lang='ja']")!;
+    expect(kanji).toHaveTextContent("仕事");
+    expect(kanji).toHaveAttribute("aria-hidden", "true");
+    // Each row names its kind for the strip and the hover colour.
+    expect(document.getElementById("row-skg-coa")).toHaveAttribute(
+      "data-archive-kind",
+      "work",
+    );
+  });
+
+  it("the Japanese archive has no kanji subtitle (its labels are already Japanese)", () => {
+    renderArchive({ locale: "ja" });
+    expect(document.querySelector("#row-skg-coa .pa-badge .pa-jp")).toBeNull();
+    expect(document.querySelector(".pa-chip .pa-jp")).toBeNull();
+  });
+
+  it("the role legend names the marked role, counts its rows and switches the role", async () => {
+    const user = userEvent.setup();
+    renderArchive();
+    const legend = screen.getByRole("group", { name: en.archive.legendLabel });
+    const pressed = () =>
+      within(legend)
+        .getAllByRole("button", { pressed: true })
+        .map((b) => b.textContent);
+    expect(pressed()).toEqual([en.roles.fullstack]);
+    expect(legend.querySelector(".pa-legend-count")).toHaveTextContent(
+      "4 of 8 projects",
+    );
+    await user.click(within(legend).getByRole("button", { name: en.roles.pm }));
+    expect(pressed()).toEqual([en.roles.pm]);
+    expect(legend.querySelector(".pa-legend-count")).toHaveTextContent(
+      "3 of 8 projects",
+    );
+    expect(window.location.search).toBe("?role=pm");
+    // A marked row says so in words, not only with the diamond.
+    expect(
+      document.getElementById("row-skg-ai-agent")!.querySelector(".pa-role"),
+    ).toHaveTextContent(`(matches ${en.roles.pm})`);
+  });
+
+  it("Hide marks removes every role mark until Show marks", async () => {
+    const user = userEvent.setup();
+    renderArchive();
+    const legend = screen.getByRole("group", { name: en.archive.legendLabel });
+    await user.click(
+      within(legend).getByRole("button", { name: en.archive.hideMarks }),
+    );
+    expect(document.querySelectorAll("li[data-highlight]")).toHaveLength(0);
+    expect(document.querySelector(".pa-role .sr-only")).toBeNull();
+    expect(legend.querySelector(".pa-legend-count")).toHaveTextContent(
+      en.archive.marksHidden,
+    );
+    await user.click(
+      within(legend).getByRole("button", { name: en.archive.showMarks }),
+    );
+    expect(document.querySelectorAll("li[data-highlight]")).toHaveLength(4);
   });
 
   it("links open in a new tab with labelled repos", () => {

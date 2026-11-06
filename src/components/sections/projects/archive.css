@@ -53,6 +53,82 @@
 .pa-chip[aria-pressed="true"] .pa-count {
   color: var(--jt-koi-ink);
 }
+.pa-chip .pa-jp {
+  font-size: 0.72rem;
+  opacity: 0.75;
+}
+
+/* ---- Role legend: what the diamond means, the role buttons and Hide marks. ---- */
+.pa-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.875rem;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 1rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--jt-line);
+  border-radius: 0.75rem;
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+.pa-legend-mark {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 1.5px;
+  background: var(--role-accent);
+  transform: rotate(45deg);
+}
+.pa-legend-roles {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+.pa-legend-role {
+  min-height: 2.75rem;
+  padding: 0 0.7rem;
+  border: 1px solid var(--jt-line-2);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    background-color 0.2s,
+    color 0.2s;
+}
+.pa-legend-toggle {
+  min-height: 2.75rem;
+  color: var(--brand-text);
+  font-size: 0.78rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+@media (min-width: 640px) {
+  .pa-legend-role,
+  .pa-legend-toggle {
+    min-height: 1.75rem;
+  }
+}
+.pa-legend-role:hover,
+.pa-legend-role[aria-pressed="true"] {
+  color: var(--foreground);
+}
+.pa-legend-role[aria-pressed="true"] {
+  border-color: var(--role-accent);
+  background: color-mix(in srgb, var(--role-accent) 16%, transparent);
+}
+.pa-legend-role:focus-visible,
+.pa-legend-toggle:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.pa-legend[data-off] .pa-legend-mark,
+.pa-legend[data-off] .pa-legend-roles {
+  opacity: 0.45;
+}
 .pa-pill {
   position: absolute;
   top: 0;
@@ -152,18 +228,39 @@
   border-radius: inherit;
   opacity: 0;
   background:
-    radial-gradient(160px 70px at 0% 0%, var(--jt-bleed-koi), transparent 70%),
     radial-gradient(
-      200px 90px at 100% 100%,
-      var(--jt-bleed-teal),
+      200px 80px at 0% 0%,
+      color-mix(in srgb, var(--pa-kind, var(--jt-koi)) 14%, transparent),
       transparent 70%
+    ),
+    radial-gradient(
+      220px 90px at 100% 100%,
+      color-mix(in srgb, var(--pa-kind, var(--jt-teal)) 11%, transparent),
+      transparent 72%
     );
   transition: opacity 0.4s;
   pointer-events: none;
 }
-.pa-row[data-highlight] {
-  background: color-mix(in srgb, var(--role-accent) 6%, transparent);
-  box-shadow: inset 3px 0 0 var(--role-accent);
+/* The strip on the left is the kind (kinds.css): vermilion work, indigo university, young-bamboo personal. */
+.pa-row[data-archive-kind="work"] {
+  --pa-kind: var(--kind-work);
+  --pa-kind-ink: var(--kind-work-ink);
+}
+.pa-row[data-archive-kind="university"] {
+  --pa-kind: var(--kind-university);
+  --pa-kind-ink: var(--kind-university-ink);
+}
+.pa-row[data-archive-kind="personal"] {
+  --pa-kind: var(--kind-personal);
+  --pa-kind-ink: var(--kind-personal-ink);
+}
+.pa-row {
+  padding-left: 1.125rem;
+  box-shadow: inset 3px 0 0 var(--pa-kind, transparent);
+}
+.pa-row-case:hover,
+.pa-row:focus-within {
+  box-shadow: inset 5px 0 0 var(--pa-kind, transparent);
 }
 .pa-row:target {
   background: color-mix(in srgb, var(--role-accent) 10%, transparent);
@@ -238,8 +335,19 @@
   white-space: nowrap;
 }
 .pa-role {
-  color: var(--jt-koi-ink);
+  color: var(--pa-kind-ink, var(--jt-koi-ink));
   font-size: 0.8125rem;
+}
+/* A row matching the legend role: a diamond in the role colour before the role (the words are in .sr-only). */
+.pa-row[data-highlight] .pa-role::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin: 0 0.45rem 0.1rem 0.1rem;
+  border-radius: 1px;
+  background: var(--role-accent);
+  transform: rotate(45deg);
 }
 
 .pa-where {
@@ -251,19 +359,25 @@
   font-size: 0.8125rem;
 }
 .pa-badge {
-  padding: 0 0.4375rem;
-  border: 1px solid var(--jt-line-2);
-  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0 0.5rem 0 0.3rem;
+  border: 1px solid color-mix(in srgb, var(--pa-kind) 45%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pa-kind) 8%, transparent);
+  color: var(--pa-kind-ink);
   font-size: 0.6875rem;
-  line-height: 1.25rem;
+  line-height: 1.375rem;
 }
-.pa-badge[data-kind="work"] {
-  border-color: color-mix(in srgb, var(--jt-koi) 40%, transparent);
-  color: var(--jt-koi-ink);
+.pa-kamon {
+  font-size: 1rem;
+  transition: rotate 0.6s var(--jt-ease);
 }
-.pa-badge[data-kind="university"] {
-  border-color: color-mix(in srgb, var(--jt-teal) 45%, transparent);
-  color: var(--jt-teal);
+.pa-jp {
+  font: 500 0.66rem/1 var(--font-mincho);
+  letter-spacing: 0.1em;
+  opacity: 0.85;
 }
 .pa-stint {
   flex-basis: 100%;
@@ -381,4 +495,114 @@
 ::view-transition-group(case-title) {
   animation-duration: 320ms;
   animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* ---- Kind motion (full motion, hover-capable pointer): the chosen chip's crest is stamped like a hanko, a
+   hovered row turns its crest and plays one ambient effect: waves under work, petals over university, a ripple
+   behind personal. Decoration only; the static design is complete without it. ---- */
+@media (hover: hover) {
+  :root[data-motion="full"] .pa-chip[aria-pressed="true"] .pa-kamon {
+    animation: kamon-stamp 0.42s var(--jt-ease);
+  }
+  :root[data-motion="full"] .pa-row-case {
+    overflow: hidden;
+  }
+  :root[data-motion="full"] .pa-row-case:hover .pa-kamon {
+    rotate: 28deg;
+  }
+  :root[data-motion="full"] .pa-row-case::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    opacity: 0;
+    pointer-events: none;
+  }
+  :root[data-motion="full"] .pa-row-case[data-archive-kind="work"]::before {
+    inset: auto 0 0;
+    height: 12px;
+    background: radial-gradient(
+        circle at 10px 12px,
+        transparent 5.5px,
+        var(--pa-kind) 6px,
+        transparent 7px
+      )
+      0 0 / 20px 12px repeat-x;
+  }
+  :root[data-motion="full"]
+    .pa-row-case[data-archive-kind="work"]:hover::before {
+    animation: pa-wave 2.6s linear infinite;
+  }
+  :root[data-motion="full"]
+    .pa-row-case[data-archive-kind="university"]::before {
+    inset: 0;
+    background:
+      radial-gradient(4px 3px at 82% 18%, #f4b3c2 90%, transparent),
+      radial-gradient(3.5px 2.5px at 66% 6%, #f4b3c2 90%, transparent),
+      radial-gradient(3px 2px at 92% 40%, #f6c5d0 90%, transparent);
+  }
+  :root[data-motion="full"]
+    .pa-row-case[data-archive-kind="university"]:hover::before {
+    animation: pa-petals 2.4s linear infinite;
+  }
+  :root[data-motion="full"] .pa-row-case[data-archive-kind="personal"]::before {
+    top: 50%;
+    right: 20%;
+    width: 12px;
+    height: 12px;
+    border: 1px solid var(--pa-kind);
+    border-radius: 50%;
+    translate: 50% -50%;
+  }
+  :root[data-motion="full"]
+    .pa-row-case[data-archive-kind="personal"]:hover::before {
+    animation: pa-ripple 1.8s var(--jt-ease) infinite;
+  }
+}
+@keyframes pa-wave {
+  from {
+    opacity: 0.22;
+    background-position-x: 0;
+  }
+  to {
+    opacity: 0.22;
+    background-position-x: 40px;
+  }
+}
+@keyframes pa-petals {
+  0% {
+    opacity: 0;
+    transform: translate(0, -6px) rotate(0);
+  }
+  20% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-120px, 40px) rotate(12deg);
+  }
+}
+/* The ring grows by size, not scale, so its 1px line stays thin. */
+@keyframes pa-ripple {
+  from {
+    opacity: 0.5;
+    width: 12px;
+    height: 12px;
+  }
+  to {
+    opacity: 0;
+    width: 140px;
+    height: 140px;
+  }
+}
+
+/* Forced colours drop backgrounds and box shadows: keep the crests, the role diamonds and the kind strip visible. */
+@media (forced-colors: active) {
+  .pa-row[data-highlight] .pa-role::before,
+  .pa-legend-mark {
+    forced-color-adjust: none;
+    background: CanvasText;
+  }
+  .pa-row {
+    border-left: 3px solid CanvasText;
+  }
 }

@@ -259,6 +259,16 @@
   font-weight: 500;
   color: var(--kk-ink);
 }
+/* The kind with its crest (Kamon, coloured by kinds.css). */
+.kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.kind > :global(.kamon) {
+  align-self: center;
+  font-size: 14px;
+}
 
 .actions {
   display: flex;

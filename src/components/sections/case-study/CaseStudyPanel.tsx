@@ -13,6 +13,8 @@ import {
 import { ensureToaster } from "@/components/site/toast-readiness";
 import { CopyIcon, XIcon } from "@/components/site/icons";
 import { useTheme } from "@/components/site/theme";
+import { Kamon } from "@/components/sections/projects/Kamon";
+import type { ProjectKind } from "@/content/schema";
 import {
   figureNumeral,
   parseFigParam,
@@ -53,6 +55,8 @@ export type CaseStudyItem = {
   duration: string;
   /** "Work", "University" or "Personal". */
   kindLabel: string;
+  /** The kind behind kindLabel; its crest is shown beside the label. */
+  kind?: ProjectKind;
   caseStudy: CaseStudyView;
   tech: string[];
   demoUrl: string | null;
@@ -315,7 +319,7 @@ export function CaseStudyPanel({
     { label: t("role"), value: item.role },
     { label: t("teamLabel"), value: item.teamSize },
     { label: t("period"), value: `${item.period} · ${item.duration}` },
-    { label: t("where"), value: item.kindLabel },
+    { label: t("where"), value: item.kindLabel, kind: item.kind },
   ].filter((m) => m.value);
   const position = t("position", { index: index + 1, total });
   const id = (key: string) => `${uid}-${key}`;
@@ -438,7 +442,16 @@ export function CaseStudyPanel({
                   {meta.map((m) => (
                     <div key={m.label}>
                       <dt>{m.label}</dt>
-                      <dd>{m.value}</dd>
+                      <dd>
+                        {"kind" in m && m.kind ? (
+                          <span className={styles.kind}>
+                            <Kamon kind={m.kind} />
+                            {m.value}
+                          </span>
+                        ) : (
+                          m.value
+                        )}
+                      </dd>
                     </div>
                   ))}
                 </dl>
