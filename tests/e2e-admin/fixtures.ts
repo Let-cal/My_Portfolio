@@ -493,6 +493,10 @@ export const FIGURES_LIST_REQUEST = [
   "pending",
   "done",
   "failed",
+  "failed-aborted",
+  "failed-connection",
+  "failed-empty",
+  "failed-timeout",
 ] as const;
 
 // CI colours Playwright's messages; the codes would otherwise hide every known prefix.
@@ -505,7 +509,7 @@ function safeFailureCategory(message: string | undefined) {
     return "reorder-not-registered";
   const figures = /^Figures save did not finish: ([a-z-]+)$/.exec(prefix)?.[1];
   if (figures) {
-    const listRequest = /^saved-no-redirect-([a-z]+)$/.exec(figures)?.[1];
+    const listRequest = /^saved-no-redirect-([a-z-]+)$/.exec(figures)?.[1];
     const known = listRequest
       ? (FIGURES_LIST_REQUEST as readonly string[]).includes(listRequest)
       : (FIGURES_SAVE_STATES as readonly string[]).includes(figures);

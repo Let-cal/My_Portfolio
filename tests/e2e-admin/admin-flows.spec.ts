@@ -456,7 +456,8 @@ test("project figures: an uploaded image and a Mermaid diagram are saved and cou
     if (isListNavigation(request)) listRequest = "done";
   };
   const onFailed = (request: PlaywrightRequest) => {
-    if (isListNavigation(request)) listRequest = "failed";
+    if (isListNavigation(request))
+      listRequest = failureKind(request.failure()?.errorText);
   };
   page.on("request", onRequest);
   page.on("requestfinished", onFinished);
@@ -526,6 +527,19 @@ test("project figures: an uploaded image and a Mermaid diagram are saved and cou
     await expect(chip).toHaveText("図 2", { timeout: 2_000 });
   }).toPass({ timeout: 45_000 });
 });
+
+/** A failed list request as a fixed word, from Chromium's net error code (never the URL or the text itself). */
+function failureKind(
+  errorText: string | undefined,
+): (typeof FIGURES_LIST_REQUEST)[number] {
+  if (!errorText) return "failed";
+  if (errorText.includes("ERR_ABORTED")) return "failed-aborted";
+  if (/ERR_CONNECTION_(RESET|CLOSED|REFUSED)/.test(errorText))
+    return "failed-connection";
+  if (errorText.includes("ERR_EMPTY_RESPONSE")) return "failed-empty";
+  if (errorText.includes("TIMED_OUT")) return "failed-timeout";
+  return "failed";
+}
 
 /**
  * Where a project save stopped when its redirect did not come: a fixed word (FIGURES_SAVE_STATES) read from what

@@ -55,6 +55,10 @@ describe("bounded private browser failure diagnostics", () => {
       "Figures save did not finish: saved-no-redirect-none",
       "figures-save-saved-no-redirect-none",
     ],
+    [
+      "Figures save did not finish: saved-no-redirect-failed-aborted",
+      "figures-save-saved-no-redirect-failed-aborted",
+    ],
     ["Figures save did not finish: saved-no-redirect-later", "other"],
     [
       "Figures save did not finish: saved-no-redirect",
