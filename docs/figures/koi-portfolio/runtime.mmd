@@ -1,0 +1,19 @@
+flowchart TB
+  visitor([Visitor]) --> rsc
+  admin([Admin]) --> proxy
+  subgraph vercel [Next.js 16 on Vercel]
+    rsc["Server Components<br/>getContent()"] --> cache[("'use cache'<br/>tag: content")]
+    cache -. "Supabase missing or invalid" .-> seed["seed.json"]
+    proxy["proxy.ts<br/>admin guard"] --> actions["Server actions<br/>requireAdmin()"]
+    actions -- "updateTag('content')" --> cache
+  end
+  subgraph supabase [Supabase]
+    db[("Postgres<br/>row level security")]
+    storage[("Storage<br/>media, files")]
+    realtime["Realtime<br/>private topic admin:content"]
+  end
+  cache -- "publishable key" --> db
+  actions -- "admin session" --> db
+  admin -- "direct upload" --> storage
+  db -- "triggers" --> realtime
+  realtime -- "change notes" --> admin
