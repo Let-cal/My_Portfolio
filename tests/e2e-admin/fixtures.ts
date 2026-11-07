@@ -473,11 +473,16 @@ function safeFailureLocation(stack: string | undefined): string | undefined {
   return locations[0];
 }
 
-/** Fixed states the figures save reports when its redirect does not come (admin-flows.spec.ts). */
+/**
+ * Fixed states the figures save reports when its redirect does not come (admin-flows.spec.ts), strongest first:
+ * the report names the first one seen while the redirect was awaited.
+ */
 export const FIGURES_SAVE_STATES = [
-  "invalid",
-  "error-toast",
   "session-dialog",
+  "error-toast",
+  "invalid",
+  "alert",
+  "saved-no-redirect",
   "saving",
   "idle",
 ] as const;

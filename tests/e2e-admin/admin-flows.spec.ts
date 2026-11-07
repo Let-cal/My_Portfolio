@@ -427,16 +427,30 @@ test("project figures: an uploaded image and a Mermaid diagram are saved and cou
   await expect(preview).toHaveAttribute("data-stale", "false");
 
   // Save renders light and dark, uploads both, and the server re-checks them.
+  // Toasts close after a few seconds, so the save's signals are sampled while the redirect is awaited; a failure
+  // names the strongest one seen (a fixed word, never the form content).
+  const seen = new Set<(typeof FIGURES_SAVE_STATES)[number]>();
+  let watching = true;
+  const watcher = (async () => {
+    while (watching) {
+      seen.add(await figuresSaveState(page).catch(() => "idle" as const));
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+  })();
   await page.getByRole("button", { name: "Lưu", exact: true }).click();
   try {
     await expect(page).toHaveURL(/\/admin\/projects\?highlight=/, {
       timeout: 60_000,
     });
   } catch {
-    // Name the form's state (a fixed word, never its content) so a CI failure says where the save stopped.
-    throw new Error(
-      `Figures save did not finish: ${await figuresSaveState(page)}`,
-    );
+    watching = false;
+    await watcher;
+    seen.add(await figuresSaveState(page));
+    const state = FIGURES_SAVE_STATES.find((s) => seen.has(s)) ?? "idle";
+    throw new Error(`Figures save did not finish: ${state}`);
+  } finally {
+    watching = false;
+    await watcher;
   }
   const media = (await suite.readProject()).media;
   expect(media.map((f) => [f.kind, (f.caption as { en: string }).en])).toEqual([
@@ -500,6 +514,10 @@ async function figuresSaveState(
   if (await page.locator("[data-sonner-toast][data-type='error']").count())
     return "error-toast";
   if (await page.locator("[aria-invalid='true']").count()) return "invalid";
+  // Inside the form only: Next.js keeps its own route announcer (role="alert") on every page.
+  if (await page.locator("form").getByRole("alert").count()) return "alert";
+  if (await page.locator("[data-sonner-toast][data-type='success']").count())
+    return "saved-no-redirect";
   if (await page.getByRole("button", { name: "Đang lưu…" }).count())
     return "saving";
   return "idle";

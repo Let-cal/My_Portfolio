@@ -34,6 +34,8 @@ const categories = [
   "figures-save-invalid",
   "figures-save-error-toast",
   "figures-save-session-dialog",
+  "figures-save-alert",
+  "figures-save-saved-no-redirect",
   "figures-save-saving",
   "figures-save-idle",
   "other",

@@ -46,6 +46,11 @@ describe("bounded private browser failure diagnostics", () => {
       "figures-save-session-dialog",
     ],
     ["Figures save did not finish: saving", "figures-save-saving"],
+    ["Figures save did not finish: alert", "figures-save-alert"],
+    [
+      "Figures save did not finish: saved-no-redirect",
+      "figures-save-saved-no-redirect",
+    ],
     ["Figures save did not finish: idle", "figures-save-idle"],
     ["Figures save did not finish: SECRET-SENTINEL", "other"],
     ["Keyboard reorder did not register", "reorder-not-registered"],
