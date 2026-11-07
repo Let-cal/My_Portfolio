@@ -66,7 +66,10 @@ export async function encodeFigureWebp(
   file: File,
 ): Promise<EncodedImage | null> {
   if (typeof createImageBitmap !== "function") return null;
-  const bitmap = await createImageBitmap(file);
+  // Phone photos carry their rotation in EXIF: apply it, so the figure is upright.
+  const bitmap = await createImageBitmap(file, {
+    imageOrientation: "from-image",
+  });
   try {
     const size = figureTargetSize(bitmap.width, bitmap.height);
     const canvas = document.createElement("canvas");
@@ -80,6 +83,9 @@ export async function encodeFigureWebp(
     const blob = await new Promise<Blob | null>((resolve) =>
       canvas.toBlob(resolve, "image/webp", FIGURE_WEBP_QUALITY),
     );
+    // Free the canvas backing store now, not when it is collected (a 1920 px canvas is ~15 MB).
+    canvas.width = 0;
+    canvas.height = 0;
     if (!blob || blob.type !== "image/webp") return null;
     return { blob, ...size };
   } finally {

@@ -5,6 +5,8 @@ import { validateUpload } from "./upload";
 
 export const FIGURE_MAX_WIDTH = 1920;
 export const FIGURE_WEBP_QUALITY = 0.82;
+/** Originals above this are refused before decoding: a huge file can exhaust the tab's memory while it decodes. */
+export const FIGURE_MAX_INPUT_BYTES = 30 * 1024 * 1024;
 
 export type ImageSize = { width: number; height: number };
 
@@ -74,6 +76,11 @@ export async function prepareFigureImage(
   // The type only: the size is checked on what is uploaded.
   const typeCheck = validateUpload({ type: file.type, size: 1 }, "image");
   if (!typeCheck.ok) return typeCheck;
+  if (file.size > FIGURE_MAX_INPUT_BYTES)
+    return {
+      ok: false,
+      reason: "Ảnh gốc lớn hơn 30 MB, hãy thu nhỏ trước khi tải lên.",
+    };
   let encoded: EncodedImage | null = null;
   try {
     encoded = await encode(file);

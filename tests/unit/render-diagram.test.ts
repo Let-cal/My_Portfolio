@@ -1,10 +1,13 @@
+// @vitest-environment jsdom
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   bytesToBase64,
   DIAGRAM_FONT_URL,
   embedFont,
+  loadMermaid,
+  MERMAID_LOAD_TIMEOUT_MS,
   MERMAID_SCRIPT_URL,
   MERMAID_VERSION,
   readViewBox,
@@ -88,5 +91,29 @@ describe("vendored Mermaid", () => {
     ).scripts;
     expect(scripts.prebuild).toContain("node scripts/copy-mermaid.mjs");
     expect(scripts.predev).toContain("node scripts/copy-mermaid.mjs");
+  });
+});
+
+describe("loading Mermaid", () => {
+  it("gives up after the load timeout, removes the script and lets the next render retry", async () => {
+    vi.useFakeTimers();
+    try {
+      // jsdom never runs the script, so it neither loads nor errors: the timeout is the only way out.
+      const first = loadMermaid();
+      const settled = expect(first).rejects.toThrow(/Mermaid tải quá lâu/);
+      await vi.advanceTimersByTimeAsync(MERMAID_LOAD_TIMEOUT_MS);
+      await settled;
+      expect(
+        document.querySelectorAll(`script[src="${MERMAID_SCRIPT_URL}"]`),
+      ).toHaveLength(0);
+      const second = loadMermaid();
+      expect(
+        document.querySelectorAll(`script[src="${MERMAID_SCRIPT_URL}"]`),
+      ).toHaveLength(1);
+      second.catch(() => {});
+      await vi.advanceTimersByTimeAsync(MERMAID_LOAD_TIMEOUT_MS);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

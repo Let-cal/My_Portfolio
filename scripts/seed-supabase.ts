@@ -6,16 +6,18 @@ import seed from "../src/content/seed.json";
 import {
   buildSeedRows,
   CONFLICT_KEY,
+  HOSTED_SEED_OMIT,
   renderSeedSql,
   withoutSeedFigures,
 } from "../src/lib/data/seed-rows";
 import { createServiceSupabase } from "../src/lib/supabase/service";
 
-// Projects go up without the seed's figures (local /seed and /images files): add figures in the admin.
+// Projects go up without their media column (the seed's figures are local /seed and /images files): a re-run keeps
+// the figures made in the admin.
 const rows = withoutSeedFigures(buildSeedRows(contentSchema.parse(seed)));
 
 if (process.argv.includes("--sql")) {
-  process.stdout.write(renderSeedSql(rows));
+  process.stdout.write(renderSeedSql(rows, HOSTED_SEED_OMIT));
 } else {
   const db = createServiceSupabase();
   for (const [table, list] of Object.entries(rows)) {
