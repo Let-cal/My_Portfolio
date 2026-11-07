@@ -125,7 +125,8 @@ Layout (desktop tiers ≥1024 px, both existing tiers): the region that holds th
 is replaced by, top to bottom:
 1. Stage: the current figure, `object-fit: contain`, on a washi-tinted surface; category seal top left
    (e.g. 構 Architecture), "⤢ Enlarge" button top right, ‹ › buttons on the sides.
-2. Caption (one line) and note (one line, muted).
+2. Caption (up to two lines; a longer caption ends in an ellipsis here and is shown in full in the viewer) and
+   note (one line, muted).
 3. Filmstrip: one thumbnail per figure with its category kanji; the current one outlined in koi orange; a
    position label "2 / 6".
 The stage takes the space left after caption and filmstrip; its height comes from the panel, never from the
@@ -200,8 +201,8 @@ Diagram editor (a sheet)
 
 Save
 - On "Lưu" of the project form, every diagram whose source or theme changed is rendered twice (light, dark),
-  sanitised (DOMPurify SVG profile; no `script`, `foreignObject` with HTML, event attributes or external
-  references), uploaded through a server action that re-checks admin, type `image/svg+xml`, size ≤ 1 MB and the
+  sanitised (DOMPurify SVG profile plus an element allowlist; no `script`, no `foreignObject` at all since labels
+  are SVG text, no event attributes or external references), uploaded through a server action that re-checks admin, type `image/svg+xml`, size ≤ 1 MB and the
   same sanitising rules, then the URLs are written into the figure before the row is saved.
 - If rendering or upload fails, the save stops with a message naming the figure, and nothing is written.
 - "Vẽ lại tất cả sơ đồ" on the list re-renders every diagram with the current theme in one save.
