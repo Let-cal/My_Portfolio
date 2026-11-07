@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="160" viewBox="0 0 480 160" role="img">
+  <rect width="480" height="160" fill="#1b1714"/>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#d9cdbd"/>
+    </marker>
+  </defs>
+  <rect x="16" y="52" width="108" height="56" rx="6" fill="#2a241f" stroke="#d9cdbd" stroke-width="1.5"/>
+  <text x="70" y="85" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#efe6d8">Client</text>
+  <rect x="186" y="52" width="108" height="56" rx="6" fill="#2a241f" stroke="#d9cdbd" stroke-width="1.5"/>
+  <text x="240" y="85" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#efe6d8">API</text>
+  <rect x="356" y="52" width="108" height="56" rx="6" fill="#2a241f" stroke="#d9cdbd" stroke-width="1.5"/>
+  <text x="410" y="85" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#efe6d8">Database</text>
+  <line x1="124" y1="80" x2="184" y2="80" stroke="#d9cdbd" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="294" y1="80" x2="354" y2="80" stroke="#d9cdbd" stroke-width="1.5" marker-end="url(#arrow)"/>
+</svg>

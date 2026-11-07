@@ -4,6 +4,9 @@ export type CaseContext = "tree" | "bento" | "archive";
 /** Query parameter that deep-links to a case study: `?case=<projectId>`. */
 export const CASE_PARAM = "case";
 
+/** Query parameter of the figure shown in the panel's figures view: `&fig=<n>`, 1-based. */
+export const FIG_PARAM = "fig";
+
 /**
  * sessionStorage key that marks a reload already tried for a project whose panel chunk failed (see
  * LazyCaseStudyPanel); the panel removes it once it has loaded, so a later failure may reload again.

@@ -4,7 +4,7 @@ import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { GrainOverlay } from "@/components/fx/GrainOverlay";
-import { Spotlight } from "@/components/fx/Spotlight";
+import { DeferredDecor } from "@/components/site/DeferredDecor";
 import { CommandPalette } from "@/components/site/CommandPalette";
 import { Footer } from "@/components/site/Footer";
 import { Header } from "@/components/site/Header";
@@ -18,7 +18,6 @@ import {
 } from "@/components/site/reveal-style";
 import { PillNav } from "@/components/site/PillNav";
 import { RoleProvider } from "@/components/site/RoleProvider";
-import { ScrollProgressKoi } from "@/components/site/ScrollProgressKoi";
 import { SideRail } from "@/components/site/SideRail";
 import { GithubIcon, LinkedinIcon } from "@/components/site/social-icons";
 import { SmoothScroll } from "@/components/site/SmoothScroll";
@@ -174,9 +173,8 @@ export default async function LocaleLayout({
               <DeferredToaster />
               <SmoothScroll />
               <CommandPalette cvUrls={cvUrls} email={profile.email} />
-              <Spotlight />
+              <DeferredDecor />
               <GrainOverlay />
-              <ScrollProgressKoi />
               <HelloIntro />
             </RoleProvider>
           </MotionProvider>

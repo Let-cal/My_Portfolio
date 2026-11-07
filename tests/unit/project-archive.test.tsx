@@ -228,6 +228,53 @@ describe("ProjectArchive", () => {
     );
   });
 
+  it("shows a 図 N chip only on rows with figures and a case study", () => {
+    renderArchive();
+    const withFigures = base.projects.filter(
+      (p) => p.media.length > 0 && p.caseStudy,
+    );
+    expect(withFigures.length).toBeGreaterThan(0);
+    const chips = [...document.querySelectorAll<HTMLElement>("[data-figures]")];
+    expect(chips).toHaveLength(withFigures.length);
+    for (const p of withFigures) {
+      const chip = document.querySelector<HTMLElement>(
+        `#row-${p.id} [data-figures]`,
+      )!;
+      expect(chip).not.toBeNull();
+      expect(chip.textContent).toBe(`図 ${p.media.length}`);
+      expect(
+        screen.getByLabelText(`${p.media.length} figures`, {
+          selector: `#row-${p.id} *`,
+        }),
+      ).toBe(chip);
+    }
+    expect(
+      document.querySelector("#row-skg-ai-agent [data-figures]"),
+    ).toBeNull();
+  });
+
+  it("no 図 chip on a row whose figures cannot open (no case study)", () => {
+    const withFigures = base.projects.find((p) => p.media.length > 0)!;
+    const noCase: Project = {
+      ...personal,
+      id: "figures-no-case",
+      title: "Figures Without Case",
+      caseStudy: null,
+      media: withFigures.media,
+    };
+    renderArchive({
+      content: { ...base, projects: [...base.projects, noCase] },
+    });
+    expect(document.querySelector("#row-figures-no-case")).not.toBeNull();
+    expect(
+      document.querySelector("#row-figures-no-case [data-figures]"),
+    ).toBeNull();
+    // The project the figures came from still has its chip.
+    expect(
+      document.querySelector(`#row-${withFigures.id} [data-figures]`),
+    ).not.toBeNull();
+  });
+
   it("groups rows by year newest first", () => {
     renderArchive();
     const groups = screen.getAllByRole("region");
@@ -344,11 +391,12 @@ describe("ProjectArchive", () => {
       "/en/projects?kind=university#row-skg-coa",
     );
     renderArchive();
-    await waitFor(() =>
-      expect(chip(/^All/)).toHaveAttribute("aria-pressed", "true"),
-    );
+    // "All" is also the state before the deep link is read (a frame after mount): wait for the URL rewrite too.
+    await waitFor(() => {
+      expect(chip(/^All/)).toHaveAttribute("aria-pressed", "true");
+      expect(window.location.search).toBe("");
+    });
     expect(visibleRowIds()).toContain("row-skg-coa");
-    expect(window.location.search).toBe("");
     expect(window.location.hash).toBe("#row-skg-coa");
     await waitFor(() => expect(scroll).toHaveBeenCalled());
     expect(scroll.mock.contexts[0]).toBe(
@@ -462,10 +510,10 @@ describe("ProjectArchive", () => {
     expect(document.getElementById("row-siteplus")).toHaveTextContent(
       siteplus.role.en,
     );
-    // A personal project is not named twice.
-    expect(where("row-side-project").textContent).toBe(
-      en.archive.kinds.personal,
-    );
+    // A personal project is not named twice (the crest and the kanji are decorative, hidden from readers).
+    const spoken = where("row-side-project").cloneNode(true) as Element;
+    spoken.querySelectorAll("[aria-hidden=true]").forEach((n) => n.remove());
+    expect(spoken.textContent).toBe(en.archive.kinds.personal);
   });
 
   it("tech shows three names, then +N, and keeps the rest for screen readers", () => {
@@ -501,6 +549,82 @@ describe("ProjectArchive", () => {
       "row-skg-flexybox-p1",
     ]);
     expect(rowIds()).toEqual(order);
+  });
+
+  it("every kind chip and row badge carries its crest, with the kanji name outside Japanese", () => {
+    renderArchive({ content: withPersonal });
+    for (const k of ["work", "university", "personal"] as const) {
+      const button = chip(new RegExp(`^${en.archive.kinds[k]}`));
+      expect(button.querySelector(`.kamon[data-kind='${k}']`)).not.toBeNull();
+    }
+    // "All" has no crest.
+    expect(chip(/^All/).querySelector(".kamon")).toBeNull();
+    const badge = (id: string) =>
+      document.querySelector(`#row-${id} .pa-badge`)!;
+    expect(badge("siteplus").querySelector(".kamon")).toHaveAttribute(
+      "data-kind",
+      "university",
+    );
+    expect(badge("side-project").querySelector(".kamon")).toHaveAttribute(
+      "data-kind",
+      "personal",
+    );
+    const kanji = badge("skg-coa").querySelector("[lang='ja']")!;
+    expect(kanji).toHaveTextContent("仕事");
+    expect(kanji).toHaveAttribute("aria-hidden", "true");
+    // Each row names its kind for the strip and the hover colour.
+    expect(document.getElementById("row-skg-coa")).toHaveAttribute(
+      "data-archive-kind",
+      "work",
+    );
+  });
+
+  it("the Japanese archive has no kanji subtitle (its labels are already Japanese)", () => {
+    renderArchive({ locale: "ja" });
+    expect(document.querySelector("#row-skg-coa .pa-badge .pa-jp")).toBeNull();
+    expect(document.querySelector(".pa-chip .pa-jp")).toBeNull();
+  });
+
+  it("the role legend names the marked role, counts its rows and switches the role", async () => {
+    const user = userEvent.setup();
+    renderArchive();
+    const legend = screen.getByRole("group", { name: en.archive.legendLabel });
+    const pressed = () =>
+      within(legend)
+        .getAllByRole("button", { pressed: true })
+        .map((b) => b.textContent);
+    expect(pressed()).toEqual([en.roles.fullstack]);
+    expect(legend.querySelector(".pa-legend-count")).toHaveTextContent(
+      "4 of 8 projects",
+    );
+    await user.click(within(legend).getByRole("button", { name: en.roles.pm }));
+    expect(pressed()).toEqual([en.roles.pm]);
+    expect(legend.querySelector(".pa-legend-count")).toHaveTextContent(
+      "3 of 8 projects",
+    );
+    expect(window.location.search).toBe("?role=pm");
+    // A marked row says so in words, not only with the diamond.
+    expect(
+      document.getElementById("row-skg-ai-agent")!.querySelector(".pa-role"),
+    ).toHaveTextContent(`(matches ${en.roles.pm})`);
+  });
+
+  it("Hide marks removes every role mark until Show marks", async () => {
+    const user = userEvent.setup();
+    renderArchive();
+    const legend = screen.getByRole("group", { name: en.archive.legendLabel });
+    await user.click(
+      within(legend).getByRole("button", { name: en.archive.hideMarks }),
+    );
+    expect(document.querySelectorAll("li[data-highlight]")).toHaveLength(0);
+    expect(document.querySelector(".pa-role .sr-only")).toBeNull();
+    expect(legend.querySelector(".pa-legend-count")).toHaveTextContent(
+      en.archive.marksHidden,
+    );
+    await user.click(
+      within(legend).getByRole("button", { name: en.archive.showMarks }),
+    );
+    expect(document.querySelectorAll("li[data-highlight]")).toHaveLength(4);
   });
 
   it("links open in a new tab with labelled repos", () => {

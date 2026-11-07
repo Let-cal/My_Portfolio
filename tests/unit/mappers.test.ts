@@ -81,6 +81,7 @@ describe("project new fields", () => {
       roles: ["techlead", "fullstack"],
       team_size: "5",
       links: [{ label: "Write-up", url: "https://example.com/post" }],
+      media: [],
     };
     const project = rowToProject(row);
     expect(project).toMatchObject({

@@ -40,6 +40,7 @@ const fixtureSchema = z
           z.literal("task4-certificate-a"),
           z.literal("task4-certificate-b"),
         ]),
+        projectId: z.literal("task4-project-figures"),
       })
       .strict(),
   })

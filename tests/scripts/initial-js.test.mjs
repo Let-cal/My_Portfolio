@@ -411,6 +411,19 @@ test("the default budget run also measures the project archive page", () =>
     mkdirSync(join(root, ".next/server/app/en"), { recursive: true });
     for (const route of ["en", "ja", "vi", "en/quick"])
       writeFileSync(join(root, ".next/server/app", `${route}.html`), "");
+    mkdirSync(join(root, ".next/static/chunks"), { recursive: true });
+    writeFileSync(join(root, ".next/static/chunks/figures.js"), "f()");
+    writeFileSync(
+      join(root, ".next/react-loadable-manifest.json"),
+      JSON.stringify({
+        "figures/LazyFigureScroll.tsx -> ./FigureScroll": {
+          files: ["static/chunks/figures.js"],
+        },
+        "figures/LazyFigureViewer.tsx -> ./FigureViewer": {
+          files: ["static/chunks/figures.js"],
+        },
+      }),
+    );
     const missing = spawnSync(process.execPath, [script, "--json"], {
       cwd: root,
       encoding: "utf8",
@@ -467,6 +480,33 @@ test(
         readFileSync(path, "utf8").includes("@vercel/speed-insights"),
         false,
         `${src} ships Speed Insights at startup`,
+      );
+    }
+  },
+);
+
+test(
+  "the pointer spotlight and the scroll-progress thread load after startup",
+  { skip: !existsSync(".next/server/app/en.html") },
+  () => {
+    const result = spawnSync(process.execPath, [script, "en", "--json"], {
+      encoding: "utf8",
+    });
+    const [{ chunks }] = JSON.parse(result.stdout);
+    for (const { src } of chunks) {
+      const code = readFileSync(
+        join(".next", decodeURIComponent(src.replace(/^\/_next\//, ""))),
+        "utf8",
+      );
+      assert.equal(
+        code.includes("--fx-spot-x"),
+        false,
+        `${src} ships the pointer spotlight at startup`,
+      );
+      assert.equal(
+        code.includes("--fx-progress"),
+        false,
+        `${src} ships the scroll-progress thread at startup`,
       );
     }
   },

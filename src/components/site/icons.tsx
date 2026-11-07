@@ -97,6 +97,7 @@ export const Loader2Icon = /*#__PURE__*/ icon("lucide lucide-loader-circle lucid
 export const LogIn = /*#__PURE__*/ icon("lucide lucide-log-in", <><path d={"m10 17 5-5-5-5"}></path><path d={"M15 12H3"}></path><path d={"M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"}></path></>);
 export const MailIcon = /*#__PURE__*/ icon("lucide lucide-mail", <><path d={"m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"}></path><rect x={"2"} y={"4"} width={"20"} height={"16"} rx={"2"}></rect></>);
 export const MapPinIcon = /*#__PURE__*/ icon("lucide lucide-map-pin", <><path d={"M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"}></path><circle cx={"12"} cy={"10"} r={"3"}></circle></>);
+export const Maximize2Icon = /*#__PURE__*/ icon("lucide lucide-maximize-2", <><path d={"M15 3h6v6"}></path><path d={"m21 3-7 7"}></path><path d={"m3 21 7-7"}></path><path d={"M9 21H3v-6"}></path></>);
 export const Menu = /*#__PURE__*/ icon("lucide lucide-menu", <><path d={"M4 5h16"}></path><path d={"M4 12h16"}></path><path d={"M4 19h16"}></path></>);
 export const MonitorIcon = /*#__PURE__*/ icon("lucide lucide-monitor", <><rect width={"20"} height={"14"} x={"2"} y={"3"} rx={"2"}></rect><line x1={"8"} x2={"16"} y1={"21"} y2={"21"}></line><line x1={"12"} x2={"12"} y1={"17"} y2={"21"}></line></>);
 export const Moon = /*#__PURE__*/ icon("lucide lucide-moon", <><path d={"M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"}></path></>);

@@ -270,7 +270,37 @@
     "chapterProjects": "第二章 作品",
     "where": "所属",
     "period": "期間",
-    "teamLabel": "チーム"
+    "teamLabel": "チーム",
+    "content": "本文",
+    "figures": "図版",
+    "enlarge": "拡大",
+    "figurePosition": "図 {n}／{count}",
+    "figureError": "この図を読み込めませんでした",
+    "retry": "再試行",
+    "prevFigure": "前の図",
+    "nextFigure": "次の図",
+    "categories": {
+      "screen": "画面",
+      "architecture": "構成",
+      "erd": "データモデル",
+      "flow": "フロー",
+      "other": "その他"
+    },
+    "viewer": {
+      "close": "閉じる",
+      "zoomIn": "拡大",
+      "zoomOut": "縮小",
+      "fit": "全体表示",
+      "actualSize": "原寸",
+      "panLeft": "左へ移動",
+      "panRight": "右へ移動",
+      "panUp": "上へ移動",
+      "panDown": "下へ移動",
+      "index": "図の一覧",
+      "canvas": "図の表示領域",
+      "count": "図 {count} 点",
+      "hint": "Esc で閉じる · ←/→ で図を切り替え · + / - で拡大縮小 · 0 で全体表示"
+    }
   },
   "projects": {
     "viewCaseStudy": "事例を見る",
@@ -282,6 +312,7 @@
     "codeMobile": "コード(モバイル)",
     "codeN": "コード{n}",
     "newTab": "(新しいタブで開きます)",
+    "figureCount": "図{count}点",
     "viewAll": "{count}件のプロジェクトをすべて見る"
   },
   "archive": {
@@ -303,7 +334,14 @@
     "stint": "職位：",
     "featured": "ホームで紹介中",
     "showing": "{total}件中{count}件を表示",
-    "empty": "この種類のプロジェクトはまだありません。"
+    "empty": "この種類のプロジェクトはまだありません。",
+    "legendLabel": "役割の印",
+    "legendLead": "次の役割で関わったプロジェクトに印を付けています",
+    "legendCount": "{total}件中{count}件",
+    "hideMarks": "印を隠す",
+    "showMarks": "印を表示",
+    "marksHidden": "印は非表示",
+    "matches": "（{role}に該当）"
   },
   "certificates": {
     "intro": "講座、資格、学校での活動です。提灯を選ぶと認定情報が見られます。",

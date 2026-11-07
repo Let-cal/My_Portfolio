@@ -33,6 +33,7 @@ function fixture() {
     member: { email: "task4-member@example.invalid", password: "b".repeat(32) },
     fixtures: {
       certificateIds: ["task4-certificate-a", "task4-certificate-b"],
+      projectId: "task4-project-figures",
     },
   };
 }

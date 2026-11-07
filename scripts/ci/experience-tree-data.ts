@@ -21,6 +21,9 @@ export const NEW_PROJECT_COLUMNS = [
   "links",
 ] as const;
 
+/** Project columns added by migrations after the experience tree one; the dry run never applies those. */
+export const LATER_PROJECT_COLUMNS = ["media"] as const;
+
 export const LINKS_VARIANT = {
   id: "skg-coa",
   code: "https://example.invalid/coa-code",
@@ -126,19 +129,23 @@ export type DryRunData = {
 export function dryRunData(before: unknown, after: unknown): DryRunData {
   const frozen = contentSchema.parse(before);
   const beforeRows = buildSeedRows(withLinksBefore(frozen));
-  const omitted = new Set<string>(NEW_PROJECT_COLUMNS);
+  const omitted = new Set<string>([
+    ...NEW_PROJECT_COLUMNS,
+    ...LATER_PROJECT_COLUMNS,
+  ]);
   beforeRows.projects = beforeRows.projects.map((p) =>
     Object.fromEntries(Object.entries(p).filter(([k]) => !omitted.has(k))),
   );
+  const later = new Set<string>(LATER_PROJECT_COLUMNS);
+  const afterRows = buildSeedRows(
+    withLinksAfter(withFrozenProjectText(contentSchema.parse(after), frozen)),
+  );
+  afterRows.projects = afterRows.projects.map((p) =>
+    Object.fromEntries(Object.entries(p).filter(([k]) => !later.has(k))),
+  );
   return {
-    beforeSql: renderSeedSql(beforeRows, { projects: NEW_PROJECT_COLUMNS }),
+    beforeSql: renderSeedSql(beforeRows, { projects: [...omitted] }),
     expectedBefore: snapshotOf(beforeRows),
-    expectedAfter: snapshotOf(
-      buildSeedRows(
-        withLinksAfter(
-          withFrozenProjectText(contentSchema.parse(after), frozen),
-        ),
-      ),
-    ),
+    expectedAfter: snapshotOf(afterRows),
   };
 }

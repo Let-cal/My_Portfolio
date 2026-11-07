@@ -18,6 +18,7 @@ import {
   monthsBetween,
   shortTitle,
 } from "@/lib/format";
+import { figureViews, type FigureView } from "@/lib/figures/view";
 import { pickLocale } from "@/lib/i18n-text";
 import en from "@/messages/en.json";
 import ja from "@/messages/ja.json";
@@ -46,6 +47,8 @@ export type JourneyChild = {
   demoUrl: string | null;
   repoUrls: string[];
   caseStudy: CaseStudyView | null;
+  /** Public views of the project figures, stored order (used by the case study panel only). */
+  figures: FigureView[];
   roles: RoleKey[];
   /** The localized `caseStudy.result`; null without a case study. */
   result: string | null;
@@ -202,6 +205,7 @@ function childOf(
       decisions: pickLocale(p.caseStudy.decisions, locale),
       result: pickLocale(p.caseStudy.result, locale),
     },
+    figures: figureViews(p.media, locale),
     roles: p.roles,
     result: p.caseStudy && pickLocale(p.caseStudy.result, locale),
     duration: formatDuration(p.start, p.end, locale, now),

@@ -18,10 +18,12 @@ export function caseItemFromRow(
         period: row.period,
         duration: row.duration,
         kindLabel,
+        kind: row.whereKind,
         caseStudy: row.caseStudy,
         tech: row.tech,
         demoUrl: row.demoUrl,
         repoUrls: row.repoUrls,
+        figures: row.figures,
       }
     : null;
 }
@@ -53,10 +55,12 @@ export function caseItemsFromJourney(
                 period: c.period,
                 duration: c.duration,
                 kindLabel: kindLabel(parent.kind),
+                kind: parent.kind === "company" ? "work" : "university",
                 caseStudy: c.caseStudy,
                 tech: c.tech,
                 demoUrl: c.demoUrl,
                 repoUrls: c.repoUrls,
+                figures: c.figures,
               },
             ]
           : [],

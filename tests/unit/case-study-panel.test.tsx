@@ -12,6 +12,23 @@ vi.mock("sonner", () => ({ toast }));
 vi.mock("@/components/site/toast-readiness", () => ({
   ensureToaster: () => Promise.resolve(),
 }));
+// The figures view is its own lazy chunk; here it renders at once.
+vi.mock(
+  "@/components/sections/case-study/figures/LazyFigureScroll",
+  async () => {
+    const { FigureScroll } =
+      await import("@/components/sections/case-study/figures/FigureScroll");
+    return { LazyFigureScroll: FigureScroll };
+  },
+);
+vi.mock(
+  "@/components/sections/case-study/figures/LazyFigureViewer",
+  async () => {
+    const { FigureViewer } =
+      await import("@/components/sections/case-study/figures/FigureViewer");
+    return { LazyFigureViewer: FigureViewer };
+  },
+);
 import { contentSchema, type Content } from "@/content/schema";
 import {
   CaseStudyPanel,
@@ -122,6 +139,15 @@ describe("CaseStudyPanel", () => {
     expect(
       within(dialog).getByText(`${byId("skg-ai-agent").period} · 6 mos`),
     ).toBeInTheDocument();
+  });
+
+  it("the Where line shows the kind's crest beside its label", async () => {
+    renderPanel({ initial: "siteplus" });
+    const dialog = await screen.findByRole("dialog");
+    const crest = dialog.querySelector(".kamon")!;
+    expect(crest).toHaveAttribute("data-kind", "university");
+    expect(crest).toHaveAttribute("aria-hidden", "true");
+    expect(crest.parentElement).toHaveTextContent(en.archive.kinds.university);
   });
 
   it("lists every tech chip", async () => {
@@ -475,5 +501,234 @@ describe("useCaseParam", () => {
     );
     await waitFor(() => expect(opened).toContain("tree:siteplus"));
     expect(opened.some((o) => o.startsWith("bento"))).toBe(false);
+  });
+});
+
+describe("CaseStudyPanel figures view", () => {
+  const siteplus = byId("siteplus");
+  /** Three projects: two with figures, the last without. */
+  const withFigures: CaseStudyItem[] = [
+    siteplus,
+    { ...byId("skg-coa"), figures: siteplus.figures.slice().reverse() },
+    { ...byId("skg-ai-agent"), figures: [] },
+  ];
+
+  it("shows the 文 / 図 control only when the project has figures, with aria-pressed", async () => {
+    expect(siteplus.figures).toHaveLength(2);
+    renderPanel({ list: withFigures, initial: "siteplus" });
+    const dialog = await screen.findByRole("dialog", { name: "SitePlus" });
+    const content = within(dialog).getByRole("button", { name: "Content" });
+    const figs = within(dialog).getByRole("button", { name: "Figures · 2" });
+    expect(content).toHaveAttribute("aria-pressed", "true");
+    expect(figs).toHaveAttribute("aria-pressed", "false");
+    // In reading order after the title.
+    const title = within(dialog).getByRole("heading", { name: "SitePlus" });
+    expect(
+      title.compareDocumentPosition(figs) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    // A project without figures has no control.
+    await userEvent
+      .setup()
+      .click(within(dialog).getByRole("button", { name: /Previous project/ }));
+    const other = await screen.findByRole("dialog", { name: "AI Agent" });
+    expect(within(other).queryByRole("button", { name: /Figures/ })).toBeNull();
+    expect(within(other).queryByRole("button", { name: "Content" })).toBeNull();
+  });
+
+  it("switching to 図 writes fig=1 with replaceState, back to 文 removes it", async () => {
+    const user = userEvent.setup();
+    window.history.replaceState(null, "", "/en/projects?case=siteplus");
+    const replace = vi.spyOn(window.history, "replaceState");
+    const push = vi.spyOn(window.history, "pushState");
+    renderPanel({ list: withFigures });
+    const dialog = await screen.findByRole("dialog", { name: "SitePlus" });
+    await user.click(
+      within(dialog).getByRole("button", { name: "Figures · 2" }),
+    );
+    expect(
+      within(dialog).getByRole("button", { name: "Figures · 2" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(within(dialog).getByRole("tablist")).toBeInTheDocument();
+    // The result banner and panes give way to the stage.
+    expect(within(dialog).queryByText(siteplus.caseStudy.problem)).toBeNull();
+    await waitFor(() =>
+      expect(window.location.search).toBe("?case=siteplus&fig=1"),
+    );
+    await user.click(
+      within(dialog).getByRole("button", { name: "Next figure" }),
+    );
+    await waitFor(() =>
+      expect(window.location.search).toBe("?case=siteplus&fig=2"),
+    );
+    await user.click(within(dialog).getByRole("button", { name: "Content" }));
+    await waitFor(() => expect(window.location.search).toBe("?case=siteplus"));
+    expect(
+      within(dialog).getByText(siteplus.caseStudy.problem),
+    ).toBeInTheDocument();
+    expect(replace).toHaveBeenCalled();
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it("opens straight on the figure of ?fig=, and on figure 1 when it is out of range", async () => {
+    window.history.replaceState(null, "", "/en/projects?case=siteplus&fig=2");
+    const { unmount } = renderPanel({ list: withFigures });
+    const dialog = await screen.findByRole("dialog", { name: "SitePlus" });
+    const tabs = await within(dialog).findAllByRole("tab");
+    expect(tabs[1]).toHaveAttribute("aria-selected", "true");
+    unmount();
+    window.history.replaceState(null, "", "/en/projects?case=siteplus&fig=9");
+    renderPanel({ list: withFigures });
+    const again = await screen.findByRole("dialog", { name: "SitePlus" });
+    const tabs2 = await within(again).findAllByRole("tab");
+    expect(tabs2[0]).toHaveAttribute("aria-selected", "true");
+    await waitFor(() =>
+      expect(window.location.search).toBe("?case=siteplus&fig=1"),
+    );
+  });
+
+  it("moving to the next project in 図 keeps 図 on figure 1 when it has figures and falls back to 文 when it has none", async () => {
+    const user = userEvent.setup();
+    window.history.replaceState(null, "", "/en/projects?case=siteplus&fig=2");
+    renderPanel({ list: withFigures });
+    const dialog = await screen.findByRole("dialog", { name: "SitePlus" });
+    await within(dialog).findAllByRole("tab");
+    await user.click(
+      within(dialog).getByRole("button", { name: /Next project: COA/ }),
+    );
+    const coa = await screen.findByRole("dialog", { name: /^COA/ });
+    const tabs = within(coa).getAllByRole("tab");
+    expect(tabs[0]).toHaveAttribute("aria-selected", "true");
+    expect(
+      within(coa).getByRole("button", { name: "Figures · 2" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await waitFor(() =>
+      expect(window.location.search).toBe("?case=skg-coa&fig=1"),
+    );
+    await user.click(
+      within(coa).getByRole("button", { name: /Next project: AI Agent/ }),
+    );
+    const agent = await screen.findByRole("dialog", { name: "AI Agent" });
+    expect(within(agent).queryByRole("tablist")).toBeNull();
+    expect(
+      within(agent).getByText(byId("skg-ai-agent").caseStudy.problem),
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(window.location.search).toBe("?case=skg-ai-agent"),
+    );
+  });
+
+  it("in 図, ArrowRight moves the figure, not the project", async () => {
+    const user = userEvent.setup();
+    window.history.replaceState(null, "", "/en/projects?case=siteplus");
+    renderPanel({ list: withFigures });
+    const dialog = await screen.findByRole("dialog", { name: "SitePlus" });
+    await user.click(
+      within(dialog).getByRole("button", { name: "Figures · 2" }),
+    );
+    // Focus stays on the toggle (outside the filmstrip): the panel routes the arrows.
+    await user.keyboard("{ArrowRight}");
+    expect(
+      screen.getByRole("dialog", { name: "SitePlus" }),
+    ).toBeInTheDocument();
+    expect(within(dialog).getAllByRole("tab")[1]).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    // At the last figure nothing wraps and the project stays.
+    await user.keyboard("{ArrowRight}");
+    expect(
+      screen.getByRole("dialog", { name: "SitePlus" }),
+    ).toBeInTheDocument();
+    expect(within(dialog).getAllByRole("tab")[1]).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    await user.keyboard("{ArrowLeft}");
+    expect(within(dialog).getAllByRole("tab")[0]).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    // The spine shows the figure position in kanji numerals.
+    expect(dialog).toHaveTextContent("図 一／二");
+  });
+
+  it("the viewer opens above the panel, its arrows move its own figure, and Esc returns to the stage on that figure", async () => {
+    const user = userEvent.setup();
+    window.history.replaceState(null, "", "/en/projects?case=siteplus");
+    renderPanel({ list: withFigures });
+    const panel = await screen.findByRole("dialog", { name: "SitePlus" });
+    await user.click(
+      within(panel).getByRole("button", { name: "Figures · 2" }),
+    );
+    await user.click(within(panel).getByRole("button", { name: "Enlarge" }));
+    const viewer = await screen.findByRole("dialog", {
+      name: "SitePlus — Mobile site-survey screen",
+    });
+    expect(viewer).toHaveAttribute("aria-modal", "true");
+    await user.keyboard("{ArrowRight}");
+    expect(viewer).toHaveAccessibleName(
+      "SitePlus — How the client, API and database connect",
+    );
+    // The panel moved with it (one step, not two) and is still on SitePlus.
+    await waitFor(() =>
+      expect(window.location.search).toBe("?case=siteplus&fig=2"),
+    );
+    await user.keyboard("{Escape}");
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: /Mobile|client, API/ }),
+      ).toBeNull(),
+    );
+    const panelAgain = screen.getByRole("dialog", { name: "SitePlus" });
+    expect(within(panelAgain).getAllByRole("tab")[1]).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(within(panelAgain).getByRole("tabpanel")).toHaveFocus();
+  });
+
+  it("with full motion the text leaves before 図 shows, and a project move cancels that exit", async () => {
+    const user = userEvent.setup();
+    document.documentElement.dataset.motion = "full";
+    const anims: { cancel: ReturnType<typeof vi.fn> }[] = [];
+    Object.defineProperty(HTMLElement.prototype, "animate", {
+      value: vi.fn(() => {
+        const animation = {
+          cancel: vi.fn(),
+          finished: new Promise<never>(() => {}),
+        };
+        anims.push(animation);
+        return animation as unknown as Animation;
+      }),
+      configurable: true,
+    });
+    try {
+      renderPanel({ list: withFigures, initial: "siteplus" });
+      const dialog = await screen.findByRole("dialog", { name: "SitePlus" });
+      await user.click(
+        within(dialog).getByRole("button", { name: "Figures · 2" }),
+      );
+      // The result banner and the panes slide out first; the stage is not there yet.
+      expect(anims).toHaveLength(2);
+      expect(within(dialog).queryByRole("tablist")).toBeNull();
+      await user.click(
+        within(dialog).getByRole("button", { name: /Next project: COA/ }),
+      );
+      await screen.findByRole("dialog", { name: /^COA/ });
+      for (const a of anims) expect(a.cancel).toHaveBeenCalled();
+    } finally {
+      delete (HTMLElement.prototype as { animate?: unknown }).animate;
+      delete document.documentElement.dataset.motion;
+    }
+  });
+
+  it("closing in 図 removes case and fig from the URL", async () => {
+    const user = userEvent.setup();
+    window.history.replaceState(null, "", "/en/projects?case=siteplus&fig=2");
+    renderPanel({ list: withFigures });
+    await screen.findByRole("dialog", { name: "SitePlus" });
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(window.location.search).toBe("");
   });
 });

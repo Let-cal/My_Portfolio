@@ -270,7 +270,37 @@
     "chapterProjects": "第二章 作品",
     "where": "Nơi làm",
     "period": "Thời gian",
-    "teamLabel": "Team"
+    "teamLabel": "Team",
+    "content": "Nội dung",
+    "figures": "Hình ảnh",
+    "enlarge": "Phóng to",
+    "figurePosition": "Hình {n} trên {count}",
+    "figureError": "Không tải được hình này",
+    "retry": "Thử lại",
+    "prevFigure": "Hình trước",
+    "nextFigure": "Hình tiếp theo",
+    "categories": {
+      "screen": "Màn hình",
+      "architecture": "Kiến trúc",
+      "erd": "Mô hình dữ liệu",
+      "flow": "Luồng",
+      "other": "Khác"
+    },
+    "viewer": {
+      "close": "Đóng",
+      "zoomIn": "Phóng to",
+      "zoomOut": "Thu nhỏ",
+      "fit": "Vừa khung",
+      "actualSize": "Kích thước thật",
+      "panLeft": "Dịch sang trái",
+      "panRight": "Dịch sang phải",
+      "panUp": "Dịch lên",
+      "panDown": "Dịch xuống",
+      "index": "Mục lục hình",
+      "canvas": "Vùng xem hình",
+      "count": "{count} hình",
+      "hint": "Esc để đóng · ←/→ chuyển hình · + / - phóng to, thu nhỏ · 0 vừa khung"
+    }
   },
   "projects": {
     "viewCaseStudy": "Xem case study",
@@ -282,6 +312,7 @@
     "codeMobile": "Code (Mobile)",
     "codeN": "Code {n}",
     "newTab": "(mở trong tab mới)",
+    "figureCount": "{count} hình",
     "viewAll": "Xem tất cả {count} dự án"
   },
   "archive": {
@@ -303,7 +334,14 @@
     "stint": "Vị trí:",
     "featured": "Nổi bật trên trang chủ",
     "showing": "Đang hiện {count} trên {total} dự án",
-    "empty": "Chưa có dự án nào thuộc loại này."
+    "empty": "Chưa có dự án nào thuộc loại này.",
+    "legendLabel": "Đánh dấu vai trò",
+    "legendLead": "Đánh dấu dự án tôi làm với vai trò",
+    "legendCount": "{count}/{total} dự án",
+    "hideMarks": "Ẩn đánh dấu",
+    "showMarks": "Hiện đánh dấu",
+    "marksHidden": "Đã ẩn đánh dấu",
+    "matches": "(đúng vai trò {role})"
   },
   "certificates": {
     "intro": "Các khóa học, chứng chỉ và hoạt động ở trường. Chọn một chiếc đèn lồng để xem thông tin chứng chỉ.",
