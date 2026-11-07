@@ -487,6 +487,14 @@ export const FIGURES_SAVE_STATES = [
   "idle",
 ] as const;
 
+/** For "saved-no-redirect": whether the list page was requested after the save, and how that request ended. */
+export const FIGURES_LIST_REQUEST = [
+  "none",
+  "pending",
+  "done",
+  "failed",
+] as const;
+
 // CI colours Playwright's messages; the codes would otherwise hide every known prefix.
 const ANSI = /\u001b\[[0-9;]*m/g;
 
@@ -496,10 +504,13 @@ function safeFailureCategory(message: string | undefined) {
   if (prefix === "Keyboard reorder did not register")
     return "reorder-not-registered";
   const figures = /^Figures save did not finish: ([a-z-]+)$/.exec(prefix)?.[1];
-  if (figures)
-    return (FIGURES_SAVE_STATES as readonly string[]).includes(figures)
-      ? `figures-save-${figures}`
-      : "other";
+  if (figures) {
+    const listRequest = /^saved-no-redirect-([a-z]+)$/.exec(figures)?.[1];
+    const known = listRequest
+      ? (FIGURES_LIST_REQUEST as readonly string[]).includes(listRequest)
+      : (FIGURES_SAVE_STATES as readonly string[]).includes(figures);
+    return known ? `figures-save-${figures}` : "other";
+  }
   if (prefix.startsWith("browserType.launch:")) return "browser-launch";
   if (prefix.startsWith("browser.newContext:")) return "browser-context";
   if (prefix.startsWith("page.goto:")) return "navigation";

@@ -1,5 +1,10 @@
-import type { Page } from "@playwright/test";
-import { test, expect, FIGURES_SAVE_STATES } from "./fixtures";
+import type { Page, Request as PlaywrightRequest } from "@playwright/test";
+import {
+  test,
+  expect,
+  FIGURES_LIST_REQUEST,
+  FIGURES_SAVE_STATES,
+} from "./fixtures";
 
 // Real Auth, server actions, RLS, Postgres and private Realtime are mandatory.
 // No test.skip, response replacement, route interception or Supabase mock.
@@ -437,6 +442,25 @@ test("project figures: an uploaded image and a Mermaid diagram are saved and cou
       await new Promise((resolve) => setTimeout(resolve, 250));
     }
   })();
+  // Whether the browser asked for the list page after the save (a non-prefetch request to /admin/projects) and
+  // how that request ended: tells a router that never navigated from a list page that never answered.
+  let listRequest: (typeof FIGURES_LIST_REQUEST)[number] = "none";
+  const isListNavigation = (request: PlaywrightRequest) =>
+    new URL(request.url()).pathname === "/admin/projects" &&
+    !request.headers()["next-router-prefetch"];
+  const onRequest = (request: PlaywrightRequest) => {
+    if (isListNavigation(request) && listRequest === "none")
+      listRequest = "pending";
+  };
+  const onFinished = (request: PlaywrightRequest) => {
+    if (isListNavigation(request)) listRequest = "done";
+  };
+  const onFailed = (request: PlaywrightRequest) => {
+    if (isListNavigation(request)) listRequest = "failed";
+  };
+  page.on("request", onRequest);
+  page.on("requestfinished", onFinished);
+  page.on("requestfailed", onFailed);
   await page.getByRole("button", { name: "Lưu", exact: true }).click();
   try {
     await expect(page).toHaveURL(/\/admin\/projects\?highlight=/, {
@@ -447,10 +471,15 @@ test("project figures: an uploaded image and a Mermaid diagram are saved and cou
     await watcher;
     seen.add(await figuresSaveState(page));
     const state = FIGURES_SAVE_STATES.find((s) => seen.has(s)) ?? "idle";
-    throw new Error(`Figures save did not finish: ${state}`);
+    throw new Error(
+      `Figures save did not finish: ${state === "saved-no-redirect" ? `${state}-${listRequest}` : state}`,
+    );
   } finally {
     watching = false;
     await watcher;
+    page.off("request", onRequest);
+    page.off("requestfinished", onFinished);
+    page.off("requestfailed", onFailed);
   }
   const media = (await suite.readProject()).media;
   expect(media.map((f) => [f.kind, (f.caption as { en: string }).en])).toEqual([
