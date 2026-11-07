@@ -473,8 +473,48 @@ function safeFailureLocation(stack: string | undefined): string | undefined {
   return locations[0];
 }
 
+/**
+ * Fixed states the figures save reports when its redirect does not come (admin-flows.spec.ts), strongest first:
+ * the report names the first one seen while the redirect was awaited.
+ */
+export const FIGURES_SAVE_STATES = [
+  "session-dialog",
+  "error-toast",
+  "invalid",
+  "alert",
+  "saved-no-redirect",
+  "saving",
+  "idle",
+] as const;
+
+/** For "saved-no-redirect": whether the list page was requested after the save, and how that request ended. */
+export const FIGURES_LIST_REQUEST = [
+  "none",
+  "pending",
+  "done",
+  "failed",
+  "failed-aborted",
+  "failed-connection",
+  "failed-empty",
+  "failed-timeout",
+] as const;
+
+// CI colours Playwright's messages; the codes would otherwise hide every known prefix.
+const ANSI = /\u001b\[[0-9;]*m/g;
+
 function safeFailureCategory(message: string | undefined) {
-  const prefix = message?.replace(/^Error: /, "") ?? "";
+  const prefix = message?.replace(ANSI, "").replace(/^Error: /, "") ?? "";
+  if (/^Test timeout of \d+ms exceeded/.test(prefix)) return "test-timeout";
+  if (prefix === "Keyboard reorder did not register")
+    return "reorder-not-registered";
+  const figures = /^Figures save did not finish: ([a-z-]+)$/.exec(prefix)?.[1];
+  if (figures) {
+    const listRequest = /^saved-no-redirect-([a-z-]+)$/.exec(figures)?.[1];
+    const known = listRequest
+      ? (FIGURES_LIST_REQUEST as readonly string[]).includes(listRequest)
+      : (FIGURES_SAVE_STATES as readonly string[]).includes(figures);
+    return known ? `figures-save-${figures}` : "other";
+  }
   if (prefix.startsWith("browserType.launch:")) return "browser-launch";
   if (prefix.startsWith("browser.newContext:")) return "browser-context";
   if (prefix.startsWith("page.goto:")) return "navigation";

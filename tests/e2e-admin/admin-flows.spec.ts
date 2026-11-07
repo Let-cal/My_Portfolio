@@ -1,4 +1,10 @@
-import { test, expect } from "./fixtures";
+import type { Page, Request as PlaywrightRequest } from "@playwright/test";
+import {
+  test,
+  expect,
+  FIGURES_LIST_REQUEST,
+  FIGURES_SAVE_STATES,
+} from "./fixtures";
 
 // Real Auth, server actions, RLS, Postgres and private Realtime are mandatory.
 // No test.skip, response replacement, route interception or Supabase mock.
@@ -121,15 +127,30 @@ test("certificate CRUD, public visibility and persisted keyboard ordering", asyn
     name: `Kéo để sắp xếp ${second}`,
     exact: true,
   });
-  await handle.focus();
-  await handle.press("Space");
-  await expect(handle).toHaveAttribute("aria-pressed", "true");
-  await handle.press("ArrowUp");
-  await expect(
-    page.getByRole("status").filter({
-      hasText: `Draggable item ${second} was moved over droppable area ${first}.`,
-    }),
-  ).toHaveCount(1);
+  const moved = page.getByRole("status").filter({
+    hasText: `Draggable item ${second} was moved over droppable area ${first}.`,
+  });
+  // A refresh of the list that lands mid-drag (a late Realtime change note from the visibility toggles above)
+  // cancels the keyboard drag, so the move is never announced. Cancel and pick the row up again, at most three
+  // times; the persisted order is still asserted below.
+  let registered = false;
+  for (let attempt = 0; attempt < 3 && !registered; attempt++) {
+    await handle.focus();
+    await handle.press("Space");
+    await expect(handle).toHaveAttribute("aria-pressed", "true");
+    await handle.press("ArrowUp");
+    registered = await expect(moved)
+      .toHaveCount(1, { timeout: 5_000 })
+      .then(
+        () => true,
+        () => false,
+      );
+    if (!registered) {
+      await handle.press("Escape");
+      await expect(handle).not.toHaveAttribute("aria-pressed", "true");
+    }
+  }
+  if (!registered) throw new Error("Keyboard reorder did not register");
   await handle.press("Space");
   await expect(page.getByText("Đã lưu thứ tự", { exact: true })).toBeVisible();
   await suite.list();
@@ -411,10 +432,56 @@ test("project figures: an uploaded image and a Mermaid diagram are saved and cou
   await expect(preview).toHaveAttribute("data-stale", "false");
 
   // Save renders light and dark, uploads both, and the server re-checks them.
+  // Toasts close after a few seconds, so the save's signals are sampled while the redirect is awaited; a failure
+  // names the strongest one seen (a fixed word, never the form content).
+  const seen = new Set<(typeof FIGURES_SAVE_STATES)[number]>();
+  let watching = true;
+  const watcher = (async () => {
+    while (watching) {
+      seen.add(await figuresSaveState(page).catch(() => "idle" as const));
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+  })();
+  // Whether the browser asked for the list page after the save (a non-prefetch request to /admin/projects) and
+  // how that request ended: tells a router that never navigated from a list page that never answered.
+  let listRequest: (typeof FIGURES_LIST_REQUEST)[number] = "none";
+  const isListNavigation = (request: PlaywrightRequest) =>
+    new URL(request.url()).pathname === "/admin/projects" &&
+    !request.headers()["next-router-prefetch"];
+  const onRequest = (request: PlaywrightRequest) => {
+    if (isListNavigation(request) && listRequest === "none")
+      listRequest = "pending";
+  };
+  const onFinished = (request: PlaywrightRequest) => {
+    if (isListNavigation(request)) listRequest = "done";
+  };
+  const onFailed = (request: PlaywrightRequest) => {
+    if (isListNavigation(request))
+      listRequest = failureKind(request.failure()?.errorText);
+  };
+  page.on("request", onRequest);
+  page.on("requestfinished", onFinished);
+  page.on("requestfailed", onFailed);
   await page.getByRole("button", { name: "Lưu", exact: true }).click();
-  await expect(page).toHaveURL(/\/admin\/projects\?highlight=/, {
-    timeout: 60_000,
-  });
+  try {
+    await expect(page).toHaveURL(/\/admin\/projects\?highlight=/, {
+      timeout: 60_000,
+    });
+  } catch {
+    watching = false;
+    await watcher;
+    seen.add(await figuresSaveState(page));
+    const state = FIGURES_SAVE_STATES.find((s) => seen.has(s)) ?? "idle";
+    throw new Error(
+      `Figures save did not finish: ${state === "saved-no-redirect" ? `${state}-${listRequest}` : state}`,
+    );
+  } finally {
+    watching = false;
+    await watcher;
+    page.off("request", onRequest);
+    page.off("requestfinished", onFinished);
+    page.off("requestfailed", onFailed);
+  }
   const media = (await suite.readProject()).media;
   expect(media.map((f) => [f.kind, (f.caption as { en: string }).en])).toEqual([
     ["image", "Task4 image figure"],
@@ -460,3 +527,41 @@ test("project figures: an uploaded image and a Mermaid diagram are saved and cou
     await expect(chip).toHaveText("図 2", { timeout: 2_000 });
   }).toPass({ timeout: 45_000 });
 });
+
+/** A failed list request as a fixed word, from Chromium's net error code (never the URL or the text itself). */
+function failureKind(
+  errorText: string | undefined,
+): (typeof FIGURES_LIST_REQUEST)[number] {
+  if (!errorText) return "failed";
+  if (errorText.includes("ERR_ABORTED")) return "failed-aborted";
+  if (/ERR_CONNECTION_(RESET|CLOSED|REFUSED)/.test(errorText))
+    return "failed-connection";
+  if (errorText.includes("ERR_EMPTY_RESPONSE")) return "failed-empty";
+  if (errorText.includes("TIMED_OUT")) return "failed-timeout";
+  return "failed";
+}
+
+/**
+ * Where a project save stopped when its redirect did not come: a fixed word (FIGURES_SAVE_STATES) read from what
+ * the form shows, never the form content itself (the failure report keeps only this word).
+ */
+async function figuresSaveState(
+  page: Page,
+): Promise<(typeof FIGURES_SAVE_STATES)[number]> {
+  if (
+    await page
+      .getByRole("dialog", { name: "Phiên đăng nhập đã hết hạn" })
+      .count()
+  )
+    return "session-dialog";
+  if (await page.locator("[data-sonner-toast][data-type='error']").count())
+    return "error-toast";
+  if (await page.locator("[aria-invalid='true']").count()) return "invalid";
+  // Inside the form only: Next.js keeps its own route announcer (role="alert") on every page.
+  if (await page.locator("form").getByRole("alert").count()) return "alert";
+  if (await page.locator("[data-sonner-toast][data-type='success']").count())
+    return "saved-no-redirect";
+  if (await page.getByRole("button", { name: "Đang lưu…" }).count())
+    return "saving";
+  return "idle";
+}
