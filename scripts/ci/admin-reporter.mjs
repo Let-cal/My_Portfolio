@@ -29,6 +29,13 @@ const categories = [
   "auth-token-missing",
   "auth-email-mismatch",
   "auth-role-mismatch",
+  "test-timeout",
+  "reorder-not-registered",
+  "figures-save-invalid",
+  "figures-save-error-toast",
+  "figures-save-session-dialog",
+  "figures-save-saving",
+  "figures-save-idle",
   "other",
 ];
 

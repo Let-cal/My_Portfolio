@@ -473,8 +473,28 @@ function safeFailureLocation(stack: string | undefined): string | undefined {
   return locations[0];
 }
 
+/** Fixed states the figures save reports when its redirect does not come (admin-flows.spec.ts). */
+export const FIGURES_SAVE_STATES = [
+  "invalid",
+  "error-toast",
+  "session-dialog",
+  "saving",
+  "idle",
+] as const;
+
+// CI colours Playwright's messages; the codes would otherwise hide every known prefix.
+const ANSI = /\u001b\[[0-9;]*m/g;
+
 function safeFailureCategory(message: string | undefined) {
-  const prefix = message?.replace(/^Error: /, "") ?? "";
+  const prefix = message?.replace(ANSI, "").replace(/^Error: /, "") ?? "";
+  if (/^Test timeout of \d+ms exceeded/.test(prefix)) return "test-timeout";
+  if (prefix === "Keyboard reorder did not register")
+    return "reorder-not-registered";
+  const figures = /^Figures save did not finish: ([a-z-]+)$/.exec(prefix)?.[1];
+  if (figures)
+    return (FIGURES_SAVE_STATES as readonly string[]).includes(figures)
+      ? `figures-save-${figures}`
+      : "other";
   if (prefix.startsWith("browserType.launch:")) return "browser-launch";
   if (prefix.startsWith("browser.newContext:")) return "browser-context";
   if (prefix.startsWith("page.goto:")) return "navigation";

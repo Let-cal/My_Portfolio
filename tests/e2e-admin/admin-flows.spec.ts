@@ -1,4 +1,5 @@
-import { test, expect } from "./fixtures";
+import type { Page } from "@playwright/test";
+import { test, expect, FIGURES_SAVE_STATES } from "./fixtures";
 
 // Real Auth, server actions, RLS, Postgres and private Realtime are mandatory.
 // No test.skip, response replacement, route interception or Supabase mock.
@@ -121,15 +122,30 @@ test("certificate CRUD, public visibility and persisted keyboard ordering", asyn
     name: `Kéo để sắp xếp ${second}`,
     exact: true,
   });
-  await handle.focus();
-  await handle.press("Space");
-  await expect(handle).toHaveAttribute("aria-pressed", "true");
-  await handle.press("ArrowUp");
-  await expect(
-    page.getByRole("status").filter({
-      hasText: `Draggable item ${second} was moved over droppable area ${first}.`,
-    }),
-  ).toHaveCount(1);
+  const moved = page.getByRole("status").filter({
+    hasText: `Draggable item ${second} was moved over droppable area ${first}.`,
+  });
+  // A refresh of the list that lands mid-drag (a late Realtime change note from the visibility toggles above)
+  // cancels the keyboard drag, so the move is never announced. Cancel and pick the row up again, at most three
+  // times; the persisted order is still asserted below.
+  let registered = false;
+  for (let attempt = 0; attempt < 3 && !registered; attempt++) {
+    await handle.focus();
+    await handle.press("Space");
+    await expect(handle).toHaveAttribute("aria-pressed", "true");
+    await handle.press("ArrowUp");
+    registered = await expect(moved)
+      .toHaveCount(1, { timeout: 5_000 })
+      .then(
+        () => true,
+        () => false,
+      );
+    if (!registered) {
+      await handle.press("Escape");
+      await expect(handle).not.toHaveAttribute("aria-pressed", "true");
+    }
+  }
+  if (!registered) throw new Error("Keyboard reorder did not register");
   await handle.press("Space");
   await expect(page.getByText("Đã lưu thứ tự", { exact: true })).toBeVisible();
   await suite.list();
@@ -412,9 +428,16 @@ test("project figures: an uploaded image and a Mermaid diagram are saved and cou
 
   // Save renders light and dark, uploads both, and the server re-checks them.
   await page.getByRole("button", { name: "Lưu", exact: true }).click();
-  await expect(page).toHaveURL(/\/admin\/projects\?highlight=/, {
-    timeout: 60_000,
-  });
+  try {
+    await expect(page).toHaveURL(/\/admin\/projects\?highlight=/, {
+      timeout: 60_000,
+    });
+  } catch {
+    // Name the form's state (a fixed word, never its content) so a CI failure says where the save stopped.
+    throw new Error(
+      `Figures save did not finish: ${await figuresSaveState(page)}`,
+    );
+  }
   const media = (await suite.readProject()).media;
   expect(media.map((f) => [f.kind, (f.caption as { en: string }).en])).toEqual([
     ["image", "Task4 image figure"],
@@ -460,3 +483,24 @@ test("project figures: an uploaded image and a Mermaid diagram are saved and cou
     await expect(chip).toHaveText("図 2", { timeout: 2_000 });
   }).toPass({ timeout: 45_000 });
 });
+
+/**
+ * Where a project save stopped when its redirect did not come: a fixed word (FIGURES_SAVE_STATES) read from what
+ * the form shows, never the form content itself (the failure report keeps only this word).
+ */
+async function figuresSaveState(
+  page: Page,
+): Promise<(typeof FIGURES_SAVE_STATES)[number]> {
+  if (
+    await page
+      .getByRole("dialog", { name: "Phiên đăng nhập đã hết hạn" })
+      .count()
+  )
+    return "session-dialog";
+  if (await page.locator("[data-sonner-toast][data-type='error']").count())
+    return "error-toast";
+  if (await page.locator("[aria-invalid='true']").count()) return "invalid";
+  if (await page.getByRole("button", { name: "Đang lưu…" }).count())
+    return "saving";
+  return "idle";
+}

@@ -29,6 +29,26 @@ describe("bounded private browser failure diagnostics", () => {
       "Task4 requires an explicit owned local app and valid private fixture",
       "settings",
     ],
+    // CI colours Playwright's messages: the ANSI codes must not hide the prefix.
+    [
+      "[2mexpect([22m[31mlocator[39m).toHaveCount(expected) failed SECRET-SENTINEL",
+      "assertion",
+    ],
+    ["Error: [31mTest timeout of 90000ms exceeded.[39m", "test-timeout"],
+    [
+      'Test timeout of 150000ms exceeded while running "beforeEach" hook.',
+      "test-timeout",
+    ],
+    ["Figures save did not finish: invalid", "figures-save-invalid"],
+    ["Figures save did not finish: error-toast", "figures-save-error-toast"],
+    [
+      "Figures save did not finish: session-dialog",
+      "figures-save-session-dialog",
+    ],
+    ["Figures save did not finish: saving", "figures-save-saving"],
+    ["Figures save did not finish: idle", "figures-save-idle"],
+    ["Figures save did not finish: SECRET-SENTINEL", "other"],
+    ["Keyboard reorder did not register", "reorder-not-registered"],
     ["SECRET-SENTINEL browserType.launch:", "other"],
     ["SECRET-SENTINEL", "other"],
     [undefined, "other"],
