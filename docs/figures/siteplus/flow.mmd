@@ -1,0 +1,13 @@
+flowchart TD
+  A["Brand sends a 4-step survey request<br/>(size, rent, lease, deposit ranges)"] --> B{"Manager reviews"}
+  B -- "Denied" --> X["Email: request declined"]
+  B -- "Accepted" --> C["Email: request accepted<br/>criteria embedded into Qdrant"]
+  C --> D["Manager / area manager assigns a survey task"]
+  D --> E["Field staff survey on mobile:<br/>site, photos, report, site deal"]
+  E --> F{"Area manager reviews"}
+  F -- "Needs edits" --> E
+  F -- "Rejected" --> R["Site refused"]
+  F -- "Accepted" --> G["Site and deal available<br/>deal embedded into Qdrant"]
+  G --> H["Manager runs AI matching:<br/>range filter, then similarity score %"]
+  H --> I["Shortlist and confirm sites"]
+  I --> J["PDF report, request closed,<br/>store recorded"]
