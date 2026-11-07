@@ -107,6 +107,8 @@ export function DiagramEditor({
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
+      // The cancelled render can no longer clear it; the next render (if any) sets it again.
+      setBusy(false);
     };
   }, [source, theme]);
 

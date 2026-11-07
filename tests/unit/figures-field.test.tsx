@@ -372,6 +372,29 @@ describe("FiguresField", () => {
     }
   });
 
+  it("clearing the source while a render runs ends the busy state", async () => {
+    vi.useFakeTimers();
+    try {
+      // A render that never settles, as when Mermaid hangs.
+      const renderStub = vi.fn(() => new Promise<never>(() => {}));
+      render(<Harness initial={[diagram("d")]} render={renderStub} />);
+      fireEvent.click(screen.getByRole("button", { name: "Sửa hình 1" }));
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      const pane = () => document.querySelector("[aria-busy]")!;
+      expect(pane()).toHaveAttribute("aria-busy", "true");
+      const box = screen.getByRole("textbox", { name: /Mã Mermaid/ });
+      fireEvent.change(box, { target: { value: "" } });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(500);
+      });
+      expect(pane()).toHaveAttribute("aria-busy", "false");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("opens a row that has an error and shows the message on its input", () => {
     render(
       <Harness

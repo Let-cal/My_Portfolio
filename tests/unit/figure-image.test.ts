@@ -104,6 +104,18 @@ describe("prepareFigureImage", () => {
     expect(result.ok).toBe(false);
     expect(encode).not.toHaveBeenCalled();
   });
+  it("refuses a file over 30 MB before decoding it", async () => {
+    const encode = vi.fn(async () => webp(1920, 1200));
+    const result = await prepareFigureImage(
+      file("raw.png", "image/png", 30 * MB + 1),
+      encode,
+    );
+    expect(result).toEqual({
+      ok: false,
+      reason: "Ảnh gốc lớn hơn 30 MB, hãy thu nhỏ trước khi tải lên.",
+    });
+    expect(encode).not.toHaveBeenCalled();
+  });
   it("falls back to the original when the encoder fails", async () => {
     const original = file("odd.avif", "image/avif", 1 * MB);
     const result = await prepareFigureImage(original, async () => {

@@ -75,16 +75,15 @@ describe("hosted seed (npm run db:seed)", () => {
     expect(media.length).toBeGreaterThan(0);
   });
 
-  it("writes every project with media [] and leaves the rest of the row alone", () => {
+  it("leaves the media column out, so a re-run keeps the figures made in the admin", () => {
     const hosted = withoutSeedFigures(rows);
     expect(Object.keys(hosted)).toEqual(Object.keys(rows));
     expect(hosted.projects).toHaveLength(rows.projects.length);
     hosted.projects.forEach((row, i) => {
-      expect(row.media).toEqual([]);
-      expect({ ...row, media: null }).toEqual({
-        ...rows.projects[i],
-        media: null,
-      });
+      expect("media" in row).toBe(false);
+      const rest = { ...rows.projects[i] };
+      delete rest.media;
+      expect(row).toEqual(rest);
     });
     // The full rows (local seed fallback, e2e) keep the figures.
     expect(rows.projects.some((r) => (r.media as unknown[]).length > 0)).toBe(
@@ -102,5 +101,11 @@ describe("hosted seed (npm run db:seed)", () => {
     expect(run.stdout).toContain("insert into public.projects");
     expect(run.stdout).not.toContain("/seed/figures/");
     expect(run.stdout).not.toContain('"kind":"diagram"');
+    // The projects insert names no media column: new rows get the default [], existing rows keep theirs.
+    const insert = /insert into public.projects (([^)]*))/.exec(
+      run.stdout,
+    )?.[1];
+    expect(insert?.split(", ")).not.toContain("media");
+    expect(run.stdout).not.toMatch(/media = excluded.media/);
   }, 30_000);
 });

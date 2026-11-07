@@ -36,16 +36,25 @@ export function buildSeedRows(c: Content): SeedRows {
 }
 
 /**
- * The rows `npm run db:seed` writes to Supabase: every project with `media: []`. The seed's figures point at local
- * /seed and /images files, which the server refuses as figure URLs (only uploaded media URLs), so a seeded
- * project could not be saved again. They stay in seed.json for the local seed fallback and e2e.
+ * The rows `npm run db:seed` writes to Supabase: projects without their `media` column. The seed's figures point
+ * at local /seed and /images files, which the server refuses as figure URLs (only uploaded media URLs), and
+ * writing `[]` instead would wipe the figures made in the admin on every re-run. Left out, a new row gets the
+ * column default (`[]`) and an existing row keeps its figures. They stay in seed.json for the local seed fallback
+ * and e2e.
  */
 export function withoutSeedFigures(rows: SeedRows): SeedRows {
   return {
     ...rows,
-    projects: rows.projects.map((row) => ({ ...row, media: [] })),
+    projects: rows.projects.map((row) => {
+      const copy = { ...row };
+      delete copy.media;
+      return copy;
+    }),
   };
 }
+
+/** Columns the hosted seed leaves out (see withoutSeedFigures). */
+export const HOSTED_SEED_OMIT = { projects: ["media"] } as const;
 
 /** Upsert key per table; skill_links are replaced as a whole instead. */
 export const CONFLICT_KEY: Record<Exclude<TableName, "skill_links">, string> = {

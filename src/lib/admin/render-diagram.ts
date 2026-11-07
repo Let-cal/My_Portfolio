@@ -100,25 +100,38 @@ export const MERMAID_SCRIPT_URL = `/vendor/mermaid.min.js?v=${MERMAID_VERSION}`;
 
 let mermaidScript: Promise<Mermaid> | null = null;
 
+/** A script that neither loads nor errors (a stalled connection) gives up after this, so the editor never hangs. */
+export const MERMAID_LOAD_TIMEOUT_MS = 20_000;
+
 /**
  * Loads Mermaid's self-contained build from public/vendor with a classic <script>
  * (the file declares a top-level var and then sets globalThis.mermaid, so it cannot
  * run as a module). It stays outside the webpack graph: bundling it would add lazy
  * chunks, and every lazy chunk adds an entry to the runtime each public page loads.
  */
-function loadMermaid(): Promise<Mermaid> {
+export function loadMermaid(): Promise<Mermaid> {
   mermaidScript ??= new Promise<Mermaid>((resolve, reject) => {
     const loaded = (globalThis as { mermaid?: Mermaid }).mermaid;
     if (loaded) return resolve(loaded);
     const script = document.createElement("script");
+    const timer = window.setTimeout(() => {
+      script.remove();
+      reject(
+        new Error(
+          `Mermaid tải quá lâu (${MERMAID_LOAD_TIMEOUT_MS / 1000} giây). Kiểm tra mạng rồi thử lại.`,
+        ),
+      );
+    }, MERMAID_LOAD_TIMEOUT_MS);
     script.src = MERMAID_SCRIPT_URL;
     script.async = true;
     script.onload = () => {
+      window.clearTimeout(timer);
       const mermaid = (globalThis as { mermaid?: Mermaid }).mermaid;
       if (mermaid) resolve(mermaid);
       else reject(new Error("Mermaid did not load."));
     };
     script.onerror = () => {
+      window.clearTimeout(timer);
       script.remove();
       reject(new Error(`Could not load Mermaid (${MERMAID_SCRIPT_URL}).`));
     };
