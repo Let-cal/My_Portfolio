@@ -1,0 +1,43 @@
+erDiagram
+  CITY ||--o{ DISTRICT : has
+  DISTRICT ||--o{ AREA : has
+  ROLE ||--o{ USER : grants
+  AREA ||--o{ USER : "staff work in"
+  BRAND ||--o{ BRAND_REQUEST : sends
+  BRAND ||--o{ STORE_PROFILE : defines
+  STORE_PROFILE ||--o{ STORE_PROFILE_CRITERIA : "min / max / default"
+  ATTRIBUTE ||--o{ STORE_PROFILE_CRITERIA : measures
+  BRAND_REQUEST }o--o{ STORE_PROFILE : "asks for"
+  AREA ||--o{ BUILDING : contains
+  AREA ||--o{ SITE : contains
+  BUILDING ||--o{ SITE : contains
+  SITE ||--o{ IMAGE : photos
+  SITE ||--o{ ATTRIBUTE_VALUE : "survey report"
+  ATTRIBUTE ||--o{ ATTRIBUTE_VALUE : measures
+  SITE ||--o{ SITE_DEAL : offers
+  USER ||--o{ TASK : "assigned to"
+  AREA ||--o{ TASK : scopes
+  SITE |o--o{ TASK : "surveyed in"
+  NOTIFICATION }o--o{ TASK : about
+  BRAND_REQUEST ||--o{ MATCHING : "matched by"
+  SITE ||--o{ MATCHING : "candidate in"
+  STORE_PROFILE ||--o{ STORE : opens
+  SITE |o--o| STORE : "becomes"
+
+  BRAND_REQUEST {
+    int Status "0 in progress .. 9 closed"
+  }
+  SITE_DEAL {
+    decimal ProposedPrice
+    int LeaseTerm
+    decimal Deposit
+    int Status "draft, available, unavailable"
+  }
+  MATCHING {
+    float CompatibilityScore "similarity %"
+  }
+  TASK {
+    int Status "assigned .. completed"
+    int Priority
+    datetime Deadline
+  }

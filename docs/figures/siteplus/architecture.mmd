@@ -1,0 +1,30 @@
+flowchart LR
+  subgraph Clients
+    brand["Brand<br/>public web pages"]
+    staff["Admin / Manager / Area manager<br/>React + TypeScript (Vercel)"]
+    field["Field staff<br/>Flutter app"]
+  end
+
+  subgraph API["ASP.NET Core Web API (.NET 8, Azure App Service)"]
+    web["WebApi<br/>31 controllers, JWT roles"]
+    app["Application<br/>services, DTOs"]
+    infra["Infrastructure<br/>EF Core, repositories"]
+    domain["Domain<br/>entities, enums"]
+    web --> app --> domain
+    infra --> app
+    hub["SignalR hub<br/>task notifications"]
+    job["Deadline check<br/>every 6 hours"]
+  end
+
+  brand -- "survey request" --> web
+  staff -- "REST + JWT" --> web
+  field -- "REST + JWT" --> web
+  hub -- "push" --> field
+  job --> hub
+
+  infra --> sql[("SQL Server<br/>29 tables")]
+  app --> embed["Cohere<br/>multilingual embeddings"]
+  app --> qdrant[("Qdrant<br/>vector search")]
+  app --> images["Cloudinary<br/>site photos"]
+  app --> mail["Gmail SMTP<br/>accept / cancel emails"]
+  app --> pdf["QuestPDF<br/>request report"]
